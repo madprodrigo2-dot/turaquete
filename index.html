@@ -3,138 +3,272 @@
   <head>
     <meta charset="UTF-8" />
     <title>Tu Raqueta Ideal</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
       body {
-        font-family: Arial;
-        text-align: center;
-        padding: 30px;
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        background: #0f172a;
+        color: white;
       }
+
+      /* HERO */
+      .hero {
+        text-align: center;
+        padding: 60px 20px;
+      }
+
+      .hero h1 {
+        font-size: 32px;
+        font-weight: 800;
+      }
+
+      .hero p {
+        color: #94a3b8;
+        margin-top: 10px;
+      }
+
+      /* BOTONES */
       button {
-        margin: 10px;
-        padding: 12px 20px;
+        padding: 14px;
+        border-radius: 12px;
+        border: none;
         cursor: pointer;
-        border-radius: 8px;
+        margin-top: 15px;
+        width: 100%;
+      }
+
+      .cta {
+        background: #22c55e;
+        color: white;
+        font-size: 16px;
+      }
+
+      .secondary {
+        background: #334155;
+        color: white;
+      }
+
+      /* CARD */
+      .container {
+        max-width: 520px;
+        margin: auto;
+        padding: 20px;
+      }
+
+      .card {
+        background: #1e293b;
+        padding: 25px;
+        border-radius: 18px;
+      }
+
+      /* FEATURES */
+      .features {
+        margin-top: 30px;
+        text-align: left;
+      }
+
+      .feature {
+        margin-bottom: 10px;
+        color: #cbd5f5;
+      }
+
+      /* RESULT */
+      .result {
+        text-align: left;
       }
     </style>
   </head>
+
   <body>
-    <h1>🎾 Descubre tu raqueta ideal en 30 segundos</h1>
     <div id="app"></div>
 
     <script>
-      const questions = [
-        {
-          question: "¿Cuál es tu nivel?",
-          answers: [
-            { text: "Principiante", effect: { control: 2 } },
-            { text: "Intermedio", effect: { control: 1, potencia: 1 } },
-            { text: "Avanzado", effect: { potencia: 2 } },
-          ],
-        },
-        {
-          question: "¿Cómo juegas normalmente?",
-          answers: [
-            { text: "Defensivo", effect: { control: 2 } },
-            { text: "Equilibrado", effect: { control: 1, potencia: 1 } },
-            { text: "Ofensivo", effect: { potencia: 2 } },
-          ],
-        },
-        {
-          question: "¿Dónde juegas más?",
-          answers: [
-            { text: "Fondo", effect: { control: 1 } },
-            { text: "Red", effect: { potencia: 2 } },
-            { text: "Mixto", effect: { control: 1, potencia: 1 } },
-          ],
-        },
-        {
-          question: "¿Tienes molestias físicas?",
-          answers: [
-            { text: "No", effect: {} },
-            { text: "Codo", effect: { confort: 2 } },
-            { text: "Muñeca", effect: { confort: 1 } },
-          ],
-        },
-      ];
-
+      let lang = null;
       let current = 0;
-      let score = { potencia: 0, control: 0, confort: 0 };
 
-      function renderQuestion() {
-        const q = questions[current];
+      let score = {
+        potencia: 0,
+        control: 0,
+        confort: 0,
+        spin: 0,
+      };
+
+      const content = {
+        es: {
+          heroTitle: "Encuentra tu raqueta perfecta 🎾",
+          heroDesc:
+            "Un test rápido que analiza tu estilo y te recomienda la mejor raqueta para ti.",
+          start: "Comenzar diagnóstico",
+          features: [
+            "✔ Recomendación personalizada",
+            "✔ Basado en tu estilo de juego",
+            "✔ Evita errores al comprar",
+          ],
+          lang: "Selecciona tu idioma",
+          cta: "Hablar con experto",
+          result: "Tu perfil de juego",
+        },
+        pt: {
+          heroTitle: "Descubra sua raquete ideal 🎾",
+          heroDesc:
+            "Um teste rápido que analisa seu estilo e recomenda a melhor raquete para você.",
+          start: "Começar diagnóstico",
+          features: [
+            "✔ Recomendação personalizada",
+            "✔ Baseado no seu estilo de jogo",
+            "✔ Evite erros na compra",
+          ],
+          lang: "Escolha seu idioma",
+          cta: "Falar com especialista",
+          result: "Seu perfil de jogo",
+        },
+      };
+
+      const questions = {
+        es: [
+          {
+            q: "¿Cuál es tu nivel?",
+            a: [
+              { t: "Principiante", e: { control: 2 } },
+              { t: "Intermedio", e: { control: 1, potencia: 1 } },
+              { t: "Avanzado", e: { potencia: 2 } },
+            ],
+          },
+          {
+            q: "¿Cómo juegas?",
+            a: [
+              { t: "Defensivo", e: { control: 2 } },
+              { t: "Equilibrado", e: { control: 1, potencia: 1 } },
+              { t: "Ofensivo", e: { potencia: 2 } },
+            ],
+          },
+        ],
+        pt: [
+          {
+            q: "Qual é o seu nível?",
+            a: [
+              { t: "Iniciante", e: { control: 2 } },
+              { t: "Intermediário", e: { control: 1, potencia: 1 } },
+              { t: "Avançado", e: { potencia: 2 } },
+            ],
+          },
+          {
+            q: "Como você joga?",
+            a: [
+              { t: "Defensivo", e: { control: 2 } },
+              { t: "Equilibrado", e: { control: 1, potencia: 1 } },
+              { t: "Ofensivo", e: { potencia: 2 } },
+            ],
+          },
+        ],
+      };
+
+      /* LANDING */
+      function renderLanding() {
         document.getElementById("app").innerHTML = `
-    <h2>${q.question}</h2>
-    ${q.answers
-      .map((a, i) => `<button onclick="answer(${i})">${a.text}</button>`)
-      .join("")}
+    <div class="hero">
+      <h1>${content.pt.heroTitle}</h1>
+      <p>${content.pt.heroDesc}</p>
+
+      <div class="features">
+        ${content.pt.features
+          .map((f) => `<div class="feature">${f}</div>`)
+          .join("")}
+      </div>
+
+      <button class="cta" onclick="renderLang()">
+        ${content.pt.start}
+      </button>
+    </div>
+  `;
+      }
+
+      /* IDIOMA */
+      function renderLang() {
+        document.getElementById("app").innerHTML = `
+    <div class="container">
+      <div class="card">
+        <h2>${content.pt.lang}</h2>
+        <button onclick="chooseLang('pt')">🇧🇷 Português</button>
+        <button onclick="chooseLang('es')">🇪🇸 Español</button>
+      </div>
+    </div>
+  `;
+      }
+
+      function chooseLang(l) {
+        lang = l;
+        renderQuestion();
+      }
+
+      /* QUIZ */
+      function renderQuestion() {
+        const q = questions[lang][current];
+
+        document.getElementById("app").innerHTML = `
+    <div class="container">
+      <div class="card">
+        <h2>${q.q}</h2>
+        ${q.a
+          .map((a, i) => `<button onclick="answer(${i})">${a.t}</button>`)
+          .join("")}
+      </div>
+    </div>
   `;
       }
 
       function answer(i) {
-        const effect = questions[current].answers[i].effect;
+        const effect = questions[lang][current].a[i].e;
 
-        for (let key in effect) {
-          score[key] += effect[key];
-        }
+        for (let key in effect) score[key] += effect[key];
 
         current++;
 
-        if (current < questions.length) {
-          renderQuestion();
-        } else {
-          showResult();
-        }
+        if (current < questions[lang].length) renderQuestion();
+        else showResult();
       }
 
+      /* RESULT */
       function showResult() {
-        let title = "";
-        let desc = "";
-        let rec = "";
-
-        if (score.potencia > score.control && score.potencia > score.confort) {
-          title = "🔥 Jugador Killer de Red";
-          desc = "Eres agresivo, buscas cerrar puntos rápido en la red.";
-          rec = `
-      Kronos 18K ⚡<br>
-      Shark Pro ⚡<br>
-      Raquetas rígidas con salida explosiva
-    `;
-        } else if (score.control > score.potencia) {
-          title = "🎯 Jugador de Control";
-          desc = "Prefieres consistencia y precisión.";
-          rec = `
-      Raquetas 3K<br>
-      EVA soft<br>
-      Mayor control y absorción
-    `;
-        } else {
-          title = "🛡 Jugador de Confort";
-          desc = "Necesitas cuidar tu brazo sin perder rendimiento.";
-          rec = `
-      Raquetas antivibración<br>
-      EVA soft<br>
-      Balance bajo
-    `;
-        }
-
         document.getElementById("app").innerHTML = `
-    <h2>${title}</h2>
-    <p>${desc}</p>
-    <p><strong>Recomendación:</strong><br>${rec}</p>
+    <div class="container">
+      <div class="card result">
+        <h2>${content[lang].result}</h2>
+        <canvas id="chart"></canvas>
 
-    <p><strong>💡 Tip:</strong> Elegir mal la raqueta puede afectar tu rendimiento o generar lesiones.</p>
-
-    <button onclick="window.open('https://wa.me/5599999999999')">
-      Hablar por WhatsApp
-    </button>
-
-    <br><br>
-
-    <button onclick="location.reload()">Repetir</button>
+        <button class="cta" onclick="window.open('https://wa.me/5599999999999')">
+          ${content[lang].cta}
+        </button>
+      </div>
+    </div>
   `;
+
+        new Chart(document.getElementById("chart"), {
+          type: "radar",
+          data: {
+            labels: ["Potencia", "Control", "Confort", "Spin"],
+            datasets: [
+              {
+                data: [
+                  score.potencia,
+                  score.control,
+                  score.confort,
+                  score.spin,
+                ],
+              },
+            ],
+          },
+        });
       }
 
-      renderQuestion();
+      renderLanding();
     </script>
   </body>
 </html>
