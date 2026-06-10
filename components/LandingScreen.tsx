@@ -156,7 +156,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
             width={852}
             height={474}
             priority
-            className="h-8 md:h-11 w-auto"
+            className="h-10 md:h-[3.25rem] w-auto"
           />
         </div>
 

@@ -20,7 +20,10 @@ const DESCRIPTION =
   'Consultor virtual de raquetes de beach tennis. Conte como você joga e receba a raquete ideal em 1 minuto — grátis, sem cadastro.'
 
 export const viewport: Viewport = {
-  themeColor: '#EAF7F6',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#EAF7F6' },
+    { media: '(prefers-color-scheme: dark)',  color: '#0E3A40' },
+  ],
 }
 
 export const metadata: Metadata = {
