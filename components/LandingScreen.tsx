@@ -295,8 +295,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
         </div>
       </div>
 
-      {/* Content */}
-      <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 md:px-8">
+      {/* ── Seção 1: hero + como funciona + analisamos ── */}
+      <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 md:px-8 pb-2 md:pb-3">
 
         {/* Hero — coluna única mobile, 2 colunas desktop */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] md:gap-12 md:items-center gap-5 md:gap-0">
@@ -405,17 +405,48 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
           </div>
         </div>
 
-        {/* Raquetes em destaque */}
-        {featuredRackets.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
-            <div className="grid grid-cols-3 gap-3">
-              {featuredRackets.map(racket => (
-                <FeaturedCard key={racket.id} racket={racket} onStart={onStart} />
-              ))}
+      </div>{/* end seção 1 */}
+
+      {/* ── Raquetes em destaque — franja arena full-width ── */}
+      {featuredRackets.length > 0 && (
+        <>
+          {/* Onda de entrada: menta → arena */}
+          <svg
+            viewBox="0 0 1440 50"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+            className="w-full h-12 md:h-14 block"
+          >
+            <path d="M0,32 C480,16 960,42 1440,24 L1440,50 L0,50 Z" fill="#FBF4E8" />
+          </svg>
+
+          {/* Franja arena com textura de grão */}
+          <div className="w-full bg-arena arena-grain py-7 md:py-9">
+            <div className="max-w-sm md:max-w-2xl mx-auto px-5 md:px-8 flex flex-col gap-3">
+              <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
+              <div className="grid grid-cols-3 gap-3">
+                {featuredRackets.map(racket => (
+                  <FeaturedCard key={racket.id} racket={racket} onStart={onStart} />
+                ))}
+              </div>
             </div>
           </div>
-        )}
+
+          {/* Onda de saída: arena → menta */}
+          <div className="w-full bg-arena" aria-hidden="true">
+            <svg
+              viewBox="0 0 1440 50"
+              preserveAspectRatio="none"
+              className="w-full h-12 md:h-14 block"
+            >
+              <path d="M0,22 C480,40 960,14 1440,32 L1440,50 L0,50 Z" fill="#EAF7F6" />
+            </svg>
+          </div>
+        </>
+      )}
+
+      {/* ── Seção 3: marcas + FAQ + CTA + footer ── */}
+      <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 md:px-8 pt-3 md:pt-4">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
@@ -488,7 +519,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
           </div>
         </footer>
 
-      </div>
+      </div>{/* end seção 3 */}
+
     </div>
   )
 }

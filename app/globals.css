@@ -6,6 +6,7 @@
   --color-yellow:     #FFC42E;
   --color-tinta:      #0E3A40;
   --color-aqua-light: #EAF7F6;
+  --color-arena:      #FBF4E8;
 }
 
 @layer utilities {
@@ -14,6 +15,12 @@
   }
   .font-body {
     font-family: var(--font-inter), system-ui, sans-serif;
+  }
+  /* Fine grain texture — feTurbulence at opacity 0.04, almost imperceptible */
+  .arena-grain {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.04'/></svg>");
+    background-repeat: repeat;
+    background-size: 200px 200px;
   }
 }
 
