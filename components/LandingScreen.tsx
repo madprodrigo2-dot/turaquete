@@ -457,13 +457,23 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
           </div>
 
           {/* CTA hero — IntersectionObserver target */}
-          <button
-            ref={heroCtaRef}
-            onClick={onStart}
-            className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
-          >
-            Começar agora
-          </button>
+          <div className="flex items-end gap-3">
+            <Image
+              src="/tury-saludando.png"
+              alt="Tury saludando, convidando você a começar"
+              width={200}
+              height={200}
+              className="w-[68px] md:w-[80px] h-auto shrink-0"
+              style={{ width: undefined }}
+            />
+            <button
+              ref={heroCtaRef}
+              onClick={onStart}
+              className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
+            >
+              Começar agora
+            </button>
+          </div>
 
         </div>
       </div>{/* end seção menta */}
