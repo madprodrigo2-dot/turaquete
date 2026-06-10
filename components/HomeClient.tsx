@@ -95,7 +95,7 @@ export default function HomeClient({ brands, featuredRackets, previewRacket }: P
           <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">
 
             <header className="flex items-center px-4 py-3 md:px-6 md:py-4 bg-white border-b border-gray-100 shrink-0">
-              <div className="flex flex-col">
+              <div className="flex flex-col items-start">
                 <Image
                   src="/turaquete-logo.png"
                   alt="Turaquete"

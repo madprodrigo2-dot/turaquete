@@ -19,38 +19,30 @@ function renderText(text: string): React.ReactNode {
   )
 }
 
+function getTuryPose(content: string, isFirst: boolean, isLoading: boolean) {
+  if (isLoading || content.includes('?')) return { src: '/tury-pensando.png', alt: 'Tury pensando' }
+  if (isFirst) return { src: '/tury-saludando.png', alt: 'Tury saludando' }
+  return { src: '/tury-explicando.png', alt: 'Tury explicando' }
+}
+
 export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false }: Props) {
   const isAssistant = role === 'assistant'
+  const tury = getTuryPose(content, showTury, loading)
 
   return (
     <div className={`flex flex-col w-full msg-enter ${isAssistant ? 'items-start' : 'items-end'}`}>
 
-      {/* Tury saludando — só no primeiro mensagem do agente */}
-      {showTury && isAssistant && (
-        <div className="pl-9 mb-1">
-          <Image
-            src="/tury-saludando.png"
-            alt="Tury, a mascote da Turaquete, acenando"
-            width={200}
-            height={200}
-            className="w-[90px] md:w-[105px] h-auto"
-            style={{ width: undefined }}
-          />
-        </div>
-      )}
-
-      {/* Bubble row — avatar + message */}
+      {/* Bubble row — Tury miniatura + mensagem */}
       <div className="flex items-end gap-2">
 
-        {/* Avatar do agente */}
         {isAssistant && (
-          <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-tinta flex items-center justify-center">
+          <div className="flex-shrink-0 w-8 md:w-10 self-end">
             <Image
-              src="/turaquete-favicon.png"
-              alt="Turaquete"
-              width={22}
-              height={22}
-              className="object-contain"
+              src={tury.src}
+              alt={tury.alt}
+              width={80}
+              height={80}
+              className="w-8 md:w-10 h-auto"
             />
           </div>
         )}
@@ -80,7 +72,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
 
       {/* RacketCards — escalonadas sob a burbuja */}
       {isAssistant && recommendations && recommendations.length > 0 && (
-        <div className="mt-3 flex flex-col gap-3 pl-9 w-full">
+        <div className="mt-3 flex flex-col gap-3 pl-10 md:pl-12 w-full">
           {recommendations.map((rec, i) => (
             <div
               key={rec.racket.id}
