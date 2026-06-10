@@ -38,7 +38,7 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
       className="group bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 transition-all flex flex-col"
     >
       {racket.image_url ? (
-        <div className="aspect-square bg-gray-50 p-3 flex items-center justify-center overflow-hidden">
+        <div className="aspect-[4/5] bg-white p-3 flex items-center justify-center overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={racket.image_url}

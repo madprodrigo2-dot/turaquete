@@ -105,6 +105,66 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
   )
 }
 
+function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
+  const previewPrice = racket?.price
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
+    : 'R$ 1.890'
+  const previewName = racket?.name ?? "Heroe's CÉU"
+  const previewImage = racket?.image_url ?? null
+
+  return (
+    <div className="w-[220px] md:w-[240px] flex-shrink-0 select-none pointer-events-none">
+      <div className="bg-gray-50 rounded-2xl border border-aqua/20 shadow-xl p-3 flex flex-col gap-2 rotate-[2deg]">
+
+        {/* Header simulado */}
+        <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 border border-gray-100 shadow-sm">
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0">
+            <Image src="/turaquete-favicon.png" alt="" width={20} height={20} className="w-full h-full object-cover" />
+          </div>
+          <span className="font-heading text-tinta text-[10px] font-semibold leading-none">especialista em beach tennis</span>
+        </div>
+
+        {/* Burbuja agente */}
+        <div className="flex items-end gap-1.5">
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0">
+            <Image src="/turaquete-favicon.png" alt="" width={20} height={20} className="w-full h-full object-cover" />
+          </div>
+          <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 border border-gray-100 shadow-sm flex-1">
+            <p className="text-tinta text-[11px] leading-snug">Me conta como você joga!</p>
+          </div>
+        </div>
+
+        {/* Burbuja usuário */}
+        <div className="flex justify-end">
+          <div className="bg-tinta rounded-2xl rounded-tr-sm px-3 py-2 max-w-[80%]">
+            <p className="text-white text-[11px] leading-snug">Jogo há 1 ano e quero potência</p>
+          </div>
+        </div>
+
+        {/* Mini RacketCard */}
+        <div className="bg-white rounded-xl border border-aqua/20 overflow-hidden flex flex-col shadow-sm">
+          <div className="h-16 bg-white flex items-center justify-center p-1.5">
+            {previewImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={previewImage} alt="" className="h-full w-full object-contain" />
+            ) : (
+              <IconEstilo />
+            )}
+          </div>
+          <div className="px-2.5 py-2 flex flex-col gap-1">
+            <p className="font-heading text-tinta text-[10px] font-semibold leading-tight line-clamp-1">{previewName}</p>
+            <p className="font-heading text-coral text-[11px] font-bold">{previewPrice}</p>
+            <div className="border border-aqua rounded-lg py-1 text-center mt-0.5">
+              <p className="text-tinta text-[9px] font-semibold">Quero esta raquete</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 function BrandCard({ brand }: { brand: Brand }) {
   const isAvailable = brand.status === 'disponivel'
 
@@ -153,7 +213,7 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       <Link href={`/raquetes/${racket.slug}`} className="block">
-        <div className="aspect-square bg-white p-3 flex items-center justify-center">
+        <div className="aspect-[4/5] bg-white p-3 flex items-center justify-center">
           {racket.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
@@ -210,7 +270,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
 
       {/* Sticky header — full viewport width */}
       <div className={`sticky top-0 z-10 w-full flex justify-center px-5 md:px-8 bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
-        <div className="w-full max-w-sm md:max-w-xl flex items-center justify-between py-3 md:py-4">
+        <div className="w-full max-w-sm md:max-w-2xl flex items-center justify-between py-3 md:py-4">
           <Image
             src="/turaquete-logo.png"
             alt="Turaquete"
@@ -235,65 +295,79 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
       </div>
 
       {/* Content */}
-      <div className="w-full max-w-sm md:max-w-xl flex flex-col gap-5 md:gap-7 px-5 md:px-8">
+      <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 md:px-8">
 
-        {/* H1 + subtítulo */}
-        <div className="flex flex-col gap-3 md:gap-4">
-          <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
-            Uma consultoria de especialista.{' '}
-            <span className="relative inline-block text-coral">
-              De graça.
-              {/* Swoosh decorativo coral */}
-              <svg
-                viewBox="0 0 140 10"
-                fill="none"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-                className="absolute -bottom-1 left-0 w-full h-[8px]"
-              >
-                <path
-                  d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
-                  stroke="#FF5E3A"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </svg>
-            </span>
-          </h1>
-          <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
-            Conte como você joga e receba a raquete ideal em 1 minuto, analisando seu nível, estilo, dores no braço e orçamento.
-          </p>
-        </div>
+        {/* Hero — coluna única mobile, 2 colunas desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] md:gap-12 md:items-center gap-5 md:gap-0">
 
-        {/* Franja */}
-        <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
-          <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
-            O mesmo que um especialista faz numa consultoria paga — aqui sem custo.
-          </p>
-        </div>
+          {/* Coluna de texto */}
+          <div className="flex flex-col gap-5 md:gap-7">
 
-        {/* Badges — bg suave + ponto coral */}
-        <div className="flex gap-2 flex-wrap">
-          {BADGES.map(badge => (
-            <span
-              key={badge}
-              className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+            {/* H1 + subtítulo */}
+            <div className="flex flex-col gap-3 md:gap-4">
+              <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
+                Uma consultoria de especialista.{' '}
+                <span className="relative inline-block text-coral">
+                  De graça.
+                  <svg
+                    viewBox="0 0 140 10"
+                    fill="none"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                    className="absolute -bottom-1 left-0 w-full h-[8px]"
+                  >
+                    <path
+                      d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
+                      stroke="#FF5E3A"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+                </span>
+              </h1>
+              <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
+                Conte como você joga e receba a raquete ideal em 1 minuto, analisando seu nível, estilo, dores no braço e orçamento.
+              </p>
+            </div>
+
+            {/* Franja */}
+            <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
+              <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
+                O mesmo que um especialista faz numa consultoria paga — aqui sem custo.
+              </p>
+            </div>
+
+            {/* Badges */}
+            <div className="flex gap-2 flex-wrap">
+              {BADGES.map(badge => (
+                <span
+                  key={badge}
+                  className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
+                  {badge}
+                </span>
+              ))}
+            </div>
+
+            {/* CTA hero — IntersectionObserver target */}
+            <button
+              ref={heroCtaRef}
+              onClick={onStart}
+              className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
-              {badge}
-            </span>
-          ))}
-        </div>
+              Começar agora
+            </button>
 
-        {/* CTA hero — IntersectionObserver target */}
-        <button
-          ref={heroCtaRef}
-          onClick={onStart}
-          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
-        >
-          Começar agora
-        </button>
+          </div>
+
+          {/* Preview do chat — decorativo */}
+          <div className="flex justify-center md:justify-end" aria-hidden="true">
+            <ChatPreview racket={featuredRackets[0]} />
+          </div>
+
+        </div>{/* end hero grid */}
 
         {/* Como funciona */}
         <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
