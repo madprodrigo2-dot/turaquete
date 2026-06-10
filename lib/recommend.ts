@@ -23,6 +23,9 @@ export interface Insights {
   shoulder_friendly: boolean
   observations: string[]
   summary: string | null
+  perfil_resumo: string | null
+  nivel_sugerido: 'iniciante' | 'intermediario' | 'avancado' | null
+  confianca: 'alta' | 'media' | 'baixa' | null
 }
 
 export interface RacketWithInsights {
@@ -41,6 +44,7 @@ export interface RacketWithInsights {
   source_url: string | null
   image_url: string | null
   technologies: string[] | null
+  specs_extra: Record<string, unknown> | null
   racket_insights: Insights | null
 }
 
@@ -52,10 +56,12 @@ export interface RecommendedRacket {
 const SELECT_FIELDS = `
   id, name, slug, model_year, weight_g, balance, format,
   face_material, core, price, currency, affiliate_url, source_url, image_url, technologies,
+  specs_extra,
   racket_insights (
     power, control, comfort, maneuverability, stability, spin, forgiveness,
     good_for_beginners, good_for_intermediate, good_for_advanced,
-    elbow_friendly, shoulder_friendly, observations, summary
+    elbow_friendly, shoulder_friendly, observations, summary,
+    perfil_resumo, nivel_sugerido, confianca
   )
 `.trim()
 
@@ -83,15 +89,21 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   const criteriosRelaxados: string[] = []
   let results = [...allCandidates]
 
-  // Soft filter: nivel — only apply if keeps at least 2 results with confirmed insights
+  // Soft filter: nivel — prefer nivel_sugerido (new field), fall back to good_for_* booleans
   if (filtros.nivel && results.length > 0) {
     let filtered: RacketWithInsights[] = []
-    if (filtros.nivel === 'iniciante') {
-      filtered = results.filter(r => r.racket_insights?.good_for_beginners === true)
-    } else if (filtros.nivel === 'intermediario') {
-      filtered = results.filter(r => r.racket_insights?.good_for_intermediate === true)
-    } else if (filtros.nivel === 'avancado') {
-      filtered = results.filter(r => r.racket_insights?.good_for_advanced === true)
+
+    const hasNivelSugerido = results.some(r => r.racket_insights?.nivel_sugerido != null)
+    if (hasNivelSugerido) {
+      filtered = results.filter(r => r.racket_insights?.nivel_sugerido === filtros.nivel)
+    } else {
+      if (filtros.nivel === 'iniciante') {
+        filtered = results.filter(r => r.racket_insights?.good_for_beginners === true)
+      } else if (filtros.nivel === 'intermediario') {
+        filtered = results.filter(r => r.racket_insights?.good_for_intermediate === true)
+      } else if (filtros.nivel === 'avancado') {
+        filtered = results.filter(r => r.racket_insights?.good_for_advanced === true)
+      }
     }
 
     if (filtered.length >= 2) {
