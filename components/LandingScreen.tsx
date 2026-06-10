@@ -105,6 +105,44 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
   )
 }
 
+function BrandCard({ brand }: { brand: Brand }) {
+  const isAvailable = brand.status === 'disponivel'
+
+  const inner = (
+    <>
+      <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
+        {brand.name}
+      </span>
+      <div className="flex items-center gap-2">
+        <StatusIndicator status={brand.status} />
+        {isAvailable && (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-aqua shrink-0" aria-hidden="true">
+            <path d="M5 2.5l4.5 4.5L5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </div>
+    </>
+  )
+
+  if (isAvailable) {
+    return (
+      <Link
+        href={`/marcas/${brand.slug}`}
+        onClick={() => sendGAEvent({ event: 'marca_aberta', slug: brand.slug })}
+        className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 active:scale-[0.98] active:bg-aqua/5 transition-all"
+      >
+        {inner}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/10 shadow-sm opacity-70 cursor-default select-none">
+      {inner}
+    </div>
+  )
+}
+
 function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart: () => void }) {
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
@@ -310,19 +348,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
             <p className="font-heading font-bold text-tinta text-base md:text-lg">Marcas disponíveis</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {brands.map(brand => (
-                <div
-                  key={brand.id}
-                  className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  {brand.status === 'disponivel' ? (
-                    <Link href={`/marcas/${brand.slug}`} className="text-tinta text-sm font-medium hover:text-aqua transition-colors">
-                      {brand.name}
-                    </Link>
-                  ) : (
-                    <span className="text-tinta text-sm font-medium">{brand.name}</span>
-                  )}
-                  <StatusIndicator status={brand.status} />
-                </div>
+                <BrandCard key={brand.id} brand={brand} />
               ))}
             </div>
           </div>
