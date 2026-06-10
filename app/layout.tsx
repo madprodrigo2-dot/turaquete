@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora, Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -18,6 +18,10 @@ const inter = Inter({
 const TITLE = 'Turaquete — Encontre sua raquete de beach tennis'
 const DESCRIPTION =
   'Consultor virtual de raquetes de beach tennis. Conte como você joga e receba a raquete ideal em 1 minuto — grátis, sem cadastro.'
+
+export const viewport: Viewport = {
+  themeColor: '#EAF7F6',
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://turaquete.vercel.app'),

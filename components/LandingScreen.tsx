@@ -106,24 +106,19 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
 
-  const perfil = racket.racket_insights?.perfil_resumo
-  const perfilShort = perfil
-    ? perfil.length > 70 ? perfil.slice(0, 68) + '…' : perfil
-    : null
+  const perfil = racket.racket_insights?.perfil_resumo ?? null
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       <Link href={`/raquetes/${racket.slug}`} className="block">
-        {racket.image_url ? (
-          <div className="aspect-square bg-gray-50 p-2 flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className="aspect-square bg-white p-3 flex items-center justify-center">
+          {racket.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
-          </div>
-        ) : (
-          <div className="aspect-square bg-aqua-light flex items-center justify-center">
+          ) : (
             <IconEstilo />
-          </div>
-        )}
+          )}
+        </div>
       </Link>
       <div className="p-3 flex flex-col gap-2 flex-1">
         <Link href={`/raquetes/${racket.slug}`}>
@@ -131,13 +126,13 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
             {racket.name}
           </p>
         </Link>
-        {perfilShort && (
-          <p className="text-tinta/55 text-[10px] leading-snug">{perfilShort}</p>
+        {perfil && (
+          <p className="text-tinta/55 text-[10px] leading-snug line-clamp-2">{perfil}</p>
         )}
         {price && <p className="font-heading text-coral font-bold text-sm">{price}</p>}
         <button
           onClick={onStart}
-          className="mt-auto w-full bg-aqua/15 border border-aqua/30 text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua hover:text-white hover:border-aqua active:scale-[0.98] transition-all leading-tight"
+          className="mt-auto w-full border border-aqua text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:bg-aqua/20 active:scale-[0.98] transition-all leading-tight"
         >
           Quero esta raquete
         </button>
@@ -150,18 +145,18 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
 
 export default function LandingScreen({ onStart, brands, featuredRackets }: Props) {
   return (
-    <div className="min-h-screen bg-aqua-light flex flex-col items-center px-5 md:px-8 py-10 md:py-16">
-      <div className="w-full max-w-sm md:max-w-xl flex flex-col gap-7 md:gap-9">
+    <div className="min-h-screen bg-aqua-light flex flex-col items-center px-5 md:px-8 pb-10 md:pb-16">
+      <div className="w-full max-w-sm md:max-w-xl flex flex-col gap-5 md:gap-7">
 
-        {/* Logo */}
-        <div className="flex justify-center pt-2">
+        {/* Header compacto — logo esquerda */}
+        <div className="flex items-center py-3 md:py-4">
           <Image
             src="/turaquete-logo.png"
             alt="Turaquete"
             width={852}
             height={474}
             priority
-            className="h-28 md:h-40 w-auto"
+            className="h-8 md:h-11 w-auto"
           />
         </div>
 
