@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'messages obrigatório' }, { status: 400 })
     }
 
-    const text = await runAgentTurn(messages)
+    const { text, recommendations } = await runAgentTurn(messages)
 
     // Persistir conversa de forma assíncrona (sem bloquear a resposta)
     getSupabase()
@@ -19,12 +19,13 @@ export async function POST(req: NextRequest) {
       .insert({
         session_id: sessionId,
         messages: [...messages, { role: 'assistant', content: text }],
+        recommended_racket_ids: recommendations?.map(r => r.racket.id) ?? [],
       })
       .then(({ error }) => {
         if (error) console.error('Conversations insert error:', error.message)
       })
 
-    return NextResponse.json({ text })
+    return NextResponse.json({ text, recommendations })
   } catch (err) {
     console.error('Chat route error:', err)
     return NextResponse.json({ error: 'Erro interno. Tente novamente.' }, { status: 500 })

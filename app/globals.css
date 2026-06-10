@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+  --color-aqua:       #0CC0BE;
+  --color-coral:      #FF5E3A;
+  --color-yellow:     #FFC42E;
+  --color-tinta:      #0E3A40;
+  --color-aqua-light: #EAF7F6;
+}
+
 html,
 body {
   height: 100%;

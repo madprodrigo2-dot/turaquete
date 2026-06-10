@@ -50,4 +50,35 @@ export const agentTools: Anthropic.Tool[] = [
       required: ['id'],
     },
   },
+  {
+    name: 'recomendar_raquetas',
+    description:
+      'Registra as raquetes escolhidas para recomendação final. ' +
+      'Use SOMENTE com IDs que vieram de buscar_raquetas nesta conversa. Máximo 3 raquetes.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        raquetes: {
+          type: 'array',
+          description: 'Lista de raquetes escolhidas, máximo 3',
+          items: {
+            type: 'object',
+            properties: {
+              id: {
+                type: 'number',
+                description: 'ID da raquete (deve ter vindo de buscar_raquetas)',
+              },
+              razao: {
+                type: 'string',
+                description: 'Por que essa raquete combina com o jogador — 1 frase curta e específica',
+              },
+            },
+            required: ['id', 'razao'],
+          },
+          maxItems: 3,
+        },
+      },
+      required: ['raquetes'],
+    },
+  },
 ]

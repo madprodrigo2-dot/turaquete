@@ -1,4 +1,4 @@
-import { getSupabase, getSupabaseAdmin } from './supabase'
+import { getSupabase } from './supabase'
 
 export interface RacketFilters {
   nivel?: 'iniciante' | 'intermediario' | 'avancado'
@@ -38,14 +38,20 @@ export interface RacketWithInsights {
   price: number | null
   currency: string
   affiliate_url: string | null
+  source_url: string | null
   image_url: string | null
   technologies: string[] | null
   racket_insights: Insights | null
 }
 
+export interface RecommendedRacket {
+  racket: RacketWithInsights
+  razao: string
+}
+
 const SELECT_FIELDS = `
   id, name, slug, model_year, weight_g, balance, format,
-  face_material, core, price, currency, affiliate_url, image_url, technologies,
+  face_material, core, price, currency, affiliate_url, source_url, image_url, technologies,
   racket_insights (
     power, control, comfort, maneuverability, stability, spin, forgiveness,
     good_for_beginners, good_for_intermediate, good_for_advanced,
@@ -125,12 +131,33 @@ export async function listarRaquetas(): Promise<RacketWithInsights[]> {
   return (data as unknown as RacketWithInsights[]) ?? []
 }
 
-export async function listarMarcas() {
+export async function getRaquetasByIds(ids: number[]): Promise<RacketWithInsights[]> {
+  if (ids.length === 0) return []
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .in('id', ids)
+
+  if (error) throw new Error(`Supabase: ${error.message}`)
+  return (data as unknown as RacketWithInsights[]) ?? []
+}
+
+export interface Brand {
+  id: number
+  name: string
+  slug: string
+  country: string | null
+  website: string | null
+  status: 'disponivel' | 'em_breve'
+}
+
+export async function listarMarcas(): Promise<Brand[]> {
   const { data, error } = await getSupabase()
     .from('brands')
-    .select('id, name, slug, country, website')
+    .select('id, name, slug, country, website, status')
+    .order('status')   // disponivel primero, depois em_breve
     .order('name')
 
   if (error) throw new Error(`Supabase: ${error.message}`)
-  return data ?? []
+  return (data as Brand[]) ?? []
 }
