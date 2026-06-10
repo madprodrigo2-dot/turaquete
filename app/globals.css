@@ -66,8 +66,6 @@ body {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 50%;
-  background-color: #FF5E3A;
   animation: bt-bounce 0.9s ease infinite;
 }
 .bt-ball:nth-child(2) { animation-delay: 0.18s; }

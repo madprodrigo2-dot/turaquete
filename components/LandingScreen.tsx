@@ -257,26 +257,27 @@ function ArenaBall({
   settled?: boolean
   className?: string
 }) {
-  const deprW = Math.round(size * 1.5)
-  const deprH = Math.round(size * 0.35)
+  const deprW = Math.round(size * 1.7)
+  const deprH = Math.round(size * 0.28)
+  const burialH = Math.round(size * 0.32)
 
   return (
     <div
       aria-hidden="true"
       className={`pointer-events-none select-none absolute${className ? ' ' + className : ''}`}
-      style={{ width: size, height: size + deprH }}
+      style={{ width: size, height: size }}
     >
-      {/* Sand depression */}
+      {/* Contact shadow at base */}
       <div
         style={{
           position: 'absolute',
-          bottom: 0,
+          bottom: -Math.round(deprH * 0.35),
           left: '50%',
           transform: 'translateX(-50%)',
           width: deprW,
           height: deprH,
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse at center, rgba(140,110,70,0.25) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(120,85,40,0.35) 0%, transparent 70%)',
         }}
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -291,10 +292,49 @@ function ArenaBall({
           width: size,
           height: size,
           transform: `rotate(${rotation}deg)`,
-          filter:
-            'drop-shadow(0 5px 10px rgba(140,110,70,0.26)) drop-shadow(0 2px 3px rgba(140,110,70,0.18))',
+          filter: 'drop-shadow(0 2px 5px rgba(100,70,30,0.32))',
+          zIndex: 1,
         }}
       />
+      {/* Sand burial overlay — bottom of ball fades into arena surface */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: burialH,
+          borderRadius: `0 0 ${Math.round(size / 2)}px ${Math.round(size / 2)}px`,
+          background: 'linear-gradient(to top, rgba(247,237,220,0.78) 0%, transparent 100%)',
+          zIndex: 2,
+        }}
+      />
+    </div>
+  )
+}
+
+// ── Arena sand mound ──────────────────────────────────────────────────────────
+
+function SandMound({
+  width = 100,
+  height = 20,
+  className = '',
+}: {
+  width?: number
+  height?: number
+  className?: string
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none select-none absolute${className ? ' ' + className : ''}`}
+    >
+      <svg width={width} height={height} viewBox="0 0 100 20" fill="none" preserveAspectRatio="none">
+        <ellipse cx="50" cy="18.5" rx="48" ry="3.5" fill="rgba(130,95,50,0.14)" />
+        <path d="M3,17 C12,17 22,2 50,1 C78,2 88,17 97,17 Z" fill="rgba(213,190,133,0.56)" />
+        <path d="M14,13 C26,7 38,3 50,1.5 C62,3 74,7 86,13 L80,17 L20,17 Z" fill="rgba(188,160,104,0.20)" />
+        <path d="M26,10 C35,5 43,3 50,2 C57,3 65,5 74,10" stroke="rgba(235,215,162,0.58)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      </svg>
     </div>
   )
 }
@@ -448,6 +488,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
 
         {/* Bola C: 28px, rotation -25°, animada (1x), rodapé — mobile + desktop */}
         <ArenaBall size={28} rotation={-25} settled={ballSettled} className="bottom-[6px] right-5 md:bottom-8 md:right-[3%]" />
+
+        {/* ── Montes de areia decorativos ── */}
+        {/* 1: rodapé centro — visível em todos */}
+        <SandMound width={115} height={22} className="bottom-3 left-1/2 -translate-x-1/2" />
+        {/* 2: topo esquerdo — padding superior, não cobre card */}
+        <SandMound width={78} height={16} className="top-2 left-[8%]" />
+        {/* 3: gutter esquerdo meio — desktop only */}
+        <SandMound width={98} height={20} className="hidden md:block top-[42%] left-[1.5%]" />
+        {/* 4: gutter direito topo — desktop only */}
+        <SandMound width={82} height={17} className="hidden md:block top-[18%] right-[1.5%]" />
 
         <div className="max-w-sm md:max-w-2xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 

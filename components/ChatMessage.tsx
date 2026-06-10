@@ -50,9 +50,12 @@ export default function ChatMessage({ role, content, recommendations, loading = 
         >
           {loading ? (
             <div className="flex items-center gap-1.5 py-0.5">
-              <span className="bt-ball" />
-              <span className="bt-ball" />
-              <span className="bt-ball" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
             </div>
           ) : (
             <span style={{ whiteSpace: 'pre-wrap' }}>{renderText(content)}</span>
