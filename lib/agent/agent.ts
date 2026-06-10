@@ -29,11 +29,13 @@ async function executeTool(
   pendingRecommendations: RecommendedRacket[]
 ): Promise<string> {
   if (name === 'buscar_raquetas') {
-    const results = await buscarRaquetas(input as RacketFilters)
-    if (results.length === 0) {
-      return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada com esses filtros.' })
+    const { raquetes, criteriosRelaxados } = await buscarRaquetas(input as RacketFilters)
+    if (raquetes.length === 0) {
+      return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada dentro do orçamento informado. O preço mínimo das raquetes disponíveis é por volta de R$1.400.' })
     }
-    return JSON.stringify({ encontradas: results.length, raquetes: results })
+    const payload: Record<string, unknown> = { encontradas: raquetes.length, raquetes }
+    if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
+    return JSON.stringify(payload)
   }
 
   if (name === 'detalle_raqueta') {

@@ -59,7 +59,13 @@ const SELECT_FIELDS = `
   )
 `.trim()
 
-export async function buscarRaquetas(filtros: RacketFilters): Promise<RacketWithInsights[]> {
+export interface BuscarResult {
+  raquetes: RacketWithInsights[]
+  criteriosRelaxados: string[]
+}
+
+export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResult> {
+  // Hard constraints in SQL — never relaxed
   let query = getSupabase()
     .from('rackets')
     .select(SELECT_FIELDS)
@@ -73,40 +79,66 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<RacketWith
   const { data, error } = await query.limit(30)
   if (error) throw new Error(`Supabase: ${error.message}`)
 
-  let results = (data as unknown as RacketWithInsights[]) ?? []
+  const allCandidates = (data as unknown as RacketWithInsights[]) ?? []
+  const criteriosRelaxados: string[] = []
+  let results = [...allCandidates]
 
-  // Filtros sobre tabla relacionada se aplican en JS
-  if (filtros.nivel === 'iniciante') {
-    results = results.filter(r => r.racket_insights?.good_for_beginners)
-  } else if (filtros.nivel === 'intermediario') {
-    results = results.filter(r => r.racket_insights?.good_for_intermediate)
-  } else if (filtros.nivel === 'avancado') {
-    results = results.filter(r => r.racket_insights?.good_for_advanced)
+  // Soft filter: nivel — only apply if keeps at least 2 results with confirmed insights
+  if (filtros.nivel && results.length > 0) {
+    let filtered: RacketWithInsights[] = []
+    if (filtros.nivel === 'iniciante') {
+      filtered = results.filter(r => r.racket_insights?.good_for_beginners === true)
+    } else if (filtros.nivel === 'intermediario') {
+      filtered = results.filter(r => r.racket_insights?.good_for_intermediate === true)
+    } else if (filtros.nivel === 'avancado') {
+      filtered = results.filter(r => r.racket_insights?.good_for_advanced === true)
+    }
+
+    if (filtered.length >= 2) {
+      results = filtered
+    } else {
+      const motivo = filtered.length === 0 ? 'dados ausentes ou sem correspondência' : `apenas ${filtered.length} resultado`
+      criteriosRelaxados.push(`nível "${filtros.nivel}" não aplicado (${motivo}) — retornando todos os candidatos dentro do orçamento`)
+    }
   }
 
-  if (filtros.cotovelo_sensivel) {
-    results = results.filter(r => r.racket_insights?.elbow_friendly)
-  }
-  if (filtros.ombro_sensivel) {
-    results = results.filter(r => r.racket_insights?.shoulder_friendly)
-  }
-
-  // Ordenar por prioridade dentro del resultado filtrado
-  if (filtros.prioridade === 'potencia') {
-    results.sort((a, b) => (b.racket_insights?.power ?? 0) - (a.racket_insights?.power ?? 0))
-  } else if (filtros.prioridade === 'controle') {
-    results.sort((a, b) => (b.racket_insights?.control ?? 0) - (a.racket_insights?.control ?? 0))
-  } else if (filtros.prioridade === 'defesa') {
-    results.sort((a, b) => (b.racket_insights?.maneuverability ?? 0) - (a.racket_insights?.maneuverability ?? 0))
-  } else if (filtros.prioridade === 'equilibrio') {
-    results.sort((a, b) => {
-      const scoreB = ((b.racket_insights?.power ?? 0) + (b.racket_insights?.control ?? 0)) / 2
-      const scoreA = ((a.racket_insights?.power ?? 0) + (a.racket_insights?.control ?? 0)) / 2
-      return scoreB - scoreA
-    })
+  // Soft filter: cotovelo — relax if < 2 results would remain
+  if (filtros.cotovelo_sensivel && results.length > 0) {
+    const filtered = results.filter(r => r.racket_insights?.elbow_friendly === true)
+    if (filtered.length >= 2) {
+      results = filtered
+    } else {
+      const motivo = filtered.length === 0 ? 'dados ausentes' : `apenas ${filtered.length} resultado`
+      criteriosRelaxados.push(`cotovelo sensível não aplicado (${motivo}) — avalie peso e material no raciocínio`)
+    }
   }
 
-  return results
+  // Soft filter: ombro — relax if < 2 results would remain
+  if (filtros.ombro_sensivel && results.length > 0) {
+    const filtered = results.filter(r => r.racket_insights?.shoulder_friendly === true)
+    if (filtered.length >= 2) {
+      results = filtered
+    } else {
+      const motivo = filtered.length === 0 ? 'dados ausentes' : `apenas ${filtered.length} resultado`
+      criteriosRelaxados.push(`ombro sensível não aplicado (${motivo}) — avalie peso e balance no raciocínio`)
+    }
+  }
+
+  // prioridade is always an ordering preference, never a filter
+  if (filtros.prioridade) {
+    const score = (r: RacketWithInsights): number => {
+      switch (filtros.prioridade) {
+        case 'potencia':   return r.racket_insights?.power ?? 0
+        case 'controle':   return r.racket_insights?.control ?? 0
+        case 'defesa':     return r.racket_insights?.maneuverability ?? 0
+        case 'equilibrio': return ((r.racket_insights?.power ?? 0) + (r.racket_insights?.control ?? 0)) / 2
+        default:           return 0
+      }
+    }
+    results = [...results].sort((a, b) => score(b) - score(a))
+  }
+
+  return { raquetes: results, criteriosRelaxados }
 }
 
 export async function detalleRaqueta(id: number): Promise<RacketWithInsights | null> {

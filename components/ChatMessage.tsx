@@ -8,6 +8,16 @@ interface Props {
   loading?: boolean
 }
 
+function renderText(text: string): React.ReactNode {
+  // Convert **bold** to <strong> — safety net for model markdown slippage
+  const parts = text.split(/(\*\*[^*\n]+\*\*)/g)
+  return parts.map((part, i) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>
+      : part
+  )
+}
+
 export default function ChatMessage({ role, content, recommendations, loading = false }: Props) {
   const isAssistant = role === 'assistant'
 
@@ -25,7 +35,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
         {loading ? (
           <span className="text-gray-400 tracking-widest">●●●</span>
         ) : (
-          <span style={{ whiteSpace: 'pre-wrap' }}>{content}</span>
+          <span style={{ whiteSpace: 'pre-wrap' }}>{renderText(content)}</span>
         )}
       </div>
 
