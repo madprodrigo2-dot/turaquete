@@ -295,134 +295,132 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
         </div>
       </div>
 
-      {/* ── Seção 1: hero + como funciona + analisamos ── */}
-      <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 md:px-8 pb-2 md:pb-3">
+      {/* ── Seção menta: hero (texto apenas) ── */}
+      <div className="w-full max-w-sm md:max-w-2xl px-5 md:px-8 pb-2 md:pb-3">
+        <div className="flex flex-col gap-5 md:gap-7">
 
-        {/* Hero — coluna única mobile, 2 colunas desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] md:gap-12 md:items-center gap-5 md:gap-0">
-
-          {/* Coluna de texto */}
-          <div className="flex flex-col gap-5 md:gap-7">
-
-            {/* H1 + subtítulo */}
-            <div className="flex flex-col gap-3 md:gap-4">
-              <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
-                Uma consultoria de especialista.{' '}
-                <span className="relative inline-block text-coral">
-                  De graça.
-                  <svg
-                    viewBox="0 0 140 10"
-                    fill="none"
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
-                    className="absolute -bottom-1 left-0 w-full h-[8px]"
-                  >
-                    <path
-                      d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
-                      stroke="#FF5E3A"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                  </svg>
-                </span>
-              </h1>
-              <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
-                Conte como você joga e receba a raquete ideal em 1 minuto, analisando seu nível, estilo, dores no braço e orçamento.
-              </p>
-            </div>
-
-            {/* Franja */}
-            <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
-              <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
-                O mesmo que um especialista faz numa consultoria paga — aqui sem custo.
-              </p>
-            </div>
-
-            {/* Badges */}
-            <div className="flex gap-2 flex-wrap">
-              {BADGES.map(badge => (
-                <span
-                  key={badge}
-                  className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+          {/* H1 + subtítulo */}
+          <div className="flex flex-col gap-3 md:gap-4">
+            <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
+              Uma consultoria de especialista.{' '}
+              <span className="relative inline-block text-coral">
+                De graça.
+                <svg
+                  viewBox="0 0 140 10"
+                  fill="none"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                  className="absolute -bottom-1 left-0 w-full h-[8px]"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
-                  {badge}
-                </span>
+                  <path
+                    d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
+                    stroke="#FF5E3A"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </svg>
+              </span>
+            </h1>
+            <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
+              Conte como você joga e receba a raquete ideal em 1 minuto, analisando seu nível, estilo, dores no braço e orçamento.
+            </p>
+          </div>
+
+          {/* Franja */}
+          <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
+            <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
+              O mesmo que um especialista faz numa consultoria paga — aqui sem custo.
+            </p>
+          </div>
+
+          {/* Badges */}
+          <div className="flex gap-2 flex-wrap">
+            {BADGES.map(badge => (
+              <span
+                key={badge}
+                className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
+                {badge}
+              </span>
+            ))}
+          </div>
+
+          {/* CTA hero — IntersectionObserver target */}
+          <button
+            ref={heroCtaRef}
+            onClick={onStart}
+            className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
+          >
+            Começar agora
+          </button>
+
+        </div>
+      </div>{/* end seção menta */}
+
+      {/* ── Onda de entrada: menta → arena ── */}
+      <svg
+        viewBox="0 0 1440 50"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        className="w-full h-12 md:h-14 block"
+      >
+        <path d="M0,32 C480,16 960,42 1440,24 L1440,50 L0,50 Z" fill="#F7EDDC" />
+      </svg>
+
+      {/* ── Seção arena: chat preview + conteúdo sobre areia ── */}
+      <div className="w-full bg-arena arena-grain">
+        <div className="max-w-sm md:max-w-2xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
+
+          {/* Chat preview (mobile: acima, desktop: direita) + Como funciona */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] md:gap-10 md:items-start gap-5">
+
+            {/* Como funciona */}
+            <div className="order-2 md:order-1 bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
+              <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
+              <div className="flex flex-col">
+                {STEPS.map((step, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="flex flex-col items-center w-7 shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0">
+                        {i + 1}
+                      </div>
+                      {i < STEPS.length - 1 && (
+                        <div className="w-px flex-1 min-h-4 bg-aqua/25" />
+                      )}
+                    </div>
+                    <p className={`text-tinta text-sm md:text-base leading-relaxed pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
+                      {step}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Preview do chat — flutua sobre a areia */}
+            <div className="order-1 md:order-2 flex justify-center md:justify-end" aria-hidden="true">
+              <ChatPreview racket={previewRacket} />
+            </div>
+
+          </div>{/* end grid chat+como-funciona */}
+
+          {/* Analisamos seu jogo */}
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
+            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-4">Analisamos seu jogo</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {ANALYSIS_ITEMS.map(({ Icon, label }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <Icon />
+                  <span className="text-tinta text-sm md:text-base">{label}</span>
+                </div>
               ))}
             </div>
-
-            {/* CTA hero — IntersectionObserver target */}
-            <button
-              ref={heroCtaRef}
-              onClick={onStart}
-              className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
-            >
-              Começar agora
-            </button>
-
           </div>
 
-          {/* Preview do chat — decorativo */}
-          <div className="flex justify-center md:justify-end" aria-hidden="true">
-            <ChatPreview racket={previewRacket} />
-          </div>
-
-        </div>{/* end hero grid */}
-
-        {/* Como funciona */}
-        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
-          <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
-          <div className="flex flex-col">
-            {STEPS.map((step, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="flex flex-col items-center w-7 shrink-0">
-                  <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0">
-                    {i + 1}
-                  </div>
-                  {i < STEPS.length - 1 && (
-                    <div className="w-px flex-1 min-h-4 bg-aqua/25" />
-                  )}
-                </div>
-                <p className={`text-tinta text-sm md:text-base leading-relaxed pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
-                  {step}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Analisamos seu jogo */}
-        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
-          <p className="font-heading font-bold text-tinta text-base md:text-lg mb-4">Analisamos seu jogo</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {ANALYSIS_ITEMS.map(({ Icon, label }) => (
-              <div key={label} className="flex items-center gap-3">
-                <Icon />
-                <span className="text-tinta text-sm md:text-base">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>{/* end seção 1 */}
-
-      {/* ── Raquetes em destaque — franja arena full-width ── */}
-      {featuredRackets.length > 0 && (
-        <>
-          {/* Onda de entrada: menta → arena */}
-          <svg
-            viewBox="0 0 1440 50"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-            className="w-full h-12 md:h-14 block"
-          >
-            <path d="M0,32 C480,16 960,42 1440,24 L1440,50 L0,50 Z" fill="#FBF4E8" />
-          </svg>
-
-          {/* Franja arena com textura de grão */}
-          <div className="w-full bg-arena arena-grain py-7 md:py-9">
-            <div className="max-w-sm md:max-w-2xl mx-auto px-5 md:px-8 flex flex-col gap-3">
+          {/* Raquetes em destaque */}
+          {featuredRackets.length > 0 && (
+            <div className="flex flex-col gap-3">
               <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
               <div className="grid grid-cols-3 gap-3">
                 {featuredRackets.map(racket => (
@@ -430,22 +428,23 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
                 ))}
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Onda de saída: arena → menta */}
-          <div className="w-full bg-arena" aria-hidden="true">
-            <svg
-              viewBox="0 0 1440 50"
-              preserveAspectRatio="none"
-              className="w-full h-12 md:h-14 block"
-            >
-              <path d="M0,22 C480,40 960,14 1440,32 L1440,50 L0,50 Z" fill="#EAF7F6" />
-            </svg>
-          </div>
-        </>
-      )}
+        </div>
+      </div>{/* end seção arena */}
 
-      {/* ── Seção 3: marcas + FAQ + CTA + footer ── */}
+      {/* ── Onda de saída: arena → menta ── */}
+      <div className="w-full bg-arena" aria-hidden="true">
+        <svg
+          viewBox="0 0 1440 50"
+          preserveAspectRatio="none"
+          className="w-full h-12 md:h-14 block"
+        >
+          <path d="M0,22 C480,40 960,14 1440,32 L1440,50 L0,50 Z" fill="#EAF7F6" />
+        </svg>
+      </div>
+
+      {/* ── Seção menta: marcas + FAQ + CTA + footer ── */}
       <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 md:px-8 pt-3 md:pt-4">
 
         {/* Marcas disponíveis */}
