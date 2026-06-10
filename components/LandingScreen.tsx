@@ -1,19 +1,85 @@
 import Image from 'next/image'
-import { Brand } from '@/lib/recommend'
+import { Brand, RacketWithInsights } from '@/lib/recommend'
 
 interface Props {
   onStart: () => void
   brands: Brand[]
+  featuredRackets: RacketWithInsights[]
 }
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
-const ANALYSIS_ITEMS = [
-  { icon: '📊', label: 'Seu nível' },
-  { icon: '🏸', label: 'Seu estilo' },
-  { icon: '💪', label: 'Dores no braço' },
-  { icon: '💰', label: 'Orçamento' },
+const STEPS = [
+  'Conte como você joga, do seu jeito',
+  'O especialista entende seu perfil',
+  'Receba 2-3 raquetes com o porquê e o link',
 ]
+
+const FAQS = [
+  {
+    q: 'É grátis mesmo?',
+    a: 'Sim. Você conta como joga e recebe as recomendações na hora. Sem cadastro, sem plano, sem custo de nenhum tipo.',
+  },
+  {
+    q: 'Como vocês escolhem as raquetes?',
+    a: 'Com base em specs reais e análise especializada — peso, balance, material do núcleo e da face. Sem achismo, sem patrocínio.',
+  },
+  {
+    q: 'Vocês vendem raquetes?',
+    a: 'Não. Indicamos onde comprar (Mercado Livre e lojas parceiras) com o link direto. A Turaquete não tem estoque nem processa pagamentos.',
+  },
+]
+
+// ── SVG icons ───────────────────────────────────────────────────────────────
+
+function IconNivel() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="2"   y="15" width="5" height="7" rx="1" fill="#0CC0BE" />
+      <rect x="9.5" y="10" width="5" height="12" rx="1" fill="#0CC0BE" />
+      <rect x="17"  y="4"  width="5" height="18" rx="1" fill="#0CC0BE" />
+    </svg>
+  )
+}
+
+function IconEstilo() {
+  // Beach tennis paddle: solid oval face + rectangular handle, no strings
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" />
+      <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" />
+    </svg>
+  )
+}
+
+function IconBraco() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2L4 5.5v5.5C4 16 7.5 20.5 12 22c4.5-1.5 8-6 8-11V5.5L12 2z" fill="#0CC0BE" />
+      <path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function IconOrcamento() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9.5" fill="#0CC0BE" />
+      <path d="M12 7.5v9" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M9.5 10h5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9.5 14h5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+const ANALYSIS_ITEMS = [
+  { Icon: IconNivel,    label: 'Seu nível' },
+  { Icon: IconEstilo,   label: 'Seu estilo de jogo' },
+  { Icon: IconBraco,    label: 'Dores no braço' },
+  { Icon: IconOrcamento, label: 'Orçamento' },
+]
+
+// ── Sub-components ──────────────────────────────────────────────────────────
 
 function StatusIndicator({ status }: { status: Brand['status'] }) {
   if (status === 'disponivel') {
@@ -35,7 +101,40 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
   )
 }
 
-export default function LandingScreen({ onStart, brands }: Props) {
+function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart: () => void }) {
+  const price = racket.price
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
+    : null
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm flex flex-col">
+      {racket.image_url ? (
+        <div className="aspect-square bg-gray-50 p-2 flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
+        </div>
+      ) : (
+        <div className="aspect-square bg-aqua-light flex items-center justify-center">
+          <IconEstilo />
+        </div>
+      )}
+      <div className="p-3 flex flex-col gap-2 flex-1">
+        <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2">{racket.name}</p>
+        {price && <p className="text-coral font-bold text-sm">{price}</p>}
+        <button
+          onClick={onStart}
+          className="mt-auto w-full border border-aqua/40 text-aqua text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:scale-[0.98] transition-all leading-tight"
+        >
+          Quero esta raquete
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ──────────────────────────────────────────────────────────
+
+export default function LandingScreen({ onStart, brands, featuredRackets }: Props) {
   return (
     <div className="min-h-screen bg-aqua-light flex flex-col items-center px-5 md:px-8 py-10 md:py-16">
       <div className="w-full max-w-sm md:max-w-xl flex flex-col gap-7 md:gap-9">
@@ -52,7 +151,7 @@ export default function LandingScreen({ onStart, brands }: Props) {
           />
         </div>
 
-        {/* Título + subtítulo */}
+        {/* H1 + subtítulo */}
         <div className="flex flex-col gap-3 md:gap-4">
           <h1 className="text-[2rem] md:text-5xl font-bold text-tinta leading-tight">
             Uma consultoria de especialista. De graça.
@@ -62,7 +161,7 @@ export default function LandingScreen({ onStart, brands }: Props) {
           </p>
         </div>
 
-        {/* Franja destacada */}
+        {/* Franja */}
         <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
           <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
             O mesmo que um especialista faz numa consultoria paga — aqui sem custo.
@@ -80,6 +179,53 @@ export default function LandingScreen({ onStart, brands }: Props) {
             </span>
           ))}
         </div>
+
+        {/* Como funciona */}
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20">
+          <p className="text-tinta font-semibold text-sm md:text-base mb-5">Como funciona</p>
+          <div className="flex flex-col">
+            {STEPS.map((step, i) => (
+              <div key={i} className="flex gap-4">
+                <div className="flex flex-col items-center w-7 shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-bold flex items-center justify-center shrink-0">
+                    {i + 1}
+                  </div>
+                  {i < STEPS.length - 1 && (
+                    <div className="w-px flex-1 min-h-4 bg-aqua/25" />
+                  )}
+                </div>
+                <p className={`text-tinta text-sm md:text-base leading-relaxed pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
+                  {step}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Analisamos seu jogo */}
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20">
+          <p className="text-tinta font-semibold text-sm md:text-base mb-4">Analisamos seu jogo</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {ANALYSIS_ITEMS.map(({ Icon, label }) => (
+              <div key={label} className="flex items-center gap-3">
+                <Icon />
+                <span className="text-tinta text-sm md:text-base">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Raquetes em destaque */}
+        {featuredRackets.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <p className="text-tinta font-semibold text-sm md:text-base">Raquetes em destaque</p>
+            <div className="grid grid-cols-3 gap-3">
+              {featuredRackets.map(racket => (
+                <FeaturedCard key={racket.id} racket={racket} onStart={onStart} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
@@ -99,15 +245,26 @@ export default function LandingScreen({ onStart, brands }: Props) {
           </div>
         )}
 
-        {/* Analisamos seu jogo */}
-        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20">
-          <p className="text-tinta font-semibold text-sm md:text-base mb-4">Analisamos seu jogo</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {ANALYSIS_ITEMS.map(item => (
-              <div key={item.label} className="flex items-center gap-3">
-                <span className="text-xl w-7 text-center leading-none">{item.icon}</span>
-                <span className="text-tinta text-sm md:text-base">{item.label}</span>
-              </div>
+        {/* Perguntas frequentes */}
+        <div className="flex flex-col gap-3">
+          <p className="text-tinta font-semibold text-sm md:text-base">Perguntas frequentes</p>
+          <div className="bg-white rounded-2xl border border-aqua/20 shadow-sm overflow-hidden divide-y divide-aqua/10">
+            {FAQS.map(({ q, a }, i) => (
+              <details key={i} className="group" open={i === 0}>
+                <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-tinta font-medium text-sm md:text-base [list-style:none] select-none [&::-webkit-details-marker]:hidden">
+                  {q}
+                  <svg
+                    width="16" height="16" viewBox="0 0 16 16" fill="none"
+                    className="shrink-0 ml-3 text-aqua transition-transform duration-200 group-open:rotate-180"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </summary>
+                <p className="px-5 pb-4 text-tinta/70 text-sm md:text-base leading-relaxed">
+                  {a}
+                </p>
+              </details>
             ))}
           </div>
         </div>
@@ -126,7 +283,10 @@ export default function LandingScreen({ onStart, brands }: Props) {
         </p>
 
         {/* Footer */}
-        <footer className="pt-2 pb-2 flex justify-center border-t border-tinta/10">
+        <footer className="pt-3 pb-2 flex flex-col items-center gap-3 border-t border-tinta/10">
+          <p className="text-center text-tinta/40 text-xs leading-relaxed max-w-xs">
+            A Turaquete pode receber comissão por compras feitas pelos links indicados, sem custo extra pra você.
+          </p>
           <a
             href="mailto:contato@turaquete.com.br"
             className="text-tinta/40 text-xs hover:text-tinta/70 transition-colors"

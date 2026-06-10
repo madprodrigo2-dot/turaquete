@@ -6,7 +6,7 @@ import LandingScreen from '@/components/LandingScreen'
 import ChatMessage from '@/components/ChatMessage'
 import StartChips from '@/components/StartChips'
 import ChatInput from '@/components/ChatInput'
-import { Brand, RecommendedRacket } from '@/lib/recommend'
+import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 
 const OPENING_MESSAGE =
   'Oi! Me conta como você joga: há quanto tempo pratica, se busca mais potência ou controle, ' +
@@ -20,9 +20,10 @@ type Message = {
 
 interface Props {
   brands: Brand[]
+  featuredRackets: RacketWithInsights[]
 }
 
-export default function HomeClient({ brands }: Props) {
+export default function HomeClient({ brands, featuredRackets }: Props) {
   const [view, setView] = useState<'landing' | 'chat'>('landing')
   const [fading, setFading] = useState(false)
 
@@ -82,7 +83,7 @@ export default function HomeClient({ brands }: Props) {
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       {view === 'landing' ? (
-        <LandingScreen brands={brands} onStart={handleStart} />
+        <LandingScreen brands={brands} featuredRackets={featuredRackets} onStart={handleStart} />
       ) : (
         <div className="flex flex-col h-screen bg-gray-50">
           <header className="flex items-center px-4 py-3 bg-white border-b border-gray-100 shrink-0">
