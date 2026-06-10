@@ -249,6 +249,8 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
 export default function LandingScreen({ onStart, brands, featuredRackets, previewRacket }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
+  const arenaRef = useRef<HTMLDivElement>(null)
+  const [ballSettled, setBallSettled] = useState(false)
 
   useEffect(() => {
     const el = heroCtaRef.current
@@ -259,6 +261,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
     )
     observer.observe(el)
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const el = arenaRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setBallSettled(true); obs.disconnect() } },
+      { threshold: 0.1 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [])
 
   const handleHeaderCta = () => {
@@ -370,7 +383,44 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
       </svg>
 
       {/* ── Seção arena: chat preview + conteúdo sobre areia ── */}
-      <div className="w-full bg-arena arena-grain">
+      <div ref={arenaRef} className="w-full bg-arena arena-grain relative">
+        {/* ── Pelotas decorativas ── */}
+        {/* Bola A: grande, desktop-only, gutter esquerdo */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none select-none hidden md:block absolute left-[2.5%] bottom-14"
+          style={{ width: 28, height: 28, filter: 'drop-shadow(0 5px 10px rgba(140,110,70,0.26)) drop-shadow(0 2px 3px rgba(140,110,70,0.18))' }}
+        >
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="13.5" fill="#FF5E3A" />
+            <ellipse cx="10.2" cy="9.8" rx="3.4" ry="2.1" fill="rgba(255,255,255,0.20)" />
+          </svg>
+        </div>
+
+        {/* Bola B: pequena — mobile topo-esquerdo, desktop gutter direito */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none select-none absolute top-[7px] left-4 md:top-9 md:left-auto md:right-[2%]"
+          style={{ width: 14, height: 14, filter: 'drop-shadow(0 3px 5px rgba(140,110,70,0.24)) drop-shadow(0 1px 2px rgba(140,110,70,0.18))' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6.5" fill="#FF5E3A" />
+            <ellipse cx="5" cy="5" rx="1.7" ry="1.1" fill="rgba(255,255,255,0.20)" />
+          </svg>
+        </div>
+
+        {/* Bola C: média, animada (1x), rodapé — mobile + desktop */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none select-none absolute bottom-[6px] right-5 md:bottom-12 md:right-[3%]${ballSettled ? ' ball-settle' : ''}`}
+          style={{ width: 20, height: 20, filter: 'drop-shadow(0 4px 8px rgba(140,110,70,0.28)) drop-shadow(0 1.5px 3px rgba(140,110,70,0.20))' }}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="9.5" fill="#FF5E3A" />
+            <ellipse cx="7.2" cy="6.8" rx="2.5" ry="1.6" fill="rgba(255,255,255,0.20)" />
+          </svg>
+        </div>
+
         <div className="max-w-sm md:max-w-2xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 
           {/* Chat preview (mobile: acima, desktop: direita) + Como funciona */}

@@ -83,10 +83,25 @@ body {
   animation: msg-in 180ms ease-out both;
 }
 
+/* ── Ball settle — one-shot on viewport entry ────────────────────────────── */
+@keyframes settle-ball {
+  0%   { transform: translateY(-7px); }
+  42%  { transform: translateY(0);    }
+  62%  { transform: translateY(-2.5px); }
+  80%  { transform: translateY(0);    }
+  91%  { transform: translateY(-1px); }
+  100% { transform: translateY(0);    }
+}
+
+.ball-settle {
+  animation: settle-ball 0.65s ease-out both;
+}
+
 /* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .bt-ball,
-  .msg-enter {
+  .msg-enter,
+  .ball-settle {
     animation: none !important;
   }
 }
