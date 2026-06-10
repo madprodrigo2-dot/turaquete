@@ -147,12 +147,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
         {/* Logo */}
         <div className="flex justify-center pt-2">
           <Image
-            src="/turaquete-logo.svg"
+            src="/turaquete-logo.png"
             alt="Turaquete"
-            width={820}
-            height={240}
+            width={852}
+            height={474}
             priority
-            className="h-24 md:h-36 w-auto"
+            className="h-20 md:h-28 w-auto"
           />
         </div>
 

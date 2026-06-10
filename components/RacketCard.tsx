@@ -1,4 +1,8 @@
+'use client'
+import { useState } from 'react'
+import { sendGAEvent } from '@next/third-parties/google'
 import { RacketWithInsights } from '@/lib/recommend'
+import InsightsModal from './InsightsModal'
 
 interface Props {
   racket: RacketWithInsights
@@ -6,8 +10,9 @@ interface Props {
 }
 
 export default function RacketCard({ racket, razao }: Props) {
-  // Botão: affiliate_url > source_url > sem botão
-  const ctaUrl = racket.affiliate_url ?? racket.source_url ?? null
+  const [modalOpen, setModalOpen] = useState(false)
+
+  const ctaUrl   = racket.affiliate_url ?? racket.source_url ?? null
   const ctaLabel = racket.affiliate_url ? 'Ver no Mercado Livre' : 'Ver na loja'
 
   const price = racket.price
@@ -18,48 +23,79 @@ export default function RacketCard({ racket, razao }: Props) {
     ? `${racket.name} ${racket.model_year}`
     : racket.name
 
-  return (
-    <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden w-full max-w-sm">
-      {/* Imagem */}
-      {racket.image_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={racket.image_url}
-          alt={racket.name}
-          className="w-full h-40 object-contain bg-gray-50 p-3"
-        />
-      ) : (
-        <div className="w-full h-40 bg-gray-50 flex items-center justify-center text-4xl select-none">
-          🏓
-        </div>
-      )}
+  const handleOpenModal = () => {
+    setModalOpen(true)
+    sendGAEvent({ event: 'info_notas_aberto', racket: racket.slug })
+  }
 
-      {/* Conteúdo */}
-      <div className="p-4 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <p className="font-semibold text-gray-900 text-sm leading-tight">{nameDisplay}</p>
-          {price && (
-            <span className="text-emerald-700 font-semibold text-sm shrink-0">{price}</span>
+  return (
+    <>
+      <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden w-full max-w-sm">
+        {/* Imagem */}
+        {racket.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={racket.image_url}
+            alt={racket.name}
+            className="w-full h-40 object-contain bg-gray-50 p-3"
+          />
+        ) : (
+          <div className="w-full h-40 bg-gray-50 flex items-center justify-center select-none">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" opacity="0.3" />
+              <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" opacity="0.3" />
+            </svg>
+          </div>
+        )}
+
+        {/* Conteúdo */}
+        <div className="p-4 flex flex-col gap-2">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold text-gray-900 text-sm leading-tight">{nameDisplay}</p>
+            {price && (
+              <span className="text-emerald-700 font-semibold text-sm shrink-0">{price}</span>
+            )}
+          </div>
+
+          <p className="text-gray-600 text-xs leading-relaxed">{razao}</p>
+
+          {racket.weight_g && (
+            <p className="text-gray-400 text-xs">{racket.weight_g}g · {racket.balance ?? ''}</p>
+          )}
+
+          {ctaUrl && (
+            <a
+              href={ctaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 w-full text-center rounded-lg bg-emerald-600 text-white text-xs font-medium py-2 px-3 hover:bg-emerald-700 active:scale-95 transition-all"
+            >
+              {ctaLabel} →
+            </a>
+          )}
+
+          {/* Botão de transparência */}
+          {racket.racket_insights && (
+            <button
+              onClick={handleOpenModal}
+              className="flex items-center gap-1.5 text-xs text-tinta/40 hover:text-aqua transition-colors mt-0.5 w-fit"
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" />
+                <path d="M7 6.5v3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <circle cx="7" cy="4.5" r="0.65" fill="currentColor" />
+              </svg>
+              Por que essas notas?
+            </button>
           )}
         </div>
-
-        <p className="text-gray-600 text-xs leading-relaxed">{razao}</p>
-
-        {racket.weight_g && (
-          <p className="text-gray-400 text-xs">{racket.weight_g}g · {racket.balance ?? ''}</p>
-        )}
-
-        {ctaUrl && (
-          <a
-            href={ctaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 w-full text-center rounded-lg bg-emerald-600 text-white text-xs font-medium py-2 px-3 hover:bg-emerald-700 active:scale-95 transition-all"
-          >
-            {ctaLabel} →
-          </a>
-        )}
       </div>
-    </div>
+
+      <InsightsModal
+        racket={racket}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
   )
 }

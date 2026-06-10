@@ -90,36 +90,44 @@ export default function HomeClient({ brands, featuredRackets }: Props) {
       {view === 'landing' ? (
         <LandingScreen brands={brands} featuredRackets={featuredRackets} onStart={handleStart} />
       ) : (
-        <div className="flex flex-col h-screen bg-gray-50">
-          <header className="flex items-center px-4 py-3 bg-white border-b border-gray-100 shrink-0">
-            <Image
-              src="/turaquete-logo.svg"
-              alt="Turaquete"
-              width={140}
-              height={36}
-              priority
-              className="h-8 w-auto"
-            />
-          </header>
+        <div className="h-screen flex flex-col bg-gray-50 md:bg-aqua-light">
+          <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 max-w-2xl mx-auto w-full">
-            {messages.map((m, i) => (
-              <ChatMessage
-                key={i}
-                role={m.role}
-                content={m.content}
-                recommendations={m.recommendations}
-              />
-            ))}
-            {loading && <ChatMessage role="assistant" content="" loading />}
-            <div ref={bottomRef} />
+            <header className="flex items-center px-4 py-3 md:px-6 md:py-4 bg-white border-b border-gray-100 shrink-0">
+              <div className="flex flex-col">
+                <Image
+                  src="/turaquete-logo.png"
+                  alt="Turaquete"
+                  width={852}
+                  height={474}
+                  priority
+                  className="h-9 md:h-12 w-auto"
+                />
+                <span className="hidden md:block text-tinta/50 text-xs mt-0.5 tracking-wide">
+                  especialista em beach tennis
+                </span>
+              </div>
+            </header>
+
+            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 w-full">
+              {messages.map((m, i) => (
+                <ChatMessage
+                  key={i}
+                  role={m.role}
+                  content={m.content}
+                  recommendations={m.recommendations}
+                />
+              ))}
+              {loading && <ChatMessage role="assistant" content="" loading />}
+              <div ref={bottomRef} />
+            </div>
+
+            {!hasUserMessages && !loading && (
+              <StartChips onSelect={sendMessage} />
+            )}
+
+            <ChatInput onSend={sendMessage} disabled={loading} />
           </div>
-
-          {!hasUserMessages && !loading && (
-            <StartChips onSelect={sendMessage} />
-          )}
-
-          <ChatInput onSend={sendMessage} disabled={loading} />
         </div>
       )}
     </div>

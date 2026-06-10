@@ -25,7 +25,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
     <div className={`flex flex-col w-full ${isAssistant ? 'items-start' : 'items-end'}`}>
       {/* Burbuja de texto */}
       <div
-        className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed
+        className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
           ${isAssistant
             ? 'bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100'
             : 'bg-emerald-600 text-white rounded-tr-sm'

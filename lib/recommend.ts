@@ -136,8 +136,16 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     }
   }
 
-  // prioridade is always an ordering preference, never a filter
-  if (filtros.prioridade) {
+  // Pain mode: sort by comfort desc (+ stability as tiebreaker) — overrides prioridade
+  const painMode = filtros.cotovelo_sensivel || filtros.ombro_sensivel
+  if (painMode) {
+    results = [...results].sort((a, b) => {
+      const ca = a.racket_insights?.comfort ?? 0
+      const cb = b.racket_insights?.comfort ?? 0
+      if (cb !== ca) return cb - ca
+      return (b.racket_insights?.stability ?? 0) - (a.racket_insights?.stability ?? 0)
+    })
+  } else if (filtros.prioridade) {
     const score = (r: RacketWithInsights): number => {
       switch (filtros.prioridade) {
         case 'potencia':   return r.racket_insights?.power ?? 0
