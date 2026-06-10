@@ -75,13 +75,22 @@ export async function runAgentTurn(history: ChatMessage[]): Promise<AgentResult>
 
   const pendingRecommendations: RecommendedRacket[] = []
   let rounds = 0
+  let hasSearchResults = false
 
   while (rounds < MAX_TOOL_ROUNDS) {
+    // Once we have search results and haven't committed to recommendations yet,
+    // force recomendar_raquetas — prevents the model from narrating "agora vou escolher"
+    // without actually choosing.
+    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0)
+      ? { type: 'tool' as const, name: 'recomendar_raquetas' }
+      : { type: 'auto' as const }
+
     const response = await anthropic.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: SYSTEM_PROMPT,
       tools: agentTools,
+      tool_choice: toolChoice,
       messages,
     })
 
@@ -101,17 +110,26 @@ export async function runAgentTurn(history: ChatMessage[]): Promise<AgentResult>
     for (const block of response.content) {
       if (block.type !== 'tool_use') continue
       const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations)
+
+      if (block.name === 'buscar_raquetas') {
+        try {
+          const parsed = JSON.parse(result) as { encontradas: number }
+          if (parsed.encontradas > 0) hasSearchResults = true
+        } catch { /* ignore parse errors */ }
+      }
+
       toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
     }
 
     messages.push({ role: 'user', content: toolResults })
   }
 
-  // Fallback si se agota MAX_TOOL_ROUNDS
+  // Fallback if MAX_TOOL_ROUNDS exhausted — keep tools available so recomendar can still fire
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,
+    tools: agentTools,
     messages,
   })
   const textBlock = finalResponse.content.find(b => b.type === 'text')
