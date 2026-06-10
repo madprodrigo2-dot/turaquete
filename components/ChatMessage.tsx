@@ -10,6 +10,24 @@ interface Props {
   showTury?: boolean
 }
 
+// Dimensões nativas dos PNGs para srcset correto
+const TURY = {
+  saludando:  { src: '/tury-saludando.png',  nW: 400, nH: 298, alt: 'Tury saludando'  },
+  pensando:   { src: '/tury-pensando.png',   nW: 297, nH: 296, alt: 'Tury pensando'   },
+  explicando: { src: '/tury-explicando.png', nW: 286, nH: 276, alt: 'Tury explicando' },
+  apenada:    { src: '/tury-apenada.png',    nW: 289, nH: 275, alt: 'Tury triste'     },
+} as const
+
+const ERROR_PHRASES = ['Ops,', 'problema de conexão', 'não consegui processar']
+
+function getPose(loading: boolean, isFirst: boolean, hasRecs: boolean, content: string) {
+  if (loading)                                              return { p: TURY.pensando,   h: 60 }
+  if (isFirst)                                             return { p: TURY.saludando,   h: 88 }
+  if (hasRecs)                                             return { p: TURY.explicando,  h: 56 }
+  if (ERROR_PHRASES.some(e => content.includes(e)))        return { p: TURY.apenada,     h: 44 }
+  return                                                          { p: TURY.saludando,   h: 48 }
+}
+
 function renderText(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*\n]+\*\*)/g)
   return parts.map((part, i) =>
@@ -21,37 +39,34 @@ function renderText(text: string): React.ReactNode {
 
 export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false }: Props) {
   const isAssistant = role === 'assistant'
+  const hasRecs = (recommendations?.length ?? 0) > 0
+  const { p, h } = getPose(loading, showTury, hasRecs, content)
 
   return (
     <div className={`flex flex-col w-full msg-enter ${isAssistant ? 'items-start' : 'items-end'}`}>
 
-      {/* Tury saludando — só no primeiro mensaje do agente, 90-110px */}
+      {/* Precarrega as outras poses na primeira mensagem — troca instantânea */}
       {showTury && isAssistant && (
-        <div className="pl-9 mb-1.5">
-          <Image
-            src="/tury-saludando.png"
-            alt="Tury, a mascote da Turaquete, acenando boas-vindas"
-            width={400}
-            height={298}
-            className="h-[88px] md:h-[108px] w-auto"
-            style={{ width: 'auto' }}
-          />
+        <div aria-hidden className="absolute w-0 h-0 overflow-hidden pointer-events-none">
+          <Image src={TURY.pensando.src}   alt="" width={TURY.pensando.nW}   height={TURY.pensando.nH}   />
+          <Image src={TURY.explicando.src} alt="" width={TURY.explicando.nW} height={TURY.explicando.nH} />
+          <Image src={TURY.apenada.src}    alt="" width={TURY.apenada.nW}    height={TURY.apenada.nH}    />
         </div>
       )}
 
-      {/* Bubble row — avatar circular + mensagem */}
+      {/* Bubble row — Tury (corpo completo, sem máscara) + burbuja */}
       <div className="flex items-end gap-2">
 
         {isAssistant && (
-          <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-tinta flex items-center justify-center">
-            <Image
-              src="/turaquete-favicon.png"
-              alt="Turaquete"
-              width={22}
-              height={22}
-              className="object-contain"
-            />
-          </div>
+          <Image
+            src={p.src}
+            alt={p.alt}
+            width={p.nW}
+            height={p.nH}
+            priority={showTury}
+            className="flex-shrink-0 self-end"
+            style={{ height: `${h}px`, width: 'auto' }}
+          />
         )}
 
         {/* Burbuja */}
@@ -77,10 +92,10 @@ export default function ChatMessage({ role, content, recommendations, loading = 
         </div>
       </div>
 
-      {/* RacketCards — escalonadas sob a burbuja */}
-      {isAssistant && recommendations && recommendations.length > 0 && (
-        <div className="mt-3 flex flex-col gap-3 pl-9 w-full">
-          {recommendations.map((rec, i) => (
+      {/* RacketCards — explicando (58px) + gap-2 (8px) = 66px de indent */}
+      {isAssistant && hasRecs && (
+        <div className="mt-3 flex flex-col gap-3 pl-[68px] w-full">
+          {recommendations!.map((rec, i) => (
             <div
               key={rec.racket.id}
               className="msg-enter"
