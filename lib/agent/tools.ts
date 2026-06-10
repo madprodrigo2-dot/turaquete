@@ -5,7 +5,9 @@ export const agentTools: Anthropic.Tool[] = [
     name: 'buscar_raquetas',
     description:
       'Busca raquetes na base de dados com base no perfil do usuário. ' +
-      'Retorna raquetes com specs objetivos e análise especializada (potência, controle, conforto, etc.). ' +
+      'Retorna raquetes com specs objetivos (peso, balance, core, face_material, model_year, specs_extra) ' +
+      'e análise especializada (potência, controle, conforto, etc.). ' +
+      'specs_extra pode conter atleta firmante, número de furos e outros dados técnicos. ' +
       'Use esta ferramenta antes de recomendar qualquer raquete.',
     input_schema: {
       type: 'object' as const,

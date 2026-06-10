@@ -54,5 +54,11 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     linhas.push('Cabeça diamante: sweet spot mais alto, ideal para ataque')
   }
 
-  return linhas.slice(0, 4)
+  // ── Furos ─────────────────────────────────────────────────────────────────
+  const furos = extra.furos as number | undefined
+  if (furos != null && furos >= 30) {
+    linhas.push(`Muitos furos (${furos}): swing mais leve e ágil`)
+  }
+
+  return linhas.slice(0, 5)
 }
