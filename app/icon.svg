@@ -1,0 +1,30 @@
+<svg width="100%" viewBox="0 0 512 512" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Ícono Turaquete</title>
+<desc>Ícono de beach tennis: una raqueta azul petróleo con orificios y una bola coral sobre arena, dentro de un azulejo redondeado color mar.</desc>
+<defs>
+<clipPath id="tileclip"><rect x="16" y="16" width="480" height="480" rx="112"/></clipPath>
+</defs>
+<rect x="16" y="16" width="480" height="480" rx="112" fill="#0E8C8B"/>
+<g clip-path="url(#tileclip)">
+<path d="M16 410 Q 256 350 496 410 L 496 496 L 16 496 Z" fill="#F5ECD9"/>
+</g>
+<g transform="rotate(-10 205 230)">
+<ellipse cx="205" cy="200" rx="80" ry="100" fill="#143642"/>
+<rect x="190" y="285" width="30" height="130" rx="14" fill="#143642"/>
+<circle cx="180" cy="150" r="6.5" fill="#F5ECD9"/>
+<circle cx="205" cy="150" r="6.5" fill="#F5ECD9"/>
+<circle cx="230" cy="150" r="6.5" fill="#F5ECD9"/>
+<circle cx="180" cy="182" r="6.5" fill="#F5ECD9"/>
+<circle cx="205" cy="182" r="6.5" fill="#F5ECD9"/>
+<circle cx="230" cy="182" r="6.5" fill="#F5ECD9"/>
+<circle cx="180" cy="214" r="6.5" fill="#F5ECD9"/>
+<circle cx="205" cy="214" r="6.5" fill="#F5ECD9"/>
+<circle cx="230" cy="214" r="6.5" fill="#F5ECD9"/>
+<circle cx="180" cy="246" r="6.5" fill="#F5ECD9"/>
+<circle cx="205" cy="246" r="6.5" fill="#F5ECD9"/>
+<circle cx="230" cy="246" r="6.5" fill="#F5ECD9"/>
+</g>
+<circle cx="295" cy="335" r="70" fill="#FFFFFF"/>
+<circle cx="295" cy="335" r="60" fill="#FF6B4A"/>
+<path d="M248 308 Q 295 358 342 312" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+</svg>
