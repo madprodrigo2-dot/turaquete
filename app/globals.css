@@ -8,9 +8,22 @@
   --color-aqua-light: #EAF7F6;
 }
 
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-sora), sans-serif;
+  }
+  .font-body {
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+}
+
 html,
 body {
   height: 100%;
+}
+
+body {
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 * {

@@ -31,7 +31,7 @@ const FAQS = [
   },
 ]
 
-// ── SVG icons ───────────────────────────────────────────────────────────────
+// ── SVG icons ─────────────────────────────────────────────────────────────────
 
 function IconNivel() {
   return (
@@ -44,7 +44,6 @@ function IconNivel() {
 }
 
 function IconEstilo() {
-  // Beach tennis paddle: solid oval face + rectangular handle, no strings
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" />
@@ -74,13 +73,13 @@ function IconOrcamento() {
 }
 
 const ANALYSIS_ITEMS = [
-  { Icon: IconNivel,    label: 'Seu nível' },
-  { Icon: IconEstilo,   label: 'Seu estilo de jogo' },
-  { Icon: IconBraco,    label: 'Dores no braço' },
+  { Icon: IconNivel,     label: 'Seu nível' },
+  { Icon: IconEstilo,    label: 'Seu estilo de jogo' },
+  { Icon: IconBraco,     label: 'Dores no braço' },
   { Icon: IconOrcamento, label: 'Orçamento' },
 ]
 
-// ── Sub-components ──────────────────────────────────────────────────────────
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 function StatusIndicator({ status }: { status: Brand['status'] }) {
   if (status === 'disponivel') {
@@ -108,7 +107,7 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
     : null
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm flex flex-col">
+    <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       <Link href={`/raquetes/${racket.slug}`} className="block">
         {racket.image_url ? (
           <div className="aspect-square bg-gray-50 p-2 flex items-center justify-center">
@@ -123,9 +122,11 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
       </Link>
       <div className="p-3 flex flex-col gap-2 flex-1">
         <Link href={`/raquetes/${racket.slug}`}>
-          <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors">{racket.name}</p>
+          <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors">
+            {racket.name}
+          </p>
         </Link>
-        {price && <p className="text-coral font-bold text-sm">{price}</p>}
+        {price && <p className="font-heading text-coral font-bold text-sm">{price}</p>}
         <button
           onClick={onStart}
           className="mt-auto w-full border border-aqua/40 text-aqua text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:scale-[0.98] transition-all leading-tight"
@@ -137,7 +138,7 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
   )
 }
 
-// ── Main component ──────────────────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export default function LandingScreen({ onStart, brands, featuredRackets }: Props) {
   return (
@@ -158,8 +159,27 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
 
         {/* H1 + subtítulo */}
         <div className="flex flex-col gap-3 md:gap-4">
-          <h1 className="text-[2rem] md:text-5xl font-bold text-tinta leading-tight">
-            Uma consultoria de especialista. De graça.
+          <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
+            Uma consultoria de especialista.{' '}
+            <span className="relative inline-block text-coral">
+              De graça.
+              {/* Swoosh decorativo coral */}
+              <svg
+                viewBox="0 0 140 10"
+                fill="none"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+                className="absolute -bottom-1 left-0 w-full h-[8px]"
+              >
+                <path
+                  d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
+                  stroke="#FF5E3A"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
+            </span>
           </h1>
           <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
             Conte como você joga e receba a raquete ideal em 1 minuto, analisando seu nível, estilo, dores no braço e orçamento.
@@ -173,26 +193,27 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
           </p>
         </div>
 
-        {/* Badges */}
+        {/* Badges — bg suave + ponto coral */}
         <div className="flex gap-2 flex-wrap">
           {BADGES.map(badge => (
             <span
               key={badge}
-              className="bg-white text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full border border-aqua/30 shadow-sm"
+              className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
             >
+              <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
               {badge}
             </span>
           ))}
         </div>
 
         {/* Como funciona */}
-        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20">
-          <p className="text-tinta font-semibold text-sm md:text-base mb-5">Como funciona</p>
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
+          <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
           <div className="flex flex-col">
             {STEPS.map((step, i) => (
               <div key={i} className="flex gap-4">
                 <div className="flex flex-col items-center w-7 shrink-0">
-                  <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0">
                     {i + 1}
                   </div>
                   {i < STEPS.length - 1 && (
@@ -208,8 +229,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
         </div>
 
         {/* Analisamos seu jogo */}
-        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20">
-          <p className="text-tinta font-semibold text-sm md:text-base mb-4">Analisamos seu jogo</p>
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
+          <p className="font-heading font-bold text-tinta text-base md:text-lg mb-4">Analisamos seu jogo</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {ANALYSIS_ITEMS.map(({ Icon, label }) => (
               <div key={label} className="flex items-center gap-3">
@@ -223,7 +244,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
         {/* Raquetes em destaque */}
         {featuredRackets.length > 0 && (
           <div className="flex flex-col gap-3">
-            <p className="text-tinta font-semibold text-sm md:text-base">Raquetes em destaque</p>
+            <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
             <div className="grid grid-cols-3 gap-3">
               {featuredRackets.map(racket => (
                 <FeaturedCard key={racket.id} racket={racket} onStart={onStart} />
@@ -235,12 +256,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
           <div className="flex flex-col gap-3">
-            <p className="text-tinta font-semibold text-sm md:text-base">Marcas disponíveis</p>
+            <p className="font-heading font-bold text-tinta text-base md:text-lg">Marcas disponíveis</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {brands.map(brand => (
                 <div
                   key={brand.id}
-                  className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm"
+                  className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm hover:shadow-md transition-shadow"
                 >
                   {brand.status === 'disponivel' ? (
                     <Link href={`/marcas/${brand.slug}`} className="text-tinta text-sm font-medium hover:text-aqua transition-colors">
@@ -258,11 +279,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
 
         {/* Perguntas frequentes */}
         <div className="flex flex-col gap-3">
-          <p className="text-tinta font-semibold text-sm md:text-base">Perguntas frequentes</p>
+          <p className="font-heading font-bold text-tinta text-base md:text-lg">Perguntas frequentes</p>
           <div className="bg-white rounded-2xl border border-aqua/20 shadow-sm overflow-hidden divide-y divide-aqua/10">
             {FAQS.map(({ q, a }, i) => (
               <details key={i} className="group" open={i === 0}>
-                <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-tinta font-medium text-sm md:text-base [list-style:none] select-none [&::-webkit-details-marker]:hidden">
+                <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-tinta font-heading font-semibold text-sm md:text-base [list-style:none] select-none [&::-webkit-details-marker]:hidden">
                   {q}
                   <svg
                     width="16" height="16" viewBox="0 0 16 16" fill="none"
@@ -280,10 +301,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
           </div>
         </div>
 
-        {/* CTA */}
+        {/* CTA principal */}
         <button
           onClick={onStart}
-          className="w-full bg-coral text-white font-semibold text-base md:text-lg py-4 md:py-5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md"
+          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
         >
           Começar agora
         </button>

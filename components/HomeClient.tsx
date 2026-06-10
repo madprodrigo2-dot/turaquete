@@ -103,7 +103,7 @@ export default function HomeClient({ brands, featuredRackets }: Props) {
                   priority
                   className="h-9 md:h-12 w-auto"
                 />
-                <span className="hidden md:block text-tinta/50 text-xs mt-0.5 tracking-wide">
+                <span className="hidden md:block font-heading text-tinta/50 text-xs mt-0.5 tracking-wide">
                   especialista em beach tennis
                 </span>
               </div>

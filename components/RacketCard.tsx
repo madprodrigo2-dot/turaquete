@@ -51,9 +51,9 @@ export default function RacketCard({ racket, razao }: Props) {
         {/* Conteúdo */}
         <div className="p-4 flex flex-col gap-2">
           <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-gray-900 text-sm leading-tight">{nameDisplay}</p>
+            <p className="font-heading font-semibold text-tinta text-sm leading-tight">{nameDisplay}</p>
             {price && (
-              <span className="text-emerald-700 font-semibold text-sm shrink-0">{price}</span>
+              <span className="font-heading text-coral font-bold text-sm shrink-0">{price}</span>
             )}
           </div>
 
@@ -68,7 +68,7 @@ export default function RacketCard({ racket, razao }: Props) {
               href={ctaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 w-full text-center rounded-lg bg-emerald-600 text-white text-xs font-medium py-2 px-3 hover:bg-emerald-700 active:scale-95 transition-all"
+              className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] transition-all"
             >
               {ctaLabel} →
             </a>
