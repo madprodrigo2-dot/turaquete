@@ -7,7 +7,7 @@ let _public: SupabaseClient | null = null
 export function getSupabaseAdmin(): SupabaseClient {
   if (!_admin) {
     _admin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
   }
@@ -17,8 +17,8 @@ export function getSupabaseAdmin(): SupabaseClient {
 export function getSupabase(): SupabaseClient {
   if (!_public) {
     _public = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_ANON_KEY!
     )
   }
   return _public
