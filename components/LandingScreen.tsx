@@ -1,5 +1,9 @@
+'use client'
+
+import { useRef, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 
 interface Props {
@@ -144,12 +148,31 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function LandingScreen({ onStart, brands, featuredRackets }: Props) {
-  return (
-    <div className="min-h-screen bg-aqua-light flex flex-col items-center px-5 md:px-8 pb-10 md:pb-16">
-      <div className="w-full max-w-sm md:max-w-xl flex flex-col gap-5 md:gap-7">
+  const [showHeaderCta, setShowHeaderCta] = useState(false)
+  const heroCtaRef = useRef<HTMLButtonElement>(null)
 
-        {/* Header compacto — logo esquerda */}
-        <div className="flex items-center py-3 md:py-4">
+  useEffect(() => {
+    const el = heroCtaRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowHeaderCta(!entry.isIntersecting),
+      { threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const handleHeaderCta = () => {
+    sendGAEvent({ event: 'chat_iniciado', source: 'header_sticky' })
+    onStart()
+  }
+
+  return (
+    <div className="min-h-screen bg-aqua-light flex flex-col items-center pb-10 md:pb-16">
+
+      {/* Sticky header — full viewport width */}
+      <div className={`sticky top-0 z-10 w-full flex justify-center px-5 md:px-8 bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
+        <div className="w-full max-w-sm md:max-w-xl flex items-center justify-between py-3 md:py-4">
           <Image
             src="/turaquete-logo.png"
             alt="Turaquete"
@@ -158,7 +181,23 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
             priority
             className="h-10 md:h-[3.25rem] w-auto"
           />
+          <button
+            onClick={handleHeaderCta}
+            aria-hidden={!showHeaderCta}
+            tabIndex={showHeaderCta ? 0 : -1}
+            className={`font-heading font-bold bg-coral text-white text-sm px-4 py-2 rounded-full shadow-sm transition-all duration-200 ${
+              showHeaderCta
+                ? 'opacity-100 translate-y-0 pointer-events-auto'
+                : 'opacity-0 -translate-y-1 pointer-events-none'
+            }`}
+          >
+            Começar
+          </button>
         </div>
+      </div>
+
+      {/* Content */}
+      <div className="w-full max-w-sm md:max-w-xl flex flex-col gap-5 md:gap-7 px-5 md:px-8">
 
         {/* H1 + subtítulo */}
         <div className="flex flex-col gap-3 md:gap-4">
@@ -209,8 +248,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
           ))}
         </div>
 
-        {/* CTA hero — visível sem scroll */}
+        {/* CTA hero — IntersectionObserver target */}
         <button
+          ref={heroCtaRef}
           onClick={onStart}
           className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
         >
