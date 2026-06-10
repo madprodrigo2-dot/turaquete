@@ -36,15 +36,14 @@ export default function ChatMessage({ role, content, recommendations, loading = 
       <div className="flex items-end gap-2">
 
         {isAssistant && (
-          <div className="flex-shrink-0 w-9 h-14 md:w-10 md:h-16 self-end">
-            <Image
-              src={tury.src}
-              alt={tury.alt}
-              width={80}
-              height={80}
-              className="w-full h-full object-contain object-bottom"
-            />
-          </div>
+          <Image
+            src={tury.src}
+            alt={tury.alt}
+            width={80}
+            height={80}
+            className="flex-shrink-0 h-11 md:h-12 w-auto self-end"
+            style={{ width: 'auto' }}
+          />
         )}
 
         {/* Burbuja */}
@@ -72,7 +71,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
 
       {/* RacketCards — escalonadas sob a burbuja */}
       {isAssistant && recommendations && recommendations.length > 0 && (
-        <div className="mt-3 flex flex-col gap-3 pl-11 md:pl-12 w-full">
+        <div className="mt-3 flex flex-col gap-3 pl-16 w-full">
           {recommendations.map((rec, i) => (
             <div
               key={rec.racket.id}
