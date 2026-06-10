@@ -1,0 +1,251 @@
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
+import BuyButton from '@/components/BuyButton'
+
+export const dynamicParams = false
+
+export async function generateStaticParams() {
+  const rackets = await listarRaquetas().catch(() => [])
+  return rackets.map(r => ({ slug: r.slug }))
+}
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params
+  const racket = await getRaquetaPorSlug(slug)
+  if (!racket) return {}
+
+  const ins = racket.racket_insights
+  const price = racket.price
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
+    : null
+
+  const title = `${racket.name} — Raquete de Beach Tennis | Turaquete`
+  const description =
+    ins?.perfil_resumo ??
+    `Specs, avaliação e onde comprar a ${racket.name}.${price ? ` A partir de ${price}.` : ''}`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(racket.image_url && { images: [racket.image_url] }),
+      locale: 'pt_BR',
+      type: 'website',
+    },
+  }
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function ScoreBar({ label, value }: { label: string; value: number | null }) {
+  if (value === null) return null
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-tinta/70 text-sm w-28 shrink-0">{label}</span>
+      <div className="flex-1 bg-aqua/15 rounded-full h-2.5">
+        <div className="bg-aqua h-2.5 rounded-full" style={{ width: `${(value / 10) * 100}%` }} />
+      </div>
+      <span className="text-tinta font-semibold text-sm w-5 text-right">{value}</span>
+    </div>
+  )
+}
+
+function SpecRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null
+  return (
+    <div className="flex justify-between py-2 border-b border-aqua/10 last:border-0">
+      <span className="text-tinta/60 text-sm">{label}</span>
+      <span className="text-tinta text-sm font-medium text-right ml-4">{value}</span>
+    </div>
+  )
+}
+
+const SPECS_EXTRA_LABELS: Record<string, string> = {
+  trama_carbono:  'Trama de carbono',
+  textura:        'Textura',
+  formato_cabeca: 'Formato da cabeça',
+  coracao:        'Coração',
+  furos_quantidade: 'Número de furos',
+  furos_padrao:   'Padrão de furos',
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default async function RaquetaPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const racket = await getRaquetaPorSlug(slug)
+  if (!racket) notFound()
+
+  const ins = racket.racket_insights
+  const price = racket.price
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
+    : null
+  const buyUrl = racket.affiliate_url ?? racket.source_url
+
+  const product = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: racket.name,
+    ...(ins?.perfil_resumo && { description: ins.perfil_resumo }),
+    ...(racket.image_url && { image: racket.image_url }),
+    brand: { '@type': 'Brand', name: "Heroe's" },
+    ...(racket.price && buyUrl && {
+      offers: {
+        '@type': 'Offer',
+        price: racket.price,
+        priceCurrency: racket.currency ?? 'BRL',
+        url: buyUrl,
+        availability: 'https://schema.org/InStock',
+      },
+    }),
+  }
+
+  const specsExtra = racket.specs_extra as Record<string, string | number> | null
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(product) }}
+      />
+
+      <div className="min-h-screen bg-aqua-light">
+        {/* Nav */}
+        <div className="sticky top-0 z-10 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Voltar
+          </Link>
+        </div>
+
+        <div className="max-w-xl mx-auto px-5 py-8 flex flex-col gap-6">
+
+          {/* Imagem */}
+          {racket.image_url && (
+            <div className="bg-white rounded-2xl p-6 flex items-center justify-center border border-aqua/20 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={racket.image_url}
+                alt={racket.name}
+                className="object-contain max-h-64 w-auto"
+              />
+            </div>
+          )}
+
+          {/* Título + preço + badges */}
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold text-tinta leading-tight">{racket.name}</h1>
+            {price && <p className="text-coral text-xl font-bold">{price}</p>}
+            <div className="flex gap-2 flex-wrap">
+              {ins?.nivel_sugerido && (
+                <span className="bg-aqua/15 text-aqua text-xs font-semibold px-3 py-1 rounded-full capitalize">
+                  {ins.nivel_sugerido}
+                </span>
+              )}
+              {ins?.elbow_friendly && (
+                <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
+                  Cotovelo amigável
+                </span>
+              )}
+              {ins?.shoulder_friendly && (
+                <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
+                  Ombro amigável
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Perfil resumo */}
+          {ins?.perfil_resumo && (
+            <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm">
+              <p className="text-tinta leading-relaxed text-sm md:text-base">{ins.perfil_resumo}</p>
+            </div>
+          )}
+
+          {/* Pontuações */}
+          {ins && (ins.power !== null || ins.control !== null) && (
+            <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm flex flex-col gap-4">
+              <p className="text-tinta font-semibold text-sm md:text-base">Avaliação</p>
+              <div className="flex flex-col gap-3">
+                <ScoreBar label="Potência"     value={ins.power} />
+                <ScoreBar label="Controle"     value={ins.control} />
+                <ScoreBar label="Conforto"     value={ins.comfort} />
+                <ScoreBar label="Manuseio"     value={ins.maneuverability} />
+                <ScoreBar label="Spin"         value={ins.spin} />
+                <ScoreBar label="Estabilidade" value={ins.stability} />
+              </div>
+              {ins.confianca && ins.confianca !== 'alta' && (
+                <p className="text-tinta/40 text-xs">
+                  Confiança da avaliação: {ins.confianca}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Specs */}
+          <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm">
+            <p className="text-tinta font-semibold text-sm md:text-base mb-3">Especificações</p>
+            <SpecRow label="Peso"             value={racket.weight_g ? `${racket.weight_g} g` : null} />
+            <SpecRow label="Balance"          value={racket.balance} />
+            <SpecRow label="Formato"          value={racket.format} />
+            <SpecRow label="Material da face" value={racket.face_material} />
+            <SpecRow label="Núcleo"           value={racket.core} />
+            {racket.technologies && racket.technologies.length > 0 && (
+              <SpecRow label="Tecnologias" value={racket.technologies.join(', ')} />
+            )}
+            {specsExtra && Object.entries(SPECS_EXTRA_LABELS).map(([key, label]) =>
+              specsExtra[key] != null ? (
+                <SpecRow key={key} label={label} value={String(specsExtra[key])} />
+              ) : null
+            )}
+          </div>
+
+          {/* CTA compra */}
+          {buyUrl ? (
+            <BuyButton
+              href={buyUrl}
+              racketName={racket.name}
+              racketSlug={racket.slug}
+              className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md text-center block"
+            >
+              {price ? `Comprar por ${price}` : 'Ver onde comprar'}
+            </BuyButton>
+          ) : (
+            <Link
+              href="/"
+              className="w-full bg-aqua text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md text-center block"
+            >
+              Falar com o especialista
+            </Link>
+          )}
+
+          {/* Falar com especialista (secundário, sempre presente) */}
+          {buyUrl && (
+            <Link
+              href="/"
+              className="w-full border border-aqua/40 text-aqua font-semibold text-sm py-3 rounded-2xl hover:bg-aqua/10 active:scale-[0.98] transition-all text-center block"
+            >
+              Não tem certeza? Fale com o especialista
+            </Link>
+          )}
+
+          <p className="text-center text-tinta/40 text-xs leading-relaxed">
+            A Turaquete pode receber comissão por compras feitas pelos links indicados, sem custo extra pra você.
+          </p>
+
+        </div>
+      </div>
+    </>
+  )
+}

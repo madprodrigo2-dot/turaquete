@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 
 interface Props {
@@ -108,18 +109,22 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm flex flex-col">
-      {racket.image_url ? (
-        <div className="aspect-square bg-gray-50 p-2 flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
-        </div>
-      ) : (
-        <div className="aspect-square bg-aqua-light flex items-center justify-center">
-          <IconEstilo />
-        </div>
-      )}
+      <Link href={`/raquetes/${racket.slug}`} className="block">
+        {racket.image_url ? (
+          <div className="aspect-square bg-gray-50 p-2 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
+          </div>
+        ) : (
+          <div className="aspect-square bg-aqua-light flex items-center justify-center">
+            <IconEstilo />
+          </div>
+        )}
+      </Link>
       <div className="p-3 flex flex-col gap-2 flex-1">
-        <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2">{racket.name}</p>
+        <Link href={`/raquetes/${racket.slug}`}>
+          <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors">{racket.name}</p>
+        </Link>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
         <button
           onClick={onStart}
@@ -237,7 +242,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
                   key={brand.id}
                   className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm"
                 >
-                  <span className="text-tinta text-sm font-medium">{brand.name}</span>
+                  {brand.status === 'disponivel' ? (
+                    <Link href={`/marcas/${brand.slug}`} className="text-tinta text-sm font-medium hover:text-aqua transition-colors">
+                      {brand.name}
+                    </Link>
+                  ) : (
+                    <span className="text-tinta text-sm font-medium">{brand.name}</span>
+                  )}
                   <StatusIndicator status={brand.status} />
                 </div>
               ))}

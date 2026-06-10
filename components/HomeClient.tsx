@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
+import { sendGAEvent } from '@next/third-parties/google'
 import LandingScreen from '@/components/LandingScreen'
 import ChatMessage from '@/components/ChatMessage'
 import StartChips from '@/components/StartChips'
@@ -43,6 +44,7 @@ export default function HomeClient({ brands, featuredRackets }: Props) {
   }, [messages, loading, view])
 
   const handleStart = () => {
+    sendGAEvent({ event: 'chat_iniciado' })
     setFading(true)
     setTimeout(() => {
       setView('chat')
@@ -64,6 +66,9 @@ export default function HomeClient({ brands, featuredRackets }: Props) {
       })
       const data = await res.json()
       const reply = data.text ?? 'Desculpe, não consegui processar sua mensagem. Tente novamente.'
+      if (data.recommendations?.length > 0) {
+        sendGAEvent({ event: 'recomendacao_exibida', count: data.recommendations.length })
+      }
       setMessages([
         ...updated,
         { role: 'assistant', content: reply, recommendations: data.recommendations ?? undefined },

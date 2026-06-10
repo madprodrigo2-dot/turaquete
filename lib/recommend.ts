@@ -195,6 +195,43 @@ export interface Brand {
   status: 'disponivel' | 'em_breve'
 }
 
+export async function getRaquetaPorSlug(slug: string): Promise<RacketWithInsights | null> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single()
+
+  if (error) return null
+  return data as unknown as RacketWithInsights
+}
+
+export async function listarRaquetasPorMarca(
+  brandSlug: string
+): Promise<{ brand: Brand; rackets: RacketWithInsights[] } | null> {
+  const { data: brandData, error: brandError } = await getSupabase()
+    .from('brands')
+    .select('id, name, slug, country, website, status')
+    .eq('slug', brandSlug)
+    .single()
+
+  if (brandError || !brandData) return null
+
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('brand_id', (brandData as { id: number }).id)
+    .eq('is_active', true)
+    .order('price')
+
+  if (error) throw new Error(`Supabase: ${error.message}`)
+  return {
+    brand: brandData as Brand,
+    rackets: (data as unknown as RacketWithInsights[]) ?? [],
+  }
+}
+
 export async function listarMarcas(): Promise<Brand[]> {
   const { data, error } = await getSupabase()
     .from('brands')
