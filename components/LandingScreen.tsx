@@ -393,7 +393,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
         >
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
             <circle cx="14" cy="14" r="13.5" fill="#FF5E3A" />
-            <ellipse cx="10.2" cy="9.8" rx="3.4" ry="2.1" fill="rgba(255,255,255,0.20)" />
+            <path d="M4,12 C7,3 21,3 24,12" stroke="rgba(255,255,255,0.32)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+            <path d="M4,16 C7,25 21,25 24,16" stroke="rgba(255,255,255,0.32)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
           </svg>
         </div>
 
@@ -405,7 +406,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <circle cx="7" cy="7" r="6.5" fill="#FF5E3A" />
-            <ellipse cx="5" cy="5" rx="1.7" ry="1.1" fill="rgba(255,255,255,0.20)" />
+            <path d="M2,5.8 C3.5,1.5 10.5,1.5 12,5.8" stroke="rgba(255,255,255,0.30)" strokeWidth="0.9" fill="none" strokeLinecap="round"/>
+            <path d="M2,8.2 C3.5,12.5 10.5,12.5 12,8.2" stroke="rgba(255,255,255,0.30)" strokeWidth="0.9" fill="none" strokeLinecap="round"/>
           </svg>
         </div>
 
@@ -417,7 +419,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="9.5" fill="#FF5E3A" />
-            <ellipse cx="7.2" cy="6.8" rx="2.5" ry="1.6" fill="rgba(255,255,255,0.20)" />
+            <path d="M2.5,8.5 C5,2 15,2 17.5,8.5" stroke="rgba(255,255,255,0.32)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+            <path d="M2.5,11.5 C5,18 15,18 17.5,11.5" stroke="rgba(255,255,255,0.32)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
           </svg>
         </div>
 
