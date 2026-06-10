@@ -62,7 +62,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
 
       {/* RacketCards — escalonadas sob a burbuja */}
       {isAssistant && recommendations && recommendations.length > 0 && (
-        <div className="mt-3 flex flex-col gap-3 w-full max-w-sm ml-9">
+        <div className="mt-3 flex flex-col gap-3 pl-9 w-full">
           {recommendations.map((rec, i) => (
             <div
               key={rec.racket.id}

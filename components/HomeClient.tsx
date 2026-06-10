@@ -106,13 +106,13 @@ export default function HomeClient({ brands, featuredRackets }: Props) {
                 <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
                   {loading
                     ? <span className="text-aqua/70 italic">digitando...</span>
-                    : <span className="text-tinta/50">especialista em beach tennis</span>
+                    : <span className="text-tinta/50">especialista em raquetes</span>
                   }
                 </span>
               </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 w-full">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full">
               {messages.map((m, i) => (
                 <ChatMessage
                   key={i}

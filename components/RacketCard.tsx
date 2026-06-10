@@ -30,7 +30,7 @@ export default function RacketCard({ racket, razao }: Props) {
 
   return (
     <>
-      <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden w-full max-w-sm">
+      <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden w-full">
         {/* Imagem */}
         {racket.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -50,14 +50,14 @@ export default function RacketCard({ racket, razao }: Props) {
 
         {/* Conteúdo */}
         <div className="p-4 flex flex-col gap-2">
-          <div className="flex items-start justify-between gap-2">
-            <p className="font-heading font-semibold text-tinta text-sm leading-tight">{nameDisplay}</p>
+          <div className="flex items-start justify-between gap-2 min-w-0">
+            <p className="font-heading font-semibold text-tinta text-sm leading-tight flex-1 min-w-0 truncate">{nameDisplay}</p>
             {price && (
               <span className="font-heading text-coral font-bold text-sm shrink-0">{price}</span>
             )}
           </div>
 
-          <p className="text-gray-600 text-xs leading-relaxed">{razao}</p>
+          <p className="text-gray-600 text-xs leading-relaxed break-words">{razao}</p>
 
           {racket.weight_g && (
             <p className="text-gray-400 text-xs">{racket.weight_g}g · {racket.balance ?? ''}</p>

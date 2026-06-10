@@ -121,7 +121,7 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
           <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0">
             <Image src="/turaquete-favicon.png" alt="" width={20} height={20} className="w-full h-full object-cover" />
           </div>
-          <span className="font-heading text-tinta text-[10px] font-semibold leading-none">especialista em beach tennis</span>
+          <span className="font-heading text-tinta text-[10px] font-semibold leading-none">especialista em raquetes</span>
         </div>
 
         {/* Burbuja agente */}
