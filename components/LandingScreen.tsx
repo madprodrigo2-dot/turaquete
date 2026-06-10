@@ -106,6 +106,11 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
 
+  const perfil = racket.racket_insights?.perfil_resumo
+  const perfilShort = perfil
+    ? perfil.length > 70 ? perfil.slice(0, 68) + '…' : perfil
+    : null
+
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow flex flex-col">
       <Link href={`/raquetes/${racket.slug}`} className="block">
@@ -126,10 +131,13 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
             {racket.name}
           </p>
         </Link>
+        {perfilShort && (
+          <p className="text-tinta/55 text-[10px] leading-snug">{perfilShort}</p>
+        )}
         {price && <p className="font-heading text-coral font-bold text-sm">{price}</p>}
         <button
           onClick={onStart}
-          className="mt-auto w-full border border-aqua/40 text-aqua text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:scale-[0.98] transition-all leading-tight"
+          className="mt-auto w-full bg-aqua/15 border border-aqua/30 text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua hover:text-white hover:border-aqua active:scale-[0.98] transition-all leading-tight"
         >
           Quero esta raquete
         </button>
@@ -153,7 +161,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
             width={852}
             height={474}
             priority
-            className="h-20 md:h-28 w-auto"
+            className="h-28 md:h-40 w-auto"
           />
         </div>
 
@@ -205,6 +213,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
             </span>
           ))}
         </div>
+
+        {/* CTA hero — visível sem scroll */}
+        <button
+          onClick={onStart}
+          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
+        >
+          Começar agora
+        </button>
 
         {/* Como funciona */}
         <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
@@ -319,12 +335,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
           <p className="text-center text-tinta/40 text-xs leading-relaxed max-w-xs">
             A Turaquete pode receber comissão por compras feitas pelos links indicados, sem custo extra pra você.
           </p>
-          <a
-            href="mailto:contato@turaquete.com.br"
-            className="text-tinta/40 text-xs hover:text-tinta/70 transition-colors"
-          >
-            Contato
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="mailto:contato@turaquete.com.br"
+              className="text-tinta/40 text-xs hover:text-tinta/70 transition-colors"
+            >
+              Contato
+            </a>
+            <span className="text-tinta/20 text-xs">·</span>
+            <Link
+              href="/privacidade"
+              className="text-tinta/40 text-xs hover:text-tinta/70 transition-colors"
+            >
+              Privacidade
+            </Link>
+          </div>
         </footer>
 
       </div>
