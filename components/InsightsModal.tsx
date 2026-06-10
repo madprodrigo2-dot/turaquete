@@ -105,7 +105,6 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
                   width={128}
                   height={128}
                   className="w-[52px] md:w-[64px] h-auto shrink-0"
-                  style={{ width: undefined }}
                 />
                 <p className="text-tinta/60 font-semibold text-xs uppercase tracking-wider">
                   O que explica essas notas

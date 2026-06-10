@@ -457,14 +457,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
           </div>
 
           {/* CTA hero — IntersectionObserver target */}
-          <div className="relative pt-8 md:pt-10">
+          <div className="relative overflow-visible">
+            {/* Tury explicando: ao lado esquerdo do botão, centralizada verticalmente, zero layout extra */}
             <Image
-              src="/tury-saludando.png"
-              alt="Tury saludando, convidando você a começar"
-              width={400}
-              height={298}
-              className="absolute top-0 left-3 md:left-4 w-[82px] md:w-[96px] h-auto pointer-events-none select-none"
-              style={{ width: 'auto' }}
+              src="/tury-explicando.png"
+              alt="Tury apontando para o botão Começar agora"
+              width={286}
+              height={276}
+              className="max-[359px]:hidden absolute left-3 top-1/2 -translate-y-1/2 w-[58px] md:w-[68px] h-auto pointer-events-none select-none"
             />
             <button
               ref={heroCtaRef}

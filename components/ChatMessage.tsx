@@ -19,31 +19,39 @@ function renderText(text: string): React.ReactNode {
   )
 }
 
-function getTuryPose(content: string, isFirst: boolean, isLoading: boolean) {
-  if (isLoading || content.includes('?')) return { src: '/tury-pensando.png', alt: 'Tury pensando' }
-  if (isFirst) return { src: '/tury-saludando.png', alt: 'Tury saludando' }
-  return { src: '/tury-explicando.png', alt: 'Tury explicando' }
-}
-
 export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false }: Props) {
   const isAssistant = role === 'assistant'
-  const tury = getTuryPose(content, showTury, loading)
 
   return (
     <div className={`flex flex-col w-full msg-enter ${isAssistant ? 'items-start' : 'items-end'}`}>
 
-      {/* Bubble row — Tury miniatura + mensagem */}
+      {/* Tury saludando — só no primeiro mensaje do agente, 90-110px */}
+      {showTury && isAssistant && (
+        <div className="pl-9 mb-1.5">
+          <Image
+            src="/tury-saludando.png"
+            alt="Tury, a mascote da Turaquete, acenando boas-vindas"
+            width={400}
+            height={298}
+            className="h-[88px] md:h-[108px] w-auto"
+            style={{ width: 'auto' }}
+          />
+        </div>
+      )}
+
+      {/* Bubble row — avatar circular + mensagem */}
       <div className="flex items-end gap-2">
 
         {isAssistant && (
-          <Image
-            src={tury.src}
-            alt={tury.alt}
-            width={80}
-            height={80}
-            className="flex-shrink-0 h-11 md:h-12 w-auto self-end"
-            style={{ width: 'auto' }}
-          />
+          <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-tinta flex items-center justify-center">
+            <Image
+              src="/turaquete-favicon.png"
+              alt="Turaquete"
+              width={22}
+              height={22}
+              className="object-contain"
+            />
+          </div>
         )}
 
         {/* Burbuja */}
@@ -71,7 +79,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
 
       {/* RacketCards — escalonadas sob a burbuja */}
       {isAssistant && recommendations && recommendations.length > 0 && (
-        <div className="mt-3 flex flex-col gap-3 pl-16 w-full">
+        <div className="mt-3 flex flex-col gap-3 pl-9 w-full">
           {recommendations.map((rec, i) => (
             <div
               key={rec.racket.id}

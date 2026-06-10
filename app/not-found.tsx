@@ -14,7 +14,6 @@ export default function NotFound() {
         width={300}
         height={300}
         className="w-[140px] md:w-[160px] h-auto"
-        style={{ width: undefined }}
         priority
       />
       <div className="flex flex-col gap-2">
