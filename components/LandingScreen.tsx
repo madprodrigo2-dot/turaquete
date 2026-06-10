@@ -10,6 +10,7 @@ interface Props {
   onStart: () => void
   brands: Brand[]
   featuredRackets: RacketWithInsights[]
+  previewRacket?: RacketWithInsights
 }
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
@@ -108,8 +109,7 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
 function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
   const previewPrice = racket?.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
-    : 'R$ 1.890'
-  const previewName = racket?.name ?? "Heroe's CÉU"
+    : 'R$ 2.299'
   const previewImage = racket?.image_url ?? null
 
   return (
@@ -124,25 +124,25 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
           <span className="font-heading text-tinta text-[10px] font-semibold leading-none">especialista em raquetes</span>
         </div>
 
+        {/* Burbuja usuário */}
+        <div className="flex justify-end">
+          <div className="bg-tinta rounded-2xl rounded-tr-sm px-3 py-2 max-w-[85%]">
+            <p className="text-white text-[11px] leading-snug">Sinto o cotovelo e jogo mais na defesa</p>
+          </div>
+        </div>
+
         {/* Burbuja agente */}
         <div className="flex items-end gap-1.5">
           <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0">
             <Image src="/turaquete-favicon.png" alt="" width={20} height={20} className="w-full h-full object-cover" />
           </div>
           <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 border border-gray-100 shadow-sm flex-1">
-            <p className="text-tinta text-[11px] leading-snug">Me conta como você joga!</p>
+            <p className="text-tinta text-[11px] leading-snug">Achei a ideal pra proteger seu braço:</p>
           </div>
         </div>
 
-        {/* Burbuja usuário */}
-        <div className="flex justify-end">
-          <div className="bg-tinta rounded-2xl rounded-tr-sm px-3 py-2 max-w-[80%]">
-            <p className="text-white text-[11px] leading-snug">Jogo há 1 ano e quero potência</p>
-          </div>
-        </div>
-
-        {/* Mini RacketCard */}
-        <div className="bg-white rounded-xl border border-aqua/20 overflow-hidden flex flex-col shadow-sm">
+        {/* Mini RacketCard — CÉU */}
+        <div className="bg-white rounded-xl border border-aqua/20 overflow-hidden flex flex-col shadow-sm ml-[26px]">
           <div className="h-16 bg-white flex items-center justify-center p-1.5">
             {previewImage ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -152,8 +152,9 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
             )}
           </div>
           <div className="px-2.5 py-2 flex flex-col gap-1">
-            <p className="font-heading text-tinta text-[10px] font-semibold leading-tight line-clamp-1">{previewName}</p>
+            <p className="font-heading text-tinta text-[10px] font-semibold leading-tight">CÉU</p>
             <p className="font-heading text-coral text-[11px] font-bold">{previewPrice}</p>
+            <p className="text-tinta/50 text-[9px] leading-snug">EVA supersoft + 22mm: conforto e estabilidade na defesa</p>
             <div className="border border-aqua rounded-lg py-1 text-center mt-0.5">
               <p className="text-tinta text-[9px] font-semibold">Quero esta raquete</p>
             </div>
@@ -245,7 +246,7 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function LandingScreen({ onStart, brands, featuredRackets }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, previewRacket }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
 
@@ -364,7 +365,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets }: Prop
 
           {/* Preview do chat — decorativo */}
           <div className="flex justify-center md:justify-end" aria-hidden="true">
-            <ChatPreview racket={featuredRackets[0]} />
+            <ChatPreview racket={previewRacket} />
           </div>
 
         </div>{/* end hero grid */}
