@@ -244,6 +244,61 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
   )
 }
 
+// ── Arena decorative ball ──────────────────────────────────────────────────────
+
+function ArenaBall({
+  size,
+  rotation = 0,
+  settled = false,
+  className = '',
+}: {
+  size: number
+  rotation?: number
+  settled?: boolean
+  className?: string
+}) {
+  const deprW = Math.round(size * 1.5)
+  const deprH = Math.round(size * 0.35)
+
+  return (
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none select-none absolute${className ? ' ' + className : ''}`}
+      style={{ width: size, height: size + deprH }}
+    >
+      {/* Sand depression */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: deprW,
+          height: deprH,
+          borderRadius: '50%',
+          background: 'radial-gradient(ellipse at center, rgba(140,110,70,0.25) 0%, transparent 70%)',
+        }}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/turaquete-bola.svg"
+        alt=""
+        className={settled ? 'ball-settle' : undefined}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: size,
+          height: size,
+          transform: `rotate(${rotation}deg)`,
+          filter:
+            'drop-shadow(0 5px 10px rgba(140,110,70,0.26)) drop-shadow(0 2px 3px rgba(140,110,70,0.18))',
+        }}
+      />
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function LandingScreen({ onStart, brands, featuredRackets, previewRacket }: Props) {
@@ -385,44 +440,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
       {/* ── Seção arena: chat preview + conteúdo sobre areia ── */}
       <div ref={arenaRef} className="w-full bg-arena arena-grain relative">
         {/* ── Pelotas decorativas ── */}
-        {/* Bola A: grande, desktop-only, gutter esquerdo */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none select-none hidden md:block absolute left-[2.5%] bottom-14"
-          style={{ width: 28, height: 28, filter: 'drop-shadow(0 5px 10px rgba(140,110,70,0.26)) drop-shadow(0 2px 3px rgba(140,110,70,0.18))' }}
-        >
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <circle cx="14" cy="14" r="13.5" fill="#FF5E3A" />
-            <path d="M4,12 C7,3 21,3 24,12" stroke="rgba(255,255,255,0.32)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-            <path d="M4,16 C7,25 21,25 24,16" stroke="rgba(255,255,255,0.32)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-          </svg>
-        </div>
+        {/* Bola A: 36px, rotation 0°, desktop-only, gutter esquerdo */}
+        <ArenaBall size={36} rotation={0} className="hidden md:block left-[2.5%] bottom-10" />
 
-        {/* Bola B: pequena — mobile topo-esquerdo, desktop gutter direito */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none select-none absolute top-[7px] left-4 md:top-9 md:left-auto md:right-[2%]"
-          style={{ width: 14, height: 14, filter: 'drop-shadow(0 3px 5px rgba(140,110,70,0.24)) drop-shadow(0 1px 2px rgba(140,110,70,0.18))' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="6.5" fill="#FF5E3A" />
-            <path d="M2,5.8 C3.5,1.5 10.5,1.5 12,5.8" stroke="rgba(255,255,255,0.30)" strokeWidth="0.9" fill="none" strokeLinecap="round"/>
-            <path d="M2,8.2 C3.5,12.5 10.5,12.5 12,8.2" stroke="rgba(255,255,255,0.30)" strokeWidth="0.9" fill="none" strokeLinecap="round"/>
-          </svg>
-        </div>
+        {/* Bola B: 22px, rotation 40°, mobile topo-esquerdo / desktop gutter direito */}
+        <ArenaBall size={22} rotation={40} className="top-[7px] left-4 md:top-9 md:left-auto md:right-[2%]" />
 
-        {/* Bola C: média, animada (1x), rodapé — mobile + desktop */}
-        <div
-          aria-hidden="true"
-          className={`pointer-events-none select-none absolute bottom-[6px] right-5 md:bottom-12 md:right-[3%]${ballSettled ? ' ball-settle' : ''}`}
-          style={{ width: 20, height: 20, filter: 'drop-shadow(0 4px 8px rgba(140,110,70,0.28)) drop-shadow(0 1.5px 3px rgba(140,110,70,0.20))' }}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <circle cx="10" cy="10" r="9.5" fill="#FF5E3A" />
-            <path d="M2.5,8.5 C5,2 15,2 17.5,8.5" stroke="rgba(255,255,255,0.32)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-            <path d="M2.5,11.5 C5,18 15,18 17.5,11.5" stroke="rgba(255,255,255,0.32)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-          </svg>
-        </div>
+        {/* Bola C: 28px, rotation -25°, animada (1x), rodapé — mobile + desktop */}
+        <ArenaBall size={28} rotation={-25} settled={ballSettled} className="bottom-[6px] right-5 md:bottom-8 md:right-[3%]" />
 
         <div className="max-w-sm md:max-w-2xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 

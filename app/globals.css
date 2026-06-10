@@ -19,14 +19,14 @@
   /* Warm two-layer shadow: ambient (wide) + contact (tight) — cards resting on sand */
   .shadow-arena {
     box-shadow:
-      0 16px 50px -6px rgba(160, 130, 85, 0.18),
-      0 4px 10px -2px rgba(140, 110, 70, 0.22);
+      0 18px 45px rgba(150, 118, 75, 0.28),
+      0 5px 10px rgba(130, 100, 60, 0.30);
     transition: box-shadow 0.2s ease;
   }
   .shadow-arena:hover {
     box-shadow:
-      0 20px 55px -4px rgba(160, 130, 85, 0.22),
-      0 5px 12px -1px rgba(140, 110, 70, 0.27);
+      0 22px 50px rgba(150, 118, 75, 0.34),
+      0 6px 12px rgba(130, 100, 60, 0.36);
   }
 
   /* Arena texture: fine grain + coarse speckles + tonal dunes + wet-sand top shadow */

@@ -1,0 +1,15 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<clipPath id="ball"><circle cx="50" cy="50" r="47"/></clipPath>
+</defs>
+<!-- base naranja-coral -->
+<circle cx="50" cy="50" r="47" fill="#FF5E3A"/>
+<!-- mitad amarilla delimitada por costura en S -->
+<g clip-path="url(#ball)">
+<path d="M 35 3 C 80 28, 20 72, 65 97 L 105 97 L 105 3 Z" fill="#FFC42E"/>
+<!-- costura blanca -->
+<path d="M 35 3 C 80 28, 20 72, 65 97" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+</g>
+<!-- highlight sutil -->
+<ellipse cx="35" cy="30" rx="10" ry="6" fill="#FFFFFF" opacity="0.25" transform="rotate(-25 35 30)"/>
+</svg>
