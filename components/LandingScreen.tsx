@@ -114,7 +114,7 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
 
   return (
     <div className="w-[220px] md:w-[240px] flex-shrink-0 select-none pointer-events-none">
-      <div className="bg-gray-50 rounded-2xl border border-aqua/20 shadow-xl p-3 flex flex-col gap-2 rotate-[2deg]">
+      <div className="bg-gray-50 rounded-2xl border border-aqua/20 shadow-arena p-3 flex flex-col gap-2 rotate-[2deg]">
 
         {/* Header simulado */}
         <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 border border-gray-100 shadow-sm">
@@ -212,7 +212,7 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
   const perfil = racket.racket_insights?.perfil_resumo ?? null
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+    <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-arena flex flex-col">
       <Link href={`/raquetes/${racket.slug}`} className="block">
         <div className="aspect-[4/5] bg-white p-3 flex items-center justify-center">
           {racket.image_url ? (
@@ -377,7 +377,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
           <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] md:gap-10 md:items-start gap-5">
 
             {/* Como funciona */}
-            <div className="order-2 md:order-1 bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
+            <div className="order-2 md:order-1 bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
               <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
               <div className="flex flex-col">
                 {STEPS.map((step, i) => (
@@ -406,7 +406,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
           </div>{/* end grid chat+como-funciona */}
 
           {/* Analisamos seu jogo */}
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-aqua/20 hover:shadow-md transition-shadow">
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
             <p className="font-heading font-bold text-tinta text-base md:text-lg mb-4">Analisamos seu jogo</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {ANALYSIS_ITEMS.map(({ Icon, label }) => (

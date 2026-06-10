@@ -16,6 +16,19 @@
   .font-body {
     font-family: var(--font-inter), system-ui, sans-serif;
   }
+  /* Warm two-layer shadow: ambient (wide) + contact (tight) — cards resting on sand */
+  .shadow-arena {
+    box-shadow:
+      0 16px 50px -6px rgba(160, 130, 85, 0.18),
+      0 4px 10px -2px rgba(140, 110, 70, 0.22);
+    transition: box-shadow 0.2s ease;
+  }
+  .shadow-arena:hover {
+    box-shadow:
+      0 20px 55px -4px rgba(160, 130, 85, 0.22),
+      0 5px 12px -1px rgba(140, 110, 70, 0.27);
+  }
+
   /* Arena texture: fine grain + coarse speckles + tonal dunes + wet-sand top shadow */
   .arena-grain {
     box-shadow: inset 0 22px 32px -10px rgba(128,92,46,0.14);
