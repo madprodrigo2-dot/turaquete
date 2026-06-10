@@ -1,5 +1,6 @@
 'use client'
 import { useEffect } from 'react'
+import Image from 'next/image'
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
@@ -97,9 +98,19 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
           {/* Explicações determinísticas */}
           {explicacoes.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="text-tinta/60 font-semibold text-xs uppercase tracking-wider">
-                O que explica essas notas
-              </p>
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/tury-explicando.png"
+                  alt="Tury explicando"
+                  width={128}
+                  height={128}
+                  className="w-[52px] md:w-[64px] h-auto shrink-0"
+                  style={{ width: undefined }}
+                />
+                <p className="text-tinta/60 font-semibold text-xs uppercase tracking-wider">
+                  O que explica essas notas
+                </p>
+              </div>
               <ul className="flex flex-col gap-2">
                 {explicacoes.map((linha, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-tinta/80 leading-snug">

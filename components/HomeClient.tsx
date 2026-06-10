@@ -103,6 +103,7 @@ export default function HomeClient({ brands, featuredRackets, previewRacket }: P
                   height={474}
                   priority
                   className="h-9 md:h-12 w-auto"
+                  style={{ width: 'auto' }}
                 />
                 <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
                   {loading
@@ -120,6 +121,7 @@ export default function HomeClient({ brands, featuredRackets, previewRacket }: P
                   role={m.role}
                   content={m.content}
                   recommendations={m.recommendations}
+                  showTury={i === 0 && m.role === 'assistant'}
                 />
               ))}
               {loading && <ChatMessage role="assistant" content="" loading />}

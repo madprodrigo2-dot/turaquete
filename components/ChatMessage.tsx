@@ -7,6 +7,7 @@ interface Props {
   content: string
   recommendations?: RecommendedRacket[]
   loading?: boolean
+  showTury?: boolean
 }
 
 function renderText(text: string): React.ReactNode {
@@ -18,24 +19,38 @@ function renderText(text: string): React.ReactNode {
   )
 }
 
-export default function ChatMessage({ role, content, recommendations, loading = false }: Props) {
+export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false }: Props) {
   const isAssistant = role === 'assistant'
 
   return (
     <div className={`flex flex-col w-full msg-enter ${isAssistant ? 'items-start' : 'items-end'}`}>
+
+      {/* Tury saludando — só no primeiro mensagem do agente */}
+      {showTury && isAssistant && (
+        <div className="pl-9 mb-1">
+          <Image
+            src="/tury-saludando.png"
+            alt="Tury, a mascote da Turaquete, acenando"
+            width={200}
+            height={200}
+            className="w-[90px] md:w-[105px] h-auto"
+            style={{ width: undefined }}
+          />
+        </div>
+      )}
 
       {/* Bubble row — avatar + message */}
       <div className="flex items-end gap-2">
 
         {/* Avatar do agente */}
         {isAssistant && (
-          <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-tinta">
+          <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-tinta flex items-center justify-center">
             <Image
               src="/turaquete-favicon.png"
               alt="Turaquete"
-              width={28}
-              height={28}
-              className="w-full h-full object-cover"
+              width={22}
+              height={22}
+              className="object-contain"
             />
           </div>
         )}

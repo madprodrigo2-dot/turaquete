@@ -118,8 +118,8 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
 
         {/* Header simulado */}
         <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 border border-gray-100 shadow-sm">
-          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0">
-            <Image src="/turaquete-favicon.png" alt="" width={20} height={20} className="w-full h-full object-cover" />
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0 flex items-center justify-center">
+            <Image src="/turaquete-favicon.png" alt="" width={16} height={16} className="object-contain" />
           </div>
           <span className="font-heading text-tinta text-[10px] font-semibold leading-none">especialista em raquetes</span>
         </div>
@@ -133,8 +133,8 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
 
         {/* Burbuja agente */}
         <div className="flex items-end gap-1.5">
-          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0">
-            <Image src="/turaquete-favicon.png" alt="" width={20} height={20} className="w-full h-full object-cover" />
+          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0 flex items-center justify-center">
+            <Image src="/turaquete-favicon.png" alt="" width={16} height={16} className="object-contain" />
           </div>
           <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 border border-gray-100 shadow-sm flex-1">
             <p className="text-tinta text-[11px] leading-snug">Achei a ideal pra proteger seu braço:</p>
@@ -387,6 +387,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
             height={474}
             priority
             className="h-10 md:h-[3.25rem] w-auto"
+            style={{ width: 'auto' }}
           />
           <button
             onClick={handleHeaderCta}
