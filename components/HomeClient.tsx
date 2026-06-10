@@ -103,8 +103,11 @@ export default function HomeClient({ brands, featuredRackets }: Props) {
                   priority
                   className="h-9 md:h-12 w-auto"
                 />
-                <span className="hidden md:block font-heading text-tinta/50 text-xs mt-0.5 tracking-wide">
-                  especialista em beach tennis
+                <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
+                  {loading
+                    ? <span className="text-aqua/70 italic">digitando...</span>
+                    : <span className="text-tinta/50">especialista em beach tennis</span>
+                  }
                 </span>
               </div>
             </header>

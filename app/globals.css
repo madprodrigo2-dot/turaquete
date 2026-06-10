@@ -29,3 +29,38 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* ── Typing indicator — coral bounce balls ───────────────────────────────── */
+@keyframes bt-bounce {
+  0%, 75%, 100% { transform: translateY(0);    }
+  38%           { transform: translateY(-8px); }
+}
+
+.bt-ball {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #FF5E3A;
+  animation: bt-bounce 0.9s ease infinite;
+}
+.bt-ball:nth-child(2) { animation-delay: 0.18s; }
+.bt-ball:nth-child(3) { animation-delay: 0.36s; }
+
+/* ── Message enter — fade + slide up ─────────────────────────────────────── */
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.msg-enter {
+  animation: msg-in 180ms ease-out both;
+}
+
+/* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .bt-ball,
+  .msg-enter {
+    animation: none !important;
+  }
+}
