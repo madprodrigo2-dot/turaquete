@@ -19,7 +19,7 @@ export default function RacketCard({ racket, razao }: Props) {
     ? `R$ ${racket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
     : null
 
-  const nameDisplay = racket.model_year
+  const nameDisplay = racket.model_year && !racket.name.includes(String(racket.model_year))
     ? `${racket.name} ${racket.model_year}`
     : racket.name
 

@@ -53,6 +53,17 @@ export interface RecommendedRacket {
   razao: string
 }
 
+// Supabase returns one-to-many joins as arrays — normalise to single object
+function normalizeRacket(raw: unknown): RacketWithInsights {
+  const r = raw as RacketWithInsights & { racket_insights: unknown }
+  return {
+    ...r,
+    racket_insights: Array.isArray(r.racket_insights)
+      ? ((r.racket_insights[0] as Insights) ?? null)
+      : (r.racket_insights as Insights | null),
+  }
+}
+
 const SELECT_FIELDS = `
   id, name, slug, model_year, weight_g, balance, format,
   face_material, core, price, currency, affiliate_url, source_url, image_url, technologies,
@@ -85,7 +96,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   const { data, error } = await query.limit(30)
   if (error) throw new Error(`Supabase: ${error.message}`)
 
-  const allCandidates = (data as unknown as RacketWithInsights[]) ?? []
+  const allCandidates = ((data as unknown[]) ?? []).map(normalizeRacket)
   const criteriosRelaxados: string[] = []
   let results = [...allCandidates]
 
@@ -169,7 +180,7 @@ export async function detalleRaqueta(id: number): Promise<RacketWithInsights | n
     .single()
 
   if (error) return null
-  return data as unknown as RacketWithInsights
+  return normalizeRacket(data)
 }
 
 export async function listarRaquetas(): Promise<RacketWithInsights[]> {
@@ -180,7 +191,7 @@ export async function listarRaquetas(): Promise<RacketWithInsights[]> {
     .order('name')
 
   if (error) throw new Error(`Supabase: ${error.message}`)
-  return (data as unknown as RacketWithInsights[]) ?? []
+  return ((data as unknown[]) ?? []).map(normalizeRacket)
 }
 
 export async function getRaquetasByIds(ids: number[]): Promise<RacketWithInsights[]> {
@@ -191,7 +202,7 @@ export async function getRaquetasByIds(ids: number[]): Promise<RacketWithInsight
     .in('id', ids)
 
   if (error) throw new Error(`Supabase: ${error.message}`)
-  return (data as unknown as RacketWithInsights[]) ?? []
+  return ((data as unknown[]) ?? []).map(normalizeRacket)
 }
 
 export interface Brand {
@@ -212,7 +223,7 @@ export async function getRaquetaPorSlug(slug: string): Promise<RacketWithInsight
     .single()
 
   if (error) return null
-  return data as unknown as RacketWithInsights
+  return normalizeRacket(data)
 }
 
 export async function listarRaquetasPorMarca(

@@ -25,7 +25,7 @@ function getPose(loading: boolean, isFirst: boolean, hasRecs: boolean, content: 
   if (isFirst)                                             return { p: TURY.saludando,   h: 88 }
   if (hasRecs)                                             return { p: TURY.explicando,  h: 56 }
   if (ERROR_PHRASES.some(e => content.includes(e)))        return { p: TURY.apenada,     h: 44 }
-  return                                                          { p: TURY.saludando,   h: 48 }
+  return null
 }
 
 function renderText(text: string): React.ReactNode {
@@ -40,7 +40,7 @@ function renderText(text: string): React.ReactNode {
 export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false }: Props) {
   const isAssistant = role === 'assistant'
   const hasRecs = (recommendations?.length ?? 0) > 0
-  const { p, h } = getPose(loading, showTury, hasRecs, content)
+  const turyConfig = getPose(loading, showTury, hasRecs, content)
 
   return (
     <div className={`flex flex-col w-full msg-enter ${isAssistant ? 'items-start' : 'items-end'}`}>
@@ -57,24 +57,24 @@ export default function ChatMessage({ role, content, recommendations, loading = 
       {/* Bubble row — Tury (corpo completo, sem máscara) + burbuja */}
       <div className="flex items-end gap-2">
 
-        {isAssistant && (
+        {isAssistant && turyConfig && (
           <Image
-            src={p.src}
-            alt={p.alt}
-            width={p.nW}
-            height={p.nH}
+            src={turyConfig.p.src}
+            alt={turyConfig.p.alt}
+            width={turyConfig.p.nW}
+            height={turyConfig.p.nH}
             priority={showTury}
             className="flex-shrink-0 self-end"
-            style={{ height: `${h}px`, width: 'auto' }}
+            style={{ height: `${turyConfig.h}px`, width: 'auto' }}
           />
         )}
 
         {/* Burbuja */}
         <div
-          className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
+          className={`px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
             ${isAssistant
-              ? 'bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100'
-              : 'bg-tinta text-white rounded-tr-sm'
+              ? `${turyConfig ? 'max-w-[85%]' : 'w-full'} bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100`
+              : 'max-w-[85%] bg-tinta text-white rounded-tr-sm'
             }`}
         >
           {loading ? (
