@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { RacketWithInsights } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
+import AthleteBadge from './AthleteBadge'
 
 interface Props {
   racket: RacketWithInsights
@@ -22,6 +23,8 @@ export default function RacketCard({ racket, razao }: Props) {
   const nameDisplay = racket.model_year && !racket.name.includes(String(racket.model_year))
     ? `${racket.name} ${racket.model_year}`
     : racket.name
+
+  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
 
   const ins = racket.racket_insights
   const topDims = ins
@@ -47,22 +50,29 @@ export default function RacketCard({ racket, razao }: Props) {
   return (
     <>
       <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden w-full">
-        {/* Imagem */}
-        {racket.image_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={racket.image_url}
-            alt={racket.name}
-            className="w-full h-40 object-contain bg-gray-50 p-3"
-          />
-        ) : (
-          <div className="w-full h-40 bg-gray-50 flex items-center justify-center select-none">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" opacity="0.3" />
-              <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" opacity="0.3" />
-            </svg>
-          </div>
-        )}
+        {/* Imagem + badge de atleta */}
+        <div className="relative">
+          {racket.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={racket.image_url}
+              alt={racket.name}
+              className="w-full h-40 object-contain bg-gray-50 p-3"
+            />
+          ) : (
+            <div className="w-full h-40 bg-gray-50 flex items-center justify-center select-none">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" opacity="0.3" />
+                <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" opacity="0.3" />
+              </svg>
+            </div>
+          )}
+          {athlete && (
+            <div className="absolute top-2 left-2 z-10">
+              <AthleteBadge athlete={athlete} />
+            </div>
+          )}
+        </div>
 
         {/* Conteúdo */}
         <div className="p-4 flex flex-col gap-2">

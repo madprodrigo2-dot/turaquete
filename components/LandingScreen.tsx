@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Wallet } from 'lucide-react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
+import AthleteBadge from './AthleteBadge'
 
 interface Props {
   onStart: () => void
@@ -205,10 +206,11 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
     : null
 
   const perfil = racket.racket_insights?.perfil_resumo ?? null
+  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-arena flex flex-col">
-      <Link href={`/raquetes/${racket.slug}`} className="block">
+      <Link href={`/raquetes/${racket.slug}`} className="block relative">
         <div className="aspect-[4/5] bg-white p-3 flex items-center justify-center">
           {racket.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -217,6 +219,11 @@ function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart
             <IconEstilo />
           )}
         </div>
+        {athlete && (
+          <div className="absolute top-1.5 left-1.5 z-10">
+            <AthleteBadge athlete={athlete} />
+          </div>
+        )}
       </Link>
       <div className="p-3 flex flex-col gap-2 flex-1">
         <Link href={`/raquetes/${racket.slug}`}>

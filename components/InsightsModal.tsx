@@ -7,6 +7,7 @@ import {
 } from 'recharts'
 import { RacketWithInsights } from '@/lib/recommend'
 import { gerarExplicacoes } from '@/lib/explicador'
+import AthleteBadge from './AthleteBadge'
 
 interface Props {
   racket: RacketWithInsights
@@ -45,6 +46,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
   const explicacoes = gerarExplicacoes(racket)
 
   const tratamentoFabrica = (racket.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica
+  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
   const specItems = [
     racket.weight_g ? `${racket.weight_g}g` : null,
     racket.balance  ? racket.balance         : null,
@@ -71,7 +73,10 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
         <div className="flex items-start justify-between px-5 pt-4 pb-2">
           <div>
             <p className="font-semibold text-tinta text-sm leading-snug">{racket.name}</p>
-            <p className="text-tinta/50 text-xs mt-0.5">Análise completa</p>
+            {athlete
+              ? <AthleteBadge athlete={athlete} variant="modal" />
+              : <p className="text-tinta/50 text-xs mt-0.5">Análise completa</p>
+            }
           </div>
           <button
             onClick={onClose}

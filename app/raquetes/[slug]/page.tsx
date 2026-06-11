@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
 import BuyButton from '@/components/BuyButton'
+import AthleteBadge from '@/components/AthleteBadge'
 
 export const dynamicParams = false
 
@@ -107,6 +108,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   }
 
   const specsExtra = racket.specs_extra as Record<string, string | number> | null
+  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
 
   return (
     <>
@@ -148,6 +150,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
             <h1 className="text-2xl font-bold text-tinta leading-tight">{racket.name}</h1>
             {price && <p className="text-coral text-xl font-bold">{price}</p>}
             <div className="flex gap-2 flex-wrap">
+              {athlete && <AthleteBadge athlete={athlete} />}
               {ins?.nivel_sugerido && (
                 <span className="bg-aqua/15 text-aqua text-xs font-semibold px-3 py-1 rounded-full capitalize">
                   {ins.nivel_sugerido}
