@@ -102,7 +102,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
 
       <div className="min-h-screen bg-aqua-light">
         {/* Nav */}
-        <div className="sticky top-0 z-10 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
+        <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
           <Link
             href="/"
             className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"

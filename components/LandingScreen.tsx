@@ -391,7 +391,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
     <div className="min-h-screen bg-aqua-light flex flex-col items-center pb-10 md:pb-16">
 
       {/* Sticky header — full viewport width */}
-      <div className={`sticky top-0 z-10 w-full flex justify-center px-5 md:px-8 bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
+      <div className={`sticky top-0 z-30 w-full flex justify-center px-5 md:px-8 bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
         <div className="w-full max-w-sm md:max-w-2xl flex items-center justify-between py-3 md:py-4">
           <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
             <Image
