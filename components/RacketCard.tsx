@@ -35,7 +35,7 @@ export default function RacketCard({ racket, razao }: Props) {
         { label: 'manuseio',     v: ins.maneuverability },
         { label: 'spin',         v: ins.spin            },
         { label: 'estabilidade', v: ins.stability       },
-        { label: 'perdão',       v: ins.forgiveness     },
+        // forgiveness is internal — agent uses it in reasoning but never shown as a visible score
       ]
         .filter(d => d.v != null)
         .sort((a, b) => (b.v as number) - (a.v as number))

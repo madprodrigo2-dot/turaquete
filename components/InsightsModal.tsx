@@ -16,8 +16,18 @@ interface Props {
   onClose: () => void
 }
 
+const GLOSSARY: [string, string][] = [
+  ['Potência',     'força que a raquete devolve no ataque — smashes mais pesados.'],
+  ['Controle',     'precisão pra colocar a bola onde você quer.'],
+  ['Conforto',     'quanto ela absorve o impacto e protege seu braço.'],
+  ['Manuseio',     'rapidez e leveza pra reagir — defesa e jogo de rede.'],
+  ['Spin',         'capacidade de gerar efeito na bola.'],
+  ['Estabilidade', 'firmeza no impacto — golpes consistentes, sem torcer na mão.'],
+]
+
 export default function InsightsModal({ racket, open, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const ins = racket.racket_insights
 
   useEffect(() => setMounted(true), [])
@@ -43,6 +53,20 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
     { subject: 'Spin',         value: ins.spin            ?? 0 },
     { subject: 'Estabilidade', value: ins.stability       ?? 0 },
   ]
+
+  const RadarTick = (props: {
+    x?: number; y?: number; payload?: { value: string }
+    textAnchor?: 'start' | 'middle' | 'end' | 'inherit'
+  }) => {
+    const { x = 0, y = 0, payload, textAnchor = 'middle' } = props
+    const score = radarData.find(d => d.subject === payload?.value)?.value ?? 0
+    return (
+      <text x={x} y={y} textAnchor={textAnchor} dy="0.355em">
+        <tspan fill="#0E3A40" fontSize={11} fontWeight={500}>{payload?.value} </tspan>
+        <tspan fill="#0CC0BE" fontSize={11} fontWeight={700}>{score}</tspan>
+      </text>
+    )
+  }
 
   const explicacoes = gerarExplicacoes(racket)
   const specRows = buildSpecRows(racket)
@@ -97,7 +121,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               <PolarGrid stroke="#C9EEEC" />
               <PolarAngleAxis
                 dataKey="subject"
-                tick={{ fill: '#0E3A40', fontSize: 11, fontWeight: 500 }}
+                tick={<RadarTick />}
               />
               <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
               <Radar
@@ -109,6 +133,31 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               />
             </RadarChart>
           </ResponsiveContainer>
+
+          {/* Glossário de dimensões */}
+          <div className="border border-aqua/20 rounded-xl overflow-hidden -mt-1">
+            <button
+              className="flex items-center justify-between w-full px-3 py-2.5 text-xs text-tinta/50 hover:text-tinta/70 transition-colors"
+              onClick={() => setGlossaryOpen(o => !o)}
+            >
+              <span>O que significa cada dimensão?</span>
+              <svg
+                width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"
+                className={`transition-transform duration-150 ${glossaryOpen ? 'rotate-180' : ''}`}
+              >
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {glossaryOpen && (
+              <div className="px-3 pb-3 flex flex-col gap-1.5 border-t border-aqua/10 pt-2.5">
+                {GLOSSARY.map(([dim, desc]) => (
+                  <p key={dim} className="text-xs text-tinta/60 leading-relaxed">
+                    <span className="font-semibold text-tinta/80">{dim}:</span> {desc}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Nota spin */}
           {tratamentoFabrica === false && (
