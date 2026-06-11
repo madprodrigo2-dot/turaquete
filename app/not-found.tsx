@@ -31,7 +31,7 @@ export default function NotFound() {
           Opa! Essa página saiu da quadra.
         </h1>
         <p className="text-tinta/60 text-base md:text-lg leading-relaxed max-w-xs mx-auto">
-          Parece que esse endereço não existe — ou a bola foi longe demais.
+          Parece que esse endereço não existe. A bola foi longe demais.
         </p>
       </div>
       <Link

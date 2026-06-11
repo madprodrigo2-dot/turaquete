@@ -31,14 +31,14 @@ export default function PrivacidadePage() {
           <section className="flex flex-col gap-2">
             <h2 className="font-heading font-bold text-tinta text-base md:text-lg">Métricas de uso</h2>
             <p>
-              Utilizamos o Google Analytics para entender como o site é usado — páginas visitadas, tempo de sessão e eventos de navegação. Esses dados são agregados e anônimos. Nenhum dado pessoal é enviado ao Google.
+              Utilizamos o Google Analytics para entender como o site é usado: páginas visitadas, tempo de sessão e eventos de navegação. Esses dados são agregados e anônimos. Nenhum dado pessoal é enviado ao Google.
             </p>
           </section>
 
           <section className="flex flex-col gap-2">
             <h2 className="font-heading font-bold text-tinta text-base md:text-lg">Links de afiliado</h2>
             <p>
-              Os links para compra de raquetes apontam para o Mercado Livre e lojas parceiras. A Turaquete pode receber uma comissão sobre compras realizadas por esses links, sem custo adicional para você. Isso não influencia as recomendações — elas são baseadas exclusivamente nas especificações técnicas e no seu perfil de jogo.
+              Os links para compra de raquetes apontam para o Mercado Livre e lojas parceiras. A Turaquete pode receber uma comissão sobre compras realizadas por esses links, sem custo adicional para você. Isso não influencia as recomendações, que são baseadas exclusivamente nas especificações técnicas e no seu perfil de jogo.
             </p>
           </section>
 

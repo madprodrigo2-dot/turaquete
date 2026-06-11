@@ -17,12 +17,12 @@ interface Props {
 }
 
 const GLOSSARY: [string, string][] = [
-  ['Potência',     'força que a raquete devolve no ataque — smashes mais pesados.'],
+  ['Potência',     'força que a raquete devolve no ataque. Smashes mais pesados.'],
   ['Controle',     'precisão pra colocar a bola onde você quer.'],
   ['Conforto',     'quanto ela absorve o impacto e protege seu braço.'],
-  ['Manuseio',     'rapidez e leveza pra reagir — defesa e jogo de rede.'],
+  ['Manuseio',     'rapidez e leveza pra reagir no jogo de rede e na defesa.'],
   ['Spin',         'capacidade de gerar efeito na bola.'],
-  ['Estabilidade', 'firmeza no impacto — golpes consistentes, sem torcer na mão.'],
+  ['Estabilidade', 'firmeza no impacto: golpes consistentes, sem torcer na mão.'],
 ]
 
 export default function InsightsModal({ racket, open, onClose }: Props) {
@@ -164,7 +164,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 -mt-1">
               <span className="text-amber-500 shrink-0 mt-0.5 text-sm">ℹ</span>
               <p className="text-amber-800 text-xs leading-relaxed">
-                <strong className="font-semibold">Spin:</strong> superfície lisa de fábrica — dá pra aumentar com tratamento (areado) aplicado depois da compra.
+                <strong className="font-semibold">Spin:</strong> superfície lisa de fábrica. Dá pra aumentar com areado aplicado depois da compra.
               </p>
             </div>
           )}

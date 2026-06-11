@@ -16,7 +16,7 @@ interface Props {
   previewRacket?: RacketWithInsights
 }
 
-const BADGES = ['Grátis', 'Sem cadastro', 'Resposta na hora']
+const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
 const STEPS = [
   'Conte como você joga, do seu jeito',
@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     q: 'Como vocês escolhem as raquetes?',
-    a: 'Com base em specs reais e análise especializada — peso, balance, material do núcleo e da face. Sem achismo, sem patrocínio.',
+    a: 'Com base em specs reais e análise especializada: peso, balance, material do núcleo e da face. Sem achismo, sem patrocínio.',
   },
   {
     q: 'Vocês vendem raquetes?',
@@ -415,9 +415,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           {/* H1 + subtítulo */}
           <div className="flex flex-col gap-3 md:gap-4">
             <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
-              A raquete certa pro seu jogo.{' '}
+              A raquete certa{' '}
               <span className="relative inline-block text-coral">
-                Em 1 minuto.
+                de primeira.
                 <svg
                   viewBox="0 0 140 10"
                   fill="none"
@@ -436,14 +436,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </span>
             </h1>
             <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
-              Conte como você joga e nosso especialista em raquetes de beach tennis te indica a ideal — com o porquê de cada escolha.
+              Raquete errada custa caro. Conte como você joga e nosso especialista te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
             </p>
           </div>
 
           {/* Franja */}
           <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
             <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
-              O mesmo que um especialista faz numa consultoria paga — aqui sem custo.
+              O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
             </p>
           </div>
 

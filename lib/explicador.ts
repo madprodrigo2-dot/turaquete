@@ -63,7 +63,7 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
   // ── Saída de bola ─────────────────────────────────────────────────────────
   const saidaDeBola = (racket.specs_extra as Record<string, unknown> | null)?.saida_de_bola as string | undefined
   if (saidaDeBola === 'fácil') {
-    linhas.push('Saída de bola fácil: devolve bem mesmo com swing suave — ótimo para iniciantes')
+    linhas.push('Saída de bola fácil: devolve bem mesmo com swing suave. Ótimo para iniciantes.')
   } else if (saidaDeBola === 'exigente') {
     linhas.push('Saída de bola exigente: entrega todo potencial com swing rápido e técnica apurada')
   }
@@ -71,7 +71,7 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
   // ── Spin / tratamento de superfície ───────────────────────────────────────
   const tratamentoFabrica = (racket.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica
   if (tratamentoFabrica === false) {
-    linhas.push('Spin: superfície lisa de fábrica — dá pra aumentar com areado aplicado depois')
+    linhas.push('Spin: superfície lisa de fábrica. Dá pra aumentar com areado aplicado depois.')
   }
 
   return linhas.slice(0, 6)
