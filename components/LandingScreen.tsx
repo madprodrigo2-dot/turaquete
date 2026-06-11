@@ -115,7 +115,7 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
         {/* Header simulado */}
         <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 border border-gray-100 shadow-sm">
           <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0 flex items-center justify-center">
-            <Image src="/turaquete-favicon.png" alt="" width={16} height={16} className="object-contain" />
+            <Image src="/logo-symbol.png" alt="" width={16} height={16} className="object-contain" />
           </div>
           <span className="font-heading text-tinta text-[10px] font-semibold leading-none">especialista em raquetes</span>
         </div>
@@ -130,7 +130,7 @@ function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
         {/* Burbuja agente */}
         <div className="flex items-end gap-1.5">
           <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0 flex items-center justify-center">
-            <Image src="/turaquete-favicon.png" alt="" width={16} height={16} className="object-contain" />
+            <Image src="/logo-symbol.png" alt="" width={16} height={16} className="object-contain" />
           </div>
           <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 border border-gray-100 shadow-sm flex-1">
             <p className="text-tinta text-[11px] leading-snug">Achei a ideal pra proteger seu braço:</p>
@@ -384,10 +384,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <div className="w-full max-w-sm md:max-w-2xl flex items-center justify-between py-3 md:py-4">
           <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
             <Image
-              src="/turaquete-logo.png"
+              src="/logo-header.png"
               alt="Turaquete"
-              width={852}
-              height={474}
+              width={386}
+              height={128}
               priority
               className="h-10 md:h-[3.25rem] w-auto"
               style={{ width: 'auto' }}
@@ -466,8 +466,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <Image
               src="/tury-explicando.png"
               alt="Tury apontando para o botão Começar agora"
-              width={286}
-              height={276}
+              width={324}
+              height={434}
               priority
               className="max-[359px]:hidden shrink-0 select-none pointer-events-none"
               style={{ height: '54px', width: 'auto' }}

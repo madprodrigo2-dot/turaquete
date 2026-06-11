@@ -17,7 +17,7 @@ interface Props {
 }
 
 const GLOSSARY: [string, string][] = [
-  ['Potência',     'força que a raquete devolve no ataque. Smashes mais pesados.'],
+  ['Potência',     'força que a raquete devolve no ataque com swing rápido (o teto dela). Se seu swing é mais suave, olhe também a Saída de bola.'],
   ['Controle',     'precisão pra colocar a bola onde você quer.'],
   ['Conforto',     'quanto ela absorve o impacto e protege seu braço.'],
   ['Manuseio',     'rapidez e leveza pra reagir no jogo de rede e na defesa.'],
@@ -73,6 +73,14 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
   const tratamentoFabrica = extra.tratamento_fabrica
   const athlete = extra.atleta as string | undefined
+  const saidaDeBola = extra.saida_de_bola as string | undefined
+  const power = ins.power ?? 0
+
+  const saidaChipClass = saidaDeBola === 'fácil'
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : saidaDeBola === 'exigente'
+    ? 'bg-amber-50 text-amber-700 border-amber-200'
+    : 'bg-gray-100 text-gray-600 border-gray-200'
 
   return createPortal(
     <div
@@ -134,6 +142,33 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
             </RadarChart>
           </ResponsiveContainer>
 
+          {/* Saída de bola chip + nota Potência */}
+          {saidaDeBola && (
+            <div className="flex flex-col gap-2 -mt-1">
+              <span className={`self-start text-xs font-semibold px-2.5 py-1 rounded-full border ${saidaChipClass}`}>
+                Saída de bola: {saidaDeBola.charAt(0).toUpperCase() + saidaDeBola.slice(1)}
+              </span>
+              <div className="flex items-start gap-2 bg-aqua-light border border-aqua/20 rounded-xl px-3 py-2.5">
+                <span className="text-aqua shrink-0 mt-0.5 text-sm">ℹ</span>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-tinta/70 text-xs leading-relaxed">
+                    Potência mede o teto da raquete com swing rápido e técnico. Saída de bola mostra o quanto ela rende com swing mais suave.
+                  </p>
+                  {power >= 8 && saidaDeBola === 'exigente' && (
+                    <p className="text-amber-700 text-xs leading-relaxed">
+                      Essa só entrega a potência toda com técnica. Pra swing suave, ela rende menos que uma macia.
+                    </p>
+                  )}
+                  {saidaDeBola === 'fácil' && (
+                    <p className="text-emerald-700 text-xs leading-relaxed">
+                      Rende bem mesmo com swing suave, ideal pra quem tá evoluindo.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Glossário de dimensões */}
           <div className="border border-aqua/20 rounded-xl overflow-hidden -mt-1">
             <button
@@ -193,8 +228,8 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
                 <Image
                   src="/tury-explicando.png"
                   alt="Tury explicando"
-                  width={128}
-                  height={128}
+                  width={324}
+                  height={434}
                   className="w-[52px] md:w-[64px] h-auto shrink-0"
                 />
                 <p className="text-tinta/60 font-semibold text-xs uppercase tracking-wider">

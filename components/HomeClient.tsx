@@ -170,10 +170,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                   onClick={e => { e.preventDefault(); setView('landing'); window.scrollTo(0, 0) }}
                 >
                   <Image
-                    src="/turaquete-logo.png"
+                    src="/logo-header.png"
                     alt="Turaquete"
-                    width={852}
-                    height={474}
+                    width={386}
+                    height={128}
                     priority
                     className="h-9 md:h-12 w-auto"
                     style={{ width: 'auto' }}

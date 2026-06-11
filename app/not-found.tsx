@@ -10,10 +10,10 @@ export default function NotFound() {
     <div className="min-h-screen bg-aqua-light flex flex-col items-center justify-center px-5 text-center gap-6">
       <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
         <Image
-          src="/turaquete-logo.png"
+          src="/logo-header.png"
           alt="Turaquete"
-          width={852}
-          height={474}
+          width={386}
+          height={128}
           className="h-8 w-auto"
           style={{ width: 'auto' }}
         />
@@ -21,8 +21,8 @@ export default function NotFound() {
       <Image
         src="/tury-apenada.png"
         alt="Tury, a mascote da Turaquete, com cara de desculpa"
-        width={300}
-        height={300}
+        width={295}
+        height={434}
         className="w-[140px] md:w-[160px] h-auto"
         priority
       />
