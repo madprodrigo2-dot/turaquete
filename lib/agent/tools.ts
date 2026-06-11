@@ -13,6 +13,10 @@ export const agentTools: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
+        nome: {
+          type: 'string',
+          description: 'Termo parcial de busca por nome (case-insensitive). Use para resolver raquetes citadas pelo usuário (ex: "rebel" retorna Rebel 24 e Rebel 25). Nunca passe orçamento ou nível ao buscar por nome específico.',
+        },
         nivel: {
           type: 'string',
           enum: ['iniciante', 'intermediario', 'avancado'],

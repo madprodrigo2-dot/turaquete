@@ -2,6 +2,7 @@ import { getSupabase } from './supabase'
 import { scoreRacket } from './scorer'
 
 export interface RacketFilters {
+  nome?: string
   nivel?: 'iniciante' | 'intermediario' | 'avancado'
   presupuesto_max?: number
   prioridade?: 'potencia' | 'controle' | 'equilibrio' | 'defesa'
@@ -91,6 +92,10 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     .select(SELECT_FIELDS)
     .eq('is_active', true)
     .order('name')
+
+  if (filtros.nome) {
+    query = query.ilike('name', `%${filtros.nome}%`)
+  }
 
   if (filtros.presupuesto_max) {
     query = query.lte('price', filtros.presupuesto_max)

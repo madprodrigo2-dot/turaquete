@@ -94,7 +94,11 @@ export default function ChatMessage({ role, content, recommendations, loading = 
 
       {/* RacketCards — explicando (58px) + gap-2 (8px) = 66px de indent */}
       {isAssistant && hasRecs && (
-        <div className="mt-3 flex flex-col gap-3 pl-[68px] w-full">
+        <div className={`mt-3 pl-[68px] w-full ${
+          recommendations!.length === 2
+            ? 'grid grid-cols-2 gap-2'
+            : 'flex flex-col gap-3'
+        }`}>
           {recommendations!.map((rec, i) => (
             <div
               key={rec.racket.id}
