@@ -8,6 +8,7 @@ export const agentTools: Anthropic.Tool[] = [
       'Retorna raquetes com specs objetivos (peso, balance, core, face_material, model_year, specs_extra) ' +
       'e análise especializada (potência, controle, conforto, etc.). ' +
       'specs_extra pode conter atleta firmante, número de furos, saida_de_bola (fácil/média/exigente) e outros dados técnicos. ' +
+      'Candidatas já vêm ordenadas por match_score (0–10) calculado pelo perfil — apresente nessa ordem e explique o porquê. ' +
       'Use esta ferramenta antes de recomendar qualquer raquete.',
     input_schema: {
       type: 'object' as const,
@@ -33,6 +34,14 @@ export const agentTools: Anthropic.Tool[] = [
         ombro_sensivel: {
           type: 'boolean',
           description: 'Jogador tem dor ou histórico de problema no ombro',
+        },
+        frequencia_alta: {
+          type: 'boolean',
+          description: 'Joga 4+ vezes por semana — sobe conforto uma prioridade',
+        },
+        contexto_vento: {
+          type: 'boolean',
+          description: 'Joga na praia ou ao ar livre com vento — favorece furos altos e estabilidade',
         },
       },
       required: [],

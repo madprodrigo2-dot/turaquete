@@ -1,4 +1,5 @@
 import { getSupabase } from './supabase'
+import { scoreRacket } from './scorer'
 
 export interface RacketFilters {
   nivel?: 'iniciante' | 'intermediario' | 'avancado'
@@ -6,6 +7,8 @@ export interface RacketFilters {
   prioridade?: 'potencia' | 'controle' | 'equilibrio' | 'defesa'
   cotovelo_sensivel?: boolean
   ombro_sensivel?: boolean
+  frequencia_alta?: boolean
+  contexto_vento?: boolean
 }
 
 export interface Insights {
@@ -77,7 +80,7 @@ const SELECT_FIELDS = `
 `.trim()
 
 export interface BuscarResult {
-  raquetes: RacketWithInsights[]
+  raquetes: (RacketWithInsights & { match_score: number })[]
   criteriosRelaxados: string[]
 }
 
@@ -147,29 +150,12 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     }
   }
 
-  // Pain mode: sort by comfort desc (+ stability as tiebreaker) — overrides prioridade
-  const painMode = filtros.cotovelo_sensivel || filtros.ombro_sensivel
-  if (painMode) {
-    results = [...results].sort((a, b) => {
-      const ca = a.racket_insights?.comfort ?? 0
-      const cb = b.racket_insights?.comfort ?? 0
-      if (cb !== ca) return cb - ca
-      return (b.racket_insights?.stability ?? 0) - (a.racket_insights?.stability ?? 0)
-    })
-  } else if (filtros.prioridade) {
-    const score = (r: RacketWithInsights): number => {
-      switch (filtros.prioridade) {
-        case 'potencia':   return r.racket_insights?.power ?? 0
-        case 'controle':   return r.racket_insights?.control ?? 0
-        case 'defesa':     return r.racket_insights?.maneuverability ?? 0
-        case 'equilibrio': return ((r.racket_insights?.power ?? 0) + (r.racket_insights?.control ?? 0)) / 2
-        default:           return 0
-      }
-    }
-    results = [...results].sort((a, b) => score(b) - score(a))
-  }
+  // Deterministic scorer — ranks by profile weights (turaquete-matriz-pesos.md Level 2)
+  const scored = results
+    .map(r => ({ ...r, match_score: scoreRacket(r, filtros) }))
+    .sort((a, b) => b.match_score - a.match_score)
 
-  return { raquetes: results, criteriosRelaxados }
+  return { raquetes: scored, criteriosRelaxados }
 }
 
 export async function detalleRaqueta(id: number): Promise<RacketWithInsights | null> {

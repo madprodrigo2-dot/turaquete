@@ -17,6 +17,21 @@ const OPENING_MESSAGE =
 const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
 const MESSAGE_LIMIT = 25
 
+const BUDGET_CHIPS = ['Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500']
+const LEVEL_CHIPS  = ['Iniciante', 'Intermediário', 'Avançado']
+
+function detectContextChips(text: string): string[] | null {
+  const t = text.toLowerCase()
+  if (t.includes('?') && (
+    t.includes('orçamento') || t.includes('orcamento') || t.includes('investir') || t.includes('custo')
+  )) return BUDGET_CHIPS
+  if (t.includes('?') && (
+    t.includes('nível') || t.includes('nivel') ||
+    (t.includes('quanto tempo') && t.includes('jog'))
+  )) return LEVEL_CHIPS
+  return null
+}
+
 function generateId() {
   return typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
 }
@@ -132,6 +147,11 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const hasUserMessages = messages.some(m => m.role === 'user')
   const atLimit = messages.length >= MESSAGE_LIMIT
 
+  const lastMsg = messages[messages.length - 1]
+  const contextChips = (!loading && !atLimit && lastMsg?.role === 'assistant')
+    ? detectContextChips(lastMsg.content)
+    : null
+
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       {view === 'landing' ? (
@@ -239,6 +259,20 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
             {!hasUserMessages && !loading && (
               <StartChips onSelect={sendMessage} />
+            )}
+
+            {contextChips && (
+              <div className="flex flex-wrap gap-2 px-4 md:px-6 py-2 border-t border-gray-100">
+                {contextChips.map(chip => (
+                  <button
+                    key={chip}
+                    onClick={() => sendMessage(chip)}
+                    className="text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/30 text-tinta/70 hover:bg-aqua/10 hover:border-aqua/50 active:scale-[0.97] transition-all"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
             )}
 
             <ChatInput onSend={sendMessage} disabled={loading || atLimit} />
