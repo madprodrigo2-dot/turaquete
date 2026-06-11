@@ -14,7 +14,7 @@ interface Props {
   previewRacket?: RacketWithInsights
 }
 
-const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
+const BADGES = ['Grátis', 'Sem cadastro', 'Resposta na hora']
 
 const STEPS = [
   'Conte como você joga, do seu jeito',
@@ -412,9 +412,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           {/* H1 + subtítulo */}
           <div className="flex flex-col gap-3 md:gap-4">
             <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
-              Uma consultoria de especialista.{' '}
+              A raquete certa pro seu jogo.{' '}
               <span className="relative inline-block text-coral">
-                De graça.
+                Em 1 minuto.
                 <svg
                   viewBox="0 0 140 10"
                   fill="none"
@@ -433,7 +433,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </span>
             </h1>
             <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
-              Conte como você joga e receba a raquete ideal em 1 minuto, analisando seu nível, estilo, dores no braço e orçamento.
+              Conte como você joga e nosso especialista em raquetes de beach tennis te indica a ideal — com o porquê de cada escolha.
             </p>
           </div>
 

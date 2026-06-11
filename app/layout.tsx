@@ -15,9 +15,9 @@ const inter = Inter({
   subsets: ["latin"],
 })
 
-const TITLE = 'Turaquete — Encontre sua raquete de beach tennis'
+const TITLE = 'Turaquete — A raquete de beach tennis certa pro seu jogo'
 const DESCRIPTION =
-  'Consultor virtual de raquetes de beach tennis. Conte como você joga e receba a raquete ideal em 1 minuto — grátis, sem cadastro.'
+  'Conte como você joga e receba a recomendação ideal em 1 minuto, com análise de nível, estilo, conforto e orçamento. Grátis e sem cadastro.'
 
 export const viewport: Viewport = {
   themeColor: [
