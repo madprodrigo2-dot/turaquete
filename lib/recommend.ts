@@ -12,6 +12,16 @@ export interface RacketFilters {
   contexto_vento?: boolean
 }
 
+// ── FIELD SEMANTICS — do not mix these up ─────────────────────────────────────
+// publicada : true → visible in Turaquete (agent, scorer, landing, pages,
+//             sitemap). THE ONLY field that gates visibility.
+// is_active : true → model still current in market (not discontinued/superseded
+//             by brand). A publicada=true racket can have is_active=false (older
+//             gen selling in clearance). Does NOT control visibility. Metadata only.
+// stock     : not modelled. "Ver na loja" always navigates. Nothing disables
+//             links or hides rackets based on store stock.
+// ──────────────────────────────────────────────────────────────────────────────
+
 export interface Insights {
   power: number | null
   control: number | null
@@ -49,6 +59,7 @@ export interface RacketWithInsights {
   image_url: string | null
   technologies: string[] | null
   specs_extra: Record<string, unknown> | null
+  publicada: boolean
   racket_insights: Insights | null
 }
 
@@ -71,7 +82,7 @@ function normalizeRacket(raw: unknown): RacketWithInsights {
 const SELECT_FIELDS = `
   id, name, slug, model_year, weight_g, balance, format,
   face_material, core, price, currency, affiliate_url, source_url, image_url, technologies,
-  specs_extra,
+  specs_extra, publicada,
   racket_insights (
     power, control, comfort, maneuverability, stability, spin, forgiveness,
     good_for_beginners, good_for_intermediate, good_for_advanced,
@@ -90,7 +101,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   let query = getSupabase()
     .from('rackets')
     .select(SELECT_FIELDS)
-    .eq('is_active', true)
+    .eq('publicada', true)
     .order('name')
 
   if (filtros.nome) {
@@ -168,7 +179,7 @@ export async function detalleRaqueta(id: number): Promise<RacketWithInsights | n
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('id', id)
-    .eq('is_active', true)
+    .eq('publicada', true)
     .single()
 
   if (error) return null
@@ -179,7 +190,7 @@ export async function listarRaquetas(): Promise<RacketWithInsights[]> {
   const { data, error } = await getSupabase()
     .from('rackets')
     .select(SELECT_FIELDS)
-    .eq('is_active', true)
+    .eq('publicada', true)
     .order('name')
 
   if (error) throw new Error(`Supabase: ${error.message}`)
@@ -212,7 +223,7 @@ export async function getRaquetaPorSlug(slug: string): Promise<RacketWithInsight
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('slug', slug)
-    .eq('is_active', true)
+    .eq('publicada', true)
     .single()
 
   if (error) return null
@@ -234,7 +245,7 @@ export async function listarRaquetasPorMarca(
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('brand_id', (brandData as { id: number }).id)
-    .eq('is_active', true)
+    .eq('publicada', true)
     .order('price')
 
   if (error) throw new Error(`Supabase: ${error.message}`)
