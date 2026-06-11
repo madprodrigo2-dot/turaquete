@@ -122,7 +122,12 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
             <header className="flex items-center px-4 py-3 md:px-6 md:py-4 bg-white border-b border-gray-100 shrink-0">
               <div className="flex flex-col items-start">
-                <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
+                <Link
+                  href="/"
+                  aria-label="Voltar à página inicial"
+                  className="cursor-pointer"
+                  onClick={e => { e.preventDefault(); setView('landing'); window.scrollTo(0, 0) }}
+                >
                   <Image
                     src="/turaquete-logo.png"
                     alt="Turaquete"
