@@ -25,6 +25,12 @@ export async function generateMetadata(
   return { title, description }
 }
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  'Itália': '🇮🇹', 'Italia': '🇮🇹', 'Italy': '🇮🇹',
+  'Brasil': '🇧🇷', 'Brazil': '🇧🇷', 'BR': '🇧🇷',
+}
+function countryFlag(country: string): string { return COUNTRY_FLAGS[country] ?? '' }
+
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
@@ -102,7 +108,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl md:text-3xl font-bold text-tinta">{brand.name}</h1>
           {brand.country && (
-            <p className="text-tinta/50 text-sm">{brand.country}</p>
+            <p className="text-tinta/50 text-sm">{countryFlag(brand.country)} {brand.country}</p>
           )}
           <p className="text-tinta/60 text-sm">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</p>
         </div>
