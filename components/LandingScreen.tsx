@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Wallet } from 'lucide-react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 
@@ -68,14 +69,7 @@ function IconBraco() {
 }
 
 function IconOrcamento() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9.5" fill="#0CC0BE" />
-      <path d="M12 7.5v9" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M9.5 10h5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M9.5 14h5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
+  return <Wallet size={24} color="#0CC0BE" aria-hidden="true" />
 }
 
 const ANALYSIS_ITEMS = [
@@ -381,15 +375,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       {/* Sticky header — full viewport width */}
       <div className={`sticky top-0 z-10 w-full flex justify-center px-5 md:px-8 bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
         <div className="w-full max-w-sm md:max-w-2xl flex items-center justify-between py-3 md:py-4">
-          <Image
-            src="/turaquete-logo.png"
-            alt="Turaquete"
-            width={852}
-            height={474}
-            priority
-            className="h-10 md:h-[3.25rem] w-auto"
-            style={{ width: 'auto' }}
-          />
+          <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
+            <Image
+              src="/turaquete-logo.png"
+              alt="Turaquete"
+              width={852}
+              height={474}
+              priority
+              className="h-10 md:h-[3.25rem] w-auto"
+              style={{ width: 'auto' }}
+            />
+          </Link>
           <button
             onClick={handleHeaderCta}
             aria-hidden={!showHeaderCta}

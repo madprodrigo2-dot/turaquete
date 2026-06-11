@@ -8,6 +8,16 @@ export const metadata = {
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-aqua-light flex flex-col items-center justify-center px-5 text-center gap-6">
+      <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
+        <Image
+          src="/turaquete-logo.png"
+          alt="Turaquete"
+          width={852}
+          height={474}
+          className="h-8 w-auto"
+          style={{ width: 'auto' }}
+        />
+      </Link>
       <Image
         src="/tury-apenada.png"
         alt="Tury, a mascote da Turaquete, com cara de desculpa"

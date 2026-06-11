@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { sendGAEvent } from '@next/third-parties/google'
 import LandingScreen from '@/components/LandingScreen'
 import ChatMessage from '@/components/ChatMessage'
@@ -12,6 +13,8 @@ import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 const OPENING_MESSAGE =
   'Oi! Me conta como você joga: há quanto tempo pratica, se busca mais potência ou controle, ' +
   'se sente algum incômodo no braço e qual seu orçamento. Com isso eu te indico a raquete certa.'
+
+const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -38,6 +41,28 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
     typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
   )
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  // Restore conversation from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(CHAT_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved) as Message[]
+        if (Array.isArray(parsed) && parsed.length > 1) {
+          setMessages(parsed)
+        }
+      }
+    } catch {}
+  }, [])
+
+  // Persist conversation to sessionStorage whenever messages update
+  useEffect(() => {
+    if (messages.length > 1) {
+      try {
+        sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages))
+      } catch {}
+    }
+  }, [messages])
 
   useEffect(() => {
     if (view === 'chat') {
@@ -97,15 +122,17 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
             <header className="flex items-center px-4 py-3 md:px-6 md:py-4 bg-white border-b border-gray-100 shrink-0">
               <div className="flex flex-col items-start">
-                <Image
-                  src="/turaquete-logo.png"
-                  alt="Turaquete"
-                  width={852}
-                  height={474}
-                  priority
-                  className="h-9 md:h-12 w-auto"
-                  style={{ width: 'auto' }}
-                />
+                <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
+                  <Image
+                    src="/turaquete-logo.png"
+                    alt="Turaquete"
+                    width={852}
+                    height={474}
+                    priority
+                    className="h-9 md:h-12 w-auto"
+                    style={{ width: 'auto' }}
+                  />
+                </Link>
                 <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
                   {loading
                     ? <span className="text-aqua/70 italic">digitando...</span>
