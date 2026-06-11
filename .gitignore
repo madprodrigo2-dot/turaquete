@@ -40,4 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# brand source material — imagens crudas, scripts one-shot, outputs intermediários
+brand-raw/

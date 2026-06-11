@@ -167,10 +167,21 @@ function BrandCard({ brand }: { brand: Brand }) {
 
   const inner = (
     <>
-      <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
-        {brand.name}
-      </span>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 min-w-0">
+        {brand.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={brand.logo_url}
+            alt={brand.name}
+            className={`h-6 w-auto object-contain shrink-0 ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+          />
+        ) : (
+          <span className={`text-sm font-medium truncate ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
+            {brand.name}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
         <StatusIndicator status={brand.status} />
         {isAvailable && (
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-aqua shrink-0" aria-hidden="true">

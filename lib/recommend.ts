@@ -204,6 +204,7 @@ export interface Brand {
   country: string | null
   website: string | null
   status: 'disponivel' | 'em_breve'
+  logo_url: string | null
 }
 
 export async function getRaquetaPorSlug(slug: string): Promise<RacketWithInsights | null> {
@@ -223,7 +224,7 @@ export async function listarRaquetasPorMarca(
 ): Promise<{ brand: Brand; rackets: RacketWithInsights[] } | null> {
   const { data: brandData, error: brandError } = await getSupabase()
     .from('brands')
-    .select('id, name, slug, country, website, status')
+    .select('id, name, slug, country, website, status, logo_url')
     .eq('slug', brandSlug)
     .single()
 
@@ -288,7 +289,7 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
 export async function listarMarcas(): Promise<Brand[]> {
   const { data, error } = await getSupabase()
     .from('brands')
-    .select('id, name, slug, country, website, status')
+    .select('id, name, slug, country, website, status, logo_url')
     .order('status')   // disponivel primero, depois em_breve
     .order('name')
 
