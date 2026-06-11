@@ -60,6 +60,14 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     linhas.push(`Muitos furos (${furos}): swing mais leve e ágil`)
   }
 
+  // ── Saída de bola ─────────────────────────────────────────────────────────
+  const saidaDeBola = (racket.specs_extra as Record<string, unknown> | null)?.saida_de_bola as string | undefined
+  if (saidaDeBola === 'fácil') {
+    linhas.push('Saída de bola fácil: devolve bem mesmo com swing suave — ótimo para iniciantes')
+  } else if (saidaDeBola === 'exigente') {
+    linhas.push('Saída de bola exigente: entrega todo potencial com swing rápido e técnica apurada')
+  }
+
   // ── Spin / tratamento de superfície ───────────────────────────────────────
   const tratamentoFabrica = (racket.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica
   if (tratamentoFabrica === false) {

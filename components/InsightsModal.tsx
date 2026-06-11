@@ -26,6 +26,7 @@ function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     : undefined
 
   const furos = (extra.furos ?? extra.furos_quantidade) as number | string | undefined
+  const saidaDeBola = extra.saida_de_bola as string | undefined
   const trama = (extra.trama_carbono as string | undefined)?.trim()
   const textura = extra.textura as string | undefined
   const tratamentoFabrica = extra.tratamento_fabrica
@@ -66,6 +67,7 @@ function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     racket.balance    ? { label: 'Balance',    value: racket.balance! }            : null,
     fibraValue        ? { label: 'Fibra',      value: fibraValue }                 : null,
     racket.core       ? { label: 'Núcleo',     value: racket.core! }              : null,
+    saidaDeBola       ? { label: 'Saída de bola', value: saidaDeBola }            : null,
     furos != null     ? { label: 'Furos',      value: String(furos) }             : null,
     formatoCabeca     ? { label: 'Formato',    value: formatoCabeca }             : null,
     espessuraStr      ? { label: 'Espessura',  value: espessuraStr }              : null,
