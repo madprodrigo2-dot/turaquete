@@ -23,9 +23,25 @@ export default function RacketCard({ racket, razao }: Props) {
     ? `${racket.name} ${racket.model_year}`
     : racket.name
 
+  const ins = racket.racket_insights
+  const topDims = ins
+    ? [
+        { label: 'potência',     v: ins.power           },
+        { label: 'controle',     v: ins.control         },
+        { label: 'conforto',     v: ins.comfort         },
+        { label: 'manuseio',     v: ins.maneuverability },
+        { label: 'spin',         v: ins.spin            },
+        { label: 'estabilidade', v: ins.stability       },
+        { label: 'perdão',       v: ins.forgiveness     },
+      ]
+        .filter(d => d.v != null)
+        .sort((a, b) => (b.v as number) - (a.v as number))
+        .slice(0, 2)
+    : []
+
   const handleOpenModal = () => {
     setModalOpen(true)
-    sendGAEvent({ event: 'info_notas_aberto', racket: racket.slug })
+    sendGAEvent({ event: 'analise_aberta', racket: racket.slug })
   }
 
   return (
@@ -59,8 +75,19 @@ export default function RacketCard({ racket, razao }: Props) {
 
           <p className="text-gray-600 text-xs leading-relaxed break-words">{razao}</p>
 
-          {racket.weight_g && (
-            <p className="text-gray-400 text-xs">{racket.weight_g}g · {racket.balance ?? ''}</p>
+          {/* Top-2 dimensões */}
+          {topDims.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-tinta/40 text-xs">Destaques:</span>
+              {topDims.map(d => (
+                <span
+                  key={d.label}
+                  className="bg-aqua-light text-tinta text-xs font-medium px-2 py-0.5 rounded-full"
+                >
+                  {d.label} {d.v}
+                </span>
+              ))}
+            </div>
           )}
 
           {ctaUrl && (
@@ -74,18 +101,20 @@ export default function RacketCard({ racket, razao }: Props) {
             </a>
           )}
 
-          {/* Botão de transparência */}
-          {racket.racket_insights && (
+          {/* Botão de análise */}
+          {ins && (
             <button
               onClick={handleOpenModal}
               className="flex items-center gap-1.5 text-xs text-tinta/40 hover:text-aqua transition-colors mt-0.5 w-fit"
             >
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M7 6.5v3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                <circle cx="7" cy="4.5" r="0.65" fill="currentColor" />
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+                <polygon points="6.5,1 11.5,3.8 11.5,9.2 6.5,12 1.5,9.2 1.5,3.8"
+                  stroke="currentColor" strokeWidth="1.2" fill="none" />
+                <line x1="6.5" y1="4" x2="6.5" y2="9" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
+                <line x1="3.7" y1="5.5" x2="9.3" y2="7.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
+                <line x1="3.7" y1="7.5" x2="9.3" y2="5.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
               </svg>
-              Por que essas notas?
+              Ver análise completa
             </button>
           )}
         </div>
