@@ -69,7 +69,9 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
-  const buyUrl = racket.affiliate_url ?? racket.source_url
+  const buyUrl   = racket.affiliate_url ?? racket.source_url
+  const irUrl    = buyUrl ? `/ir/${racket.slug}` : null
+  const linkTipo: 'afiliado' | 'oficial' = racket.affiliate_url ? 'afiliado' : 'oficial'
 
   const product = {
     '@context': 'https://schema.org',
@@ -186,11 +188,12 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           </div>
 
           {/* CTA compra */}
-          {buyUrl ? (
+          {irUrl ? (
             <BuyButton
-              href={buyUrl}
+              href={irUrl}
               racketName={racket.name}
               racketSlug={racket.slug}
+              linkTipo={linkTipo}
               className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md text-center block"
             >
               {price ? `Comprar por ${price}` : 'Ver onde comprar'}
@@ -205,7 +208,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           )}
 
           {/* Falar com especialista (secundário, sempre presente) */}
-          {buyUrl && (
+          {irUrl && (
             <Link
               href="/"
               className="w-full border border-aqua/40 text-aqua font-semibold text-sm py-3 rounded-2xl hover:bg-aqua/10 active:scale-[0.98] transition-all text-center block"

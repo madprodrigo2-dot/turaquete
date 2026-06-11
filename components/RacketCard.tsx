@@ -13,8 +13,9 @@ interface Props {
 export default function RacketCard({ racket, razao }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
-  const ctaUrl   = racket.affiliate_url ?? racket.source_url ?? null
-  const ctaLabel = racket.affiliate_url ? 'Ver no Mercado Livre' : 'Ver na loja'
+  const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
+  const ctaHref  = hasLink ? `/ir/${racket.slug}` : null
+  const linkTipo = racket.affiliate_url ? 'afiliado' : 'oficial'
 
   const price = racket.price
     ? `R$ ${racket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
@@ -100,15 +101,20 @@ export default function RacketCard({ racket, razao }: Props) {
             </div>
           )}
 
-          {ctaUrl && (
+          {ctaHref ? (
             <a
-              href={ctaUrl}
+              href={ctaHref}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })}
               className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] transition-all"
             >
-              {ctaLabel} →
+              Ver na loja →
             </a>
+          ) : (
+            <span className="mt-1 w-full text-center rounded-lg bg-gray-100 text-gray-400 text-xs font-heading font-semibold py-2 px-3 cursor-not-allowed select-none block">
+              Em breve nas lojas
+            </span>
           )}
 
           {/* Botão de análise */}
