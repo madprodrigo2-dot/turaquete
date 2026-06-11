@@ -19,11 +19,18 @@ export default function ChatInput({ onSend, disabled }: Props) {
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }, [text])
 
+  // Refocus when response arrives (disabled: true → false)
+  useEffect(() => {
+    if (!disabled) textareaRef.current?.focus()
+  }, [disabled])
+
   const handleSend = () => {
     const trimmed = text.trim()
     if (!trimmed || disabled) return
     onSend(trimmed)
     setText('')
+    // Focus immediately after clearing — keeps keyboard open on mobile
+    textareaRef.current?.focus()
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -47,6 +54,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
           className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50 bg-gray-50"
         />
         <button
+          onMouseDown={e => e.preventDefault()}
           onClick={handleSend}
           disabled={disabled || !text.trim()}
           className="rounded-xl bg-emerald-600 text-white px-4 py-3 text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 transition-colors shrink-0"
