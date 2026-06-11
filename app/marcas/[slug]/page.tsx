@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
+import AthleteBadge from '@/components/AthleteBadge'
 
 export const dynamicParams = false
 
@@ -31,6 +32,7 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
   const ins = racket.racket_insights
+  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
 
   return (
     <Link
@@ -38,7 +40,12 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
       className="group bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 transition-all flex flex-col"
     >
       {racket.image_url ? (
-        <div className="aspect-[4/5] bg-white p-3 flex items-center justify-center overflow-hidden">
+        <div className="relative aspect-[4/5] bg-white p-3 flex items-center justify-center overflow-hidden">
+          {athlete && (
+            <div className="absolute top-1.5 left-1.5 z-10">
+              <AthleteBadge athlete={athlete} />
+            </div>
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={racket.image_url}

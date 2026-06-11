@@ -26,31 +26,52 @@ function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     : undefined
 
   const furos = (extra.furos ?? extra.furos_quantidade) as number | string | undefined
-  const trama = extra.trama_carbono as string | undefined
+  const trama = (extra.trama_carbono as string | undefined)?.trim()
   const textura = extra.textura as string | undefined
-  const formatoCabeca = racket.format ?? (extra.formato_cabeca as string | undefined)
   const tratamentoFabrica = extra.tratamento_fabrica
+  const formatoCabeca = racket.format ?? (extra.formato_cabeca as string | undefined)
   const athlete = extra.atleta as string | undefined
   const athleteLabel = athlete
     ? (athlete.includes('(') ? athlete.split('(')[0].trim() : athlete.trim())
     : undefined
 
+  // Fibra = face_material + trama merged (avoid duplication like "Carbono 12K / 12K")
+  const faceBase = racket.face_material?.trim()
+  let fibraValue: string | undefined
+  if (faceBase && trama) {
+    const upperBase = faceBase.toUpperCase()
+    const upperTrama = trama.toUpperCase()
+    fibraValue = (upperBase.includes(upperTrama) || upperTrama.includes(upperBase))
+      ? faceBase
+      : `${faceBase} ${trama}`
+  } else {
+    fibraValue = faceBase ?? trama
+  }
+
+  // Superfície = textura + tratamento merged into one value
+  let superficieValue: string | undefined
+  if (textura != null || tratamentoFabrica != null) {
+    const tex = textura ? (textura.charAt(0).toUpperCase() + textura.slice(1)) : null
+    if (tratamentoFabrica === false) {
+      superficieValue = tex ? `${tex}, sem tratamento de fábrica` : 'Lisa, sem tratamento de fábrica'
+    } else if (tratamentoFabrica === true) {
+      superficieValue = tex ? `${tex}, com tratamento de fábrica` : 'Com tratamento de fábrica'
+    } else {
+      superficieValue = tex ?? undefined
+    }
+  }
+
   return ([
-    racket.weight_g         ? { label: 'Peso',        value: `${racket.weight_g}g` }           : null,
-    racket.balance          ? { label: 'Balance',     value: racket.balance! }                  : null,
-    espessuraStr            ? { label: 'Espessura',   value: espessuraStr }                     : null,
-    racket.face_material    ? { label: 'Fibra',       value: racket.face_material! }            : null,
-    trama                   ? { label: 'Trama',       value: trama }                            : null,
-    racket.core             ? { label: 'Núcleo',      value: racket.core! }                     : null,
-    formatoCabeca           ? { label: 'Formato',     value: formatoCabeca }                    : null,
-    furos != null           ? { label: 'Furos',       value: String(furos) }                    : null,
-    textura                 ? { label: 'Textura',     value: textura }                          : null,
-    racket.model_year       ? { label: 'Ano',         value: String(racket.model_year!) }       : null,
-    tratamentoFabrica != null ? {
-      label: 'Superfície',
-      value: tratamentoFabrica === false ? 'Lisa, sem tratamento' : 'Com tratamento de fábrica',
-    } : null,
-    athleteLabel            ? { label: 'Atleta',      value: athleteLabel }                     : null,
+    racket.weight_g   ? { label: 'Peso',       value: `${racket.weight_g}g` }     : null,
+    racket.balance    ? { label: 'Balance',    value: racket.balance! }            : null,
+    fibraValue        ? { label: 'Fibra',      value: fibraValue }                 : null,
+    racket.core       ? { label: 'Núcleo',     value: racket.core! }              : null,
+    furos != null     ? { label: 'Furos',      value: String(furos) }             : null,
+    formatoCabeca     ? { label: 'Formato',    value: formatoCabeca }             : null,
+    espessuraStr      ? { label: 'Espessura',  value: espessuraStr }              : null,
+    superficieValue   ? { label: 'Superfície', value: superficieValue }           : null,
+    racket.model_year ? { label: 'Ano',        value: String(racket.model_year!) } : null,
+    athleteLabel      ? { label: 'Atleta',     value: athleteLabel }              : null,
   ] as (SpecRow | null)[]).filter((r): r is SpecRow => r !== null)
 }
 
