@@ -89,6 +89,8 @@ export function scoreRacket(racket: RacketData, profile: ScorerProfile): number 
   const totalWeight = w.power + w.control + w.comfort + w.maneuverability + w.spin + w.stability + w.forgiveness
   if (totalWeight === 0) return 0
 
+  // comfort already encodes antivib. anchor: 0 verified systems→≈5, 1→≈8, 2+→≈9
+  // (see turaquete-taxonomia-tecnologias.md §"Ajuste de ancla")
   const raw =
     (ins.power           ?? 0) * w.power +
     (ins.control         ?? 0) * w.control +

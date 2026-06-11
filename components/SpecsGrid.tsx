@@ -40,12 +40,26 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
   const saidaDeBolaRaw = extra.saida_de_bola as string | undefined
   const saidaDeBola = saidaDeBolaRaw === 'rascunho_pendente' ? undefined : saidaDeBolaRaw
 
-  // Filter technologies that duplicate info already in face_material
-  const faceNorm = racket.face_material?.toLowerCase().trim() ?? ''
-  const techFiltered = (racket.technologies ?? []).filter(t => {
-    const tn = t.toLowerCase().trim()
-    return !faceNorm.includes(tn) && !tn.includes(faceNorm)
-  })
+  interface TechEntry { nome: string; tipo: string }
+  const tecnosEstruturadas = extra.tecnologias as TechEntry[] | undefined
+
+  let techFisicasRow: SpecRow | null = null
+  let techDeclarativasRow: SpecRow | null = null
+
+  if (Array.isArray(tecnosEstruturadas)) {
+    const fisicas = tecnosEstruturadas.filter(t => t.tipo === 'antivibracao' || t.tipo === 'estrutural')
+    const declarativas = tecnosEstruturadas.filter(t => t.tipo === 'declarativa')
+    if (fisicas.length > 0) techFisicasRow = { label: 'Tecnologias', value: fisicas.map(t => t.nome).join(', ') }
+    if (declarativas.length > 0) techDeclarativasRow = { label: 'Acabamentos', value: declarativas.map(t => t.nome).join(', ') }
+  } else {
+    // Fallback: flat technologies column, filtering material names already in face_material
+    const faceNorm = racket.face_material?.toLowerCase().trim() ?? ''
+    const techFiltered = (racket.technologies ?? []).filter(t => {
+      const tn = t.toLowerCase().trim()
+      return !faceNorm.includes(tn) && !tn.includes(faceNorm)
+    })
+    if (techFiltered.length > 0) techFisicasRow = { label: 'Tecnologias', value: techFiltered.join(', ') }
+  }
 
   return ([
     racket.weight_g      ? { label: 'Peso',              value: `${racket.weight_g}g` }          : null,
@@ -59,9 +73,8 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     saidaDeBola          ? { label: 'Saída de bola',     value: cap(saidaDeBola) }                : null,
     racket.model_year    ? { label: 'Ano',               value: String(racket.model_year) }       : null,
     athleteLabel         ? { label: 'Atleta',            value: athleteLabel }                    : null,
-    techFiltered.length > 0
-      ? { label: 'Tecnologias', value: techFiltered.join(', ') }
-      : null,
+    techFisicasRow,
+    techDeclarativasRow,
   ] as (SpecRow | null)[]).filter((r): r is SpecRow => r !== null)
 }
 
