@@ -44,11 +44,13 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
 
   const explicacoes = gerarExplicacoes(racket)
 
+  const tratamentoFabrica = (racket.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica
   const specItems = [
     racket.weight_g ? `${racket.weight_g}g` : null,
     racket.balance  ? racket.balance         : null,
     racket.face_material                     ?? null,
     racket.core                              ?? null,
+    tratamentoFabrica === false ? 'Superfície: lisa (sem tratamento de fábrica)' : null,
   ].filter((s): s is string => s != null && s.trim() !== '')
 
   return createPortal(
@@ -116,6 +118,16 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               />
             </RadarChart>
           </ResponsiveContainer>
+
+          {/* Nota de spin / superfície lisa */}
+          {tratamentoFabrica === false && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 -mt-1">
+              <span className="text-amber-500 shrink-0 mt-0.5 text-sm">ℹ</span>
+              <p className="text-amber-800 text-xs leading-relaxed">
+                <strong className="font-semibold">Spin:</strong> superfície lisa de fábrica — dá pra aumentar com tratamento (areado) aplicado depois da compra.
+              </p>
+            </div>
+          )}
 
           {/* Perfil resumo */}
           {ins.perfil_resumo && (

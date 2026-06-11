@@ -60,5 +60,11 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     linhas.push(`Muitos furos (${furos}): swing mais leve e ágil`)
   }
 
-  return linhas.slice(0, 5)
+  // ── Spin / tratamento de superfície ───────────────────────────────────────
+  const tratamentoFabrica = (racket.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica
+  if (tratamentoFabrica === false) {
+    linhas.push('Spin: superfície lisa de fábrica — dá pra aumentar com areado aplicado depois')
+  }
+
+  return linhas.slice(0, 6)
 }
