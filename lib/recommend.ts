@@ -168,6 +168,7 @@ export async function detalleRaqueta(id: number): Promise<RacketWithInsights | n
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('id', id)
+    .eq('is_active', true)
     .single()
 
   if (error) return null
