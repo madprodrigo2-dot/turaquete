@@ -228,8 +228,8 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
                 <Image
                   src="/tury-explicando.png"
                   alt="Tury explicando"
-                  width={324}
-                  height={434}
+                  width={296}
+                  height={376}
                   className="w-[52px] md:w-[64px] h-auto shrink-0"
                 />
                 <p className="text-tinta/60 font-semibold text-xs uppercase tracking-wider">

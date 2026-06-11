@@ -12,10 +12,10 @@ interface Props {
 
 // Dimensões nativas dos PNGs para srcset correto
 const TURY = {
-  saludando:  { src: '/tury-saludando.png',  nW: 371, nH: 434, alt: 'Tury saludando'  },
-  pensando:   { src: '/tury-pensando.png',   nW: 291, nH: 434, alt: 'Tury pensando'   },
-  explicando: { src: '/tury-explicando.png', nW: 324, nH: 434, alt: 'Tury explicando' },
-  apenada:    { src: '/tury-apenada.png',    nW: 295, nH: 434, alt: 'Tury triste'     },
+  saludando:  { src: '/tury-saludando.png',  nW: 343, nH: 398, alt: 'Tury saludando'  },
+  pensando:   { src: '/tury-pensando.png',   nW: 291, nH: 420, alt: 'Tury pensando'   },
+  explicando: { src: '/tury-explicando.png', nW: 296, nH: 376, alt: 'Tury explicando' },
+  apenada:    { src: '/tury-apenada.png',    nW: 292, nH: 416, alt: 'Tury triste'     },
 } as const
 
 const ERROR_PHRASES = ['Ops,', 'problema de conexão', 'não consegui processar']

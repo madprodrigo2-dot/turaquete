@@ -386,7 +386,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <Image
               src="/logo-header.png"
               alt="Turaquete"
-              width={386}
+              width={322}
               height={128}
               priority
               className="h-10 md:h-[3.25rem] w-auto"
@@ -466,8 +466,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <Image
               src="/tury-explicando.png"
               alt="Tury apontando para o botão Começar agora"
-              width={324}
-              height={434}
+              width={296}
+              height={376}
               priority
               className="max-[359px]:hidden shrink-0 select-none pointer-events-none"
               style={{ height: '54px', width: 'auto' }}

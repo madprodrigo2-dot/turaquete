@@ -12,7 +12,7 @@ export default function NotFound() {
         <Image
           src="/logo-header.png"
           alt="Turaquete"
-          width={386}
+          width={322}
           height={128}
           className="h-8 w-auto"
           style={{ width: 'auto' }}
@@ -21,8 +21,8 @@ export default function NotFound() {
       <Image
         src="/tury-apenada.png"
         alt="Tury, a mascote da Turaquete, com cara de desculpa"
-        width={295}
-        height={434}
+        width={292}
+        height={416}
         className="w-[140px] md:w-[160px] h-auto"
         priority
       />

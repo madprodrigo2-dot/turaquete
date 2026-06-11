@@ -172,7 +172,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                   <Image
                     src="/logo-header.png"
                     alt="Turaquete"
-                    width={386}
+                    width={322}
                     height={128}
                     priority
                     className="h-9 md:h-12 w-auto"
