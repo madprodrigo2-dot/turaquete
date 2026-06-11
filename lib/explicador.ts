@@ -57,7 +57,7 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
   // ── Furos ─────────────────────────────────────────────────────────────────
   const furos = extra.furos as number | undefined
   if (furos != null && furos >= 30) {
-    linhas.push(`Muitos furos (${furos}): swing mais leve e ágil`)
+    linhas.push(`Muitos furos (${furos}): swing mais leve, ágil e estável em dia de vento`)
   }
 
   // ── Saída de bola ─────────────────────────────────────────────────────────
