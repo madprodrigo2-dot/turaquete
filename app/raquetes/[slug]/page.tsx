@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
 import BuyButton from '@/components/BuyButton'
 import AthleteBadge from '@/components/AthleteBadge'
+import SpecsGrid from '@/components/SpecsGrid'
 
 export const dynamicParams = false
 
@@ -57,25 +58,6 @@ function ScoreBar({ label, value }: { label: string; value: number | null }) {
   )
 }
 
-function SpecRow({ label, value }: { label: string; value: string | null | undefined }) {
-  if (!value) return null
-  return (
-    <div className="flex justify-between py-2 border-b border-aqua/10 last:border-0">
-      <span className="text-tinta/60 text-sm">{label}</span>
-      <span className="text-tinta text-sm font-medium text-right ml-4">{value}</span>
-    </div>
-  )
-}
-
-const SPECS_EXTRA_LABELS: Record<string, string> = {
-  trama_carbono:  'Trama de carbono',
-  textura:        'Textura',
-  formato_cabeca: 'Formato da cabeça',
-  coracao:        'Coração',
-  furos_quantidade: 'Número de furos',
-  furos_padrao:   'Padrão de furos',
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function RaquetaPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -107,7 +89,6 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
     }),
   }
 
-  const specsExtra = racket.specs_extra as Record<string, string | number> | null
   const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
 
   return (
@@ -199,19 +180,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           {/* Specs */}
           <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm">
             <p className="text-tinta font-semibold text-sm md:text-base mb-3">Especificações</p>
-            <SpecRow label="Peso"             value={racket.weight_g ? `${racket.weight_g} g` : null} />
-            <SpecRow label="Balance"          value={racket.balance} />
-            <SpecRow label="Formato"          value={racket.format} />
-            <SpecRow label="Material da face" value={racket.face_material} />
-            <SpecRow label="Núcleo"           value={racket.core} />
-            {racket.technologies && racket.technologies.length > 0 && (
-              <SpecRow label="Tecnologias" value={racket.technologies.join(', ')} />
-            )}
-            {specsExtra && Object.entries(SPECS_EXTRA_LABELS).map(([key, label]) =>
-              specsExtra[key] != null ? (
-                <SpecRow key={key} label={label} value={String(specsExtra[key])} />
-              ) : null
-            )}
+            <SpecsGrid racket={racket} />
           </div>
 
           {/* CTA compra */}

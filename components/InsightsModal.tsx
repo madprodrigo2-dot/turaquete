@@ -8,73 +8,12 @@ import {
 import { RacketWithInsights } from '@/lib/recommend'
 import { gerarExplicacoes } from '@/lib/explicador'
 import AthleteBadge from './AthleteBadge'
+import SpecsGrid, { buildSpecRows } from './SpecsGrid'
 
 interface Props {
   racket: RacketWithInsights
   open: boolean
   onClose: () => void
-}
-
-interface SpecRow { label: string; value: string }
-
-function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
-  const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
-
-  const rawEspessura = extra.espessura as string | number | undefined
-  const espessuraStr = rawEspessura != null
-    ? (String(rawEspessura).includes('mm') ? String(rawEspessura) : `${rawEspessura}mm`)
-    : undefined
-
-  const furos = (extra.furos ?? extra.furos_quantidade) as number | string | undefined
-  const saidaDeBola = extra.saida_de_bola as string | undefined
-  const trama = (extra.trama_carbono as string | undefined)?.trim()
-  const textura = extra.textura as string | undefined
-  const tratamentoFabrica = extra.tratamento_fabrica
-  const formatoCabeca = racket.format ?? (extra.formato_cabeca as string | undefined)
-  const athlete = extra.atleta as string | undefined
-  const athleteLabel = athlete
-    ? (athlete.includes('(') ? athlete.split('(')[0].trim() : athlete.trim())
-    : undefined
-
-  // Fibra = face_material + trama merged (avoid duplication like "Carbono 12K / 12K")
-  const faceBase = racket.face_material?.trim()
-  let fibraValue: string | undefined
-  if (faceBase && trama) {
-    const upperBase = faceBase.toUpperCase()
-    const upperTrama = trama.toUpperCase()
-    fibraValue = (upperBase.includes(upperTrama) || upperTrama.includes(upperBase))
-      ? faceBase
-      : `${faceBase} ${trama}`
-  } else {
-    fibraValue = faceBase ?? trama
-  }
-
-  // Superfície = textura + tratamento merged into one value
-  let superficieValue: string | undefined
-  if (textura != null || tratamentoFabrica != null) {
-    const tex = textura ? (textura.charAt(0).toUpperCase() + textura.slice(1)) : null
-    if (tratamentoFabrica === false) {
-      superficieValue = tex ? `${tex}, sem tratamento de fábrica` : 'Lisa, sem tratamento de fábrica'
-    } else if (tratamentoFabrica === true) {
-      superficieValue = tex ? `${tex}, com tratamento de fábrica` : 'Com tratamento de fábrica'
-    } else {
-      superficieValue = tex ?? undefined
-    }
-  }
-
-  return ([
-    racket.weight_g   ? { label: 'Peso',       value: `${racket.weight_g}g` }     : null,
-    racket.balance    ? { label: 'Balance',    value: racket.balance! }            : null,
-    fibraValue        ? { label: 'Fibra',      value: fibraValue }                 : null,
-    racket.core       ? { label: 'Núcleo',     value: racket.core! }              : null,
-    saidaDeBola       ? { label: 'Saída de bola', value: saidaDeBola }            : null,
-    furos != null     ? { label: 'Furos',      value: String(furos) }             : null,
-    formatoCabeca     ? { label: 'Formato',    value: formatoCabeca }             : null,
-    espessuraStr      ? { label: 'Espessura',  value: espessuraStr }              : null,
-    superficieValue   ? { label: 'Superfície', value: superficieValue }           : null,
-    racket.model_year ? { label: 'Ano',        value: String(racket.model_year!) } : null,
-    athleteLabel      ? { label: 'Atleta',     value: athleteLabel }              : null,
-  ] as (SpecRow | null)[]).filter((r): r is SpecRow => r !== null)
 }
 
 export default function InsightsModal({ racket, open, onClose }: Props) {
@@ -194,14 +133,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               <p className="text-tinta/40 font-semibold text-[10px] uppercase tracking-wider">
                 Especificações
               </p>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-                {specRows.map(({ label, value }) => (
-                  <div key={label} className="flex flex-col gap-0.5">
-                    <span className="text-[10px] text-tinta/40 leading-none">{label}</span>
-                    <span className="text-xs text-tinta font-medium leading-snug">{value}</span>
-                  </div>
-                ))}
-              </div>
+              <SpecsGrid racket={racket} variant="modal" />
             </div>
           )}
 
