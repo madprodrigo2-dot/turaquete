@@ -37,7 +37,8 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     ? (athlete.includes('(') ? athlete.split('(')[0].trim() : athlete.trim())
     : undefined
 
-  const saidaDeBola = extra.saida_de_bola as string | undefined
+  const saidaDeBolaRaw = extra.saida_de_bola as string | undefined
+  const saidaDeBola = saidaDeBolaRaw === 'rascunho_pendente' ? undefined : saidaDeBolaRaw
 
   // Filter technologies that duplicate info already in face_material
   const faceNorm = racket.face_material?.toLowerCase().trim() ?? ''

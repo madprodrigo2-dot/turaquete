@@ -73,7 +73,8 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
   const tratamentoFabrica = extra.tratamento_fabrica
   const athlete = extra.atleta as string | undefined
-  const saidaDeBola = extra.saida_de_bola as string | undefined
+  const saidaDeBolaRaw = extra.saida_de_bola as string | undefined
+  const saidaDeBola = saidaDeBolaRaw === 'rascunho_pendente' ? undefined : saidaDeBolaRaw
   const power = ins.power ?? 0
 
   const saidaChipClass = saidaDeBola === 'fácil'
