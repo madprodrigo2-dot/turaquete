@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
+import { sendGAEvent } from '@next/third-parties/google'
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts'
@@ -28,6 +29,7 @@ const GLOSSARY: [string, string][] = [
 export default function InsightsModal({ racket, open, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
   const [glossaryOpen, setGlossaryOpen] = useState(false)
+  const [anatomiaOpen, setAnatomiaOpen] = useState(false)
   const ins = racket.racket_insights
 
   useEffect(() => setMounted(true), [])
@@ -191,6 +193,38 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
                     <span className="font-semibold text-tinta/80">{dim}:</span> {desc}
                   </p>
                 ))}
+              </div>
+            )}
+          </div>
+
+          {/* Anatomia da raquete */}
+          <div className="border border-aqua/20 rounded-xl overflow-hidden -mt-1">
+            <button
+              className="flex items-center justify-between w-full px-3 py-2.5 text-xs text-tinta/50 hover:text-tinta/70 transition-colors"
+              onClick={() => {
+                const next = !anatomiaOpen
+                setAnatomiaOpen(next)
+                if (next) sendGAEvent({ event: 'anatomia_aberta', racket: racket.slug })
+              }}
+            >
+              <span>Anatomia da raquete</span>
+              <svg
+                width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"
+                className={`transition-transform duration-150 ${anatomiaOpen ? 'rotate-180' : ''}`}
+              >
+                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {anatomiaOpen && (
+              <div className="border-t border-aqua/10">
+                <Image
+                  src="/anatomia-raquete.webp"
+                  alt="Diagrama com as partes da raquete de beach tennis: moldura, face, núcleo EVA, furos, coração, cabo e espessura"
+                  width={1264}
+                  height={778}
+                  className="w-full h-auto"
+                  priority={false}
+                />
               </div>
             )}
           </div>
