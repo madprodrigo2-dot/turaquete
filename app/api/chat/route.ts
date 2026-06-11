@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runAgentTurn, ChatMessage } from '@/lib/agent/agent'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
@@ -26,7 +26,9 @@ export async function POST(req: NextRequest) {
 
     const { text, recommendations } = await runAgentTurn(messages)
 
-    // Persistir conversa de forma assíncrona (sem bloquear a resposta)
+    // Persistir conversa e eventos de recomendação (fire-and-forget)
+    const admin = getSupabaseAdmin()
+
     getSupabase()
       .from('conversations')
       .insert({
@@ -37,6 +39,18 @@ export async function POST(req: NextRequest) {
       .then(({ error }) => {
         if (error) console.error('Conversations insert error:', error.message)
       })
+
+    if (recommendations && recommendations.length > 0) {
+      admin
+        .from('recommendation_events')
+        .insert(recommendations.map(r => ({
+          racket_id: r.racket.id,
+          conversation_id: sessionId,
+        })))
+        .then(({ error }) => {
+          if (error) console.error('Recommendation events insert error:', error.message)
+        })
+    }
 
     return NextResponse.json({ text, recommendations })
   } catch (err) {

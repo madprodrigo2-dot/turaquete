@@ -22,10 +22,11 @@ type Message = {
 interface Props {
   brands: Brand[]
   featuredRackets: RacketWithInsights[]
+  featuredSource: 'real' | 'curated'
   previewRacket?: RacketWithInsights
 }
 
-export default function HomeClient({ brands, featuredRackets, previewRacket }: Props) {
+export default function HomeClient({ brands, featuredRackets, featuredSource, previewRacket }: Props) {
   const [view, setView] = useState<'landing' | 'chat'>('landing')
   const [fading, setFading] = useState(false)
 
@@ -89,7 +90,7 @@ export default function HomeClient({ brands, featuredRackets, previewRacket }: P
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       {view === 'landing' ? (
-        <LandingScreen brands={brands} featuredRackets={featuredRackets} previewRacket={previewRacket} onStart={handleStart} />
+        <LandingScreen brands={brands} featuredRackets={featuredRackets} featuredSource={featuredSource} previewRacket={previewRacket} onStart={handleStart} />
       ) : (
         <div className="h-screen flex flex-col bg-gray-50 md:bg-aqua-light">
           <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">

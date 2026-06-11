@@ -251,6 +251,48 @@ export async function listarRaquetasPorMarca(
   }
 }
 
+export interface TopRaquetasResult {
+  rackets: RacketWithInsights[]
+  source: 'real' | 'curated'
+}
+
+const CURATED_SLUGS = ['beast-2023', 'ceu', 'coach'] as const
+const COLD_START_THRESHOLD = 10
+
+export async function getTopRaquetas(): Promise<TopRaquetasResult> {
+  const supabase = getSupabase()
+
+  // Cold-start guard: if fewer than 10 total events, use curated list
+  const { data: totalData } = await supabase.rpc('count_recommendation_events')
+  const total = (totalData as number | null) ?? 0
+
+  if (total < COLD_START_THRESHOLD) {
+    const rackets = (
+      await Promise.all(CURATED_SLUGS.map(slug => getRaquetaPorSlug(slug)))
+    ).filter((r): r is RacketWithInsights => r !== null)
+    return { rackets, source: 'curated' }
+  }
+
+  // Real data: top 3 rackets by recommendation count in last 30 days
+  const { data: topRows } = await supabase.rpc('get_top_rackets_30d', { lim: 3 })
+  const rows = (topRows as { racket_id: number; cnt: number }[] | null) ?? []
+
+  if (rows.length === 0) {
+    const rackets = (
+      await Promise.all(CURATED_SLUGS.map(slug => getRaquetaPorSlug(slug)))
+    ).filter((r): r is RacketWithInsights => r !== null)
+    return { rackets, source: 'curated' }
+  }
+
+  const ids = rows.map(r => r.racket_id)
+  const unordered = await getRaquetasByIds(ids)
+  // Preserve leaderboard order (IN query doesn't guarantee it)
+  const byId = new Map(unordered.map(r => [r.id, r]))
+  const rackets = ids.map(id => byId.get(id)).filter((r): r is RacketWithInsights => r !== undefined)
+
+  return { rackets, source: 'real' }
+}
+
 export async function listarMarcas(): Promise<Brand[]> {
   const { data, error } = await getSupabase()
     .from('brands')

@@ -10,6 +10,7 @@ interface Props {
   onStart: () => void
   brands: Brand[]
   featuredRackets: RacketWithInsights[]
+  featuredSource: 'real' | 'curated'
   previewRacket?: RacketWithInsights
 }
 
@@ -341,7 +342,7 @@ function SandMound({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function LandingScreen({ onStart, brands, featuredRackets, previewRacket }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, previewRacket }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
   const arenaRef = useRef<HTMLDivElement>(null)
@@ -559,10 +560,19 @@ export default function LandingScreen({ onStart, brands, featuredRackets, previe
             </div>
           </div>
 
-          {/* Raquetes em destaque */}
+          {/* Raquetes em destaque / mais recomendadas */}
           {featuredRackets.length > 0 && (
             <div className="flex flex-col gap-3">
-              <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
+              {featuredSource === 'real' ? (
+                <div className="flex flex-col gap-0.5">
+                  <p className="font-heading font-bold text-tinta text-base md:text-lg">
+                    As mais recomendadas pelo especialista
+                  </p>
+                  <p className="text-tinta/50 text-xs">com base nas consultorias recentes</p>
+                </div>
+              ) : (
+                <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
+              )}
               <div className="grid grid-cols-3 gap-3">
                 {featuredRackets.map(racket => (
                   <FeaturedCard key={racket.id} racket={racket} onStart={onStart} />
