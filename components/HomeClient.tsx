@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { sendGAEvent } from '@next/third-parties/google'
@@ -15,6 +15,11 @@ const OPENING_MESSAGE =
   'se sente algum incômodo no braço e qual seu orçamento. Com isso eu te indico a raquete certa.'
 
 const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
+const MESSAGE_LIMIT = 25
+
+function generateId() {
+  return typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+}
 
 type Message = {
   role: 'user' | 'assistant'
@@ -32,14 +37,13 @@ interface Props {
 export default function HomeClient({ brands, featuredRackets, featuredSource, previewRacket }: Props) {
   const [view, setView] = useState<'landing' | 'chat'>('landing')
   const [fading, setFading] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
 
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: OPENING_MESSAGE },
   ])
   const [loading, setLoading] = useState(false)
-  const [sessionId] = useState<string>(() =>
-    typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
-  )
+  const [sessionId, setSessionId] = useState<string>(generateId)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Restore conversation from sessionStorage on mount
@@ -69,6 +73,21 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, loading, view])
+
+  // Close confirm on outside interaction
+  useEffect(() => {
+    if (!confirmReset) return
+    const dismiss = () => setConfirmReset(false)
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismiss() }, { once: true })
+  }, [confirmReset])
+
+  const resetConversation = useCallback(() => {
+    setMessages([{ role: 'assistant', content: OPENING_MESSAGE }])
+    setSessionId(generateId())
+    try { sessionStorage.removeItem(CHAT_STORAGE_KEY) } catch {}
+    sendGAEvent({ event: 'conversa_reiniciada' })
+    setConfirmReset(false)
+  }, [])
 
   const handleStart = () => {
     sendGAEvent({ event: 'chat_iniciado' })
@@ -111,6 +130,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   }
 
   const hasUserMessages = messages.some(m => m.role === 'user')
+  const atLimit = messages.length >= MESSAGE_LIMIT
 
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
@@ -120,7 +140,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
         <div className="h-screen flex flex-col bg-gray-50 md:bg-aqua-light">
           <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">
 
-            <header className="flex items-center px-4 py-3 md:px-6 md:py-4 bg-white border-b border-gray-100 shrink-0">
+            <header className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 bg-white border-b border-gray-100 shrink-0">
+              {/* Logo */}
               <div className="flex flex-col items-start">
                 <Link
                   href="/"
@@ -145,6 +166,41 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                   }
                 </span>
               </div>
+
+              {/* Nova conversa */}
+              <div className="flex items-center gap-2 shrink-0">
+                {confirmReset ? (
+                  <>
+                    <span className="text-tinta/50 text-xs hidden sm:block leading-tight max-w-[120px]">
+                      A conversa atual será apagada.
+                    </span>
+                    <button
+                      onClick={resetConversation}
+                      className="text-xs font-semibold text-white bg-tinta px-3 py-1.5 rounded-lg hover:bg-tinta/80 transition-colors"
+                    >
+                      Confirmar
+                    </button>
+                    <button
+                      onClick={() => setConfirmReset(false)}
+                      className="text-xs text-tinta/50 hover:text-tinta/80 px-2 py-1.5 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setConfirmReset(true)}
+                    className="flex items-center gap-1.5 text-tinta/40 hover:text-tinta/70 transition-colors py-1.5 px-2 rounded-lg hover:bg-gray-50"
+                    aria-label="Nova conversa"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                      <path d="M13 7.5a5.5 5.5 0 1 1-1.6-3.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                      <path d="M11.4 2.4v3h-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="hidden sm:block text-xs font-medium">Nova conversa</span>
+                  </button>
+                )}
+              </div>
             </header>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full">
@@ -158,6 +214,26 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                 />
               ))}
               {loading && <ChatMessage role="assistant" content="" loading />}
+
+              {/* Limite de mensagens */}
+              {atLimit && !loading && (
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <p className="text-tinta/50 text-sm leading-relaxed max-w-xs">
+                    Chegamos ao limite desta consultoria. Quer começar uma nova?
+                  </p>
+                  <button
+                    onClick={resetConversation}
+                    className="flex items-center gap-1.5 bg-tinta text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-tinta/80 active:scale-[0.98] transition-all"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                      <path d="M13 7.5a5.5 5.5 0 1 1-1.6-3.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                      <path d="M11.4 2.4v3h-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Recomeçar
+                  </button>
+                </div>
+              )}
+
               <div ref={bottomRef} />
             </div>
 
@@ -165,7 +241,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
               <StartChips onSelect={sendMessage} />
             )}
 
-            <ChatInput onSend={sendMessage} disabled={loading} />
+            <ChatInput onSend={sendMessage} disabled={loading || atLimit} />
           </div>
         </div>
       )}
