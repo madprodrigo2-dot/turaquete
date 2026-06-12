@@ -10,20 +10,20 @@ const jsonLd = {
   '@graph': [
     {
       '@type': 'WebSite',
-      '@id': 'https://turaquete.com.br/#website',
-      url: 'https://turaquete.com.br',
+      '@id': 'https://www.turaquete.com.br/#website',
+      url: 'https://www.turaquete.com.br',
       name: 'Turaquete',
       description: 'Especialista em raquetes de beach tennis',
       inLanguage: 'pt-BR',
     },
     {
       '@type': 'Organization',
-      '@id': 'https://turaquete.com.br/#organization',
+      '@id': 'https://www.turaquete.com.br/#organization',
       name: 'Turaquete',
-      url: 'https://turaquete.com.br',
+      url: 'https://www.turaquete.com.br',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://turaquete.com.br/turaquete-logo.png',
+        url: 'https://www.turaquete.com.br/turaquete-logo.png',
         width: '400',
         height: '120',
       },

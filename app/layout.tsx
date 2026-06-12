@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://turaquete.com.br'),
+  metadataBase: new URL('https://www.turaquete.com.br'),
   title: {
     default:  TITLE,
     template: '%s | Turaquete',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     images:      ['/opengraph-image.png'],
     locale:      'pt_BR',
     type:        'website',
-    url:         'https://turaquete.com.br',
+    url:         'https://www.turaquete.com.br',
     siteName:    'Turaquete',
   },
   twitter: {

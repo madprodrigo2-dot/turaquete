@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/ir/',
       },
     ],
-    sitemap: 'https://turaquete.com.br/sitemap.xml',
+    sitemap: 'https://www.turaquete.com.br/sitemap.xml',
   }
 }
