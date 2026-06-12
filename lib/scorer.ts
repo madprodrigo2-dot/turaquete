@@ -14,6 +14,8 @@ export interface FittingProfile {
   jogo_aereo_predominante?: boolean
   cotovelo_sensivel?: boolean
   ombro_sensivel?: boolean
+  // Gender: pass only when revealed organically (grammar, context). Never ask.
+  genero_organico?: 'masculino' | 'feminino'
 }
 
 export interface FaixaIdeal {
@@ -69,6 +71,12 @@ export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
   const porte_grande = p.porte === 'grande' || p.forca_declarada === 'forte'
   if (porte_menudo) { peso_min -= 10; peso_max -= 10 }  // floor clamp below brings to 315
   if (porte_grande) { peso_min += 10; peso_max += 10 }
+
+  // Modifier: gender (organic signal only — never asked). Men floor at 320g.
+  // Calibration: men in beach tennis reliably hit harder and sustain more g without fatigue.
+  if (p.genero_organico === 'masculino') {
+    peso_min = Math.max(peso_min, 320)
+  }
 
   // Modifier: age (absolute overrides for 50+ — comfort mandate)
   if (p.idade != null) {

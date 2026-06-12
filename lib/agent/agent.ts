@@ -71,6 +71,7 @@ async function executeTool(
       balance_preferido: faixa.balance_preferido,
       prioridades: faixa.prioridades,
       descricao: `${faixa.peso_min}–${faixa.peso_max}g, balance ${faixa.balance_preferido}, priorize ${faixa.prioridades.join(', ')}`,
+      DADO_VINCULANTE: `Narre EXATAMENTE "${faixa.peso_min}–${faixa.peso_max}g" no diagnóstico. PROIBIDO usar outros valores de peso. Estes números vieram do código e são definitivos.`,
     })
   }
 
@@ -225,10 +226,16 @@ async function streamResponse(
   diagnosticoRef: { value: FaixaIdeal | null },
   onToken: (token: string) => void
 ): Promise<AgentResult> {
+  // Inject the calculated faixa into the system prompt so the final narrative
+  // is forced to use the exact numbers from calcular_faixa_ideal, not the model's own calculation.
+  const systemForStream = diagnosticoRef.value
+    ? `${SYSTEM_PROMPT}\n\n[FAIXA VINCULANTE CALCULADA PELO CÓDIGO]\npeso_min=${diagnosticoRef.value.peso_min}g  peso_max=${diagnosticoRef.value.peso_max}g  balance=${diagnosticoRef.value.balance_preferido}\nNarre EXATAMENTE estes valores. É proibido usar qualquer outro número de peso no diagnóstico desta conversa.`
+    : SYSTEM_PROMPT
+
   const stream = anthropic.messages.stream({
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    system: SYSTEM_PROMPT,
+    system: systemForStream,
     messages,
   })
 

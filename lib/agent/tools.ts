@@ -146,6 +146,11 @@ export const agentTools: Anthropic.Tool[] = [
           type: 'boolean',
           description: 'Tem dor ou histórico no ombro',
         },
+        genero_organico: {
+          type: 'string',
+          enum: ['masculino', 'feminino'],
+          description: 'Gênero, apenas se a pessoa revelou organicamente (gramática como "cansado/cansada", contexto como "jogo com meus amigos"). NUNCA pergunte. Homens têm piso de 320g na faixa calculada.',
+        },
       },
       required: [],
     },
