@@ -69,6 +69,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const sendingRef = useRef(false)
   // AbortController for the in-flight fetch — cancelled on timeout or unmount
   const abortRef = useRef<AbortController | null>(null)
+  // Tracks which start chip (if any) triggered the current send
+  const starterUsadoRef = useRef<string | null>(null)
 
   const STREAM_TIMEOUT_MS = 40_000
 
@@ -164,10 +166,18 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
     try {
       const apiMessages = updated.map(({ role, content }) => ({ role, content }))
+      const isFirstMessage = !messages.some(m => m.role === 'user')
+      const reqBody: Record<string, unknown> = { messages: apiMessages, sessionId }
+      if (isFirstMessage) {
+        reqBody.primeiraMensagem = text
+        reqBody.starterUsado = starterUsadoRef.current ?? null
+      }
+      starterUsadoRef.current = null
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, sessionId }),
+        body: JSON.stringify(reqBody),
         signal: abort.signal,
       })
 
@@ -191,7 +201,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
         if (!line.startsWith('data: ')) return
         const payload = line.slice(6).trim()
         if (!payload) return
-        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; message?: string }
+        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; intencao?: string; message?: string }
         try { evt = JSON.parse(payload) } catch { return }
 
         if (evt.type === 'token' && evt.token !== undefined) {
@@ -218,6 +228,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           }
           if (diag) {
             sendGAEvent({ event: 'diagnostico_exibido', nivel: diag.peso_min + '-' + diag.peso_max })
+          }
+          if (evt.intencao) {
+            sendGAEvent({ event: 'intencao_detectada', intencao: evt.intencao })
           }
           setStreamIsDone(true)
         } else if (evt.type === 'error') {
@@ -390,7 +403,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
             </div>
 
             {!hasUserMessages && !loading && !isAnimating && (
-              <StartChips onSelect={sendMessage} />
+              <StartChips onSelect={(chip) => {
+                starterUsadoRef.current = chip
+                sendMessage(chip)
+              }} />
             )}
 
             {contextChips && (

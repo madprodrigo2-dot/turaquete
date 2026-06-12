@@ -156,6 +156,34 @@ export const agentTools: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'registrar_intencao',
+    description:
+      'Classifica a intenção detectada na PRIMEIRA mensagem do usuário. ' +
+      'Chame EXATAMENTE UMA VEZ, na primeira mensagem (quando não há nenhuma mensagem de usuário anterior no histórico), ' +
+      'ANTES de qualquer outra ferramenta ou resposta de texto.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        intencao: {
+          type: 'string',
+          enum: [
+            'primeira_raquete',
+            'troca',
+            'ajuste_da_atual',
+            'lesao_dor',
+            'comparacao',
+            'presente',
+            'preco_orcamento',
+            'curiosidade',
+            'outra',
+          ],
+          description: 'Classificação da intenção principal da pessoa nesta primeira mensagem.',
+        },
+      },
+      required: ['intencao'],
+    },
+  },
+  {
     name: 'sugerir_opcoes',
     description:
       'Apresenta chips tocáveis para o usuário escolher. Use para desambiguar modelos citados sem ano ou versão ' +

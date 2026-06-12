@@ -20,7 +20,12 @@ function sanitizeDashes(token: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { messages, sessionId } = body as { messages: ChatMessage[]; sessionId: string }
+    const { messages, sessionId, primeiraMensagem, starterUsado } = body as {
+      messages: ChatMessage[]
+      sessionId: string
+      primeiraMensagem?: string
+      starterUsado?: string | null
+    }
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'messages obrigatório' }, { status: 400 })
@@ -71,7 +76,7 @@ export async function POST(req: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const { text, recommendations, suggestions, isComparison, diagnostico } = await runAgentTurn(messages, (token) => {
+          const { text, recommendations, suggestions, isComparison, diagnostico, intencao } = await runAgentTurn(messages, (token) => {
             writeEvent(controller, { type: 'token', token: sanitizeDashes(token) })
           })
 
@@ -82,6 +87,11 @@ export async function POST(req: NextRequest) {
               session_id: sessionId,
               messages: [...messages, { role: 'assistant', content: text }],
               recommended_racket_ids: recommendations?.map(r => r.racket.id) ?? [],
+              ...(primeiraMensagem !== undefined && {
+                primeira_mensagem: primeiraMensagem,
+                starter_usado: starterUsado ?? null,
+                intencao_detectada: intencao ?? null,
+              }),
             })
             .then(({ error }) => {
               if (error) console.error('Conversations insert error:', error.message)
@@ -105,6 +115,7 @@ export async function POST(req: NextRequest) {
             suggestions: suggestions ?? null,
             isComparison: isComparison ?? false,
             diagnostico: diagnostico ?? null,
+            intencao: intencao ?? null,
           })
         } catch (err) {
           console.error('Chat stream error:', err)

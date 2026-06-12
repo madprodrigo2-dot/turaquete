@@ -15,12 +15,17 @@ export type ChatMessage = {
   content: string
 }
 
+export type IntencaoTipo =
+  | 'primeira_raquete' | 'troca' | 'ajuste_da_atual' | 'lesao_dor'
+  | 'comparacao' | 'presente' | 'preco_orcamento' | 'curiosidade' | 'outra'
+
 export type AgentResult = {
   text: string
   recommendations?: RecommendedRacket[]
   suggestions?: string[]
   isComparison?: boolean
   diagnostico?: FaixaIdeal
+  intencao?: IntencaoTipo
 }
 
 export type { FaixaIdeal }
@@ -60,8 +65,14 @@ async function executeTool(
   input: Record<string, unknown>,
   pendingRecommendations: RecommendedRacket[],
   pendingSuggestions: string[],
-  diagnosticoRef: { value: FaixaIdeal | null }
+  diagnosticoRef: { value: FaixaIdeal | null },
+  intencaoRef: { value: IntencaoTipo | null }
 ): Promise<string> {
+  if (name === 'registrar_intencao') {
+    intencaoRef.value = input.intencao as IntencaoTipo
+    return JSON.stringify({ registrado: true })
+  }
+
   if (name === 'diagnosticar_perfil') {
     const faixa = calcular_faixa_ideal(input as FittingProfile)
     diagnosticoRef.value = faixa
@@ -135,6 +146,7 @@ export async function runAgentTurn(
   const pendingRecommendations: RecommendedRacket[] = []
   const pendingSuggestions: string[] = []
   const diagnosticoRef: { value: FaixaIdeal | null } = { value: null }
+  const intencaoRef: { value: IntencaoTipo | null } = { value: null }
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false
@@ -158,7 +170,7 @@ export async function runAgentTurn(
 
     if (response.stop_reason !== 'tool_use') {
       if (onToken) {
-        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, onToken)
+        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken)
       }
       const textBlock = response.content.find(b => b.type === 'text')
       const text = textBlock?.type === 'text' ? textBlock.text : ''
@@ -168,6 +180,7 @@ export async function runAgentTurn(
         suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
         isComparison: isComparison || undefined,
         diagnostico: diagnosticoRef.value ?? undefined,
+        intencao: intencaoRef.value ?? undefined,
       }
     }
 
@@ -180,7 +193,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -206,7 +219,7 @@ export async function runAgentTurn(
 
   // Fallback if MAX_TOOL_ROUNDS exhausted
   if (onToken) {
-    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, onToken)
+    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken)
   }
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
@@ -222,6 +235,7 @@ export async function runAgentTurn(
     suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
     isComparison: isComparison || undefined,
     diagnostico: diagnosticoRef.value ?? undefined,
+    intencao: intencaoRef.value ?? undefined,
   }
 }
 
@@ -231,6 +245,7 @@ async function streamResponse(
   pendingSuggestions: string[],
   isComparison: boolean,
   diagnosticoRef: { value: FaixaIdeal | null },
+  intencaoRef: { value: IntencaoTipo | null },
   onToken: (token: string) => void
 ): Promise<AgentResult> {
   // Inject the calculated faixa into the system prompt so the final narrative
@@ -260,5 +275,6 @@ async function streamResponse(
     suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
     isComparison: isComparison || undefined,
     diagnostico: diagnosticoRef.value ?? undefined,
+    intencao: intencaoRef.value ?? undefined,
   }
 }
