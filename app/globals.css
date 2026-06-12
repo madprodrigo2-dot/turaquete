@@ -95,6 +95,10 @@ body {
   animation: settle-ball 0.65s ease-out both;
 }
 
+/* ── Character fade-in (paced typing animation) ─────────────────────────── */
+@keyframes char-fade { from { opacity: 0; } to { opacity: 1; } }
+.char-fade { animation: char-fade 100ms ease-out forwards; }
+
 /* ── Typing cursor (shown while paced text is draining) ─────────────────── */
 @keyframes cursor-blink {
   0%, 100% { opacity: 0.55; }
@@ -115,7 +119,8 @@ body {
   .bt-ball,
   .msg-enter,
   .ball-settle,
-  .typing-cursor {
+  .typing-cursor,
+  .char-fade {
     animation: none !important;
   }
   .typing-cursor { display: none; }

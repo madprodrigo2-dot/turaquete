@@ -1,3 +1,6 @@
+'use client'
+
+import { useRef } from 'react'
 import Image from 'next/image'
 import RacketCard from './RacketCard'
 import CompareTable from './CompareTable'
@@ -6,6 +9,7 @@ import TermoGlossario from './TermoGlossario'
 import { RecommendedRacket } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
 import { findGlossaryMatches } from '@/lib/glossario'
+import { usePacedText } from '@/hooks/usePacedText'
 
 interface Props {
   role: 'user' | 'assistant'
@@ -18,8 +22,10 @@ interface Props {
   onSuggestion?: (s: string) => void
   diagnostico?: FaixaIdeal
   disableGlossary?: boolean
-  showCursor?: boolean
-  onFlush?: () => void
+  // Paced animation props (only set on the currently-streaming last message)
+  rawText?: string
+  streamIsDone?: boolean
+  onAnimationChange?: (animating: boolean) => void
 }
 
 // Dimensões nativas dos PNGs para srcset correto
@@ -56,7 +62,25 @@ function renderAssistantText(text: string): React.ReactNode {
 
   boldParts.forEach((part, bi) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      nodes.push(<strong key={`b${bi}`} className="font-semibold">{part.slice(2, -2)}</strong>)
+      const inner = part.slice(2, -2)
+      const bMatches = findGlossaryMatches(inner, trackedTerms)
+      if (bMatches.length === 0) {
+        nodes.push(<strong key={`b${bi}`} className="font-semibold">{inner}</strong>)
+      } else {
+        let bCursor = 0
+        const bNodes: React.ReactNode[] = []
+        bMatches.forEach((bm, bmi) => {
+          if (bm.start > bCursor) bNodes.push(inner.slice(bCursor, bm.start))
+          bNodes.push(
+            <TermoGlossario key={`bg${bi}-${bmi}`} entry={bm.entry}>
+              {bm.matched}
+            </TermoGlossario>
+          )
+          bCursor = bm.end
+        })
+        if (bCursor < inner.length) bNodes.push(inner.slice(bCursor))
+        nodes.push(<strong key={`b${bi}`} className="font-semibold">{bNodes}</strong>)
+      }
       return
     }
 
@@ -82,15 +106,39 @@ function renderAssistantText(text: string): React.ReactNode {
   return nodes
 }
 
-export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false, suggestions, isComparison, onSuggestion, diagnostico, disableGlossary = false, showCursor = false, onFlush }: Props) {
+export default function ChatMessage({
+  role, content, recommendations, loading = false, showTury = false,
+  suggestions, isComparison, onSuggestion, diagnostico,
+  disableGlossary = false,
+  rawText, streamIsDone, onAnimationChange,
+}: Props) {
   const isAssistant = role === 'assistant'
   const hasRecs = (recommendations?.length ?? 0) > 0
+
+  // The pacing container ref — used only when rawText is provided.
+  const containerRef = useRef<HTMLSpanElement>(null)
+
+  // The hook always runs (hooks can't be conditional), but it's a no-op when rawText is ''.
+  const { isAnimating, flush } = usePacedText(
+    containerRef,
+    rawText ?? '',
+    streamIsDone ?? false,
+    { onAnimationChange }
+  )
+
+  // Pacing mode: rawText prop is provided (we're on the currently-streaming message).
+  // During animation the DOM container shows text; cards/chips are held back until done.
+  const isPacing = rawText !== undefined
+  const holdBack = isPacing && isAnimating
+
+  // Pose: during animation we always show "pensando" until first token, then nothing special
+  // (pose is based on content which is the full-message string from messages state).
   const turyConfig = getPose(loading, showTury, hasRecs, content)
 
   return (
     <div className={`flex flex-col w-full msg-enter ${isAssistant ? 'items-start' : 'items-end'}`}>
 
-      {/* Precarrega as outras poses na primeira mensagem — troca instantânea */}
+      {/* Precarrega as outras poses na primeira mensagem */}
       {showTury && isAssistant && (
         <div aria-hidden className="absolute w-0 h-0 overflow-hidden pointer-events-none">
           <Image src={TURY.pensando.src}   alt="" width={TURY.pensando.nW}   height={TURY.pensando.nH}   />
@@ -99,7 +147,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
         </div>
       )}
 
-      {/* Bubble row — Tury (corpo completo, sem máscara) + burbuja */}
+      {/* Bubble row */}
       <div className="flex items-end gap-2">
 
         {isAssistant && turyConfig && (
@@ -114,14 +162,14 @@ export default function ChatMessage({ role, content, recommendations, loading = 
           />
         )}
 
-        {/* Burbuja — click/tap flushes animation (tap-to-skip) */}
+        {/* Burbuja — click/tap flushes animation while draining (video-game skip) */}
         <div
           className={`px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
             ${isAssistant
               ? `${turyConfig ? 'max-w-[85%]' : 'w-full'} bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100`
               : 'max-w-[85%] bg-tinta text-white rounded-tr-sm'
             }`}
-          onClick={onFlush}
+          onClick={holdBack ? flush : undefined}
         >
           {loading ? (
             <div className="flex items-center gap-1.5 py-0.5">
@@ -132,27 +180,32 @@ export default function ChatMessage({ role, content, recommendations, loading = 
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
             </div>
+          ) : isPacing ? (
+            // Stable DOM container — hook appends chars here directly, zero React re-renders
+            <span style={{ whiteSpace: 'pre-wrap' }}>
+              <span ref={containerRef} />
+              {isAnimating && <span className="typing-cursor" aria-hidden="true" />}
+            </span>
           ) : (
             <span style={{ whiteSpace: 'pre-wrap' }}>
               {isAssistant && !disableGlossary
                 ? renderAssistantText(content)
                 : renderText(content)
               }
-              {showCursor && <span className="typing-cursor" aria-hidden="true" />}
             </span>
           )}
         </div>
       </div>
 
-      {/* Diagnóstico de fitting */}
-      {isAssistant && diagnostico && (
+      {/* Diagnóstico de fitting — held back until animation finishes */}
+      {isAssistant && diagnostico && !holdBack && (
         <div className="mt-2 pl-[68px] w-full">
           <DiagnosticoBlock faixa={diagnostico} />
         </div>
       )}
 
-      {/* RacketCards — explicando (58px) + gap-2 (8px) = 66px de indent */}
-      {isAssistant && hasRecs && (
+      {/* RacketCards — held back until animation finishes */}
+      {isAssistant && hasRecs && !holdBack && (
         <div className="mt-3 pl-[68px] w-full flex flex-col gap-2">
           {isComparison && <CompareTable recommendations={recommendations!} />}
           <div className={
@@ -173,8 +226,8 @@ export default function ChatMessage({ role, content, recommendations, loading = 
         </div>
       )}
 
-      {/* Quick reply chips */}
-      {isAssistant && suggestions && suggestions.length > 0 && onSuggestion && (
+      {/* Quick reply chips — held back until animation finishes */}
+      {isAssistant && suggestions && suggestions.length > 0 && onSuggestion && !holdBack && (
         <div className="mt-2 pl-[68px] flex flex-wrap gap-2">
           {suggestions.map(s => (
             <button

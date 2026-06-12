@@ -31,11 +31,19 @@ export async function POST(req: NextRequest) {
       } catch { /* client disconnected */ }
     }
 
+    function sanitizeDashes(token: string): string {
+      return token
+        .replace(/ — /g, ', ')
+        .replace(/— /g, ', ')
+        .replace(/ —/g, ', ')
+        .replace(/—/g, ',')
+    }
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
           const { text, recommendations, suggestions, isComparison, diagnostico } = await runAgentTurn(messages, (token) => {
-            writeEvent(controller, { type: 'token', token })
+            writeEvent(controller, { type: 'token', token: sanitizeDashes(token) })
           })
 
           // Fire-and-forget persistence

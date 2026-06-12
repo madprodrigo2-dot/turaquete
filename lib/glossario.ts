@@ -23,7 +23,7 @@ export const GLOSSARIO: GlossarioEntry[] = [
   },
   {
     termo: 'controle',
-    definicao: 'Precisão na direção e profundidade do golpe; raquetes com balance ao cabo e moldura redonda oferecem mais controle.',
+    definicao: 'Precisão na direção e profundidade do golpe; raquetes com balance ao cabo e cabeça redonda oferecem mais controle.',
     showInModal: true,
   },
   {
@@ -48,7 +48,7 @@ export const GLOSSARIO: GlossarioEntry[] = [
   },
   {
     termo: 'sweet spot',
-    definicao: 'Área da face onde o golpe sai completo. Fora dela a bola perde potência e vibra mais. Raquetes redondas têm sweet spot maior e mais centralizado.',
+    definicao: 'Área da face onde o golpe sai completo. Fora dela a bola perde potência e vibra mais. Raquetes de cabeça redonda têm sweet spot maior e mais central; formatos diamante, menor e mais alto.',
     showInModal: true,
   },
 
@@ -95,7 +95,7 @@ export const GLOSSARIO: GlossarioEntry[] = [
   },
   {
     termo: 'moldura',
-    definicao: 'Aro externo da raquete, que define a forma (redonda, diamante, gota) e a rigidez do conjunto.',
+    definicao: 'Aro externo da raquete, que define o formato da cabeça (redonda, diamante ou gota) e a rigidez do conjunto.',
     aliases: ['frame'],
     noAnatomia: true,
   },

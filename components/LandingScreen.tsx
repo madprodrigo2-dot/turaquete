@@ -19,10 +19,13 @@ interface Props {
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
-const STEPS = [
-  'Conte como você joga, do seu jeito',
-  'O especialista entende seu perfil',
-  'Receba 2-3 raquetes com o porquê e o link',
+const STEPS: { label: string; desc?: string }[] = [
+  { label: 'Conte como você joga, do seu jeito' },
+  { label: 'O especialista entende seu perfil' },
+  {
+    label: 'Receba seu perfil e as raquetes certas',
+    desc: 'O especialista te diz o peso e balance ideais pro seu jogo, e indica as raquetes que batem exatamente com esse perfil.',
+  },
 ]
 
 const FAQS = [
@@ -675,9 +678,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                         <div className="w-px flex-1 min-h-4 bg-aqua/25" />
                       )}
                     </div>
-                    <p className={`text-tinta text-sm md:text-base leading-relaxed pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
-                      {step}
-                    </p>
+                    <div className={`flex flex-col pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
+                      <p className="text-tinta text-sm md:text-base leading-relaxed">{step.label}</p>
+                      {step.desc && (
+                        <p className="text-tinta/60 text-xs md:text-sm leading-relaxed mt-1">{step.desc}</p>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

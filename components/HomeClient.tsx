@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { usePacedText } from '@/hooks/usePacedText'
 import Image from 'next/image'
 import Link from 'next/link'
 import { sendGAEvent } from '@next/third-parties/google'
@@ -70,7 +69,12 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   // Paced text animation — buffer drains at human typing speed
   const [streamRawText, setStreamRawText] = useState('')
   const [streamIsDone, setStreamIsDone] = useState(false)
-  const { displayedText: pacedText, isAnimating, flush: flushAnimation } = usePacedText(streamRawText, streamIsDone)
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  const handleAnimationChange = useCallback((v: boolean) => {
+    setIsAnimating(v)
+    if (!v) setStreamRawText('')
+  }, [])
 
   // Restore conversation from sessionStorage on mount
   useEffect(() => {
@@ -306,18 +310,16 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full">
               {messages.map((m, i) => {
                 const isLast = i === messages.length - 1
-                // While paced animation is draining, show animated text and hide cards/chips
-                // so they only appear after their textual introduction has been fully revealed.
-                const isPacing = isAnimating && isLast && m.role === 'assistant'
+                const isPacing = (isStreaming || streamRawText !== '') && isLast && m.role === 'assistant'
                 return (
                   <ChatMessage
                     key={i}
                     role={m.role}
-                    content={isPacing ? pacedText : m.content}
-                    recommendations={isPacing ? undefined : m.recommendations}
-                    suggestions={isPacing ? undefined : m.suggestions}
+                    content={m.content}
+                    recommendations={m.recommendations}
+                    suggestions={m.suggestions}
                     isComparison={m.isComparison}
-                    diagnostico={isPacing ? undefined : m.diagnostico}
+                    diagnostico={m.diagnostico}
                     onSuggestion={
                       isLast && !loading && !isStreaming && !isAnimating && !atLimit
                         ? sendMessage
@@ -325,8 +327,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                     }
                     disableGlossary={(isStreaming || isAnimating) && isLast}
                     showTury={i === 0 && m.role === 'assistant'}
-                    showCursor={isPacing}
-                    onFlush={isPacing ? flushAnimation : undefined}
+                    rawText={isPacing ? streamRawText : undefined}
+                    streamIsDone={isPacing ? streamIsDone : undefined}
+                    onAnimationChange={isPacing ? handleAnimationChange : undefined}
                   />
                 )
               })}

@@ -54,6 +54,30 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     linhas.push('Cabeça diamante: sweet spot mais alto, ideal para ataque')
   }
 
+  // ── Tolerância / sweet spot ────────────────────────────────────────────────
+  // Cita trama e EVA como causas — nunca formato (todo o catálogo é cabeça redonda)
+  const forgiveness = racket.racket_insights?.forgiveness ?? null
+  if (forgiveness != null) {
+    if (forgiveness >= 8) {
+      const parts: string[] = []
+      if (trama === 'kevlar' || face.includes('kevlar')) parts.push('trama de Kevlar flexível')
+      else if (trama === '3k') parts.push('trama 3K')
+      else if (face.includes('fibra') || face.includes('vidro')) parts.push('face de fibra de vidro')
+      if (core.includes('supersoft') || core.includes('soft')) parts.push('núcleo macio')
+      if (parts.length > 0) {
+        linhas.push(`${parts.join(' e ')}: perdoa quando você não acerta no centro`)
+      }
+    } else if (forgiveness <= 5) {
+      if (trama === '18k') {
+        linhas.push('Trama 18K rígida: o sweet spot é certeiro, fora dele a bola perde resposta')
+      } else if (trama === '12k') {
+        linhas.push('Trama 12K rígida: sweet spot exigente, pede acerto técnico no centro')
+      } else if (core.includes('hard') || core.includes('duro')) {
+        linhas.push('Núcleo duro: poderoso no centro, exigente fora do sweet spot')
+      }
+    }
+  }
+
   // ── Furos ─────────────────────────────────────────────────────────────────
   const furos = extra.furos as number | undefined
   if (furos != null && furos >= 30) {
@@ -74,5 +98,5 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     linhas.push('Spin: superfície lisa de fábrica. Dá pra aumentar com areado aplicado depois.')
   }
 
-  return linhas.slice(0, 6)
+  return linhas.slice(0, 7)
 }
