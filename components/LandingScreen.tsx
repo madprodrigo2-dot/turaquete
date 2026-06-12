@@ -7,6 +7,7 @@ import { Wallet } from 'lucide-react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 import AthleteBadge from './AthleteBadge'
+import InsightsModal from './InsightsModal'
 
 interface Props {
   onStart: () => void
@@ -211,47 +212,175 @@ function BrandCard({ brand }: { brand: Brand }) {
   )
 }
 
-function FeaturedCard({ racket, onStart }: { racket: RacketWithInsights; onStart: () => void }) {
+function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
+  const [modalOpen, setModalOpen] = useState(false)
+
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
-
-  const perfil = racket.racket_insights?.perfil_resumo ?? null
-  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const perfil   = racket.racket_insights?.perfil_resumo ?? null
+  const athlete  = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
+  const ctaHref  = hasLink ? `/ir/${racket.slug}` : null
+  const linkTipo = racket.affiliate_url ? 'afiliado' : 'oficial'
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-arena flex flex-col">
-      <Link href={`/raquetes/${racket.slug}`} className="block relative">
-        <div className="aspect-[4/5] bg-white p-3 flex items-center justify-center">
-          {racket.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
+    <>
+      <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-arena flex flex-col h-full">
+        <Link href={`/raquetes/${racket.slug}`} className="block relative">
+          <div className="aspect-[4/5] bg-white p-3 flex items-center justify-center">
+            {racket.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
+            ) : (
+              <IconEstilo />
+            )}
+          </div>
+          {athlete && (
+            <div className="absolute top-1.5 left-1.5 z-10">
+              <AthleteBadge athlete={athlete} />
+            </div>
+          )}
+        </Link>
+        <div className="p-3 flex flex-col gap-2 flex-1">
+          <Link href={`/raquetes/${racket.slug}`}>
+            <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors">
+              {racket.name}
+            </p>
+          </Link>
+          {perfil && (
+            <p className="text-tinta/55 text-[10px] leading-snug line-clamp-2">{perfil}</p>
+          )}
+          {price && <p className="font-heading text-coral font-bold text-sm">{price}</p>}
+          {ctaHref ? (
+            <a
+              href={ctaHref}
+              target="_blank"
+              rel={`noopener noreferrer${linkTipo === 'afiliado' ? ' sponsored' : ''}`}
+              onClick={() => sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })}
+              className="mt-auto w-full text-center border border-aqua text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:bg-aqua/20 active:scale-[0.98] transition-all leading-tight"
+            >
+              Quero esta raquete
+            </a>
           ) : (
-            <IconEstilo />
+            <span className="mt-auto w-full text-center rounded-xl bg-gray-100 text-gray-400 text-xs font-semibold py-2 cursor-not-allowed select-none block">
+              Em breve nas lojas
+            </span>
+          )}
+          {racket.racket_insights && (
+            <button
+              onClick={() => setModalOpen(true)}
+              className="flex items-center gap-1 text-[10px] text-tinta/40 hover:text-aqua transition-colors w-fit"
+            >
+              <svg width="11" height="11" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+                <polygon points="6.5,1 11.5,3.8 11.5,9.2 6.5,12 1.5,9.2 1.5,3.8" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                <line x1="6.5" y1="4" x2="6.5" y2="9" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
+                <line x1="3.7" y1="5.5" x2="9.3" y2="7.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
+                <line x1="3.7" y1="7.5" x2="9.3" y2="5.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
+              </svg>
+              Ver análise
+            </button>
           )}
         </div>
-        {athlete && (
-          <div className="absolute top-1.5 left-1.5 z-10">
-            <AthleteBadge athlete={athlete} />
-          </div>
-        )}
-      </Link>
-      <div className="p-3 flex flex-col gap-2 flex-1">
-        <Link href={`/raquetes/${racket.slug}`}>
-          <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors">
-            {racket.name}
-          </p>
-        </Link>
-        {perfil && (
-          <p className="text-tinta/55 text-[10px] leading-snug line-clamp-2">{perfil}</p>
-        )}
-        {price && <p className="font-heading text-coral font-bold text-sm">{price}</p>}
-        <button
-          onClick={onStart}
-          className="mt-auto w-full border border-aqua text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:bg-aqua/20 active:scale-[0.98] transition-all leading-tight"
+      </div>
+      <InsightsModal racket={racket} open={modalOpen} onClose={() => setModalOpen(false)} />
+    </>
+  )
+}
+
+// ── Carousel ──────────────────────────────────────────────────────────────────
+
+function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(0)
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd] = useState(false)
+
+  const syncState = () => {
+    const el = trackRef.current
+    if (!el) return
+    const { scrollLeft, clientWidth, scrollWidth } = el
+    setAtStart(scrollLeft <= 2)
+    setAtEnd(scrollLeft + clientWidth >= scrollWidth - 2)
+    const firstCard = el.children[0] as HTMLElement | null
+    if (!firstCard) return
+    const step = firstCard.offsetWidth + 12 // gap-3 = 12px
+    setActiveIdx(Math.round(scrollLeft / step))
+  }
+
+  useEffect(() => { syncState() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const scrollToIdx = (idx: number) => {
+    const el = trackRef.current
+    if (!el) return
+    const card = el.children[idx] as HTMLElement | null
+    if (!card) return
+    const scrollPadding = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0
+    el.scrollTo({ left: card.offsetLeft - scrollPadding, behavior: 'smooth' })
+  }
+
+  const arrowCls = (disabled: boolean) =>
+    `hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border shadow-sm items-center justify-center transition-all
+     ${disabled ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
+
+  return (
+    <div className="relative">
+      {/* Prev arrow */}
+      <button
+        onClick={() => scrollToIdx(Math.max(0, activeIdx - 1))}
+        disabled={atStart}
+        aria-label="Raquetes anteriores"
+        className={`${arrowCls(atStart)} left-0 -translate-x-full -ml-2`}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+          <path d="M8.5 2L4 6.5l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* Track — breaks out of parent padding on mobile, contained on desktop */}
+      <div className="-mx-5 md:mx-0">
+        <div
+          ref={trackRef}
+          onScroll={syncState}
+          className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pl-5 pr-5 md:pl-0 md:pr-0 scroll-pl-5 md:scroll-pl-0"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
         >
-          Quero esta raquete
-        </button>
+          {rackets.map(racket => (
+            <div
+              key={racket.id}
+              className="w-[calc(100vw-64px)] md:w-[calc((100%-24px)/3)] shrink-0 snap-start"
+            >
+              <FeaturedCard racket={racket} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Next arrow */}
+      <button
+        onClick={() => scrollToIdx(Math.min(rackets.length - 1, activeIdx + 1))}
+        disabled={atEnd}
+        aria-label="Próximas raquetes"
+        className={`${arrowCls(atEnd)} right-0 translate-x-full ml-2`}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+          <path d="M4.5 2L9 6.5 4.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-1.5 mt-3" role="group" aria-label="Navegação do carrossel">
+        {rackets.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => scrollToIdx(idx)}
+            aria-label={`Ir para raquete ${idx + 1}`}
+            aria-current={idx === activeIdx ? 'true' : undefined}
+            className={`h-1.5 rounded-full transition-all duration-200 ${
+              idx === activeIdx ? 'w-4 bg-aqua' : 'w-1.5 bg-tinta/20 hover:bg-tinta/40'
+            }`}
+          />
+        ))}
       </div>
     </div>
   )
@@ -587,11 +716,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               ) : (
                 <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
               )}
-              <div className="grid grid-cols-3 gap-3">
-                {featuredRackets.map(racket => (
-                  <FeaturedCard key={racket.id} racket={racket} onStart={onStart} />
-                ))}
-              </div>
+              <FeaturedCarousel rackets={featuredRackets} />
             </div>
           )}
 

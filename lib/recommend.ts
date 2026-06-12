@@ -260,6 +260,21 @@ export interface TopRaquetasResult {
   source: 'real' | 'curated'
 }
 
+export async function getRaquetasPorSlug(slugs: readonly string[]): Promise<RacketWithInsights[]> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .in('slug', slugs as string[])
+    .eq('publicada', true)
+  if (error || !data) return []
+  // Preserve curated order
+  return slugs
+    .map(s => (data as unknown as RacketWithInsights[]).find(r => r.slug === s))
+    .filter((r): r is RacketWithInsights => r != null)
+    .map(normalizeRacket)
+    .filter((r): r is RacketWithInsights => r != null)
+}
+
 const CURATED_SLUGS = ['beast-2023', 'ceu', 'coach'] as const
 const COLD_START_THRESHOLD = 10
 

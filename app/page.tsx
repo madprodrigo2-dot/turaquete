@@ -1,7 +1,17 @@
-import { listarMarcas, getTopRaquetas, getRaquetaPorSlug } from '@/lib/recommend'
+import { listarMarcas, getRaquetasPorSlug, getRaquetaPorSlug } from '@/lib/recommend'
 import HomeClient from '@/components/HomeClient'
 
 export const revalidate = 3600
+
+// ── Carrusel de destaques — editar slugs aqui para mudar a seleção ─────────────
+const FEATURED_SLUGS = [
+  'beast-2023',
+  'ceu',
+  'harley-25',
+  'rebel-25',
+  'starlight-ruby',
+  'kronos-25',
+] as const
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -32,7 +42,7 @@ const jsonLd = {
 export default async function Page() {
   const [brands, featured, previewRacket] = await Promise.all([
     listarMarcas().catch(() => []),
-    getTopRaquetas().catch(() => ({ rackets: [], source: 'curated' as const })),
+    getRaquetasPorSlug(FEATURED_SLUGS).catch(() => []),
     getRaquetaPorSlug('ceu').catch(() => null),
   ])
   return (
@@ -43,8 +53,8 @@ export default async function Page() {
       />
       <HomeClient
         brands={brands}
-        featuredRackets={featured.rackets}
-        featuredSource={featured.source}
+        featuredRackets={featured}
+        featuredSource="curated"
         previewRacket={previewRacket ?? undefined}
       />
     </>
