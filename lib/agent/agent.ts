@@ -34,24 +34,25 @@ type SuggestInput = {
   opcoes: string[]
 }
 
-function applyFaixaBonus(
+// Marks rackets with fora_da_faixa and sorts in-range first.
+// Tolerance ±5g accounts for factory variation; spec rule: a 330g nominal racket
+// is never "in range" for a 320g-max faixa (330 > 320+5).
+function applyFaixaFilter(
   raquetes: (RacketWithInsights & { match_score: number })[],
   faixa: FaixaIdeal
-): (RacketWithInsights & { match_score: number })[] {
+): (RacketWithInsights & { match_score: number; fora_da_faixa: boolean })[] {
   const TOLERANCIA = 5
-  const BONUS = 1.0
-  const PENALTY = 0.5
-  return raquetes
-    .map(r => {
-      const peso = r.weight_g
-      if (peso == null) return r
-      const inRange = peso >= faixa.peso_min - TOLERANCIA && peso <= faixa.peso_max + TOLERANCIA
-      return {
-        ...r,
-        match_score: Math.round((inRange ? r.match_score + BONUS : Math.max(0, r.match_score - PENALTY)) * 10) / 10,
-      }
-    })
-    .sort((a, b) => b.match_score - a.match_score)
+  const marked = raquetes.map(r => {
+    const peso = r.weight_g
+    const fora = peso != null
+      ? peso < faixa.peso_min - TOLERANCIA || peso > faixa.peso_max + TOLERANCIA
+      : false
+    return { ...r, fora_da_faixa: fora }
+  })
+  return marked.sort((a, b) => {
+    if (a.fora_da_faixa !== b.fora_da_faixa) return a.fora_da_faixa ? 1 : -1
+    return b.match_score - a.match_score
+  })
 }
 
 async function executeTool(
@@ -75,7 +76,7 @@ async function executeTool(
 
   if (name === 'buscar_raquetas') {
     const { raquetes, criteriosRelaxados } = await buscarRaquetas(input as RacketFilters)
-    const ranked = diagnosticoRef.value ? applyFaixaBonus(raquetes, diagnosticoRef.value) : raquetes
+    const ranked = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
     if (ranked.length === 0) {
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada dentro do orçamento informado. O preço mínimo das raquetes disponíveis é por volta de R$1.400.' })
     }

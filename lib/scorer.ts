@@ -23,7 +23,9 @@ export interface FaixaIdeal {
   prioridades: string[]
 }
 
-const CATALOGO_FLOOR = 295
+// Physical minimum: below 315g the racket lacks mass to absorb impact and vibrates too much.
+// This rule was validated by Rodrigo and is inviolable — no faixa ever goes below this.
+const CATALOGO_FLOOR = 315
 
 export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
   const dor = p.cotovelo_sensivel || p.ombro_sensivel
@@ -39,7 +41,7 @@ export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
       peso_min = 325; peso_max = 345; balance_preferido = 'medio_ou_cabeca'
       prioridades = ['potência', 'estabilidade', 'controle']
     } else if (p.estilo === 'defensivo') {
-      peso_min = 310; peso_max = 325; balance_preferido = 'medio_ou_cabo'
+      peso_min = 315; peso_max = 325; balance_preferido = 'medio_ou_cabo'
       prioridades = ['controle', 'estabilidade', 'manuseio']
     } else {
       peso_min = 315; peso_max = 335; balance_preferido = 'medio'
@@ -58,47 +60,50 @@ export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
     }
   } else {
     // iniciante or unknown
-    peso_min = 300; peso_max = 320; balance_preferido = 'medio_ou_cabo'
+    peso_min = 315; peso_max = 325; balance_preferido = 'medio_ou_cabo'
     prioridades = ['sweet spot generoso', 'conforto', 'manuseio']
   }
 
-  // Modifier: porte/forca
+  // Modifier: porte/forca (only if the person mentioned it spontaneously)
   const porte_menudo = p.porte === 'menudo' || p.forca_declarada === 'fraca'
   const porte_grande = p.porte === 'grande' || p.forca_declarada === 'forte'
-  if (porte_menudo) { peso_min -= 10; peso_max -= 10 }
+  if (porte_menudo) { peso_min -= 10; peso_max -= 10 }  // floor clamp below brings to 315
   if (porte_grande) { peso_min += 10; peso_max += 10 }
 
-  // Modifier: age
+  // Modifier: age (absolute overrides for 50+ — comfort mandate)
   if (p.idade != null) {
     if (p.idade >= 65) {
-      // Absolute override — comfort and tolerance mandate
-      peso_min = 295; peso_max = 315
+      // Absolute override — lightest safe range, never head-heavy
+      peso_min = 315; peso_max = 320
       balance_preferido = 'medio_ou_cabo'
       prioridades = ['conforto', 'sweet spot generoso', 'tolerância']
     } else if (p.idade >= 50) {
-      peso_min -= 10; peso_max -= 10
+      // Absolute override — comfort range regardless of level
+      peso_min = 315; peso_max = 325
       if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
+      balance_preferido = balance_preferido === 'medio' ? 'medio_ou_cabo' : balance_preferido
       if (!dor) prioridades = ['conforto', 'sweet spot generoso', ...prioridades]
-    } else if (p.idade <= 17 && p.idade >= 13) {
-      // Adolescent: bottom of their level range
+    } else if (p.idade >= 13 && p.idade <= 17) {
+      // Adolescent: light end of their level range
       peso_max = peso_min + 10
     }
   }
 
-  // Modifier: jogo aéreo/de rede
+  // Modifier: jogo aéreo/de rede → push toward light end of range
   if (p.jogo_aereo_predominante) { peso_min -= 5; peso_max -= 5 }
 
-  // HARD RULE: lesão → max 320, never heavy-head balance
+  // HARD RULE: lesão → 315-320g, never head-heavy balance, comfort always first
   if (dor) {
+    peso_min = 315
     peso_max = Math.min(peso_max, 320)
     if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
     prioridades = ['conforto', 'sweet spot generoso', 'manuseio', 'estabilidade']
   }
 
-  // Clamp to catalog floor
+  // Clamp to physical floor — 315g minimum, inviolable
   peso_min = Math.max(peso_min, CATALOGO_FLOOR)
-  peso_max = Math.max(peso_max, CATALOGO_FLOOR + 10)
-  if (peso_min > peso_max) peso_max = peso_min + 10
+  peso_max = Math.max(peso_max, CATALOGO_FLOOR + 5)
+  if (peso_min > peso_max) peso_max = peso_min + 5
 
   return { peso_min, peso_max, balance_preferido, prioridades }
 }
