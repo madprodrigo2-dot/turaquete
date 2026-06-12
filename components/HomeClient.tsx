@@ -11,8 +11,8 @@ import ChatInput from '@/components/ChatInput'
 import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 
 const OPENING_MESSAGE =
-  'Oi! Me conta como você joga: há quanto tempo pratica, se busca mais potência ou controle, ' +
-  'se sente algum incômodo no braço e qual seu orçamento. Com isso eu te indico a raquete certa.'
+  'Oi! Conta pra mim: há quanto tempo você joga, como costuma jogar na quadra, se algo incomoda ' +
+  '— braço, controle, potência... Do seu jeito, sem formulário.'
 
 const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
 const MESSAGE_LIMIT = 25
