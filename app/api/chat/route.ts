@@ -3,6 +3,20 @@ import { runAgentTurn, ChatMessage } from '@/lib/agent/agent'
 import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rate-limit'
 
+// In-memory dedup: rejects the same message arriving twice within 2s for the same session.
+// Map key = sessionId, value = { lastMsg, timestamp }.
+// Module-scoped so it persists across requests in the same serverless instance.
+const dedupCache = new Map<string, { lastMsg: string; ts: number }>()
+const DEDUP_WINDOW_MS = 2_000
+
+function sanitizeDashes(token: string): string {
+  return token
+    .replace(/ — /g, ', ')
+    .replace(/— /g, ', ')
+    .replace(/ —/g, ', ')
+    .replace(/—/g, ',')
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -24,19 +38,34 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Server-side dedup: reject identical consecutive messages within DEDUP_WINDOW_MS
+    if (sessionId) {
+      const lastMsg = messages[messages.length - 1]
+      const key = sessionId
+      const prev = dedupCache.get(key)
+      const now = Date.now()
+      if (
+        prev &&
+        prev.lastMsg === lastMsg.content &&
+        now - prev.ts < DEDUP_WINDOW_MS
+      ) {
+        return NextResponse.json({ error: 'Mensagem duplicada.' }, { status: 429 })
+      }
+      dedupCache.set(key, { lastMsg: lastMsg.content, ts: now })
+      // Prune stale entries (keep map small — serverless instances are ephemeral anyway)
+      if (dedupCache.size > 500) {
+        const cutoff = now - 60_000
+        for (const [k, v] of dedupCache) {
+          if (v.ts < cutoff) dedupCache.delete(k)
+        }
+      }
+    }
+
     const encoder = new TextEncoder()
     const writeEvent = (controller: ReadableStreamDefaultController, data: object) => {
       try {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
       } catch { /* client disconnected */ }
-    }
-
-    function sanitizeDashes(token: string): string {
-      return token
-        .replace(/ — /g, ', ')
-        .replace(/— /g, ', ')
-        .replace(/ —/g, ', ')
-        .replace(/—/g, ',')
     }
 
     const stream = new ReadableStream({

@@ -177,7 +177,14 @@ export async function runAgentTurn(
     const toolResults: Anthropic.ToolResultBlockParam[] = []
     for (const block of response.content) {
       if (block.type !== 'tool_use') continue
-      const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef)
+
+      let result: string
+      try {
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef)
+      } catch (toolErr) {
+        console.error(`Tool ${block.name} error:`, toolErr)
+        result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
+      }
 
       if (block.name === 'buscar_raquetas') {
         try {

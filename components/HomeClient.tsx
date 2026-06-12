@@ -65,6 +65,12 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const [isStreaming, setIsStreaming] = useState(false)
   const [sessionId, setSessionId] = useState<string>(generateId)
   const bottomRef = useRef<HTMLDivElement>(null)
+  // Guard against concurrent sends (double-tap, quick-reply race)
+  const sendingRef = useRef(false)
+  // AbortController for the in-flight fetch — cancelled on timeout or unmount
+  const abortRef = useRef<AbortController | null>(null)
+
+  const STREAM_TIMEOUT_MS = 40_000
 
   // Paced text animation — buffer drains at human typing speed
   const [streamRawText, setStreamRawText] = useState('')
@@ -135,13 +141,26 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
     }, 150)
   }
 
+  const TIMEOUT_MESSAGE = 'Opa, travei aqui. Pode mandar de novo?'
+
   const sendMessage = async (text: string) => {
+    // Hard guard: reject if a request is already in flight
+    if (sendingRef.current) return
+    sendingRef.current = true
+
     const updated: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(updated)
     setLoading(true)
-    // Reset paced animation for the new assistant reply
     setStreamRawText('')
     setStreamIsDone(false)
+
+    const abort = new AbortController()
+    abortRef.current = abort
+
+    // 40-second timeout: cancel fetch + show friendly retry message
+    const timeoutId = setTimeout(() => {
+      abort.abort()
+    }, STREAM_TIMEOUT_MS)
 
     try {
       const apiMessages = updated.map(({ role, content }) => ({ role, content }))
@@ -149,6 +168,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: apiMessages, sessionId }),
+        signal: abort.signal,
       })
 
       if (res.status === 429) {
@@ -165,6 +185,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       let buffer = ''
       let partialText = ''
       let streamStarted = false
+      let streamFinished = false
 
       const processLine = (line: string) => {
         if (!line.startsWith('data: ')) return
@@ -183,6 +204,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           setStreamRawText(partialText)
           setMessages([...updated, { role: 'assistant', content: partialText }])
         } else if (evt.type === 'done') {
+          streamFinished = true
           const recs = evt.recommendations ?? undefined
           const sugs = evt.suggestions?.length ? evt.suggestions : undefined
           const isCmp = evt.isComparison ?? false
@@ -199,6 +221,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           }
           setStreamIsDone(true)
         } else if (evt.type === 'error') {
+          streamFinished = true
           setMessages([...updated, { role: 'assistant', content: evt.message ?? 'Ops, tive um problema de conexão. Tente novamente.' }])
         }
       }
@@ -213,17 +236,26 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       }
       if (buffer) processLine(buffer)
 
-      if (!streamStarted) {
-        setMessages([...updated, { role: 'assistant', content: 'Desculpe, não consegui processar sua mensagem. Tente novamente.' }])
+      if (!streamStarted && !streamFinished) {
+        setMessages([...updated, { role: 'assistant', content: TIMEOUT_MESSAGE, suggestions: [text] }])
       }
-    } catch {
+    } catch (err) {
+      const isAbort = err instanceof Error && err.name === 'AbortError'
       setMessages([
         ...updated,
-        { role: 'assistant', content: 'Ops, tive um problema de conexão. Tente novamente.' },
+        {
+          role: 'assistant',
+          content: isAbort ? TIMEOUT_MESSAGE : 'Ops, tive um problema de conexão. Tente novamente.',
+          // Pass original text as suggestion so the retry chip re-sends it
+          suggestions: isAbort ? [text] : undefined,
+        },
       ])
     } finally {
+      clearTimeout(timeoutId)
+      abortRef.current = null
       setLoading(false)
       setIsStreaming(false)
+      sendingRef.current = false
     }
   }
 
