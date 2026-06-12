@@ -1,17 +1,9 @@
-import { listarMarcas, getRaquetasPorSlug, getRaquetaPorSlug } from '@/lib/recommend'
+import { listarMarcas, getTopRaquetas, getRaquetaPorSlug } from '@/lib/recommend'
 import HomeClient from '@/components/HomeClient'
 
-export const revalidate = 3600
-
-// ── Carrusel de destaques — editar slugs aqui para mudar a seleção ─────────────
-const FEATURED_SLUGS = [
-  'beast-2023',
-  'ceu',
-  'harley-25',
-  'rebel-25',
-  'starlight-ruby',
-  'kronos-25',
-] as const
+// Regenerate every 5 min so the recommendation carousel reflects recent data.
+// Edit CURATED_SLUGS in lib/recommend.ts to change the cold-start fallback.
+export const revalidate = 300
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -42,7 +34,7 @@ const jsonLd = {
 export default async function Page() {
   const [brands, featured, previewRacket] = await Promise.all([
     listarMarcas().catch(() => []),
-    getRaquetasPorSlug(FEATURED_SLUGS).catch(() => []),
+    getTopRaquetas().catch(() => ({ rackets: [], source: 'curated' as const })),
     getRaquetaPorSlug('ceu').catch(() => null),
   ])
   return (
@@ -53,8 +45,8 @@ export default async function Page() {
       />
       <HomeClient
         brands={brands}
-        featuredRackets={featured}
-        featuredSource="curated"
+        featuredRackets={featured.rackets}
+        featuredSource={featured.source}
         previewRacket={previewRacket ?? undefined}
       />
     </>

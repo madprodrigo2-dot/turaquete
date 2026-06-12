@@ -203,9 +203,10 @@ export async function getRaquetasByIds(ids: number[]): Promise<RacketWithInsight
     .from('rackets')
     .select(SELECT_FIELDS)
     .in('id', ids)
+    .eq('publicada', true)   // never surface unpublished rackets from event data
 
   if (error) throw new Error(`Supabase: ${error.message}`)
-  return ((data as unknown[]) ?? []).map(normalizeRacket)
+  return ((data as unknown[]) ?? []).map(normalizeRacket).filter((r): r is RacketWithInsights => r !== null)
 }
 
 export interface Brand {
@@ -275,41 +276,51 @@ export async function getRaquetasPorSlug(slugs: readonly string[]): Promise<Rack
     .filter((r): r is RacketWithInsights => r != null)
 }
 
-const CURATED_SLUGS = ['beast-2023', 'ceu', 'coach'] as const
-const COLD_START_THRESHOLD = 10
+// ── Featured carousel config ─────────────────────────────────────────────────
+// Change slugs here to update the cold-start fallback order.
+const CURATED_SLUGS = [
+  'beast-2023', 'ceu', 'harley-25', 'rebel-25', 'starlight-ruby', 'kronos-25',
+] as const
+
+const TOP_N = 6
+// Once this many recommendations are recorded in the last 30 days, real data
+// fully drives the carousel (with fallback filling any remaining slots).
+const COLD_START_THRESHOLD = 30
 
 export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   const supabase = getSupabase()
 
-  // Cold-start guard: if fewer than 10 total events, use curated list
-  const { data: totalData } = await supabase.rpc('count_recommendation_events')
-  const total = (totalData as number | null) ?? 0
-
-  if (total < COLD_START_THRESHOLD) {
-    const rackets = (
-      await Promise.all(CURATED_SLUGS.map(slug => getRaquetaPorSlug(slug)))
-    ).filter((r): r is RacketWithInsights => r !== null)
-    return { rackets, source: 'curated' }
-  }
-
-  // Real data: top 3 rackets by recommendation count in last 30 days
-  const { data: topRows } = await supabase.rpc('get_top_rackets_30d', { lim: 3 })
+  // Fetch top N by recommendation count in rolling 30-day window
+  const { data: topRows } = await supabase.rpc('get_top_rackets_30d', { lim: TOP_N })
   const rows = (topRows as { racket_id: number; cnt: number }[] | null) ?? []
+  const totalInWindow = rows.reduce((sum, r) => sum + r.cnt, 0)
 
-  if (rows.length === 0) {
-    const rackets = (
-      await Promise.all(CURATED_SLUGS.map(slug => getRaquetaPorSlug(slug)))
-    ).filter((r): r is RacketWithInsights => r !== null)
+  // Cold-start: not enough real signal yet — return curated fallback
+  if (totalInWindow < COLD_START_THRESHOLD || rows.length === 0) {
+    const rackets = await getRaquetasPorSlug(CURATED_SLUGS)
     return { rackets, source: 'curated' }
   }
 
-  const ids = rows.map(r => r.racket_id)
-  const unordered = await getRaquetasByIds(ids)
-  // Preserve leaderboard order (IN query doesn't guarantee it)
+  // Fetch real rackets (getRaquetasByIds already filters publicada=true)
+  const realIds = rows.map(r => r.racket_id)
+  const unordered = await getRaquetasByIds(realIds)
+  // Preserve leaderboard order
   const byId = new Map(unordered.map(r => [r.id, r]))
-  const rackets = ids.map(id => byId.get(id)).filter((r): r is RacketWithInsights => r !== undefined)
+  const realRackets = realIds
+    .map(id => byId.get(id))
+    .filter((r): r is RacketWithInsights => r !== undefined)
 
-  return { rackets, source: 'real' }
+  // Fill remaining slots from fallback, skipping already included slugs
+  if (realRackets.length < TOP_N) {
+    const realSlugSet = new Set(realRackets.map(r => r.slug))
+    const gapSlugs = (CURATED_SLUGS as readonly string[])
+      .filter(s => !realSlugSet.has(s))
+      .slice(0, TOP_N - realRackets.length)
+    const gapRackets = await getRaquetasPorSlug(gapSlugs)
+    return { rackets: [...realRackets, ...gapRackets], source: 'real' }
+  }
+
+  return { rackets: realRackets.slice(0, TOP_N), source: 'real' }
 }
 
 export async function listarMarcas(): Promise<Brand[]> {
