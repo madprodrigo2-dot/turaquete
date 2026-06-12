@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
 import BuyButton from '@/components/BuyButton'
 import AthleteBadge from '@/components/AthleteBadge'
-import SpecsGrid from '@/components/SpecsGrid'
+import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
 
 export const dynamicParams = false
 
@@ -135,8 +135,8 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
             <div className="flex gap-2 flex-wrap">
               {athlete && <AthleteBadge athlete={athlete} />}
               {ins?.nivel_sugerido && (
-                <span className="bg-aqua/15 text-aqua text-xs font-semibold px-3 py-1 rounded-full capitalize">
-                  {ins.nivel_sugerido}
+                <span className="bg-aqua/15 text-aqua text-xs font-semibold px-3 py-1 rounded-full">
+                  {NIVEL_LABEL[ins.nivel_sugerido] ?? ins.nivel_sugerido}
                 </span>
               )}
               {ins?.elbow_friendly && (

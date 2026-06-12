@@ -4,6 +4,7 @@ import { sendGAEvent } from '@next/third-parties/google'
 import { RacketWithInsights } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
 import AthleteBadge from './AthleteBadge'
+import { NIVEL_LABEL } from './SpecsGrid'
 
 interface Props {
   racket: RacketWithInsights
@@ -85,6 +86,13 @@ export default function RacketCard({ racket, razao }: Props) {
           </div>
 
           <p className="text-gray-600 text-xs leading-relaxed break-words">{razao}</p>
+
+          {/* Pra quem */}
+          {ins?.nivel_sugerido && (
+            <p className="text-tinta/40 text-xs">
+              Pra quem: <span className="text-tinta/60">{NIVEL_LABEL[ins.nivel_sugerido] ?? ins.nivel_sugerido}</span>
+            </p>
+          )}
 
           {/* Top-2 dimensões */}
           {topDims.length > 0 && (

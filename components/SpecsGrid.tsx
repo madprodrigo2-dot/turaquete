@@ -4,6 +4,12 @@ function cap(str: string): string {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : str
 }
 
+export const NIVEL_LABEL: Record<string, string> = {
+  iniciante:    'De iniciante a avançado',
+  intermediario: 'A partir de intermediário',
+  avancado:     'Jogadores experientes',
+}
+
 export interface SpecRow { label: string; value: string }
 
 export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
@@ -61,7 +67,12 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     if (techFiltered.length > 0) techFisicasRow = { label: 'Tecnologias', value: techFiltered.join(', ') }
   }
 
+  const praQuem = racket.racket_insights?.nivel_sugerido
+    ? NIVEL_LABEL[racket.racket_insights.nivel_sugerido] ?? cap(racket.racket_insights.nivel_sugerido)
+    : undefined
+
   return ([
+    praQuem              ? { label: 'Pra quem',          value: praQuem }                         : null,
     racket.weight_g      ? { label: 'Peso',              value: `${racket.weight_g}g` }          : null,
     racket.balance       ? { label: 'Balance',           value: cap(racket.balance) }             : null,
     formatoCabeca        ? { label: 'Formato da cabeça', value: cap(formatoCabeca) }              : null,

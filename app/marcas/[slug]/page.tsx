@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
 import AthleteBadge from '@/components/AthleteBadge'
+import { NIVEL_LABEL } from '@/components/SpecsGrid'
 
 export const dynamicParams = false
 
@@ -71,7 +72,7 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2">{racket.name}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
         {ins?.nivel_sugerido && (
-          <p className="text-tinta/50 text-xs capitalize">{ins.nivel_sugerido}</p>
+          <p className="text-tinta/50 text-xs">{NIVEL_LABEL[ins.nivel_sugerido] ?? ins.nivel_sugerido}</p>
         )}
       </div>
     </Link>

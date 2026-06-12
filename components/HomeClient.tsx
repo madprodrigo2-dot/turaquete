@@ -9,6 +9,7 @@ import ChatMessage from '@/components/ChatMessage'
 import StartChips from '@/components/StartChips'
 import ChatInput from '@/components/ChatInput'
 import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
+import type { FaixaIdeal } from '@/lib/scorer'
 
 const OPENING_MESSAGE =
   'Oi! Conta pra mim: há quanto tempo você joga, como costuma jogar na quadra, se algo incomoda ' +
@@ -40,6 +41,9 @@ type Message = {
   role: 'user' | 'assistant'
   content: string
   recommendations?: RecommendedRacket[]
+  suggestions?: string[]
+  isComparison?: boolean
+  diagnostico?: FaixaIdeal
 }
 
 interface Props {
@@ -58,6 +62,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
     { role: 'assistant', content: OPENING_MESSAGE },
   ])
   const [loading, setLoading] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [sessionId, setSessionId] = useState<string>(generateId)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -125,15 +130,70 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: apiMessages, sessionId }),
       })
-      const data = await res.json()
-      const reply = data.text ?? 'Desculpe, não consegui processar sua mensagem. Tente novamente.'
-      if (data.recommendations?.length > 0) {
-        sendGAEvent({ event: 'recomendacao_exibida', count: data.recommendations.length })
+
+      if (res.status === 429) {
+        const data = await res.json() as { error?: string }
+        setMessages([...updated, { role: 'assistant', content: data.error ?? 'Muitas mensagens. Tenta de novo em alguns minutos.' }])
+        return
       }
-      setMessages([
-        ...updated,
-        { role: 'assistant', content: reply, recommendations: data.recommendations ?? undefined },
-      ])
+      if (!res.ok || !res.body) {
+        throw new Error(`HTTP ${res.status}`)
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let partialText = ''
+      let streamStarted = false
+
+      const processLine = (line: string) => {
+        if (!line.startsWith('data: ')) return
+        const payload = line.slice(6).trim()
+        if (!payload) return
+        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; message?: string }
+        try { evt = JSON.parse(payload) } catch { return }
+
+        if (evt.type === 'token' && evt.token !== undefined) {
+          partialText += evt.token
+          if (!streamStarted) {
+            streamStarted = true
+            setLoading(false)
+            setIsStreaming(true)
+          }
+          setMessages([...updated, { role: 'assistant', content: partialText }])
+        } else if (evt.type === 'done') {
+          const recs = evt.recommendations ?? undefined
+          const sugs = evt.suggestions?.length ? evt.suggestions : undefined
+          const isCmp = evt.isComparison ?? false
+          const diag = evt.diagnostico ?? undefined
+          setMessages([...updated, { role: 'assistant', content: partialText || '...', recommendations: recs, suggestions: sugs, isComparison: isCmp, diagnostico: diag }])
+          if (recs && recs.length > 0) {
+            sendGAEvent({ event: 'recomendacao_exibida', count: recs.length })
+          }
+          if (isCmp && recs && recs.length > 0) {
+            sendGAEvent({ event: 'comparacao_exibida', count: recs.length })
+          }
+          if (diag) {
+            sendGAEvent({ event: 'diagnostico_exibido', nivel: diag.peso_min + '-' + diag.peso_max })
+          }
+        } else if (evt.type === 'error') {
+          setMessages([...updated, { role: 'assistant', content: evt.message ?? 'Ops, tive um problema de conexão. Tente novamente.' }])
+        }
+      }
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        lines.forEach(processLine)
+      }
+      if (buffer) processLine(buffer)
+
+      if (!streamStarted) {
+        setMessages([...updated, { role: 'assistant', content: 'Desculpe, não consegui processar sua mensagem. Tente novamente.' }])
+      }
     } catch {
       setMessages([
         ...updated,
@@ -141,6 +201,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       ])
     } finally {
       setLoading(false)
+      setIsStreaming(false)
     }
   }
 
@@ -148,7 +209,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const atLimit = messages.length >= MESSAGE_LIMIT
 
   const lastMsg = messages[messages.length - 1]
-  const contextChips = (!loading && !atLimit && lastMsg?.role === 'assistant')
+  const contextChips = (!loading && !isStreaming && !atLimit && lastMsg?.role === 'assistant')
     ? detectContextChips(lastMsg.content)
     : null
 
@@ -180,7 +241,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                   />
                 </Link>
                 <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
-                  {loading
+                  {(loading || isStreaming)
                     ? <span className="text-aqua/70 italic">digitando...</span>
                     : <span className="text-tinta/50">especialista em raquetes</span>
                   }
@@ -230,6 +291,14 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                   role={m.role}
                   content={m.content}
                   recommendations={m.recommendations}
+                  suggestions={m.suggestions}
+                  isComparison={m.isComparison}
+                  diagnostico={m.diagnostico}
+                  onSuggestion={
+                    i === messages.length - 1 && !loading && !isStreaming && !atLimit
+                      ? sendMessage
+                      : undefined
+                  }
                   showTury={i === 0 && m.role === 'assistant'}
                 />
               ))}
@@ -275,7 +344,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
               </div>
             )}
 
-            <ChatInput onSend={sendMessage} disabled={loading || atLimit} />
+            <ChatInput onSend={sendMessage} disabled={loading || isStreaming || atLimit} />
           </div>
         </div>
       )}

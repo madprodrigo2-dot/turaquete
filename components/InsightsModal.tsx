@@ -24,6 +24,7 @@ const GLOSSARY: [string, string][] = [
   ['Manuseio',     'rapidez e leveza pra reagir no jogo de rede e na defesa.'],
   ['Spin',         'capacidade de gerar efeito na bola.'],
   ['Estabilidade', 'firmeza no impacto: golpes consistentes, sem torcer na mão.'],
+  ['Sweet spot',   'a área da face onde o golpe sai completo; fora dela perde potência e vibra mais. Raquetes redondas têm sweet spot maior e mais centralizado — mais tolerante a erros.'],
 ]
 
 export default function InsightsModal({ racket, open, onClose }: Props) {
@@ -85,6 +86,18 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
     ? 'bg-amber-50 text-amber-700 border-amber-200'
     : 'bg-gray-100 text-gray-600 border-gray-200'
 
+  const forgiveness = ins.forgiveness ?? null
+  const sweetSpotLabel = forgiveness != null
+    ? forgiveness >= 8 ? 'generoso (perdoa erros)'
+    : forgiveness >= 6 ? 'médio'
+    : 'exigente (pede técnica)'
+    : null
+  const sweetSpotChipClass = forgiveness != null
+    ? forgiveness >= 8 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : forgiveness >= 6 ? 'bg-gray-100 text-gray-600 border-gray-200'
+    : 'bg-amber-50 text-amber-700 border-amber-200'
+    : ''
+
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50"
@@ -145,30 +158,41 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
             </RadarChart>
           </ResponsiveContainer>
 
-          {/* Saída de bola chip + nota Potência */}
-          {saidaDeBola && (
+          {/* Saída de bola + Sweet spot chips + nota Potência */}
+          {(saidaDeBola || sweetSpotLabel) && (
             <div className="flex flex-col gap-2 -mt-1">
-              <span className={`self-start text-xs font-semibold px-2.5 py-1 rounded-full border ${saidaChipClass}`}>
-                Saída de bola: {saidaDeBola.charAt(0).toUpperCase() + saidaDeBola.slice(1)}
-              </span>
-              <div className="flex items-start gap-2 bg-aqua-light border border-aqua/20 rounded-xl px-3 py-2.5">
-                <span className="text-aqua shrink-0 mt-0.5 text-sm">ℹ</span>
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-tinta/70 text-xs leading-relaxed">
-                    Potência mede o teto da raquete com swing rápido e técnico. Saída de bola mostra o quanto ela rende com swing mais suave.
-                  </p>
-                  {power >= 8 && saidaDeBola === 'exigente' && (
-                    <p className="text-amber-700 text-xs leading-relaxed">
-                      Essa só entrega a potência toda com técnica. Pra swing suave, ela rende menos que uma macia.
-                    </p>
-                  )}
-                  {saidaDeBola === 'fácil' && (
-                    <p className="text-emerald-700 text-xs leading-relaxed">
-                      Rende bem mesmo com swing suave, ideal pra quem tá evoluindo.
-                    </p>
-                  )}
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {saidaDeBola && (
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${saidaChipClass}`}>
+                    Saída de bola: {saidaDeBola.charAt(0).toUpperCase() + saidaDeBola.slice(1)}
+                  </span>
+                )}
+                {sweetSpotLabel && (
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${sweetSpotChipClass}`}>
+                    Sweet spot: {sweetSpotLabel}
+                  </span>
+                )}
               </div>
+              {saidaDeBola && (
+                <div className="flex items-start gap-2 bg-aqua-light border border-aqua/20 rounded-xl px-3 py-2.5">
+                  <span className="text-aqua shrink-0 mt-0.5 text-sm">ℹ</span>
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-tinta/70 text-xs leading-relaxed">
+                      Potência mede o teto da raquete com swing rápido e técnico. Saída de bola mostra o quanto ela rende com swing mais suave.
+                    </p>
+                    {power >= 8 && saidaDeBola === 'exigente' && (
+                      <p className="text-amber-700 text-xs leading-relaxed">
+                        Essa só entrega a potência toda com técnica. Pra swing suave, ela rende menos que uma macia.
+                      </p>
+                    )}
+                    {saidaDeBola === 'fácil' && (
+                      <p className="text-emerald-700 text-xs leading-relaxed">
+                        Rende bem mesmo com swing suave, ideal pra quem tá evoluindo.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

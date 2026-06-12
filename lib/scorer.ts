@@ -3,6 +3,106 @@
 // The LLM receives pre-sorted results and focuses on explaining the ranking,
 // not re-ranking on its own.
 
+// ── Fitting profile ──────────────────────────────────────────────────────────
+
+export interface FittingProfile {
+  nivel?: 'iniciante' | 'intermediario' | 'avancado'
+  estilo?: 'ofensivo' | 'defensivo' | 'misto'
+  idade?: number
+  porte?: 'menudo' | 'normal' | 'grande'
+  forca_declarada?: 'fraca' | 'forte'
+  jogo_aereo_predominante?: boolean
+  cotovelo_sensivel?: boolean
+  ombro_sensivel?: boolean
+}
+
+export interface FaixaIdeal {
+  peso_min: number
+  peso_max: number
+  balance_preferido: string
+  prioridades: string[]
+}
+
+const CATALOGO_FLOOR = 295
+
+export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
+  const dor = p.cotovelo_sensivel || p.ombro_sensivel
+
+  // Base range by nivel + estilo
+  let peso_min: number
+  let peso_max: number
+  let balance_preferido: string
+  let prioridades: string[]
+
+  if (p.nivel === 'avancado') {
+    if (p.estilo === 'ofensivo') {
+      peso_min = 325; peso_max = 345; balance_preferido = 'medio_ou_cabeca'
+      prioridades = ['potência', 'estabilidade', 'controle']
+    } else if (p.estilo === 'defensivo') {
+      peso_min = 310; peso_max = 325; balance_preferido = 'medio_ou_cabo'
+      prioridades = ['controle', 'estabilidade', 'manuseio']
+    } else {
+      peso_min = 315; peso_max = 335; balance_preferido = 'medio'
+      prioridades = ['controle', 'estabilidade', 'potência']
+    }
+  } else if (p.nivel === 'intermediario') {
+    if (p.estilo === 'ofensivo') {
+      peso_min = 320; peso_max = 330; balance_preferido = 'medio'
+      prioridades = ['equilíbrio', 'potência']
+    } else if (p.estilo === 'defensivo') {
+      peso_min = 315; peso_max = 328; balance_preferido = 'medio'
+      prioridades = ['controle', 'estabilidade', 'manuseio']
+    } else {
+      peso_min = 315; peso_max = 330; balance_preferido = 'medio'
+      prioridades = ['equilíbrio', 'controle']
+    }
+  } else {
+    // iniciante or unknown
+    peso_min = 300; peso_max = 320; balance_preferido = 'medio_ou_cabo'
+    prioridades = ['sweet spot generoso', 'conforto', 'manuseio']
+  }
+
+  // Modifier: porte/forca
+  const porte_menudo = p.porte === 'menudo' || p.forca_declarada === 'fraca'
+  const porte_grande = p.porte === 'grande' || p.forca_declarada === 'forte'
+  if (porte_menudo) { peso_min -= 10; peso_max -= 10 }
+  if (porte_grande) { peso_min += 10; peso_max += 10 }
+
+  // Modifier: age
+  if (p.idade != null) {
+    if (p.idade >= 65) {
+      // Absolute override — comfort and tolerance mandate
+      peso_min = 295; peso_max = 315
+      balance_preferido = 'medio_ou_cabo'
+      prioridades = ['conforto', 'sweet spot generoso', 'tolerância']
+    } else if (p.idade >= 50) {
+      peso_min -= 10; peso_max -= 10
+      if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
+      if (!dor) prioridades = ['conforto', 'sweet spot generoso', ...prioridades]
+    } else if (p.idade <= 17 && p.idade >= 13) {
+      // Adolescent: bottom of their level range
+      peso_max = peso_min + 10
+    }
+  }
+
+  // Modifier: jogo aéreo/de rede
+  if (p.jogo_aereo_predominante) { peso_min -= 5; peso_max -= 5 }
+
+  // HARD RULE: lesão → max 320, never heavy-head balance
+  if (dor) {
+    peso_max = Math.min(peso_max, 320)
+    if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
+    prioridades = ['conforto', 'sweet spot generoso', 'manuseio', 'estabilidade']
+  }
+
+  // Clamp to catalog floor
+  peso_min = Math.max(peso_min, CATALOGO_FLOOR)
+  peso_max = Math.max(peso_max, CATALOGO_FLOOR + 10)
+  if (peso_min > peso_max) peso_max = peso_min + 10
+
+  return { peso_min, peso_max, balance_preferido, prioridades }
+}
+
 interface Insights {
   power: number | null; control: number | null; comfort: number | null
   maneuverability: number | null; stability: number | null

@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { agentTools } from './tools'
 import { SYSTEM_PROMPT } from './prompt'
-import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket } from '../recommend'
+import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
+import { calcular_faixa_ideal, FaixaIdeal, FittingProfile } from '../scorer'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -17,23 +18,68 @@ export type ChatMessage = {
 export type AgentResult = {
   text: string
   recommendations?: RecommendedRacket[]
+  suggestions?: string[]
+  isComparison?: boolean
+  diagnostico?: FaixaIdeal
 }
+
+export type { FaixaIdeal }
 
 type RecommendInput = {
   raquetes: Array<{ id: number; razao: string }>
+  tipo?: 'recomendacao' | 'comparacao'
+}
+
+type SuggestInput = {
+  opcoes: string[]
+}
+
+function applyFaixaBonus(
+  raquetes: (RacketWithInsights & { match_score: number })[],
+  faixa: FaixaIdeal
+): (RacketWithInsights & { match_score: number })[] {
+  const TOLERANCIA = 5
+  const BONUS = 1.0
+  const PENALTY = 0.5
+  return raquetes
+    .map(r => {
+      const peso = r.weight_g
+      if (peso == null) return r
+      const inRange = peso >= faixa.peso_min - TOLERANCIA && peso <= faixa.peso_max + TOLERANCIA
+      return {
+        ...r,
+        match_score: Math.round((inRange ? r.match_score + BONUS : Math.max(0, r.match_score - PENALTY)) * 10) / 10,
+      }
+    })
+    .sort((a, b) => b.match_score - a.match_score)
 }
 
 async function executeTool(
   name: string,
   input: Record<string, unknown>,
-  pendingRecommendations: RecommendedRacket[]
+  pendingRecommendations: RecommendedRacket[],
+  pendingSuggestions: string[],
+  diagnosticoRef: { value: FaixaIdeal | null }
 ): Promise<string> {
+  if (name === 'diagnosticar_perfil') {
+    const faixa = calcular_faixa_ideal(input as FittingProfile)
+    diagnosticoRef.value = faixa
+    return JSON.stringify({
+      peso_min: faixa.peso_min,
+      peso_max: faixa.peso_max,
+      balance_preferido: faixa.balance_preferido,
+      prioridades: faixa.prioridades,
+      descricao: `${faixa.peso_min}–${faixa.peso_max}g, balance ${faixa.balance_preferido}, priorize ${faixa.prioridades.join(', ')}`,
+    })
+  }
+
   if (name === 'buscar_raquetas') {
     const { raquetes, criteriosRelaxados } = await buscarRaquetas(input as RacketFilters)
-    if (raquetes.length === 0) {
+    const ranked = diagnosticoRef.value ? applyFaixaBonus(raquetes, diagnosticoRef.value) : raquetes
+    if (ranked.length === 0) {
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada dentro do orçamento informado. O preço mínimo das raquetes disponíveis é por volta de R$1.400.' })
     }
-    const payload: Record<string, unknown> = { encontradas: raquetes.length, raquetes }
+    const payload: Record<string, unknown> = { encontradas: ranked.length, raquetes: ranked }
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
     return JSON.stringify(payload)
   }
@@ -42,6 +88,12 @@ async function executeTool(
     const racket = await detalleRaqueta(input.id as number)
     if (!racket) return JSON.stringify({ erro: 'Raquete não encontrada.' })
     return JSON.stringify(racket)
+  }
+
+  if (name === 'sugerir_opcoes') {
+    const { opcoes } = input as SuggestInput
+    pendingSuggestions.push(...opcoes.slice(0, 4))
+    return JSON.stringify({ exibidas: opcoes.length })
   }
 
   if (name === 'recomendar_raquetas') {
@@ -69,13 +121,19 @@ async function executeTool(
   return JSON.stringify({ erro: `Ferramenta desconhecida: ${name}` })
 }
 
-export async function runAgentTurn(history: ChatMessage[]): Promise<AgentResult> {
+export async function runAgentTurn(
+  history: ChatMessage[],
+  onToken?: (token: string) => void
+): Promise<AgentResult> {
   const messages: Anthropic.MessageParam[] = history.map(m => ({
     role: m.role,
     content: m.content,
   }))
 
   const pendingRecommendations: RecommendedRacket[] = []
+  const pendingSuggestions: string[] = []
+  const diagnosticoRef: { value: FaixaIdeal | null } = { value: null }
+  let isComparison = false
   let rounds = 0
   let hasSearchResults = false
 
@@ -97,11 +155,17 @@ export async function runAgentTurn(history: ChatMessage[]): Promise<AgentResult>
     })
 
     if (response.stop_reason !== 'tool_use') {
+      if (onToken) {
+        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, onToken)
+      }
       const textBlock = response.content.find(b => b.type === 'text')
       const text = textBlock?.type === 'text' ? textBlock.text : ''
       return {
         text,
         recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
+        suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
+        isComparison: isComparison || undefined,
+        diagnostico: diagnosticoRef.value ?? undefined,
       }
     }
 
@@ -111,7 +175,7 @@ export async function runAgentTurn(history: ChatMessage[]): Promise<AgentResult>
     const toolResults: Anthropic.ToolResultBlockParam[] = []
     for (const block of response.content) {
       if (block.type !== 'tool_use') continue
-      const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations)
+      const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef)
 
       if (block.name === 'buscar_raquetas') {
         try {
@@ -120,13 +184,21 @@ export async function runAgentTurn(history: ChatMessage[]): Promise<AgentResult>
         } catch { /* ignore parse errors */ }
       }
 
+      if (block.name === 'recomendar_raquetas') {
+        const inp = block.input as { tipo?: string }
+        if (inp.tipo === 'comparacao') isComparison = true
+      }
+
       toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
     }
 
     messages.push({ role: 'user', content: toolResults })
   }
 
-  // Fallback if MAX_TOOL_ROUNDS exhausted — keep tools available so recomendar can still fire
+  // Fallback if MAX_TOOL_ROUNDS exhausted
+  if (onToken) {
+    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, onToken)
+  }
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
@@ -138,5 +210,40 @@ export async function runAgentTurn(history: ChatMessage[]): Promise<AgentResult>
   return {
     text: textBlock?.type === 'text' ? textBlock.text : '',
     recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
+    suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
+    isComparison: isComparison || undefined,
+    diagnostico: diagnosticoRef.value ?? undefined,
+  }
+}
+
+async function streamResponse(
+  messages: Anthropic.MessageParam[],
+  pendingRecommendations: RecommendedRacket[],
+  pendingSuggestions: string[],
+  isComparison: boolean,
+  diagnosticoRef: { value: FaixaIdeal | null },
+  onToken: (token: string) => void
+): Promise<AgentResult> {
+  const stream = anthropic.messages.stream({
+    model: MODEL,
+    max_tokens: MAX_TOKENS,
+    system: SYSTEM_PROMPT,
+    messages,
+  })
+
+  let text = ''
+  for await (const event of stream) {
+    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      text += event.delta.text
+      onToken(event.delta.text)
+    }
+  }
+
+  return {
+    text,
+    recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
+    suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
+    isComparison: isComparison || undefined,
+    diagnostico: diagnosticoRef.value ?? undefined,
   }
 }

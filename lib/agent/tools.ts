@@ -92,8 +92,81 @@ export const agentTools: Anthropic.Tool[] = [
           },
           maxItems: 3,
         },
+        tipo: {
+          type: 'string',
+          enum: ['recomendacao', 'comparacao'],
+          description: "Tipo de saída: 'recomendacao' (padrão, quando o agente escolheu as melhores raquetes pro perfil) ou 'comparacao' (quando o usuário pediu explicitamente a diferença entre modelos).",
+        },
       },
       required: ['raquetes'],
+    },
+  },
+  {
+    name: 'diagnosticar_perfil',
+    description:
+      'Calcula a faixa de peso e balance ideal para a pessoa antes de buscar raquetes. ' +
+      'Chame quando tiver o essencial: nível e/ou estilo de jogo. ' +
+      'Sinais pessoais (idade, porte, força) são opcionais — passe APENAS o que a pessoa mencionou espontaneamente, nunca pergunte.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        nivel: {
+          type: 'string',
+          enum: ['iniciante', 'intermediario', 'avancado'],
+          description: 'Nível do jogador',
+        },
+        estilo: {
+          type: 'string',
+          enum: ['ofensivo', 'defensivo', 'misto'],
+          description: 'Estilo de jogo predominante',
+        },
+        idade: {
+          type: 'number',
+          description: 'Idade, apenas se a pessoa mencionou espontaneamente',
+        },
+        porte: {
+          type: 'string',
+          enum: ['menudo', 'normal', 'grande'],
+          description: 'Porte físico, apenas se a pessoa mencionou',
+        },
+        forca_declarada: {
+          type: 'string',
+          enum: ['fraca', 'forte'],
+          description: 'Força ou potência de swing, apenas se a pessoa mencionou',
+        },
+        jogo_aereo_predominante: {
+          type: 'boolean',
+          description: 'Joga muito na rede ou no jogo aéreo',
+        },
+        cotovelo_sensivel: {
+          type: 'boolean',
+          description: 'Tem dor ou histórico no cotovelo',
+        },
+        ombro_sensivel: {
+          type: 'boolean',
+          description: 'Tem dor ou histórico no ombro',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'sugerir_opcoes',
+    description:
+      'Apresenta chips tocáveis para o usuário escolher. Use para desambiguar modelos citados sem ano ou versão ' +
+      '(ex.: "Rebel" sem especificar 24 ou 25) ou para oferecer escolhas de fluxo. ' +
+      'Chame ANTES de buscar_raquetas quando o nome for ambíguo. Máximo 4 opções.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        opcoes: {
+          type: 'array',
+          description: 'Lista de opções tocáveis, máximo 4',
+          items: { type: 'string' },
+          maxItems: 4,
+        },
+      },
+      required: ['opcoes'],
     },
   },
 ]

@@ -1,6 +1,9 @@
 import Image from 'next/image'
 import RacketCard from './RacketCard'
+import CompareTable from './CompareTable'
+import DiagnosticoBlock from './DiagnosticoBlock'
 import { RecommendedRacket } from '@/lib/recommend'
+import type { FaixaIdeal } from '@/lib/scorer'
 
 interface Props {
   role: 'user' | 'assistant'
@@ -8,6 +11,10 @@ interface Props {
   recommendations?: RecommendedRacket[]
   loading?: boolean
   showTury?: boolean
+  suggestions?: string[]
+  isComparison?: boolean
+  onSuggestion?: (s: string) => void
+  diagnostico?: FaixaIdeal
 }
 
 // Dimensões nativas dos PNGs para srcset correto
@@ -37,7 +44,7 @@ function renderText(text: string): React.ReactNode {
   )
 }
 
-export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false }: Props) {
+export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false, suggestions, isComparison, onSuggestion, diagnostico }: Props) {
   const isAssistant = role === 'assistant'
   const hasRecs = (recommendations?.length ?? 0) > 0
   const turyConfig = getPose(loading, showTury, hasRecs, content)
@@ -92,21 +99,46 @@ export default function ChatMessage({ role, content, recommendations, loading = 
         </div>
       </div>
 
+      {/* Diagnóstico de fitting */}
+      {isAssistant && diagnostico && (
+        <div className="mt-2 pl-[68px] w-full">
+          <DiagnosticoBlock faixa={diagnostico} />
+        </div>
+      )}
+
       {/* RacketCards — explicando (58px) + gap-2 (8px) = 66px de indent */}
       {isAssistant && hasRecs && (
-        <div className={`mt-3 pl-[68px] w-full ${
-          recommendations!.length === 2
-            ? 'grid grid-cols-2 gap-2'
-            : 'flex flex-col gap-3'
-        }`}>
-          {recommendations!.map((rec, i) => (
-            <div
-              key={rec.racket.id}
-              className="msg-enter"
-              style={{ animationDelay: `${60 + i * 80}ms` }}
+        <div className="mt-3 pl-[68px] w-full flex flex-col gap-2">
+          {isComparison && <CompareTable recommendations={recommendations!} />}
+          <div className={
+            recommendations!.length === 2
+              ? 'grid grid-cols-2 gap-2'
+              : 'flex flex-col gap-3'
+          }>
+            {recommendations!.map((rec, i) => (
+              <div
+                key={rec.racket.id}
+                className="msg-enter"
+                style={{ animationDelay: `${60 + i * 80}ms` }}
+              >
+                <RacketCard racket={rec.racket} razao={rec.razao} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick reply chips */}
+      {isAssistant && suggestions && suggestions.length > 0 && onSuggestion && (
+        <div className="mt-2 pl-[68px] flex flex-wrap gap-2">
+          {suggestions.map(s => (
+            <button
+              key={s}
+              onClick={() => onSuggestion(s)}
+              className="text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm"
             >
-              <RacketCard racket={rec.racket} razao={rec.razao} />
-            </div>
+              {s}
+            </button>
           ))}
         </div>
       )}
