@@ -95,11 +95,28 @@ body {
   animation: settle-ball 0.65s ease-out both;
 }
 
+/* ── Typing cursor (shown while paced text is draining) ─────────────────── */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 0;    }
+}
+.typing-cursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 0.85em;
+  background: currentColor;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: cursor-blink 900ms step-end infinite;
+}
+
 /* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .bt-ball,
   .msg-enter,
-  .ball-settle {
+  .ball-settle,
+  .typing-cursor {
     animation: none !important;
   }
+  .typing-cursor { display: none; }
 }

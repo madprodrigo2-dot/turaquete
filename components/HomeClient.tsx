@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePacedText } from '@/hooks/usePacedText'
 import Image from 'next/image'
 import Link from 'next/link'
 import { sendGAEvent } from '@next/third-parties/google'
@@ -66,6 +67,11 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const [sessionId, setSessionId] = useState<string>(generateId)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Paced text animation — buffer drains at human typing speed
+  const [streamRawText, setStreamRawText] = useState('')
+  const [streamIsDone, setStreamIsDone] = useState(false)
+  const { displayedText: pacedText, isAnimating, flush: flushAnimation } = usePacedText(streamRawText, streamIsDone)
+
   // Restore conversation from sessionStorage on mount
   useEffect(() => {
     try {
@@ -93,6 +99,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, loading, view])
+
+  // Scroll to bottom when animation finishes so that newly revealed cards are visible
+  useEffect(() => {
+    if (!isAnimating && streamRawText && view === 'chat') {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [isAnimating, streamRawText, view])
 
   // Close confirm on outside interaction
   useEffect(() => {
@@ -122,6 +135,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
     const updated: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(updated)
     setLoading(true)
+    // Reset paced animation for the new assistant reply
+    setStreamRawText('')
+    setStreamIsDone(false)
 
     try {
       const apiMessages = updated.map(({ role, content }) => ({ role, content }))
@@ -160,6 +176,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
             setLoading(false)
             setIsStreaming(true)
           }
+          setStreamRawText(partialText)
           setMessages([...updated, { role: 'assistant', content: partialText }])
         } else if (evt.type === 'done') {
           const recs = evt.recommendations ?? undefined
@@ -176,6 +193,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           if (diag) {
             sendGAEvent({ event: 'diagnostico_exibido', nivel: diag.peso_min + '-' + diag.peso_max })
           }
+          setStreamIsDone(true)
         } else if (evt.type === 'error') {
           setMessages([...updated, { role: 'assistant', content: evt.message ?? 'Ops, tive um problema de conexão. Tente novamente.' }])
         }
@@ -209,7 +227,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const atLimit = messages.length >= MESSAGE_LIMIT
 
   const lastMsg = messages[messages.length - 1]
-  const contextChips = (!loading && !isStreaming && !atLimit && lastMsg?.role === 'assistant')
+  // Context chips and other reactive UI only appear after the full animation settles
+  const contextChips = (!loading && !isStreaming && !isAnimating && !atLimit && lastMsg?.role === 'assistant')
     ? detectContextChips(lastMsg.content)
     : null
 
@@ -241,7 +260,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                   />
                 </Link>
                 <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
-                  {(loading || isStreaming)
+                  {(loading || isStreaming || isAnimating)
                     ? <span className="text-aqua/70 italic">digitando...</span>
                     : <span className="text-tinta/50">especialista em raquetes</span>
                   }
@@ -285,24 +304,32 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
             </header>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full">
-              {messages.map((m, i) => (
-                <ChatMessage
-                  key={i}
-                  role={m.role}
-                  content={m.content}
-                  recommendations={m.recommendations}
-                  suggestions={m.suggestions}
-                  isComparison={m.isComparison}
-                  diagnostico={m.diagnostico}
-                  onSuggestion={
-                    i === messages.length - 1 && !loading && !isStreaming && !atLimit
-                      ? sendMessage
-                      : undefined
-                  }
-                  disableGlossary={isStreaming && i === messages.length - 1}
-                  showTury={i === 0 && m.role === 'assistant'}
-                />
-              ))}
+              {messages.map((m, i) => {
+                const isLast = i === messages.length - 1
+                // While paced animation is draining, show animated text and hide cards/chips
+                // so they only appear after their textual introduction has been fully revealed.
+                const isPacing = isAnimating && isLast && m.role === 'assistant'
+                return (
+                  <ChatMessage
+                    key={i}
+                    role={m.role}
+                    content={isPacing ? pacedText : m.content}
+                    recommendations={isPacing ? undefined : m.recommendations}
+                    suggestions={isPacing ? undefined : m.suggestions}
+                    isComparison={m.isComparison}
+                    diagnostico={isPacing ? undefined : m.diagnostico}
+                    onSuggestion={
+                      isLast && !loading && !isStreaming && !isAnimating && !atLimit
+                        ? sendMessage
+                        : undefined
+                    }
+                    disableGlossary={(isStreaming || isAnimating) && isLast}
+                    showTury={i === 0 && m.role === 'assistant'}
+                    showCursor={isPacing}
+                    onFlush={isPacing ? flushAnimation : undefined}
+                  />
+                )
+              })}
               {loading && <ChatMessage role="assistant" content="" loading />}
 
               {/* Limite de mensagens */}
@@ -327,7 +354,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
               <div ref={bottomRef} />
             </div>
 
-            {!hasUserMessages && !loading && (
+            {!hasUserMessages && !loading && !isAnimating && (
               <StartChips onSelect={sendMessage} />
             )}
 
@@ -345,7 +372,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
               </div>
             )}
 
-            <ChatInput onSend={sendMessage} disabled={loading || isStreaming || atLimit} />
+            <ChatInput onSend={sendMessage} disabled={loading || isStreaming || isAnimating || atLimit} />
           </div>
         </div>
       )}

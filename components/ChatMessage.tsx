@@ -18,6 +18,8 @@ interface Props {
   onSuggestion?: (s: string) => void
   diagnostico?: FaixaIdeal
   disableGlossary?: boolean
+  showCursor?: boolean
+  onFlush?: () => void
 }
 
 // Dimensões nativas dos PNGs para srcset correto
@@ -80,7 +82,7 @@ function renderAssistantText(text: string): React.ReactNode {
   return nodes
 }
 
-export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false, suggestions, isComparison, onSuggestion, diagnostico, disableGlossary = false }: Props) {
+export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false, suggestions, isComparison, onSuggestion, diagnostico, disableGlossary = false, showCursor = false, onFlush }: Props) {
   const isAssistant = role === 'assistant'
   const hasRecs = (recommendations?.length ?? 0) > 0
   const turyConfig = getPose(loading, showTury, hasRecs, content)
@@ -112,13 +114,14 @@ export default function ChatMessage({ role, content, recommendations, loading = 
           />
         )}
 
-        {/* Burbuja */}
+        {/* Burbuja — click/tap flushes animation (tap-to-skip) */}
         <div
           className={`px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
             ${isAssistant
               ? `${turyConfig ? 'max-w-[85%]' : 'w-full'} bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100`
               : 'max-w-[85%] bg-tinta text-white rounded-tr-sm'
             }`}
+          onClick={onFlush}
         >
           {loading ? (
             <div className="flex items-center gap-1.5 py-0.5">
@@ -135,6 +138,7 @@ export default function ChatMessage({ role, content, recommendations, loading = 
                 ? renderAssistantText(content)
                 : renderText(content)
               }
+              {showCursor && <span className="typing-cursor" aria-hidden="true" />}
             </span>
           )}
         </div>
