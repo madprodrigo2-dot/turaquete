@@ -15,9 +15,9 @@ const inter = Inter({
   subsets: ["latin"],
 })
 
-const TITLE = 'Turaquete | A raquete de beach tennis certa de primeira'
-const DESCRIPTION =
-  'Raquete errada custa caro. Conte como você joga e receba a indicação certa pro seu nível, estilo e bolso. Grátis, sem cadastro.'
+const TITLE       = 'Turaquete | Especialista em raquetes de beach tennis'
+const OG_TITLE    = 'Turaquete | A raquete certa de primeira.'
+const DESCRIPTION = 'Conte como você joga e nosso especialista indica a raquete ideal pro seu nível, estilo e bolso. De graça, explicando o porquê de cada escolha.'
 
 export const viewport: Viewport = {
   themeColor: [
@@ -27,20 +27,33 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://turaquete.vercel.app'),
-  title: TITLE,
+  metadataBase: new URL('https://turaquete.com.br'),
+  title: {
+    default:  TITLE,
+    template: '%s | Turaquete',
+  },
   description: DESCRIPTION,
   openGraph: {
-    title: TITLE,
+    title:       OG_TITLE,
     description: DESCRIPTION,
-    images: ['/opengraph-image'],
-    locale: 'pt_BR',
-    type: 'website',
+    images:      ['/opengraph-image.png'],
+    locale:      'pt_BR',
+    type:        'website',
+    url:         'https://turaquete.com.br',
+    siteName:    'Turaquete',
   },
   twitter: {
-    card: 'summary_large_image',
-    title: TITLE,
+    card:        'summary_large_image',
+    title:       OG_TITLE,
     description: DESCRIPTION,
+  },
+  icons: {
+    icon: [
+      { url: '/turaquete-favicon.png', sizes: '32x32',  type: 'image/png' },
+      { url: '/icon-192.png',          sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png',          sizes: '512x512', type: 'image/png' },
+    ],
+    apple: { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
   },
 };
 

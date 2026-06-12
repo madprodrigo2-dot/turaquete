@@ -3,6 +3,32 @@ import HomeClient from '@/components/HomeClient'
 
 export const revalidate = 3600
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': 'https://turaquete.com.br/#website',
+      url: 'https://turaquete.com.br',
+      name: 'Turaquete',
+      description: 'Especialista em raquetes de beach tennis',
+      inLanguage: 'pt-BR',
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://turaquete.com.br/#organization',
+      name: 'Turaquete',
+      url: 'https://turaquete.com.br',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://turaquete.com.br/turaquete-logo.png',
+        width: '400',
+        height: '120',
+      },
+    },
+  ],
+}
+
 export default async function Page() {
   const [brands, featured, previewRacket] = await Promise.all([
     listarMarcas().catch(() => []),
@@ -10,11 +36,17 @@ export default async function Page() {
     getRaquetaPorSlug('ceu').catch(() => null),
   ])
   return (
-    <HomeClient
-      brands={brands}
-      featuredRackets={featured.rackets}
-      featuredSource={featured.source}
-      previewRacket={previewRacket ?? undefined}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <HomeClient
+        brands={brands}
+        featuredRackets={featured.rackets}
+        featuredSource={featured.source}
+        previewRacket={previewRacket ?? undefined}
+      />
+    </>
   )
 }
