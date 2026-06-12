@@ -299,6 +299,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                       ? sendMessage
                       : undefined
                   }
+                  disableGlossary={isStreaming && i === messages.length - 1}
                   showTury={i === 0 && m.role === 'assistant'}
                 />
               ))}

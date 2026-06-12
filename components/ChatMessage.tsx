@@ -2,8 +2,10 @@ import Image from 'next/image'
 import RacketCard from './RacketCard'
 import CompareTable from './CompareTable'
 import DiagnosticoBlock from './DiagnosticoBlock'
+import TermoGlossario from './TermoGlossario'
 import { RecommendedRacket } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
+import { findGlossaryMatches } from '@/lib/glossario'
 
 interface Props {
   role: 'user' | 'assistant'
@@ -15,6 +17,7 @@ interface Props {
   isComparison?: boolean
   onSuggestion?: (s: string) => void
   diagnostico?: FaixaIdeal
+  disableGlossary?: boolean
 }
 
 // Dimensões nativas dos PNGs para srcset correto
@@ -44,7 +47,40 @@ function renderText(text: string): React.ReactNode {
   )
 }
 
-export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false, suggestions, isComparison, onSuggestion, diagnostico }: Props) {
+function renderAssistantText(text: string): React.ReactNode {
+  const boldParts = text.split(/(\*\*[^*\n]+\*\*)/g)
+  const trackedTerms = new Set<string>()
+  const nodes: React.ReactNode[] = []
+
+  boldParts.forEach((part, bi) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      nodes.push(<strong key={`b${bi}`} className="font-semibold">{part.slice(2, -2)}</strong>)
+      return
+    }
+
+    const matches = findGlossaryMatches(part, trackedTerms)
+    if (matches.length === 0) {
+      nodes.push(part)
+      return
+    }
+
+    let cursor = 0
+    matches.forEach((m, mi) => {
+      if (m.start > cursor) nodes.push(part.slice(cursor, m.start))
+      nodes.push(
+        <TermoGlossario key={`g${bi}-${mi}`} entry={m.entry}>
+          {m.matched}
+        </TermoGlossario>
+      )
+      cursor = m.end
+    })
+    if (cursor < part.length) nodes.push(part.slice(cursor))
+  })
+
+  return nodes
+}
+
+export default function ChatMessage({ role, content, recommendations, loading = false, showTury = false, suggestions, isComparison, onSuggestion, diagnostico, disableGlossary = false }: Props) {
   const isAssistant = role === 'assistant'
   const hasRecs = (recommendations?.length ?? 0) > 0
   const turyConfig = getPose(loading, showTury, hasRecs, content)
@@ -94,7 +130,12 @@ export default function ChatMessage({ role, content, recommendations, loading = 
               <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
             </div>
           ) : (
-            <span style={{ whiteSpace: 'pre-wrap' }}>{renderText(content)}</span>
+            <span style={{ whiteSpace: 'pre-wrap' }}>
+              {isAssistant && !disableGlossary
+                ? renderAssistantText(content)
+                : renderText(content)
+              }
+            </span>
           )}
         </div>
       </div>

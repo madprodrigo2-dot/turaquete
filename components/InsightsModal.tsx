@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import { RacketWithInsights } from '@/lib/recommend'
 import { gerarExplicacoes } from '@/lib/explicador'
+import { GLOSSARIO_MODAL } from '@/lib/glossario'
 import AthleteBadge from './AthleteBadge'
 import SpecsGrid, { buildSpecRows } from './SpecsGrid'
 
@@ -16,16 +17,6 @@ interface Props {
   open: boolean
   onClose: () => void
 }
-
-const GLOSSARY: [string, string][] = [
-  ['Potência',     'força que a raquete devolve no ataque com swing rápido (o teto dela). Se seu swing é mais suave, olhe também a Saída de bola.'],
-  ['Controle',     'precisão pra colocar a bola onde você quer.'],
-  ['Conforto',     'quanto ela absorve o impacto e protege seu braço.'],
-  ['Manuseio',     'rapidez e leveza pra reagir no jogo de rede e na defesa.'],
-  ['Spin',         'capacidade de gerar efeito na bola.'],
-  ['Estabilidade', 'firmeza no impacto: golpes consistentes, sem torcer na mão.'],
-  ['Sweet spot',   'a área da face onde o golpe sai completo; fora dela perde potência e vibra mais. Raquetes redondas têm sweet spot maior e mais centralizado — mais tolerante a erros.'],
-]
 
 export default function InsightsModal({ racket, open, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
@@ -212,9 +203,9 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
             </button>
             {glossaryOpen && (
               <div className="px-3 pb-3 flex flex-col gap-1.5 border-t border-aqua/10 pt-2.5">
-                {GLOSSARY.map(([dim, desc]) => (
-                  <p key={dim} className="text-xs text-tinta/60 leading-relaxed">
-                    <span className="font-semibold text-tinta/80">{dim}:</span> {desc}
+                {GLOSSARIO_MODAL.map(e => (
+                  <p key={e.termo} className="text-xs text-tinta/60 leading-relaxed">
+                    <span className="font-semibold text-tinta/80">{e.termo.charAt(0).toUpperCase() + e.termo.slice(1)}:</span> {e.definicao}
                   </p>
                 ))}
               </div>
