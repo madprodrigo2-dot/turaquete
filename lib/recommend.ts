@@ -128,60 +128,57 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   if (filtros.presupuesto_max) sqlParts.push(`preço≤${filtros.presupuesto_max}`)
   filterTrace.push({ filtro: `SQL [${sqlParts.join(', ')}]`, depois: allCandidates.length, relaxado: false })
 
-  // Soft filter: nivel — prefer nivel_sugerido (new field), fall back to good_for_* booleans
-  if (filtros.nivel && results.length > 0) {
-    const before = results.length
-    let filtered: RacketWithInsights[] = []
-
-    const hasNivelSugerido = results.some(r => r.racket_insights?.nivel_sugerido != null)
-    const campoUsado = hasNivelSugerido ? 'nivel_sugerido' : 'good_for_*'
-    if (hasNivelSugerido) {
-      filtered = results.filter(r => r.racket_insights?.nivel_sugerido === filtros.nivel)
-    } else {
-      if (filtros.nivel === 'iniciante') {
-        filtered = results.filter(r => r.racket_insights?.good_for_beginners === true)
-      } else if (filtros.nivel === 'intermediario') {
-        filtered = results.filter(r => r.racket_insights?.good_for_intermediate === true)
-      } else if (filtros.nivel === 'avancado') {
-        filtered = results.filter(r => r.racket_insights?.good_for_advanced === true)
-      }
-    }
-
-    if (filtered.length >= 2) {
-      results = filtered
-      filterTrace.push({ filtro: `nível "${filtros.nivel}" (${campoUsado})`, antes: before, depois: results.length, relaxado: false })
-    } else {
-      const motivo = filtered.length === 0 ? 'dados ausentes ou sem correspondência' : `apenas ${filtered.length} resultado`
-      criteriosRelaxados.push(`nível "${filtros.nivel}" não aplicado (${motivo}) — retornando todos os candidatos dentro do orçamento`)
-      filterTrace.push({ filtro: `nível "${filtros.nivel}" (${campoUsado})`, antes: before, depois: results.length, relaxado: true, note: motivo })
-    }
+  // Nivel: NOT a filter — the scorer already adjusts ranking via baseWeights().
+  // Filtering by nivel_sugerido==='avancado' would exclude comfort-first rackets
+  // (CÉU, Kronos, Athena tagged 'iniciante') that are exactly right for injured advanced players.
+  if (filtros.nivel) {
+    filterTrace.push({
+      filtro: `nível "${filtros.nivel}" → pesos do scorer (não filtra)`,
+      depois: results.length,
+      relaxado: false,
+      note: 'candidatas abertas para todos os níveis; scorer pondera conforme perfil',
+    })
   }
 
-  // Soft filter: cotovelo — relax if < 2 results would remain
+  // Injury filter: cotovelo — highest-priority rule, relax only if truly 0 results.
+  // Criterion: elbow_friendly=true (explicit tag), OR elbow_friendly not set AND comfort≥8
+  // AND saida_de_bola not 'exigente'. elbow_friendly=false is a hard exclusion.
   if (filtros.cotovelo_sensivel && results.length > 0) {
     const before = results.length
-    const filtered = results.filter(r => r.racket_insights?.elbow_friendly === true)
-    if (filtered.length >= 2) {
+    const filtered = results.filter(r => {
+      const ins = r.racket_insights
+      if (!ins) return false
+      if (ins.elbow_friendly === true) return true
+      if (ins.elbow_friendly === false) return false
+      const saida = r.specs_extra?.saida_de_bola as string | undefined
+      return (ins.comfort ?? 0) >= 8 && saida !== 'exigente'
+    })
+    if (filtered.length >= 1) {
       results = filtered
-      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly)', antes: before, depois: results.length, relaxado: false })
+      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: false })
     } else {
-      const motivo = filtered.length === 0 ? 'dados ausentes' : `apenas ${filtered.length} resultado`
-      criteriosRelaxados.push(`cotovelo sensível não aplicado (${motivo}) — avalie peso e material no raciocínio`)
-      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly)', antes: before, depois: results.length, relaxado: true, note: motivo })
+      criteriosRelaxados.push('cotovelo sensível: nenhuma raquete com flag ou conforto≥8 — avalie manualmente')
+      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
     }
   }
 
-  // Soft filter: ombro — relax if < 2 results would remain
+  // Injury filter: ombro — same logic as cotovelo
   if (filtros.ombro_sensivel && results.length > 0) {
     const before = results.length
-    const filtered = results.filter(r => r.racket_insights?.shoulder_friendly === true)
-    if (filtered.length >= 2) {
+    const filtered = results.filter(r => {
+      const ins = r.racket_insights
+      if (!ins) return false
+      if (ins.shoulder_friendly === true) return true
+      if (ins.shoulder_friendly === false) return false
+      const saida = r.specs_extra?.saida_de_bola as string | undefined
+      return (ins.comfort ?? 0) >= 8 && saida !== 'exigente'
+    })
+    if (filtered.length >= 1) {
       results = filtered
-      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly)', antes: before, depois: results.length, relaxado: false })
+      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: false })
     } else {
-      const motivo = filtered.length === 0 ? 'dados ausentes' : `apenas ${filtered.length} resultado`
-      criteriosRelaxados.push(`ombro sensível não aplicado (${motivo}) — avalie peso e balance no raciocínio`)
-      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly)', antes: before, depois: results.length, relaxado: true, note: motivo })
+      criteriosRelaxados.push('ombro sensível: nenhuma raquete com flag ou conforto≥8 — avalie manualmente')
+      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
     }
   }
 

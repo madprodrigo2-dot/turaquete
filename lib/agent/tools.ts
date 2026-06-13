@@ -20,7 +20,7 @@ export const agentTools: Anthropic.Tool[] = [
         nivel: {
           type: 'string',
           enum: ['iniciante', 'intermediario', 'avancado'],
-          description: 'Nível do jogador',
+          description: 'Nível do jogador — ajusta os pesos do scorer (não filtra candidatas; raquetes tolerantes são válidas para todos os níveis, especialmente em casos de lesão)',
         },
         presupuesto_max: {
           type: 'number',
