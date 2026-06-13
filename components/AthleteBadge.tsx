@@ -23,7 +23,7 @@ export default function AthleteBadge({ athlete, variant = 'overlay' }: Props) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold leading-tight whitespace-nowrap"
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold leading-tight"
       style={isSenna
         ? { background: '#FFC42E', color: '#0E3A40' }
         : { background: '#0E3A40', color: '#ffffff' }

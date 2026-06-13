@@ -240,7 +240,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
             )}
           </div>
           {athlete && (
-            <div className="absolute top-1.5 left-1.5 z-10">
+            <div className="absolute top-1.5 left-1.5 z-10 max-w-[calc(100%-12px)]">
               <AthleteBadge athlete={athlete} />
             </div>
           )}
@@ -298,6 +298,25 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
   const [activeIdx, setActiveIdx] = useState(0)
   const [atStart, setAtStart] = useState(true)
   const [atEnd, setAtEnd] = useState(false)
+  // maxIdx = highest index that can actually be scrolled to (varies by viewport).
+  // On desktop (3 cards visible) fewer positions are reachable than rackets.length - 1.
+  const [maxIdx, setMaxIdx] = useState(rackets.length - 1)
+
+  const computeMaxIdx = () => {
+    const el = trackRef.current
+    if (!el || el.children.length === 0) return
+    const maxScroll = el.scrollWidth - el.clientWidth
+    const scrollPadding = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0
+    for (let i = rackets.length - 1; i >= 0; i--) {
+      const card = el.children[i] as HTMLElement | null
+      if (!card) continue
+      if (card.offsetLeft - scrollPadding <= maxScroll + 2) {
+        setMaxIdx(i)
+        return
+      }
+    }
+    setMaxIdx(0)
+  }
 
   const syncState = () => {
     const el = trackRef.current
@@ -311,7 +330,15 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
     setActiveIdx(Math.round(scrollLeft / step))
   }
 
-  useEffect(() => { syncState() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    syncState()
+    computeMaxIdx()
+    const el = trackRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => { computeMaxIdx(); syncState() })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const scrollToIdx = (idx: number) => {
     const el = trackRef.current
@@ -325,6 +352,9 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
   const arrowCls = (disabled: boolean) =>
     `hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border shadow-sm items-center justify-center transition-all
      ${disabled ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
+
+  // Number of navigable positions = maxIdx + 1 (reachable slides only)
+  const dotCount = maxIdx + 1
 
   return (
     <div className="relative">
@@ -359,9 +389,9 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
         </div>
       </div>
 
-      {/* Next arrow */}
+      {/* Next arrow — clamped to maxIdx so it never tries an unreachable position */}
       <button
-        onClick={() => scrollToIdx(Math.min(rackets.length - 1, activeIdx + 1))}
+        onClick={() => scrollToIdx(Math.min(maxIdx, activeIdx + 1))}
         disabled={atEnd}
         aria-label="Próximas raquetes"
         className={`${arrowCls(atEnd)} right-0 translate-x-full ml-2`}
@@ -371,20 +401,22 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
         </svg>
       </button>
 
-      {/* Dots */}
-      <div className="flex justify-center gap-1.5 mt-3" role="group" aria-label="Navegação do carrossel">
-        {rackets.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => scrollToIdx(idx)}
-            aria-label={`Ir para raquete ${idx + 1}`}
-            aria-current={idx === activeIdx ? 'true' : undefined}
-            className={`h-1.5 rounded-full transition-all duration-200 ${
-              idx === activeIdx ? 'w-4 bg-aqua' : 'w-1.5 bg-tinta/20 hover:bg-tinta/40'
-            }`}
-          />
-        ))}
-      </div>
+      {/* Dots — only as many as positions that are actually reachable */}
+      {dotCount > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3" role="group" aria-label="Navegação do carrossel">
+          {Array.from({ length: dotCount }, (_, idx) => (
+            <button
+              key={idx}
+              onClick={() => scrollToIdx(idx)}
+              aria-label={`Ir para raquete ${idx + 1}`}
+              aria-current={idx === activeIdx ? 'true' : undefined}
+              className={`h-1.5 rounded-full transition-all duration-200 ${
+                idx === activeIdx ? 'w-4 bg-aqua' : 'w-1.5 bg-tinta/20 hover:bg-tinta/40'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
