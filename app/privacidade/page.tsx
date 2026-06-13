@@ -52,6 +52,16 @@ export default function PrivacidadePage() {
               >
                 contato@turaquete.com.br
               </a>
+              {' '}ou pelo{' '}
+              <a
+                href="https://wa.me/5547997649011?text=Oi!%20Vim%20pelo%20Turaquete%20e%20queria%20tirar%20uma%20d%C3%BAvida."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-aqua hover:underline"
+              >
+                WhatsApp
+              </a>
+              .
             </p>
           </section>
 
