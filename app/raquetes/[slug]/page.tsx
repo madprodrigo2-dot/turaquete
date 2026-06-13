@@ -6,6 +6,7 @@ import BuyButton from '@/components/BuyButton'
 import AthleteBadge from '@/components/AthleteBadge'
 import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
 import ScoreSection from '@/components/ScoreSection'
+import RacketKeyStats from '@/components/RacketKeyStats'
 
 export const dynamicParams = false
 
@@ -160,6 +161,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 stability={ins.stability}
                 tratamentoFabrica={tratamentoFabrica}
               />
+              <RacketKeyStats racket={racket} />
               {/* Shown only for baixa/media — used when a new racket enters with incomplete
                   or conflicting specs, until data is filled in. alta = hide silently. */}
               {ins.confianca && ins.confianca !== 'alta' && (

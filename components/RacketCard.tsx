@@ -31,12 +31,12 @@ export default function RacketCard({ racket, razao }: Props) {
   const ins = racket.racket_insights
   const topDims = ins
     ? [
-        { label: 'potência',     v: ins.power           },
-        { label: 'controle',     v: ins.control         },
-        { label: 'conforto',     v: ins.comfort         },
-        { label: 'manuseio',     v: ins.maneuverability },
-        { label: 'spin',         v: ins.spin            },
-        { label: 'estabilidade', v: ins.stability       },
+        { label: 'Potência',     v: ins.power           },
+        { label: 'Controle',     v: ins.control         },
+        { label: 'Conforto',     v: ins.comfort         },
+        { label: 'Manuseio',     v: ins.maneuverability },
+        { label: 'Spin',         v: ins.spin            },
+        { label: 'Estabilidade', v: ins.stability       },
         // forgiveness is internal — agent uses it in reasoning but never shown as a visible score
       ]
         .filter(d => d.v != null)

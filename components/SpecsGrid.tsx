@@ -43,9 +43,6 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     ? (athlete.includes('(') ? athlete.split('(')[0].trim() : athlete.trim())
     : undefined
 
-  const saidaDeBolaRaw = extra.saida_de_bola as string | undefined
-  const saidaDeBola = saidaDeBolaRaw === 'rascunho_pendente' ? undefined : saidaDeBolaRaw
-
   interface TechEntry { nome: string; tipo: string }
   const tecnosEstruturadas = extra.tecnologias as TechEntry[] | undefined
 
@@ -81,7 +78,6 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     espessuraStr         ? { label: 'Espessura',         value: espessuraStr }                    : null,
     furos != null        ? { label: 'Furos',             value: String(furos) }                   : null,
     superficieValue      ? { label: 'Superfície',        value: superficieValue }                 : null,
-    saidaDeBola          ? { label: 'Saída de bola',     value: cap(saidaDeBola) }                : null,
     racket.model_year    ? { label: 'Ano',               value: String(racket.model_year) }       : null,
     athleteLabel         ? { label: 'Atleta',            value: athleteLabel }                    : null,
     techFisicasRow,
