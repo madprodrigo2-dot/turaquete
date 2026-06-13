@@ -29,6 +29,15 @@ export type IntencaoTipo =
   | 'primeira_raquete' | 'troca' | 'ajuste_da_atual' | 'lesao_dor'
   | 'comparacao' | 'presente' | 'preco_orcamento' | 'curiosidade' | 'outra'
 
+export type AgentDebugInfo = {
+  perfilInput?: Record<string, unknown>
+  scorerResults?: Array<{
+    id: number; name: string; score: number
+    weight_g: number | null; elbow_friendly?: boolean | null; fora_da_faixa?: boolean
+  }>
+  criteriosRelaxados?: string[]
+}
+
 export type AgentResult = {
   text: string
   recommendations?: RecommendedRacket[]
@@ -37,6 +46,7 @@ export type AgentResult = {
   diagnostico?: FaixaIdeal
   intencao?: IntencaoTipo
   usage: TokenUsage
+  debug: AgentDebugInfo
 }
 
 export type { FaixaIdeal, TokenUsage }
@@ -85,7 +95,8 @@ async function executeTool(
   pendingRecommendations: RecommendedRacket[],
   pendingSuggestions: string[],
   diagnosticoRef: { value: FaixaIdeal | null },
-  intencaoRef: { value: IntencaoTipo | null }
+  intencaoRef: { value: IntencaoTipo | null },
+  debugRef: { value: AgentDebugInfo }
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -95,6 +106,7 @@ async function executeTool(
   if (name === 'diagnosticar_perfil') {
     const faixa = calcular_faixa_ideal(input as FittingProfile)
     diagnosticoRef.value = faixa
+    debugRef.value.perfilInput = input
     return JSON.stringify({
       peso_min: faixa.peso_min,
       peso_max: faixa.peso_max,
@@ -108,6 +120,15 @@ async function executeTool(
   if (name === 'buscar_raquetas') {
     const { raquetes, criteriosRelaxados } = await buscarRaquetas(input as RacketFilters)
     const ranked = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
+    debugRef.value.scorerResults = ranked.slice(0, 10).map(r => ({
+      id: r.id,
+      name: r.name,
+      score: r.match_score,
+      weight_g: r.weight_g,
+      elbow_friendly: r.racket_insights?.elbow_friendly ?? null,
+      fora_da_faixa: (r as { match_score: number; fora_da_faixa?: boolean }).fora_da_faixa ?? false,
+    }))
+    debugRef.value.criteriosRelaxados = criteriosRelaxados
     if (ranked.length === 0) {
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada dentro do orçamento informado. O preço mínimo das raquetes disponíveis é por volta de R$1.400.' })
     }
@@ -167,6 +188,7 @@ export async function runAgentTurn(
   const pendingSuggestions: string[] = []
   const diagnosticoRef: { value: FaixaIdeal | null } = { value: null }
   const intencaoRef: { value: IntencaoTipo | null } = { value: null }
+  const debugRef: { value: AgentDebugInfo } = { value: {} }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   let isComparison = false
   let rounds = 0
@@ -193,7 +215,7 @@ export async function runAgentTurn(
 
     if (response.stop_reason !== 'tool_use') {
       if (onToken) {
-        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, usage, onToken, signal)
+        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, onToken, signal)
       }
       const textBlock = response.content.find(b => b.type === 'text')
       const text = textBlock?.type === 'text' ? textBlock.text : ''
@@ -205,6 +227,7 @@ export async function runAgentTurn(
         diagnostico: diagnosticoRef.value ?? undefined,
         intencao: intencaoRef.value ?? undefined,
         usage,
+        debug: debugRef.value,
       }
     }
 
@@ -217,7 +240,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -243,7 +266,7 @@ export async function runAgentTurn(
 
   // Fallback if MAX_TOOL_ROUNDS exhausted
   if (onToken) {
-    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, usage, onToken, signal)
+    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, onToken, signal)
   }
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
@@ -262,6 +285,7 @@ export async function runAgentTurn(
     diagnostico: diagnosticoRef.value ?? undefined,
     intencao: intencaoRef.value ?? undefined,
     usage,
+    debug: debugRef.value,
   }
 }
 
@@ -272,6 +296,7 @@ async function streamResponse(
   isComparison: boolean,
   diagnosticoRef: { value: FaixaIdeal | null },
   intencaoRef: { value: IntencaoTipo | null },
+  debugRef: { value: AgentDebugInfo },
   usage: TokenUsage,
   onToken: (token: string) => void,
   signal?: AbortSignal
@@ -311,5 +336,6 @@ async function streamResponse(
     diagnostico: diagnosticoRef.value ?? undefined,
     intencao: intencaoRef.value ?? undefined,
     usage,
+    debug: debugRef.value,
   }
 }

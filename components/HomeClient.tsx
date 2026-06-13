@@ -10,6 +10,7 @@ import StartChips from '@/components/StartChips'
 import ChatInput from '@/components/ChatInput'
 import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
+import DebugPanel, { DebugData } from '@/components/DebugPanel'
 
 const OPENING_MESSAGE =
   'Oi! Conta pra mim: há quanto tempo você joga, como costuma jogar na quadra, se algo incomoda ' +
@@ -44,6 +45,7 @@ type Message = {
   suggestions?: string[]
   isComparison?: boolean
   diagnostico?: FaixaIdeal
+  debug?: DebugData
   _isTimeout?: true  // internal flag: stripped from API payloads, triggers history rollback on retry
 }
 
@@ -74,6 +76,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const starterUsadoRef = useRef<string | null>(null)
   // Counts consecutive timeouts — resets on success; ≥2 breaks the retry chip loop
   const consecutiveTimeoutsRef = useRef(0)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [debugMode, setDebugMode] = useState(false)
+  const pendingDebugRef = useRef<DebugData | null>(null)
 
   const STREAM_TIMEOUT_MS = 30_000
 
@@ -129,6 +134,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismiss() }, { once: true })
   }, [confirmReset])
 
+  useEffect(() => {
+    fetch('/api/admin/me')
+      .then(r => r.json())
+      .then((d: { isAdmin: boolean }) => { if (d.isAdmin) setIsAdmin(true) })
+      .catch(() => {})
+  }, [])
+
   const resetConversation = useCallback(() => {
     setMessages([{ role: 'assistant', content: OPENING_MESSAGE }])
     setSessionId(generateId())
@@ -170,6 +182,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
     setLoading(true)
     setStreamRawText('')
     setStreamIsDone(false)
+    pendingDebugRef.current = null
 
     const abort = new AbortController()
     abortRef.current = abort
@@ -216,7 +229,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
         if (!line.startsWith('data: ')) return
         const payload = line.slice(6).trim()
         if (!payload) return
-        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; intencao?: string; message?: string }
+        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; intencao?: string; message?: string } & Partial<DebugData>
         try { evt = JSON.parse(payload) } catch { return }
 
         if (evt.type === 'token' && evt.token !== undefined) {
@@ -228,6 +241,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           }
           setStreamRawText(partialText)
           setMessages([...updated, { role: 'assistant', content: partialText }])
+        } else if (evt.type === 'debug') {
+          pendingDebugRef.current = { thinking: evt.thinking, perfilInput: evt.perfilInput, scorerResults: evt.scorerResults, criteriosRelaxados: evt.criteriosRelaxados, diagnostico: evt.diagnostico, usage: evt.usage }
         } else if (evt.type === 'done') {
           streamFinished = true
           consecutiveTimeoutsRef.current = 0
@@ -235,7 +250,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           const sugs = evt.suggestions?.length ? evt.suggestions : undefined
           const isCmp = evt.isComparison ?? false
           const diag = evt.diagnostico ?? undefined
-          setMessages([...updated, { role: 'assistant', content: partialText || '...', recommendations: recs, suggestions: sugs, isComparison: isCmp, diagnostico: diag }])
+          const dbg = pendingDebugRef.current ?? undefined
+          setMessages([...updated, { role: 'assistant', content: partialText || '...', recommendations: recs, suggestions: sugs, isComparison: isCmp, diagnostico: diag, debug: dbg }])
           if (recs && recs.length > 0) {
             sendGAEvent({ event: 'recomendacao_exibida', count: recs.length })
           }
@@ -354,6 +370,15 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
               {/* Nova conversa */}
               <div className="flex items-center gap-2 shrink-0">
+                {isAdmin && (
+                  <button
+                    onClick={() => setDebugMode(m => !m)}
+                    title="Toggle debug mode"
+                    className={`text-[11px] px-2 py-1 rounded border font-mono transition-colors ${debugMode ? 'bg-yellow-50 border-yellow-400 text-yellow-700' : 'border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300'}`}
+                  >
+                    ⚙
+                  </button>
+                )}
                 {confirmReset ? (
                   <>
                     <span className="text-tinta/50 text-xs hidden sm:block leading-tight max-w-[120px]">
@@ -401,6 +426,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
                     suggestions={m.suggestions}
                     isComparison={m.isComparison}
                     diagnostico={m.diagnostico}
+                    debug={m.debug}
+                    debugMode={debugMode}
                     onSuggestion={
                       isLast && !loading && !isStreaming && !isAnimating && !atLimit
                         ? sendMessage

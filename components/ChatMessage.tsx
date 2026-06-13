@@ -6,6 +6,7 @@ import RacketCard from './RacketCard'
 import CompareTable from './CompareTable'
 import DiagnosticoBlock from './DiagnosticoBlock'
 import TermoGlossario from './TermoGlossario'
+import DebugPanel, { DebugData } from './DebugPanel'
 import { RecommendedRacket } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
 import { findGlossaryMatches } from '@/lib/glossario'
@@ -21,6 +22,8 @@ interface Props {
   isComparison?: boolean
   onSuggestion?: (s: string) => void
   diagnostico?: FaixaIdeal
+  debug?: DebugData
+  debugMode?: boolean
   disableGlossary?: boolean
   // Paced animation props (only set on the currently-streaming last message)
   rawText?: string
@@ -109,6 +112,7 @@ function renderAssistantText(text: string): React.ReactNode {
 export default function ChatMessage({
   role, content, recommendations, loading = false, showTury = false,
   suggestions, isComparison, onSuggestion, diagnostico,
+  debug, debugMode = false,
   disableGlossary = false,
   rawText, streamIsDone, onAnimationChange,
 }: Props) {
@@ -238,6 +242,13 @@ export default function ChatMessage({
               {s}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Admin debug panel — only when debugMode is on and debug data is present */}
+      {isAssistant && debugMode && debug && !holdBack && (
+        <div className="pl-[68px] w-full">
+          <DebugPanel data={debug} />
         </div>
       )}
     </div>
