@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { FaixaIdeal } from '@/lib/scorer'
+import type { DecisionTrace } from '@/lib/debug-types'
 
 export type DebugData = {
   thinking?: string
@@ -16,6 +17,7 @@ export type DebugData = {
   }>
   criteriosRelaxados?: string[]
   diagnostico?: FaixaIdeal | null
+  decisionTrace?: DecisionTrace
   usage?: {
     input: number
     output: number
@@ -42,6 +44,79 @@ function Section({ title, children, defaultOpen = true }: { title: string; child
   )
 }
 
+function DecisionTreeSection({ trace }: { trace: DecisionTrace }) {
+  return (
+    <Section title="Árvore de decisão">
+      {/* Faixa fitting steps */}
+      {trace.faixaSteps && trace.faixaSteps.length > 0 && (
+        <div className="mb-3">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Fitting (faixa)</div>
+          {trace.faixaSteps.map((step, i) => (
+            <div key={i} className="leading-snug mb-0.5">
+              <div className="flex items-baseline gap-1.5 text-[11px]">
+                <span className="text-gray-500 shrink-0">{i === 0 ? '┌' : '├'}</span>
+                <span className={step.isOverride ? 'text-orange-300 font-semibold' : 'text-gray-200'}>{step.label}</span>
+                <span className="text-cyan-300 shrink-0">{step.result.peso_min}–{step.result.peso_max}g</span>
+                {step.result.balance && <span className="text-gray-500 shrink-0">{step.result.balance}</span>}
+                {step.isOverride && <span className="text-orange-400 text-[9px] shrink-0">⚠ override</span>}
+              </div>
+              {step.note && <div className="text-[10px] text-gray-500 italic ml-4">{step.note}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Conflitos */}
+      {trace.conflitos && trace.conflitos.length > 0 && (
+        <div className="mb-3">
+          <div className="text-[10px] text-orange-400 uppercase tracking-wider mb-1">⚠ Conflitos detectados</div>
+          {trace.conflitos.map((c, i) => (
+            <div key={i} className="text-[11px] text-orange-300 leading-snug">{c}</div>
+          ))}
+        </div>
+      )}
+
+      {/* Filter steps */}
+      {trace.filterSteps && trace.filterSteps.length > 0 && (
+        <div className="mb-3">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Filtros do scorer</div>
+          {trace.filterSteps.map((step, i) => (
+            <div key={i} className="text-[11px] leading-snug mb-0.5">
+              <div className={`flex items-baseline gap-2 ${step.relaxado ? 'text-orange-300' : 'text-gray-200'}`}>
+                <span className="text-gray-500 shrink-0">•</span>
+                <span className="flex-1 min-w-0">{step.filtro}</span>
+                <span className="text-yellow-300 shrink-0 tabular-nums">
+                  {step.antes != null ? `${step.antes}→` : ''}{step.depois}
+                </span>
+                {step.relaxado && <span className="text-orange-400 text-[9px] shrink-0">relaxado</span>}
+              </div>
+              {step.note && <div className="text-[10px] text-gray-500 italic ml-3">{step.note}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Scorer weights */}
+      {trace.scorerWeights && Object.keys(trace.scorerWeights).length > 0 && (
+        <div>
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Pesos do scorer</div>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+            {Object.entries(trace.scorerWeights)
+              .sort((a, b) => b[1] - a[1])
+              .map(([key, val]) => (
+                <span key={key} className="text-[11px]">
+                  <span className="text-gray-400">{key} </span>
+                  <span className="text-yellow-300 tabular-nums">{val}</span>
+                </span>
+              ))
+            }
+          </div>
+        </div>
+      )}
+    </Section>
+  )
+}
+
 export default function DebugPanel({ data }: { data: DebugData }) {
   return (
     <div className="mt-2 font-mono text-xs bg-gray-800 text-gray-200 rounded-lg overflow-hidden border border-gray-600 select-text">
@@ -54,6 +129,10 @@ export default function DebugPanel({ data }: { data: DebugData }) {
         <Section title="Thinking" defaultOpen={false}>
           <pre className="text-[11px] text-gray-300 whitespace-pre-wrap break-words leading-relaxed max-h-48 overflow-y-auto">{data.thinking}</pre>
         </Section>
+      )}
+
+      {data.decisionTrace && (
+        <DecisionTreeSection trace={data.decisionTrace} />
       )}
 
       {data.perfilInput && (
@@ -75,7 +154,7 @@ export default function DebugPanel({ data }: { data: DebugData }) {
       )}
 
       {data.scorerResults && data.scorerResults.length > 0 && (
-        <Section title={`Scorer (${data.scorerResults.length})`}>
+        <Section title={`Ranking scorer (${data.scorerResults.length})`}>
           <div className="space-y-0.5">
             {data.scorerResults.map(r => (
               <div key={r.id} className="flex items-baseline gap-2 text-[11px]">
@@ -88,7 +167,7 @@ export default function DebugPanel({ data }: { data: DebugData }) {
             ))}
           </div>
           {data.criteriosRelaxados && data.criteriosRelaxados.length > 0 && (
-            <div className="mt-1.5 text-orange-400 text-[10px]">relaxados: {data.criteriosRelaxados.join(', ')}</div>
+            <div className="mt-1.5 text-orange-400 text-[10px]">relaxados: {data.criteriosRelaxados.join(' · ')}</div>
           )}
         </Section>
       )}

@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase'
 import { scoreRacket } from './scorer'
+import type { FilterStep } from './debug-types'
 
 export interface RacketFilters {
   nome?: string
@@ -94,6 +95,7 @@ const SELECT_FIELDS = `
 export interface BuscarResult {
   raquetes: (RacketWithInsights & { match_score: number })[]
   criteriosRelaxados: string[]
+  filterTrace: FilterStep[]
 }
 
 export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResult> {
@@ -117,13 +119,22 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
 
   const allCandidates = ((data as unknown[]) ?? []).map(normalizeRacket)
   const criteriosRelaxados: string[] = []
+  const filterTrace: FilterStep[] = []
   let results = [...allCandidates]
+
+  // Record SQL step
+  const sqlParts = ['publicada=true']
+  if (filtros.nome) sqlParts.push(`nome="${filtros.nome}"`)
+  if (filtros.presupuesto_max) sqlParts.push(`preço≤${filtros.presupuesto_max}`)
+  filterTrace.push({ filtro: `SQL [${sqlParts.join(', ')}]`, depois: allCandidates.length, relaxado: false })
 
   // Soft filter: nivel — prefer nivel_sugerido (new field), fall back to good_for_* booleans
   if (filtros.nivel && results.length > 0) {
+    const before = results.length
     let filtered: RacketWithInsights[] = []
 
     const hasNivelSugerido = results.some(r => r.racket_insights?.nivel_sugerido != null)
+    const campoUsado = hasNivelSugerido ? 'nivel_sugerido' : 'good_for_*'
     if (hasNivelSugerido) {
       filtered = results.filter(r => r.racket_insights?.nivel_sugerido === filtros.nivel)
     } else {
@@ -138,31 +149,39 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
 
     if (filtered.length >= 2) {
       results = filtered
+      filterTrace.push({ filtro: `nível "${filtros.nivel}" (${campoUsado})`, antes: before, depois: results.length, relaxado: false })
     } else {
       const motivo = filtered.length === 0 ? 'dados ausentes ou sem correspondência' : `apenas ${filtered.length} resultado`
       criteriosRelaxados.push(`nível "${filtros.nivel}" não aplicado (${motivo}) — retornando todos os candidatos dentro do orçamento`)
+      filterTrace.push({ filtro: `nível "${filtros.nivel}" (${campoUsado})`, antes: before, depois: results.length, relaxado: true, note: motivo })
     }
   }
 
   // Soft filter: cotovelo — relax if < 2 results would remain
   if (filtros.cotovelo_sensivel && results.length > 0) {
+    const before = results.length
     const filtered = results.filter(r => r.racket_insights?.elbow_friendly === true)
     if (filtered.length >= 2) {
       results = filtered
+      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly)', antes: before, depois: results.length, relaxado: false })
     } else {
       const motivo = filtered.length === 0 ? 'dados ausentes' : `apenas ${filtered.length} resultado`
       criteriosRelaxados.push(`cotovelo sensível não aplicado (${motivo}) — avalie peso e material no raciocínio`)
+      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly)', antes: before, depois: results.length, relaxado: true, note: motivo })
     }
   }
 
   // Soft filter: ombro — relax if < 2 results would remain
   if (filtros.ombro_sensivel && results.length > 0) {
+    const before = results.length
     const filtered = results.filter(r => r.racket_insights?.shoulder_friendly === true)
     if (filtered.length >= 2) {
       results = filtered
+      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly)', antes: before, depois: results.length, relaxado: false })
     } else {
       const motivo = filtered.length === 0 ? 'dados ausentes' : `apenas ${filtered.length} resultado`
       criteriosRelaxados.push(`ombro sensível não aplicado (${motivo}) — avalie peso e balance no raciocínio`)
+      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly)', antes: before, depois: results.length, relaxado: true, note: motivo })
     }
   }
 
@@ -170,8 +189,9 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   const scored = results
     .map(r => ({ ...r, match_score: scoreRacket(r, filtros) }))
     .sort((a, b) => b.match_score - a.match_score)
+  filterTrace.push({ filtro: 'scorer (ranking por pesos)', antes: results.length, depois: scored.length, relaxado: false, note: 'sem eliminação, apenas ordenação' })
 
-  return { raquetes: scored, criteriosRelaxados }
+  return { raquetes: scored, criteriosRelaxados, filterTrace }
 }
 
 export async function detalleRaqueta(id: number): Promise<RacketWithInsights | null> {

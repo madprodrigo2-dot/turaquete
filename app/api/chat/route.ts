@@ -229,6 +229,7 @@ export async function POST(req: NextRequest) {
               scorerResults: debug?.scorerResults,
               criteriosRelaxados: debug?.criteriosRelaxados?.length ? debug.criteriosRelaxados : undefined,
               diagnostico: diagnostico ?? null,
+              decisionTrace: debug?.decisionTrace,
               usage: { ...usage, usd, brl },
             })
           }

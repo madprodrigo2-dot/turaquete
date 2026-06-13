@@ -1,3 +1,5 @@
+import type { FaixaStep, FaixaTrace } from './debug-types'
+
 // Deterministic racket scorer — weights from turaquete-matriz-pesos.md Level 2.
 // Called by buscarRaquetas to rank candidates before sending to the LLM.
 // The LLM receives pre-sorted results and focuses on explaining the ranking,
@@ -222,4 +224,135 @@ export function scoreRacket(racket: RacketData, profile: ScorerProfile): number 
   }
 
   return Math.round(score * 10) / 10
+}
+
+// ── Decision-trace variants (admin debug only) ────────────────────────────────
+
+export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaIdeal; trace: FaixaTrace } {
+  const dor = p.cotovelo_sensivel || p.ombro_sensivel
+  const steps: FaixaStep[] = []
+  const conflitos: string[] = []
+
+  let peso_min: number
+  let peso_max: number
+  let balance_preferido: string
+  let prioridades: string[]
+
+  if (p.nivel === 'avancado') {
+    if (p.estilo === 'ofensivo') {
+      peso_min = 325; peso_max = 345; balance_preferido = 'medio_ou_cabeca'
+      prioridades = ['potência', 'estabilidade', 'controle']
+    } else if (p.estilo === 'defensivo') {
+      peso_min = 315; peso_max = 325; balance_preferido = 'medio_ou_cabo'
+      prioridades = ['controle', 'estabilidade', 'manuseio']
+    } else {
+      peso_min = 315; peso_max = 335; balance_preferido = 'medio'
+      prioridades = ['controle', 'estabilidade', 'potência']
+    }
+  } else if (p.nivel === 'intermediario') {
+    if (p.estilo === 'ofensivo') {
+      peso_min = 320; peso_max = 330; balance_preferido = 'medio'
+      prioridades = ['equilíbrio', 'potência']
+    } else if (p.estilo === 'defensivo') {
+      peso_min = 315; peso_max = 328; balance_preferido = 'medio'
+      prioridades = ['controle', 'estabilidade', 'manuseio']
+    } else {
+      peso_min = 315; peso_max = 330; balance_preferido = 'medio'
+      prioridades = ['equilíbrio', 'controle']
+    }
+  } else {
+    peso_min = 315; peso_max = 325; balance_preferido = 'medio_ou_cabo'
+    prioridades = ['sweet spot generoso', 'conforto', 'manuseio']
+  }
+  steps.push({
+    label: `base [${p.nivel ?? 'desconhecido'}/${p.estilo ?? 'não especificado'}]`,
+    result: { peso_min, peso_max, balance: balance_preferido },
+  })
+
+  const porte_menudo = p.porte === 'menudo' || p.forca_declarada === 'fraca'
+  const porte_grande = p.porte === 'grande' || p.forca_declarada === 'forte'
+  if (porte_menudo) {
+    const prev = { peso_min, peso_max }
+    peso_min -= 10; peso_max -= 10
+    steps.push({ label: '+ porte menudo / força fraca', result: { peso_min, peso_max }, note: `${prev.peso_min}–${prev.peso_max} → ${peso_min}–${peso_max}g` })
+  }
+  if (porte_grande) {
+    const prev = { peso_min, peso_max }
+    peso_min += 10; peso_max += 10
+    steps.push({ label: '+ porte grande / força forte', result: { peso_min, peso_max }, note: `${prev.peso_min}–${prev.peso_max} → ${peso_min}–${peso_max}g` })
+  }
+
+  if (p.genero_organico === 'masculino') {
+    const prev = peso_min
+    peso_min = Math.max(peso_min, 320)
+    if (peso_min !== prev) {
+      steps.push({ label: '+ gênero masculino (floor 320g)', result: { peso_min, peso_max }, note: `min ${prev} → ${peso_min}g` })
+    }
+  }
+
+  if (p.idade != null) {
+    if (p.idade >= 65) {
+      if (p.nivel === 'avancado' || p.nivel === 'intermediario') {
+        conflitos.push(`idade ${p.idade}+ → override absoluto 315–320g, ignora nível ${p.nivel}`)
+      }
+      const prev = { peso_min, peso_max, b: balance_preferido }
+      peso_min = 315; peso_max = 320; balance_preferido = 'medio_ou_cabo'
+      prioridades = ['conforto', 'sweet spot generoso', 'tolerância']
+      steps.push({ label: '+ idade ≥65 (override absoluto)', result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g, ${prev.b} → 315–320g, medio_ou_cabo`, isOverride: true })
+    } else if (p.idade >= 50) {
+      const prev = { peso_min, peso_max, b: balance_preferido }
+      peso_min = 315; peso_max = 325
+      if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
+      balance_preferido = balance_preferido === 'medio' ? 'medio_ou_cabo' : balance_preferido
+      if (!dor) prioridades = ['conforto', 'sweet spot generoso', ...prioridades]
+      steps.push({ label: '+ idade 50–64 (override conforto)', result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g → 315–325g`, isOverride: true })
+    } else if (p.idade >= 13 && p.idade <= 17) {
+      const prevMax = peso_max
+      peso_max = peso_min + 10
+      steps.push({ label: `+ adolescente ${p.idade} anos (teto min+10)`, result: { peso_min, peso_max }, note: `max ${prevMax} → ${peso_max}g` })
+    }
+  }
+
+  if (p.jogo_aereo_predominante) {
+    const prev = { peso_min, peso_max }
+    peso_min -= 5; peso_max -= 5
+    steps.push({ label: '+ jogo aéreo predominante (−5g)', result: { peso_min, peso_max }, note: `${prev.peso_min}–${prev.peso_max} → ${peso_min}–${peso_max}g` })
+  }
+
+  if (dor) {
+    const lesaoDesc = [p.cotovelo_sensivel && 'cotovelo', p.ombro_sensivel && 'ombro'].filter(Boolean).join('+')
+    if (porte_grande) conflitos.push(`lesão (${lesaoDesc}) + porte grande: porte elevou o peso mas lesão força teto 320g`)
+    if (p.estilo === 'ofensivo') conflitos.push(`lesão (${lesaoDesc}) + estilo ofensivo: faixa 325–345g forçada para 315–320g, balance cabeça excluído`)
+    if (balance_preferido === 'medio_ou_cabeca') conflitos.push(`lesão (${lesaoDesc}) + balance cabeça: balance excluído por lesão`)
+    const prev = { peso_min, peso_max, b: balance_preferido }
+    peso_min = 315
+    peso_max = Math.min(peso_max, 320)
+    if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
+    prioridades = ['conforto', 'sweet spot generoso', 'manuseio', 'estabilidade']
+    steps.push({ label: `+ LESÃO (${lesaoDesc}) ─ regra hard`, result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g → 315–${Math.min(prev.peso_max, 320)}g, prioridades: conforto first`, isOverride: true })
+  }
+
+  const preClamp = { peso_min, peso_max }
+  peso_min = Math.max(peso_min, CATALOGO_FLOOR)
+  peso_max = Math.max(peso_max, CATALOGO_FLOOR + 5)
+  if (peso_min > peso_max) peso_max = peso_min + 5
+  if (peso_min !== preClamp.peso_min || peso_max !== preClamp.peso_max) {
+    steps.push({ label: '+ clamp floor (min catálogo 315g)', result: { peso_min, peso_max }, note: `${preClamp.peso_min}–${preClamp.peso_max} → ${peso_min}–${peso_max}g` })
+  }
+
+  return { faixa: { peso_min, peso_max, balance_preferido, prioridades }, trace: { steps, conflitos } }
+}
+
+export function computeScorerWeights(profile: ScorerProfile): Record<string, number> {
+  const w = applyModifiers(baseWeights(profile), profile)
+  const all: Record<string, number> = {
+    potência: w.power,
+    controle: w.control,
+    conforto: w.comfort,
+    manuseio: w.maneuverability,
+    spin: w.spin,
+    estabilidade: w.stability,
+    'sweet spot': w.forgiveness,
+  }
+  return Object.fromEntries(Object.entries(all).filter(([, v]) => v > 0))
 }

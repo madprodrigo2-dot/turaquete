@@ -3,7 +3,8 @@ import { agentTools } from './tools'
 import { SYSTEM_PROMPT } from './prompt'
 import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
-import { calcular_faixa_ideal, FaixaIdeal, FittingProfile } from '../scorer'
+import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
+import type { DecisionTrace, FilterStep } from '../debug-types'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -36,6 +37,7 @@ export type AgentDebugInfo = {
     weight_g: number | null; elbow_friendly?: boolean | null; fora_da_faixa?: boolean
   }>
   criteriosRelaxados?: string[]
+  decisionTrace?: DecisionTrace
 }
 
 export type AgentResult = {
@@ -104,9 +106,12 @@ async function executeTool(
   }
 
   if (name === 'diagnosticar_perfil') {
-    const faixa = calcular_faixa_ideal(input as FittingProfile)
+    const { faixa, trace } = calcular_faixa_ideal_traced(input as FittingProfile)
     diagnosticoRef.value = faixa
     debugRef.value.perfilInput = input
+    if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
+    debugRef.value.decisionTrace.faixaSteps = trace.steps
+    debugRef.value.decisionTrace.conflitos = trace.conflitos
     return JSON.stringify({
       peso_min: faixa.peso_min,
       peso_max: faixa.peso_max,
@@ -118,7 +123,7 @@ async function executeTool(
   }
 
   if (name === 'buscar_raquetas') {
-    const { raquetes, criteriosRelaxados } = await buscarRaquetas(input as RacketFilters)
+    const { raquetes, criteriosRelaxados, filterTrace } = await buscarRaquetas(input as RacketFilters)
     const ranked = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
     debugRef.value.scorerResults = ranked.slice(0, 10).map(r => ({
       id: r.id,
@@ -129,6 +134,23 @@ async function executeTool(
       fora_da_faixa: (r as { match_score: number; fora_da_faixa?: boolean }).fora_da_faixa ?? false,
     }))
     debugRef.value.criteriosRelaxados = criteriosRelaxados
+
+    // Build extended filter trace: SQL/soft steps + faixa weight step
+    if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
+    const extendedTrace: FilterStep[] = [...filterTrace]
+    if (diagnosticoRef.value) {
+      const faixa = diagnosticoRef.value
+      const foraCount = ranked.filter(r => (r as { fora_da_faixa?: boolean }).fora_da_faixa).length
+      extendedTrace.push({
+        filtro: `faixa de peso ${faixa.peso_min}–${faixa.peso_max}g (±5g tolerância)`,
+        antes: ranked.length,
+        depois: ranked.length,
+        relaxado: false,
+        note: `${ranked.length - foraCount} em faixa, ${foraCount} fora (mantidos, penalizados no ranking)`,
+      })
+    }
+    debugRef.value.decisionTrace.filterSteps = extendedTrace
+    debugRef.value.decisionTrace.scorerWeights = computeScorerWeights(input as RacketFilters)
     if (ranked.length === 0) {
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada dentro do orçamento informado. O preço mínimo das raquetes disponíveis é por volta de R$1.400.' })
     }

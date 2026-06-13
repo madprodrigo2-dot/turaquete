@@ -242,7 +242,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           setStreamRawText(partialText)
           setMessages([...updated, { role: 'assistant', content: partialText }])
         } else if (evt.type === 'debug') {
-          pendingDebugRef.current = { thinking: evt.thinking, perfilInput: evt.perfilInput, scorerResults: evt.scorerResults, criteriosRelaxados: evt.criteriosRelaxados, diagnostico: evt.diagnostico, usage: evt.usage }
+          pendingDebugRef.current = { thinking: evt.thinking, perfilInput: evt.perfilInput, scorerResults: evt.scorerResults, criteriosRelaxados: evt.criteriosRelaxados, diagnostico: evt.diagnostico, decisionTrace: evt.decisionTrace, usage: evt.usage }
         } else if (evt.type === 'done') {
           streamFinished = true
           consecutiveTimeoutsRef.current = 0
