@@ -64,7 +64,7 @@ export const GLOSSARIO: GlossarioEntry[] = [
   },
   {
     termo: 'EVA',
-    definicao: 'Material espumoso usado no núcleo da raquete. EVA macio absorve vibração (mais conforto); EVA duro devolve mais energia (mais potência).',
+    definicao: 'Material espumoso usado no núcleo da raquete. EVA macio absorve vibração (mais conforto, protege o braço); EVA médio equilibra conforto e resposta; EVA duro/firme devolve mais energia (mais potência, mas protege menos o braço).',
     noAnatomia: true,
   },
   {
