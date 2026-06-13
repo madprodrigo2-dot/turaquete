@@ -1,6 +1,6 @@
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
+import { auth, signOut } from '@/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,17 +21,10 @@ function getAdmin() {
   )
 }
 
-export default async function IntencoesAdmin({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string>>
-}) {
-  // Simple token gate — keep ADMIN_TOKEN in env vars, never commit
-  const params = await searchParams
-  const token = params.token ?? ''
-  const expected = process.env.ADMIN_TOKEN
-  if (!expected || token !== expected) {
-    redirect('/')
+export default async function IntencoesAdmin() {
+  const session = await auth()
+  if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
+    redirect('/admin/login')
   }
 
   const sb = getAdmin()
@@ -85,7 +78,27 @@ export default async function IntencoesAdmin({
   return (
     <div className="min-h-screen bg-gray-50 p-6 font-sans text-sm text-gray-800">
       <div className="max-w-4xl mx-auto flex flex-col gap-8">
-        <h1 className="text-2xl font-bold text-gray-900">Intenções — Turaquete Admin</h1>
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Intenções</h1>
+            <p className="text-gray-400 text-xs mt-0.5">Turaquete Admin · {session.user?.email}</p>
+          </div>
+          <form
+            action={async () => {
+              'use server'
+              await signOut({ redirectTo: '/admin/login' })
+            }}
+          >
+            <button
+              type="submit"
+              className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors"
+            >
+              Sair
+            </button>
+          </form>
+        </div>
 
         {/* Intenções */}
         <section>
@@ -154,6 +167,7 @@ export default async function IntencoesAdmin({
             )}
           </div>
         </section>
+
       </div>
     </div>
   )
