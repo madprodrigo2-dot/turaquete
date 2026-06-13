@@ -25,6 +25,7 @@ interface Props {
   debug?: DebugData
   debugMode?: boolean
   disableGlossary?: boolean
+  sessionId?: string
   // Paced animation props (only set on the currently-streaming last message)
   rawText?: string
   streamIsDone?: boolean
@@ -114,6 +115,7 @@ export default function ChatMessage({
   suggestions, isComparison, onSuggestion, diagnostico,
   debug, debugMode = false,
   disableGlossary = false,
+  sessionId,
   rawText, streamIsDone, onAnimationChange,
 }: Props) {
   const isAssistant = role === 'assistant'
@@ -223,7 +225,7 @@ export default function ChatMessage({
                 className="msg-enter"
                 style={{ animationDelay: `${60 + i * 80}ms` }}
               >
-                <RacketCard racket={rec.racket} razao={rec.razao} />
+                <RacketCard racket={rec.racket} razao={rec.razao} sessionId={sessionId} />
               </div>
             ))}
           </div>

@@ -10,9 +10,18 @@ import { derivarNivel } from '@/lib/nivel'
 interface Props {
   racket: RacketWithInsights
   razao: string
+  sessionId?: string
 }
 
-export default function RacketCard({ racket, razao }: Props) {
+function fireEvent(body: Record<string, unknown>) {
+  fetch('/api/events', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).catch(() => {})
+}
+
+export default function RacketCard({ racket, razao, sessionId }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
@@ -48,6 +57,7 @@ export default function RacketCard({ racket, razao }: Props) {
   const handleOpenModal = () => {
     setModalOpen(true)
     sendGAEvent({ event: 'analise_aberta', racket: racket.slug })
+    if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_analise', racket_id: racket.id })
   }
 
   return (
@@ -118,7 +128,10 @@ export default function RacketCard({ racket, razao }: Props) {
               href={ctaHref}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })}
+              onClick={() => {
+                sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })
+                if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_na_loja', racket_id: racket.id })
+              }}
               className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] transition-all"
             >
               Ver na loja →

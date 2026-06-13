@@ -11,6 +11,7 @@ import ChatInput from '@/components/ChatInput'
 import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
 import DebugPanel, { DebugData } from '@/components/DebugPanel'
+import FeedbackWidget from '@/components/FeedbackWidget'
 
 const OPENING_MESSAGE =
   'Oi! Conta pra mim: há quanto tempo você joga, como costuma jogar na quadra, se algo incomoda ' +
@@ -46,6 +47,9 @@ type Message = {
   isComparison?: boolean
   diagnostico?: FaixaIdeal
   debug?: DebugData
+  isFirstRec?: boolean   // true on the first assistant message that contains recommendations
+  intencao?: string      // conversation intencao, stored here for persistence
+  turnosAteRec?: number  // user turn count when this first rec was shown
   _isTimeout?: true  // internal flag: stripped from API payloads, triggers history rollback on retry
 }
 
@@ -79,6 +83,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const [isAdmin, setIsAdmin] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
   const pendingDebugRef = useRef<DebugData | null>(null)
+  const [feedbackDone, setFeedbackDone] = useState(false)
+  const firstRecShownRef = useRef(false)
+  const intencaoConvRef = useRef<string | undefined>(undefined)
+  const turnosAteRecRef = useRef(0)
 
   const STREAM_TIMEOUT_MS = 30_000
 
@@ -141,13 +149,29 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       .catch(() => {})
   }, [])
 
+  function fireEvent(body: Record<string, unknown>) {
+    fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch(() => {})
+  }
+
   const resetConversation = useCallback(() => {
+    if (firstRecShownRef.current) {
+      fireEvent({ session_id: sessionId, event_type: 'nova_conversa_pos_rec' })
+    }
+    firstRecShownRef.current = false
+    intencaoConvRef.current = undefined
+    turnosAteRecRef.current = 0
+    setFeedbackDone(false)
     setMessages([{ role: 'assistant', content: OPENING_MESSAGE }])
     setSessionId(generateId())
     try { sessionStorage.removeItem(CHAT_STORAGE_KEY) } catch {}
     sendGAEvent({ event: 'conversa_reiniciada' })
     setConfirmReset(false)
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])
 
   const handleStart = () => {
     sendGAEvent({ event: 'chat_iniciado' })
@@ -251,7 +275,23 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           const isCmp = evt.isComparison ?? false
           const diag = evt.diagnostico ?? undefined
           const dbg = pendingDebugRef.current ?? undefined
-          setMessages([...updated, { role: 'assistant', content: partialText || '...', recommendations: recs, suggestions: sugs, isComparison: isCmp, diagnostico: diag, debug: dbg }])
+          if (evt.intencao) {
+            intencaoConvRef.current = evt.intencao
+            sendGAEvent({ event: 'intencao_detectada', intencao: evt.intencao })
+          }
+          const isFirstRec = !!(recs && recs.length > 0 && !firstRecShownRef.current)
+          if (isFirstRec) {
+            firstRecShownRef.current = true
+            turnosAteRecRef.current = updated.filter(m => m.role === 'user').length
+          }
+          setMessages([...updated, {
+            role: 'assistant', content: partialText || '...',
+            recommendations: recs, suggestions: sugs, isComparison: isCmp,
+            diagnostico: diag, debug: dbg,
+            isFirstRec: isFirstRec || undefined,
+            intencao: isFirstRec ? intencaoConvRef.current : undefined,
+            turnosAteRec: isFirstRec ? turnosAteRecRef.current : undefined,
+          }])
           if (recs && recs.length > 0) {
             sendGAEvent({ event: 'recomendacao_exibida', count: recs.length })
           }
@@ -260,9 +300,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           }
           if (diag) {
             sendGAEvent({ event: 'diagnostico_exibido', nivel: diag.peso_min + '-' + diag.peso_max })
-          }
-          if (evt.intencao) {
-            sendGAEvent({ event: 'intencao_detectada', intencao: evt.intencao })
           }
           setStreamIsDone(true)
         } else if (evt.type === 'error') {
@@ -417,28 +454,40 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
               {messages.map((m, i) => {
                 const isLast = i === messages.length - 1
                 const isPacing = (isStreaming || streamRawText !== '') && isLast && m.role === 'assistant'
+                const showFeedback = m.isFirstRec && !feedbackDone && !loading && !isStreaming && !isAnimating
                 return (
-                  <ChatMessage
-                    key={i}
-                    role={m.role}
-                    content={m.content}
-                    recommendations={m.recommendations}
-                    suggestions={m.suggestions}
-                    isComparison={m.isComparison}
-                    diagnostico={m.diagnostico}
-                    debug={m.debug}
-                    debugMode={debugMode}
-                    onSuggestion={
-                      isLast && !loading && !isStreaming && !isAnimating && !atLimit
-                        ? sendMessage
-                        : undefined
-                    }
-                    disableGlossary={(isStreaming || isAnimating) && isLast}
-                    showTury={i === 0 && m.role === 'assistant'}
-                    rawText={isPacing ? streamRawText : undefined}
-                    streamIsDone={isPacing ? streamIsDone : undefined}
-                    onAnimationChange={isPacing ? handleAnimationChange : undefined}
-                  />
+                  <div key={i} className="contents">
+                    <ChatMessage
+                      role={m.role}
+                      content={m.content}
+                      recommendations={m.recommendations}
+                      suggestions={m.suggestions}
+                      isComparison={m.isComparison}
+                      diagnostico={m.diagnostico}
+                      debug={m.debug}
+                      debugMode={debugMode}
+                      sessionId={sessionId}
+                      onSuggestion={
+                        isLast && !loading && !isStreaming && !isAnimating && !atLimit
+                          ? sendMessage
+                          : undefined
+                      }
+                      disableGlossary={(isStreaming || isAnimating) && isLast}
+                      showTury={i === 0 && m.role === 'assistant'}
+                      rawText={isPacing ? streamRawText : undefined}
+                      streamIsDone={isPacing ? streamIsDone : undefined}
+                      onAnimationChange={isPacing ? handleAnimationChange : undefined}
+                    />
+                    {showFeedback && (
+                      <FeedbackWidget
+                        sessionId={sessionId}
+                        intencao={m.intencao}
+                        turnosAteRec={m.turnosAteRec ?? 0}
+                        decisionTrace={m.debug?.decisionTrace}
+                        onDone={() => setFeedbackDone(true)}
+                      />
+                    )}
+                  </div>
                 )
               })}
               {loading && <ChatMessage role="assistant" content="" loading />}
