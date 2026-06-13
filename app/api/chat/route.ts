@@ -92,6 +92,14 @@ export async function POST(req: NextRequest) {
 
     const stream = new ReadableStream({
       async start(controller) {
+        // Heartbeat: keeps the SSE connection alive during tool-call processing
+        // (which sends no tokens). Without this, the client's reader.read() can
+        // block indefinitely in environments where AbortController doesn't
+        // propagate to the stream reader (Safari, some proxy setups).
+        const heartbeat = setInterval(() => {
+          writeEvent(controller, { type: 'ping' })
+        }, 5_000)
+
         try {
           const { text, recommendations, suggestions, isComparison, diagnostico, intencao, usage } = await runAgentTurn(messages, (token) => {
             writeEvent(controller, { type: 'token', token: sanitizeToken(token) })
@@ -153,6 +161,7 @@ export async function POST(req: NextRequest) {
             writeEvent(controller, { type: 'error', message: 'Erro interno. Tente novamente.' })
           }
         } finally {
+          clearInterval(heartbeat)
           controller.close()
         }
       },

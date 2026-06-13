@@ -257,7 +257,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
+        // Exit if stream ended OR if AbortController fired (handles environments
+        // where aborting a fetch doesn't automatically reject reader.read())
+        if (done || abort.signal.aborted) break
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
         buffer = lines.pop() ?? ''
@@ -265,7 +267,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       }
       if (buffer) processLine(buffer)
 
-      if (!streamStarted && !streamFinished) {
+      if (!streamFinished) {
+        // Stream ended without a 'done' event: either never started (no tokens)
+        // or started but connection dropped mid-response. Both need a retry prompt.
         consecutiveTimeoutsRef.current++
         const stuck = consecutiveTimeoutsRef.current >= 2
         setMessages([...updated, {
