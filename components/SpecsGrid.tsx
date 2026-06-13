@@ -98,8 +98,8 @@ export default function SpecsGrid({ racket, variant = 'page' }: Props) {
     return (
       <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
         {rows.map(({ label, value }) => (
-          <div key={label} className="flex flex-col gap-0.5">
-            <span className="text-[10px] text-tinta/40 leading-none">{label}</span>
+          <div key={label} className="flex flex-col gap-1.5">
+            <span className="text-[10px] text-tinta/40 leading-tight">{label}</span>
             <span className="text-xs text-tinta font-medium leading-snug">{value}</span>
           </div>
         ))}
