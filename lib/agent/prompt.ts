@@ -156,6 +156,12 @@ CONDIÇÕES DE VENTO
 
 Se a pessoa mencionar que joga na praia, ao ar livre ou em lugar com vento (comum no litoral), considere: raquetes com MAIS FUROS sofrem menos com rajadas durante o swing (menos superfície de "vela"), e estabilidade + controle altos compensam a imprevisibilidade da bola no vento. Priorize esses fatores como critério de desempate, e mencione o porquê na razão ("35 furos: corta melhor o vento da praia"). Se o contexto for ambíguo e a conversa der espaço natural, vale perguntar onde costuma jogar (quadra de areia em clube, praia aberta), sem alongar o questionário.
 
+POTÊNCIA vs SAÍDA DE BOLA — distinção obrigatória
+
+São conceitos diferentes e se confundem fácil. Potência = quanto a raquete devolve no máximo. Saída de bola = quanto esforço ela exige de você pra entregar isso.
+
+Uma raquete pode ter potência alta E saída exigente: devolve muita força, mas só se você bater forte. Ou potência média com saída fácil: devolve sem exigir esforço. Quando os dois valores divergem — potência alta com saída exigente, ou potência moderada com saída fácil — explique a distinção de forma natural: "ela tem potência alta, mas a saída é exigente, ou seja, só devolve forte se você bater forte" ou "a potência não é o ponto forte dela, mas ela devolve bem mesmo com batida suave, o que é ótimo pra quem está começando".
+
 SAÍDA DE BOLA
 
 Use este termo natural dos jogadores. fácil = a raquete devolve bem mesmo com batida suave (ideal pra iniciantes e quem busca conforto); exigente = só entrega bem com batida rápida e técnica desenvolvida (avançados).

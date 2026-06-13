@@ -38,7 +38,12 @@ export default function RacketKeyStats({ racket }: Props) {
       <div className="flex flex-wrap gap-2">
         {saidaDeBola && (
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${saidaChipClass}`}>
-            Saída de bola: {saidaDeBola.charAt(0).toUpperCase() + saidaDeBola.slice(1)}
+            Saída de bola:{' '}
+            {saidaDeBola === 'fácil'
+              ? 'fácil (devolve sem esforço)'
+              : saidaDeBola === 'exigente'
+              ? 'exigente (exige batida forte)'
+              : 'média (pede batida moderada)'}
           </span>
         )}
         {sweetSpotLabel && (
