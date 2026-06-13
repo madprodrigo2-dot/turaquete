@@ -73,12 +73,16 @@ export async function POST(req: NextRequest) {
       } catch { /* client disconnected */ }
     }
 
+    const agentController = new AbortController()
+    const agentTimeout = setTimeout(() => agentController.abort(), 45_000)
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
           const { text, recommendations, suggestions, isComparison, diagnostico, intencao } = await runAgentTurn(messages, (token) => {
             writeEvent(controller, { type: 'token', token: sanitizeDashes(token) })
-          })
+          }, agentController.signal)
+          clearTimeout(agentTimeout)
 
           // Fire-and-forget persistence
           getSupabase()
@@ -118,8 +122,13 @@ export async function POST(req: NextRequest) {
             intencao: intencao ?? null,
           })
         } catch (err) {
-          console.error('Chat stream error:', err)
-          writeEvent(controller, { type: 'error', message: 'Erro interno. Tente novamente.' })
+          clearTimeout(agentTimeout)
+          if (err instanceof Error && err.name === 'AbortError') {
+            writeEvent(controller, { type: 'error', message: 'Opa, travei aqui. Pode mandar de novo?' })
+          } else {
+            console.error('Chat stream error:', err)
+            writeEvent(controller, { type: 'error', message: 'Erro interno. Tente novamente.' })
+          }
         } finally {
           controller.close()
         }

@@ -75,7 +75,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   // Counts consecutive timeouts — resets on success; ≥2 breaks the retry chip loop
   const consecutiveTimeoutsRef = useRef(0)
 
-  const STREAM_TIMEOUT_MS = 55_000
+  const STREAM_TIMEOUT_MS = 30_000
 
   // Paced text animation — buffer drains at human typing speed
   const [streamRawText, setStreamRawText] = useState('')

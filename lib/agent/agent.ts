@@ -136,7 +136,8 @@ async function executeTool(
 
 export async function runAgentTurn(
   history: ChatMessage[],
-  onToken?: (token: string) => void
+  onToken?: (token: string) => void,
+  signal?: AbortSignal
 ): Promise<AgentResult> {
   const messages: Anthropic.MessageParam[] = history.map(m => ({
     role: m.role,
@@ -166,11 +167,11 @@ export async function runAgentTurn(
       tools: agentTools,
       tool_choice: toolChoice,
       messages,
-    })
+    }, { signal })
 
     if (response.stop_reason !== 'tool_use') {
       if (onToken) {
-        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken)
+        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken, signal)
       }
       const textBlock = response.content.find(b => b.type === 'text')
       const text = textBlock?.type === 'text' ? textBlock.text : ''
@@ -219,7 +220,7 @@ export async function runAgentTurn(
 
   // Fallback if MAX_TOOL_ROUNDS exhausted
   if (onToken) {
-    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken)
+    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken, signal)
   }
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
@@ -227,7 +228,7 @@ export async function runAgentTurn(
     system: SYSTEM_PROMPT,
     tools: agentTools,
     messages,
-  })
+  }, { signal })
   const textBlock = finalResponse.content.find(b => b.type === 'text')
   return {
     text: textBlock?.type === 'text' ? textBlock.text : '',
@@ -246,7 +247,8 @@ async function streamResponse(
   isComparison: boolean,
   diagnosticoRef: { value: FaixaIdeal | null },
   intencaoRef: { value: IntencaoTipo | null },
-  onToken: (token: string) => void
+  onToken: (token: string) => void,
+  signal?: AbortSignal
 ): Promise<AgentResult> {
   // Inject the calculated faixa into the system prompt so the final narrative
   // is forced to use the exact numbers from calcular_faixa_ideal, not the model's own calculation.
@@ -259,7 +261,7 @@ async function streamResponse(
     max_tokens: MAX_TOKENS,
     system: systemForStream,
     messages,
-  })
+  }, { signal })
 
   let text = ''
   for await (const event of stream) {
