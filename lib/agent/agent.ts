@@ -1,14 +1,24 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { agentTools } from './tools'
 import { SYSTEM_PROMPT } from './prompt'
+import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal, FaixaIdeal, FittingProfile } from '../scorer'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const MODEL = 'claude-haiku-4-5-20251001'
+const MODEL = PRICING.model
 const MAX_TOKENS = 1024
 const MAX_TOOL_ROUNDS = 5
+
+// Stable system prompt as a cacheable block — sent on every turn but only billed
+// once per cache TTL (~5 min). Dynamic injections (FAIXA VINCULANTE) are appended
+// as a second uncached block in streamResponse.
+const SYSTEM_CACHED: Anthropic.TextBlockParam[] = [{
+  type: 'text',
+  text: SYSTEM_PROMPT,
+  cache_control: { type: 'ephemeral' },
+}]
 
 export type ChatMessage = {
   role: 'user' | 'assistant'
@@ -26,9 +36,10 @@ export type AgentResult = {
   isComparison?: boolean
   diagnostico?: FaixaIdeal
   intencao?: IntencaoTipo
+  usage: TokenUsage
 }
 
-export type { FaixaIdeal }
+export type { FaixaIdeal, TokenUsage }
 
 type RecommendInput = {
   raquetes: Array<{ id: number; razao: string }>
@@ -37,6 +48,14 @@ type RecommendInput = {
 
 type SuggestInput = {
   opcoes: string[]
+}
+
+function addUsage(acc: TokenUsage, u: Anthropic.Usage): void {
+  const ux = u as unknown as Record<string, number>
+  acc.input      += u.input_tokens
+  acc.output     += u.output_tokens
+  acc.cacheRead  += ux.cache_read_input_tokens    ?? 0
+  acc.cacheWrite += ux.cache_creation_input_tokens ?? 0
 }
 
 // Marks rackets with fora_da_faixa and sorts in-range first.
@@ -148,6 +167,7 @@ export async function runAgentTurn(
   const pendingSuggestions: string[] = []
   const diagnosticoRef: { value: FaixaIdeal | null } = { value: null }
   const intencaoRef: { value: IntencaoTipo | null } = { value: null }
+  const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false
@@ -163,15 +183,17 @@ export async function runAgentTurn(
     const response = await anthropic.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
+      system: SYSTEM_CACHED,
       tools: agentTools,
       tool_choice: toolChoice,
       messages,
     }, { signal })
 
+    addUsage(usage, response.usage)
+
     if (response.stop_reason !== 'tool_use') {
       if (onToken) {
-        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken, signal)
+        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, usage, onToken, signal)
       }
       const textBlock = response.content.find(b => b.type === 'text')
       const text = textBlock?.type === 'text' ? textBlock.text : ''
@@ -182,6 +204,7 @@ export async function runAgentTurn(
         isComparison: isComparison || undefined,
         diagnostico: diagnosticoRef.value ?? undefined,
         intencao: intencaoRef.value ?? undefined,
+        usage,
       }
     }
 
@@ -220,15 +243,16 @@ export async function runAgentTurn(
 
   // Fallback if MAX_TOOL_ROUNDS exhausted
   if (onToken) {
-    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, onToken, signal)
+    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, usage, onToken, signal)
   }
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    system: SYSTEM_PROMPT,
+    system: SYSTEM_CACHED,
     tools: agentTools,
     messages,
   }, { signal })
+  addUsage(usage, finalResponse.usage)
   const textBlock = finalResponse.content.find(b => b.type === 'text')
   return {
     text: textBlock?.type === 'text' ? textBlock.text : '',
@@ -237,6 +261,7 @@ export async function runAgentTurn(
     isComparison: isComparison || undefined,
     diagnostico: diagnosticoRef.value ?? undefined,
     intencao: intencaoRef.value ?? undefined,
+    usage,
   }
 }
 
@@ -247,19 +272,23 @@ async function streamResponse(
   isComparison: boolean,
   diagnosticoRef: { value: FaixaIdeal | null },
   intencaoRef: { value: IntencaoTipo | null },
+  usage: TokenUsage,
   onToken: (token: string) => void,
   signal?: AbortSignal
 ): Promise<AgentResult> {
-  // Inject the calculated faixa into the system prompt so the final narrative
-  // is forced to use the exact numbers from calcular_faixa_ideal, not the model's own calculation.
-  const systemForStream = diagnosticoRef.value
-    ? `${SYSTEM_PROMPT}\n\n[FAIXA VINCULANTE CALCULADA PELO CÓDIGO]\npeso_min=${diagnosticoRef.value.peso_min}g  peso_max=${diagnosticoRef.value.peso_max}g  balance=${diagnosticoRef.value.balance_preferido}\nNarre EXATAMENTE estes valores. É proibido usar qualquer outro número de peso no diagnóstico desta conversa.`
-    : SYSTEM_PROMPT
+  // Stable part is cached; dynamic FAIXA VINCULANTE appended as a second uncached block.
+  const systemBlocks: Anthropic.TextBlockParam[] = [...SYSTEM_CACHED]
+  if (diagnosticoRef.value) {
+    systemBlocks.push({
+      type: 'text',
+      text: `\n\n[FAIXA VINCULANTE CALCULADA PELO CÓDIGO]\npeso_min=${diagnosticoRef.value.peso_min}g  peso_max=${diagnosticoRef.value.peso_max}g  balance=${diagnosticoRef.value.balance_preferido}\nNarre EXATAMENTE estes valores. É proibido usar qualquer outro número de peso no diagnóstico desta conversa.`,
+    })
+  }
 
   const stream = anthropic.messages.stream({
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    system: systemForStream,
+    system: systemBlocks,
     messages,
   }, { signal })
 
@@ -271,6 +300,9 @@ async function streamResponse(
     }
   }
 
+  const finalMsg = await stream.finalMessage()
+  addUsage(usage, finalMsg.usage)
+
   return {
     text,
     recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
@@ -278,5 +310,6 @@ async function streamResponse(
     isComparison: isComparison || undefined,
     diagnostico: diagnosticoRef.value ?? undefined,
     intencao: intencaoRef.value ?? undefined,
+    usage,
   }
 }

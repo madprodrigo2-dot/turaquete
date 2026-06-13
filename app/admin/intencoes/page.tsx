@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { auth, signOut } from '@/auth'
+import { USD_TO_BRL } from '@/lib/agent/pricing'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +13,11 @@ interface MensagemRow {
   intencao_detectada: string | null
   primeira_mensagem: string | null
 }
+interface CostRow {
+  created_at: string
+  custo_brl: number | null
+  recommended_racket_ids: number[] | null
+}
 
 function getAdmin() {
   return createClient(
@@ -19,6 +25,19 @@ function getAdmin() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } }
   )
+}
+
+function fmtBrl(v: number): string {
+  return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`
+}
+
+function fmtBrlShort(v: number): string {
+  return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function avg(arr: number[]): number | null {
+  if (arr.length === 0) return null
+  return arr.reduce((a, b) => a + b, 0) / arr.length
 }
 
 export default async function IntencoesAdmin() {
@@ -29,7 +48,11 @@ export default async function IntencoesAdmin() {
 
   const sb = getAdmin()
 
-  const [intentRows, starterRows, msgRows] = await Promise.all([
+  const now = Date.now()
+  const ago30 = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const ago7  = new Date(now -  7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const [intentRows, starterRows, msgRows, costRows] = await Promise.all([
     sb.rpc('admin_intencao_counts').then(r => (r.data ?? []) as IntencaoRow[]),
     sb.rpc('admin_starter_counts').then(r => (r.data ?? []) as StarterRow[]),
     sb
@@ -39,6 +62,12 @@ export default async function IntencoesAdmin() {
       .order('created_at', { ascending: false })
       .limit(50)
       .then(r => (r.data ?? []) as MensagemRow[]),
+    sb
+      .from('conversations')
+      .select('created_at, custo_brl, recommended_racket_ids')
+      .not('custo_brl', 'is', null)
+      .gte('created_at', ago30)
+      .then(r => (r.data ?? []) as CostRow[]),
   ])
 
   // Fallback: if RPCs don't exist yet, run direct queries
@@ -75,6 +104,29 @@ export default async function IntencoesAdmin() {
             .sort((a, b) => b.total - a.total)
         })
 
+  // ── Cost stats ────────────────────────────────────────────────────────────
+  const costs30 = costRows.map(r => r.custo_brl!).filter(v => v > 0)
+  const costs7  = costRows
+    .filter(r => r.created_at >= ago7)
+    .map(r => r.custo_brl!)
+    .filter(v => v > 0)
+
+  const costsWithRec = costRows
+    .filter(r => (r.recommended_racket_ids?.length ?? 0) > 0)
+    .map(r => r.custo_brl!)
+    .filter(v => v > 0)
+
+  const avg30        = avg(costs30)
+  const avg7         = avg(costs7)
+  const total30      = costs30.reduce((a, b) => a + b, 0)
+  const avgWithRec   = avg(costsWithRec)
+  const maxCost      = costs30.length > 0 ? Math.max(...costs30) : null
+
+  const hasCostData = costs30.length > 0
+
+  // Estimated commision per sale — fill in when affiliate % is known
+  const COMISSAO_ESTIMADA_BRL: number | null = null  // e.g. 120 for ~5% of R$2.400
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 font-sans text-sm text-gray-800">
       <div className="max-w-4xl mx-auto flex flex-col gap-8">
@@ -99,6 +151,63 @@ export default async function IntencoesAdmin() {
             </button>
           </form>
         </div>
+
+        {/* ── Custos ── */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-700 mb-3">Custos (API Anthropic)</h2>
+
+          {!hasCostData ? (
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-3 text-gray-400 italic text-xs">
+              Sem dados de custo ainda. Execute a migration SQL e aguarde novas conversas.
+            </div>
+          ) : (
+            <>
+              {/* Número estrela */}
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4 flex flex-col gap-1">
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Custo médio por recomendação exibida (30d)</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {avgWithRec != null ? fmtBrl(avgWithRec) : '—'}
+                </p>
+                {COMISSAO_ESTIMADA_BRL != null && avgWithRec != null && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Comissão estimada por venda: {fmtBrlShort(COMISSAO_ESTIMADA_BRL)}
+                    {' · '}
+                    <span className={avgWithRec < COMISSAO_ESTIMADA_BRL * 0.1 ? 'text-emerald-600 font-medium' : 'text-amber-600 font-medium'}>
+                      margem {((COMISSAO_ESTIMADA_BRL - avgWithRec) / COMISSAO_ESTIMADA_BRL * 100).toFixed(1)}%
+                    </span>
+                  </p>
+                )}
+                {COMISSAO_ESTIMADA_BRL == null && (
+                  <p className="text-xs text-gray-300 mt-1">
+                    Preencha <code className="font-mono">COMISSAO_ESTIMADA_BRL</code> no código para ver a margem.
+                  </p>
+                )}
+              </div>
+
+              {/* Grade de métricas */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: 'Custo médio / conversa (7d)', value: avg7 != null ? fmtBrl(avg7) : '—', sub: `${costs7.length} conv.` },
+                  { label: 'Custo médio / conversa (30d)', value: avg30 != null ? fmtBrl(avg30) : '—', sub: `${costs30.length} conv.` },
+                  { label: 'Custo total (30d)', value: fmtBrlShort(total30), sub: `USD ${(total30 / USD_TO_BRL).toFixed(4)}` },
+                  { label: 'Conversa mais cara (30d)', value: maxCost != null ? fmtBrl(maxCost) : '—', sub: 'anomalias' },
+                ].map(({ label, value, sub }) => (
+                  <div key={label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
+                    <p className="text-base font-bold text-gray-800">{value}</p>
+                    <p className="text-[10px] text-gray-300">{sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Contexto de negócio */}
+              <div className="mt-3 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-700">
+                <span className="font-semibold">Referência:</span> ticket médio ~R$2.000–2.400 · comissão afiliado ML ~5–8% → R$100–192/venda.
+                {' '}Preencha <code className="font-mono">COMISSAO_ESTIMADA_BRL</code> em <code className="font-mono">app/admin/intencoes/page.tsx</code> quando souber o % exato.
+              </div>
+            </>
+          )}
+        </section>
 
         {/* Intenções */}
         <section>

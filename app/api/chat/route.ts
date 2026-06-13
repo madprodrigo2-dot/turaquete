@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runAgentTurn, ChatMessage } from '@/lib/agent/agent'
+import { calcCost, PRICING } from '@/lib/agent/pricing'
 import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rate-limit'
 
@@ -79,10 +80,12 @@ export async function POST(req: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          const { text, recommendations, suggestions, isComparison, diagnostico, intencao } = await runAgentTurn(messages, (token) => {
+          const { text, recommendations, suggestions, isComparison, diagnostico, intencao, usage } = await runAgentTurn(messages, (token) => {
             writeEvent(controller, { type: 'token', token: sanitizeDashes(token) })
           }, agentController.signal)
           clearTimeout(agentTimeout)
+
+          const { usd, brl } = calcCost(usage)
 
           // Fire-and-forget persistence
           getSupabase()
@@ -91,6 +94,13 @@ export async function POST(req: NextRequest) {
               session_id: sessionId,
               messages: [...messages, { role: 'assistant', content: text }],
               recommended_racket_ids: recommendations?.map(r => r.racket.id) ?? [],
+              tokens_input:       usage.input,
+              tokens_output:      usage.output,
+              tokens_cache_read:  usage.cacheRead,
+              tokens_cache_write: usage.cacheWrite,
+              modelo_usado:       PRICING.model,
+              custo_usd:          usd,
+              custo_brl:          brl,
               ...(primeiraMensagem !== undefined && {
                 primeira_mensagem: primeiraMensagem,
                 starter_usado: starterUsado ?? null,
