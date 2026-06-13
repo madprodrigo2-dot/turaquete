@@ -26,11 +26,48 @@ export async function generateMetadata(
   return { title, description }
 }
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  'Itália': '🇮🇹', 'Italia': '🇮🇹', 'Italy': '🇮🇹',
-  'Brasil': '🇧🇷', 'Brazil': '🇧🇷', 'BR': '🇧🇷',
+// ── Flag SVGs ─────────────────────────────────────────────────────────────────
+
+function FlagItaly() {
+  return (
+    <svg
+      width="20" height="14" viewBox="0 0 3 2"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Itália"
+      role="img"
+      className="inline-block align-middle rounded-[1px]"
+      style={{ boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.15)', shapeRendering: 'crispEdges' }}
+    >
+      <rect width="1" height="2" fill="#009246"/>
+      <rect x="1" width="1" height="2" fill="#ffffff"/>
+      <rect x="2" width="1" height="2" fill="#CE2B37"/>
+    </svg>
+  )
 }
-function countryFlag(country: string): string { return COUNTRY_FLAGS[country] ?? '' }
+
+function FlagBrazil() {
+  return (
+    <svg
+      width="20" height="14" viewBox="0 0 20 14"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Brasil"
+      role="img"
+      className="inline-block align-middle rounded-[1px]"
+      style={{ boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.15)' }}
+    >
+      <rect width="20" height="14" fill="#009c3b"/>
+      <polygon points="10,1.2 18.8,7 10,12.8 1.2,7" fill="#ffdf00"/>
+      <circle cx="10" cy="7" r="3.8" fill="#002776"/>
+    </svg>
+  )
+}
+
+function CountryFlag({ country }: { country: string }) {
+  const c = country.toLowerCase()
+  if (c === 'itália' || c === 'italia' || c === 'italy') return <FlagItaly />
+  if (c === 'brasil' || c === 'brazil' || c === 'br') return <FlagBrazil />
+  return null
+}
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
@@ -109,7 +146,10 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl md:text-3xl font-bold text-tinta">{brand.name}</h1>
           {brand.country && (
-            <p className="text-tinta/50 text-sm">{countryFlag(brand.country)} {brand.country}</p>
+            <p className="text-tinta/50 text-sm flex items-center gap-1.5">
+              <CountryFlag country={brand.country} />
+              <span>{brand.country}</span>
+            </p>
           )}
           <p className="text-tinta/60 text-sm">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</p>
         </div>

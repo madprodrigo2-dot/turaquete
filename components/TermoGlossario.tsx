@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { sendGAEvent } from '@next/third-parties/google'
 import type { GlossarioEntry } from '@/lib/glossario'
 
 interface Props {
   entry: GlossarioEntry
-  children: string
+  children: React.ReactNode
+  className?: string
 }
 
 interface TooltipPos {
@@ -34,7 +35,7 @@ function AnatomiaOverlay({ onClose }: { onClose: () => void }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/raquete-anatomia.png"
+          src="/anatomia-raquete.webp"
           alt="Anatomia da raquete de beach tennis"
           className="w-full rounded-2xl shadow-2xl"
         />
@@ -128,7 +129,7 @@ function Tooltip({ entry, triggerRef, onClose }: {
   )
 }
 
-export default function TermoGlossario({ entry, children }: Props) {
+export default function TermoGlossario({ entry, children, className }: Props) {
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
 
@@ -143,7 +144,7 @@ export default function TermoGlossario({ entry, children }: Props) {
       <button
         ref={triggerRef}
         onClick={handleOpen}
-        className="inline border-b border-dashed border-aqua/50 text-inherit hover:border-aqua transition-colors focus:outline-none"
+        className={className ?? "inline border-b border-dashed border-aqua/50 text-inherit hover:border-aqua transition-colors focus:outline-none"}
         aria-expanded={open}
         aria-label={`Definição: ${entry.termo}`}
       >

@@ -17,33 +17,33 @@ export const GLOSSARIO: GlossarioEntry[] = [
   // --- Dimensões do modal (showInModal: true) ---
   {
     termo: 'potência',
-    definicao: 'Força transmitida ao golpe; raquetes mais pesadas e com balance à cabeça potencializam o impacto.',
+    definicao: 'A força que a raquete entrega no ataque, sem você precisar forçar.',
     aliases: ['potencia'],
     showInModal: true,
   },
   {
     termo: 'controle',
-    definicao: 'Precisão na direção e profundidade do golpe; raquetes com balance ao cabo e cabeça redonda oferecem mais controle.',
+    definicao: 'A precisão pra colocar a bola exatamente onde você quer.',
     showInModal: true,
   },
   {
     termo: 'conforto',
-    definicao: 'Absorção de vibração ao impacto; núcleo de EVA macio e moldura mais flexível reduzem o impacto no braço.',
+    definicao: 'O quanto ela protege seu braço do impacto e da vibração.',
     showInModal: true,
   },
   {
     termo: 'manuseio',
-    definicao: 'Facilidade de movimentar a raquete na quadra; raquetes mais leves e com balance ao cabo respondem mais rápido.',
+    definicao: 'A agilidade: rapidez pra reagir, defender e trocar de golpe.',
     showInModal: true,
   },
   {
     termo: 'spin',
-    definicao: 'Efeito rotativo na bola; trama aberta (espaçamento maior entre furos) e superfície rugosa geram mais spin.',
+    definicao: 'A capacidade de gerar efeito na bola, no estado de fábrica.',
     showInModal: true,
   },
   {
     termo: 'estabilidade',
-    definicao: 'Resistência a torção ao errar o centro do golpe; raquetes largas e pesadas são mais estáveis.',
+    definicao: 'A firmeza no impacto: ela não torce na mão em bolas fortes.',
     showInModal: true,
   },
   {

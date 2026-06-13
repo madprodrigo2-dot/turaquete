@@ -8,9 +8,9 @@ import {
 } from 'recharts'
 import { RacketWithInsights } from '@/lib/recommend'
 import { gerarExplicacoes } from '@/lib/explicador'
-import { GLOSSARIO_MODAL } from '@/lib/glossario'
 import AthleteBadge from './AthleteBadge'
 import SpecsGrid, { buildSpecRows } from './SpecsGrid'
+import ScoreSection from './ScoreSection'
 
 interface Props {
   racket: RacketWithInsights
@@ -20,7 +20,6 @@ interface Props {
 
 export default function InsightsModal({ racket, open, onClose }: Props) {
   const [mounted, setMounted] = useState(false)
-  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const [anatomiaOpen, setAnatomiaOpen] = useState(false)
   const ins = racket.racket_insights
 
@@ -187,30 +186,16 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
             </div>
           )}
 
-          {/* Glossário de dimensões */}
-          <div className="border border-aqua/20 rounded-xl overflow-hidden -mt-1">
-            <button
-              className="flex items-center justify-between w-full px-3 py-2.5 text-xs text-tinta/50 hover:text-tinta/70 transition-colors"
-              onClick={() => setGlossaryOpen(o => !o)}
-            >
-              <span>O que significa cada dimensão?</span>
-              <svg
-                width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"
-                className={`transition-transform duration-150 ${glossaryOpen ? 'rotate-180' : ''}`}
-              >
-                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            {glossaryOpen && (
-              <div className="px-3 pb-3 flex flex-col gap-1.5 border-t border-aqua/10 pt-2.5">
-                {GLOSSARIO_MODAL.map(e => (
-                  <p key={e.termo} className="text-xs text-tinta/60 leading-relaxed">
-                    <span className="font-semibold text-tinta/80">{e.termo.charAt(0).toUpperCase() + e.termo.slice(1)}:</span> {e.definicao}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Pontuações com tooltips por dimensão */}
+          <ScoreSection
+            power={ins.power}
+            control={ins.control}
+            comfort={ins.comfort}
+            maneuverability={ins.maneuverability}
+            spin={ins.spin}
+            stability={ins.stability}
+            tratamentoFabrica={tratamentoFabrica as boolean | undefined}
+          />
 
           {/* Anatomia da raquete */}
           <div className="border border-aqua/20 rounded-xl overflow-hidden -mt-1">
@@ -243,16 +228,6 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               </div>
             )}
           </div>
-
-          {/* Nota spin */}
-          {tratamentoFabrica === false && (
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 -mt-1">
-              <span className="text-amber-500 shrink-0 mt-0.5 text-sm">ℹ</span>
-              <p className="text-amber-800 text-xs leading-relaxed">
-                <strong className="font-semibold">Spin:</strong> superfície lisa de fábrica. Dá pra aumentar com areado aplicado depois da compra.
-              </p>
-            </div>
-          )}
 
           {/* Perfil resumo */}
           {ins.perfil_resumo && (

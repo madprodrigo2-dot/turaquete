@@ -5,6 +5,7 @@ import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
 import BuyButton from '@/components/BuyButton'
 import AthleteBadge from '@/components/AthleteBadge'
 import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
+import ScoreSection from '@/components/ScoreSection'
 
 export const dynamicParams = false
 
@@ -43,21 +44,6 @@ export async function generateMetadata(
   }
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function ScoreBar({ label, value }: { label: string; value: number | null }) {
-  if (value === null) return null
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-tinta/70 text-sm w-28 shrink-0">{label}</span>
-      <div className="flex-1 bg-aqua/15 rounded-full h-2.5">
-        <div className="bg-aqua h-2.5 rounded-full" style={{ width: `${(value / 10) * 100}%` }} />
-      </div>
-      <span className="text-tinta font-semibold text-sm w-5 text-right">{value}</span>
-    </div>
-  )
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function RaquetaPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -91,7 +77,9 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
     }),
   }
 
-  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const extra = (racket.specs_extra as Record<string, unknown> | null) ?? {}
+  const athlete = extra.atleta as string | undefined
+  const tratamentoFabrica = extra.tratamento_fabrica as boolean | undefined
 
   return (
     <>
@@ -163,14 +151,15 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           {ins && (ins.power !== null || ins.control !== null) && (
             <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm flex flex-col gap-4">
               <p className="text-tinta font-semibold text-sm md:text-base">Avaliação</p>
-              <div className="flex flex-col gap-3">
-                <ScoreBar label="Potência"     value={ins.power} />
-                <ScoreBar label="Controle"     value={ins.control} />
-                <ScoreBar label="Conforto"     value={ins.comfort} />
-                <ScoreBar label="Manuseio"     value={ins.maneuverability} />
-                <ScoreBar label="Spin"         value={ins.spin} />
-                <ScoreBar label="Estabilidade" value={ins.stability} />
-              </div>
+              <ScoreSection
+                power={ins.power}
+                control={ins.control}
+                comfort={ins.comfort}
+                maneuverability={ins.maneuverability}
+                spin={ins.spin}
+                stability={ins.stability}
+                tratamentoFabrica={tratamentoFabrica}
+              />
               {/* Shown only for baixa/media — used when a new racket enters with incomplete
                   or conflicting specs, until data is filled in. alta = hide silently. */}
               {ins.confianca && ins.confianca !== 'alta' && (

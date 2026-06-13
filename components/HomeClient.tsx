@@ -44,6 +44,7 @@ type Message = {
   suggestions?: string[]
   isComparison?: boolean
   diagnostico?: FaixaIdeal
+  _isTimeout?: true  // internal flag: stripped from API payloads, triggers history rollback on retry
 }
 
 interface Props {
@@ -71,8 +72,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const abortRef = useRef<AbortController | null>(null)
   // Tracks which start chip (if any) triggered the current send
   const starterUsadoRef = useRef<string | null>(null)
+  // Counts consecutive timeouts — resets on success; ≥2 breaks the retry chip loop
+  const consecutiveTimeoutsRef = useRef(0)
 
-  const STREAM_TIMEOUT_MS = 40_000
+  const STREAM_TIMEOUT_MS = 55_000
 
   // Paced text animation — buffer drains at human typing speed
   const [streamRawText, setStreamRawText] = useState('')
@@ -150,7 +153,19 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
     if (sendingRef.current) return
     sendingRef.current = true
 
-    const updated: Message[] = [...messages, { role: 'user', content: text }]
+    // Rollback: if the last message is a timeout error, strip it (and the user
+    // message that caused it, if it's the same text) before retrying. This
+    // prevents the API from receiving a history polluted with error messages and
+    // breaks the visual "timeout → chip → timeout → chip" loop.
+    let baseMessages = messages
+    if (baseMessages.at(-1)?._isTimeout) {
+      baseMessages = baseMessages.slice(0, -1)
+      if (baseMessages.at(-1)?.role === 'user' && baseMessages.at(-1)?.content === text) {
+        baseMessages = baseMessages.slice(0, -1)
+      }
+    }
+
+    const updated: Message[] = [...baseMessages, { role: 'user', content: text }]
     setMessages(updated)
     setLoading(true)
     setStreamRawText('')
@@ -166,7 +181,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
     try {
       const apiMessages = updated.map(({ role, content }) => ({ role, content }))
-      const isFirstMessage = !messages.some(m => m.role === 'user')
+      const isFirstMessage = !baseMessages.some(m => m.role === 'user')
       const reqBody: Record<string, unknown> = { messages: apiMessages, sessionId }
       if (isFirstMessage) {
         reqBody.primeiraMensagem = text
@@ -215,6 +230,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
           setMessages([...updated, { role: 'assistant', content: partialText }])
         } else if (evt.type === 'done') {
           streamFinished = true
+          consecutiveTimeoutsRef.current = 0
           const recs = evt.recommendations ?? undefined
           const sugs = evt.suggestions?.length ? evt.suggestions : undefined
           const isCmp = evt.isComparison ?? false
@@ -250,19 +266,35 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
       if (buffer) processLine(buffer)
 
       if (!streamStarted && !streamFinished) {
-        setMessages([...updated, { role: 'assistant', content: TIMEOUT_MESSAGE, suggestions: [text] }])
+        consecutiveTimeoutsRef.current++
+        const stuck = consecutiveTimeoutsRef.current >= 2
+        setMessages([...updated, {
+          role: 'assistant',
+          content: stuck ? 'Parece que tô com lentidão no servidor agora. Aguarda uns minutinhos e tenta de novo.' : TIMEOUT_MESSAGE,
+          suggestions: stuck ? undefined : [text],
+          _isTimeout: true,
+        }])
       }
     } catch (err) {
       const isAbort = err instanceof Error && err.name === 'AbortError'
-      setMessages([
-        ...updated,
-        {
-          role: 'assistant',
-          content: isAbort ? TIMEOUT_MESSAGE : 'Ops, tive um problema de conexão. Tente novamente.',
-          // Pass original text as suggestion so the retry chip re-sends it
-          suggestions: isAbort ? [text] : undefined,
-        },
-      ])
+      if (isAbort) {
+        consecutiveTimeoutsRef.current++
+        const stuck = consecutiveTimeoutsRef.current >= 2
+        setMessages([
+          ...updated,
+          {
+            role: 'assistant',
+            content: stuck ? 'Parece que tô com lentidão no servidor agora. Aguarda uns minutinhos e tenta de novo.' : TIMEOUT_MESSAGE,
+            suggestions: stuck ? undefined : [text],
+            _isTimeout: true,
+          },
+        ])
+      } else {
+        setMessages([
+          ...updated,
+          { role: 'assistant', content: 'Ops, tive um problema de conexão. Tente novamente.' },
+        ])
+      }
     } finally {
       clearTimeout(timeoutId)
       abortRef.current = null
