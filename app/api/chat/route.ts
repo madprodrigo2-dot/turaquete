@@ -10,12 +10,25 @@ import { checkRateLimit } from '@/lib/rate-limit'
 const dedupCache = new Map<string, { lastMsg: string; ts: number }>()
 const DEDUP_WINDOW_MS = 2_000
 
-function sanitizeDashes(token: string): string {
-  return token
+const VOCAB_BLOCKLIST: [RegExp, string][] = [
+  [/\bforgiveness\b/gi, 'sweet spot'],
+  [/\bmaneuverability\b/gi, 'manuseio'],
+]
+
+function sanitizeToken(token: string): string {
+  let t = token
     .replace(/ — /g, ', ')
     .replace(/— /g, ', ')
     .replace(/ —/g, ', ')
     .replace(/—/g, ',')
+  for (const [re, replacement] of VOCAB_BLOCKLIST) {
+    if (re.test(t)) {
+      console.warn(`[sanitize] blocked internal term, replacing with "${replacement}"`)
+      re.lastIndex = 0
+      t = t.replace(re, replacement)
+    }
+  }
+  return t
 }
 
 export async function POST(req: NextRequest) {
@@ -81,7 +94,7 @@ export async function POST(req: NextRequest) {
       async start(controller) {
         try {
           const { text, recommendations, suggestions, isComparison, diagnostico, intencao, usage } = await runAgentTurn(messages, (token) => {
-            writeEvent(controller, { type: 'token', token: sanitizeDashes(token) })
+            writeEvent(controller, { type: 'token', token: sanitizeToken(token) })
           }, agentController.signal)
           clearTimeout(agentTimeout)
 
