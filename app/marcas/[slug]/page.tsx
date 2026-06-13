@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
 import AthleteBadge from '@/components/AthleteBadge'
 import { NIVEL_LABEL } from '@/components/SpecsGrid'
+import { derivarNivel } from '@/lib/nivel'
 
 export const dynamicParams = false
 
@@ -108,9 +109,12 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
       <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2">{racket.name}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
-        {ins?.nivel_sugerido && (
-          <p className="text-tinta/50 text-xs">{NIVEL_LABEL[ins.nivel_sugerido] ?? ins.nivel_sugerido}</p>
-        )}
+        {(() => {
+          const nivel = derivarNivel(racket)
+          return nivel ? (
+            <p className="text-tinta/50 text-xs">{NIVEL_LABEL[nivel] ?? nivel}</p>
+          ) : null
+        })()}
       </div>
     </Link>
   )

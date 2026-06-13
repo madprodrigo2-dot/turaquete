@@ -7,6 +7,7 @@ import AthleteBadge from '@/components/AthleteBadge'
 import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
 import ScoreSection from '@/components/ScoreSection'
 import RacketKeyStats from '@/components/RacketKeyStats'
+import { derivarNivel } from '@/lib/nivel'
 
 export const dynamicParams = false
 
@@ -123,11 +124,14 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
             {price && <p className="text-coral text-xl font-bold">{price}</p>}
             <div className="flex gap-2 flex-wrap">
               {athlete && <AthleteBadge athlete={athlete} />}
-              {ins?.nivel_sugerido && (
-                <span className="bg-aqua/15 text-aqua text-xs font-semibold px-3 py-1 rounded-full">
-                  {NIVEL_LABEL[ins.nivel_sugerido] ?? ins.nivel_sugerido}
-                </span>
-              )}
+              {(() => {
+                const nivel = derivarNivel(racket)
+                return nivel ? (
+                  <span className="bg-aqua/15 text-aqua text-xs font-semibold px-3 py-1 rounded-full">
+                    {NIVEL_LABEL[nivel] ?? nivel}
+                  </span>
+                ) : null
+              })()}
               {ins?.elbow_friendly && (
                 <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
                   Cotovelo amigável

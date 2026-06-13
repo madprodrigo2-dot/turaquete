@@ -52,16 +52,16 @@ export default function RacketKeyStats({ racket }: Props) {
           <span className="text-aqua shrink-0 mt-0.5 text-sm">ℹ</span>
           <div className="flex flex-col gap-1.5">
             <p className="text-tinta/70 text-xs leading-relaxed">
-              Potência mede o teto da raquete com swing rápido e técnico. Saída de bola mostra o quanto ela rende com swing mais suave.
+              Potência mede o teto da raquete com batida rápida e técnica. Saída de bola mostra o quanto ela rende com batida mais suave.
             </p>
             {power >= 8 && saidaDeBola === 'exigente' && (
               <p className="text-amber-700 text-xs leading-relaxed">
-                Essa só entrega a potência toda com técnica. Pra swing suave, ela rende menos que uma macia.
+                Essa só entrega a potência toda com técnica. Com batida suave, ela rende menos que uma macia.
               </p>
             )}
             {saidaDeBola === 'fácil' && (
               <p className="text-emerald-700 text-xs leading-relaxed">
-                Rende bem mesmo com swing suave, ideal pra quem tá evoluindo.
+                Rende bem mesmo com batida suave, ideal pra quem tá evoluindo.
               </p>
             )}
           </div>

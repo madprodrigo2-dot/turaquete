@@ -5,6 +5,7 @@ import { RacketWithInsights } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
 import AthleteBadge from './AthleteBadge'
 import { NIVEL_LABEL } from './SpecsGrid'
+import { derivarNivel } from '@/lib/nivel'
 
 interface Props {
   racket: RacketWithInsights
@@ -88,11 +89,14 @@ export default function RacketCard({ racket, razao }: Props) {
           <p className="text-gray-600 text-xs leading-relaxed break-words">{razao}</p>
 
           {/* Pra quem */}
-          {ins?.nivel_sugerido && (
-            <p className="text-tinta/40 text-xs">
-              Pra quem: <span className="text-tinta/60">{NIVEL_LABEL[ins.nivel_sugerido] ?? ins.nivel_sugerido}</span>
-            </p>
-          )}
+          {(() => {
+            const nivel = derivarNivel(racket)
+            return nivel ? (
+              <p className="text-tinta/40 text-xs">
+                Pra quem: <span className="text-tinta/60">{NIVEL_LABEL[nivel] ?? nivel}</span>
+              </p>
+            ) : null
+          })()}
 
           {/* Top-2 dimensões */}
           {topDims.length > 0 && (

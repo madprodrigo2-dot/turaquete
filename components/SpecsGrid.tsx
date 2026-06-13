@@ -1,4 +1,5 @@
 import { RacketWithInsights } from '@/lib/recommend'
+import { derivarNivel } from '@/lib/nivel'
 
 function cap(str: string): string {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : str
@@ -64,8 +65,9 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     if (techFiltered.length > 0) techFisicasRow = { label: 'Tecnologias', value: techFiltered.join(', ') }
   }
 
-  const praQuem = racket.racket_insights?.nivel_sugerido
-    ? NIVEL_LABEL[racket.racket_insights.nivel_sugerido] ?? cap(racket.racket_insights.nivel_sugerido)
+  const nivelDerivado = derivarNivel(racket)
+  const praQuem = nivelDerivado
+    ? NIVEL_LABEL[nivelDerivado] ?? cap(nivelDerivado)
     : undefined
 
   return ([
