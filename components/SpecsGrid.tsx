@@ -1,5 +1,22 @@
 import { RacketWithInsights } from '@/lib/recommend'
 import { derivarNivel } from '@/lib/nivel'
+import TermoGlossario from './TermoGlossario'
+import type { GlossarioEntry } from '@/lib/glossario'
+
+const ADJUSTABLE: Record<string, GlossarioEntry> = {
+  'Peso': {
+    termo: 'Peso — ajustável',
+    definicao: 'Valor de fábrica (pode variar ±10g). Dá pra AUMENTAR adicionando fitas de peso no cabo ou na cabeça. Não dá pra reduzir o peso.',
+  },
+  'Balance': {
+    termo: 'Balance — ajustável',
+    definicao: 'Valor de referência. Dá pra ajustar adicionando peso: no cabo deixa mais ágil e com mais controle; na cabeça dá mais potência.',
+  },
+  'Superfície': {
+    termo: 'Superfície — ajustável',
+    definicao: 'Estado de fábrica. Dá pra aumentar o spin com tratamento areado numa loja especializada (custo baixo, não altera estrutura).',
+  },
+}
 
 function cap(str: string): string {
   return str ? str.charAt(0).toUpperCase() + str.slice(1) : str
@@ -99,24 +116,48 @@ export default function SpecsGrid({ racket, variant = 'page' }: Props) {
   if (variant === 'modal') {
     return (
       <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-        {rows.map(({ label, value }) => (
-          <div key={label} className="flex flex-col gap-1.5">
-            <span className="text-[10px] text-tinta/40 leading-tight">{label}</span>
-            <span className="text-xs text-tinta font-medium leading-snug">{value}</span>
-          </div>
-        ))}
+        {rows.map(({ label, value }) => {
+          const adj = ADJUSTABLE[label]
+          return (
+            <div key={label} className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-tinta/40 leading-tight">{label}</span>
+                {adj && (
+                  <TermoGlossario entry={adj} className="flex items-center focus:outline-none shrink-0">
+                    <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 px-1 py-0.5 rounded-full leading-none hover:bg-amber-200 transition-colors">
+                      ajust.
+                    </span>
+                  </TermoGlossario>
+                )}
+              </div>
+              <span className="text-xs text-tinta font-medium leading-snug">{value}</span>
+            </div>
+          )
+        })}
       </div>
     )
   }
 
   return (
     <>
-      {rows.map(({ label, value }) => (
-        <div key={label} className="flex justify-between py-2 border-b border-aqua/10 last:border-0">
-          <span className="text-tinta/60 text-sm">{label}</span>
-          <span className="text-tinta text-sm font-medium text-right ml-4">{value}</span>
-        </div>
-      ))}
+      {rows.map(({ label, value }) => {
+        const adj = ADJUSTABLE[label]
+        return (
+          <div key={label} className="flex justify-between items-center py-2 border-b border-aqua/10 last:border-0">
+            <span className="text-tinta/60 text-sm">{label}</span>
+            <div className="flex items-center gap-2 ml-4">
+              <span className="text-tinta text-sm font-medium text-right">{value}</span>
+              {adj && (
+                <TermoGlossario entry={adj} className="flex items-center focus:outline-none shrink-0">
+                  <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none hover:bg-amber-200 transition-colors">
+                    ajustável
+                  </span>
+                </TermoGlossario>
+              )}
+            </div>
+          </div>
+        )
+      })}
     </>
   )
 }
