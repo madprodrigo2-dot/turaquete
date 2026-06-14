@@ -792,7 +792,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                       <path d="M6 1C3.24 1 1 3.02 1 5.5c0 .98.32 1.89.86 2.63L1.5 11l2.93-1.5C4.9 9.82 5.44 10 6 10c2.76 0 5-2.02 5-4.5S8.76 1 6 1z" fill="#0CC0BE" opacity=".7"/>
                     </svg>
                   </div>
-                  <p className="text-tinta/75 text-sm leading-relaxed italic">"{q}"</p>
+                  <p className="text-tinta/75 text-sm leading-relaxed italic">&ldquo;{q}&rdquo;</p>
                 </div>
               ))}
             </div>
