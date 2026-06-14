@@ -9,7 +9,7 @@ import type { DecisionTrace, FilterStep } from '../debug-types'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const MODEL = PRICING.model
-const MAX_TOKENS = 1024
+const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
 const MAX_TOOL_ROUNDS = 5
 
 // Stable system prompt as a cacheable block — sent on every turn but only billed
@@ -221,13 +221,23 @@ export async function runAgentTurn(
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false
+  // Stall recovery: if the model emits pure text with no tool calls on the first
+  // round (e.g. "Um segundo." / "Deixa eu buscar..."), we retry once with
+  // tool_choice:'any' to force it to actually call a tool. The stall response is
+  // discarded — messages stays untouched so the forced retry gets a clean slate.
+  let stalledOnce = false
 
   while (rounds < MAX_TOOL_ROUNDS) {
-    // Once we have search results and haven't committed to recommendations yet,
-    // force recomendar_raquetas — prevents the model from narrating "agora vou escolher"
-    // without actually choosing.
+    const nothingDoneYet = !diagnosticoRef.value && pendingRecommendations.length === 0 && !hasSearchResults
+
+    // tool_choice priority:
+    //   1. Force recomendar_raquetas when search results exist but no picks yet
+    //   2. Force any tool when the model just stalled on a first-round text-only response
+    //   3. Auto otherwise
     const toolChoice = (hasSearchResults && pendingRecommendations.length === 0)
       ? { type: 'tool' as const, name: 'recomendar_raquetas' }
+      : (stalledOnce && nothingDoneYet)
+      ? { type: 'any' as const }
       : { type: 'auto' as const }
 
     const response = await anthropic.messages.create({
@@ -242,6 +252,15 @@ export async function runAgentTurn(
     addUsage(usage, response.usage)
 
     if (response.stop_reason !== 'tool_use') {
+      // Detect stall: model returned pure text (end_turn) on a first round where
+      // nothing has been done yet. Retry once with tool_choice:'any'.
+      if (nothingDoneYet && !stalledOnce && response.stop_reason === 'end_turn') {
+        stalledOnce = true
+        rounds++ // charge against budget to prevent infinite loop
+        console.warn('[agent] stall detected — retrying with tool_choice:any')
+        continue  // messages unchanged; model gets forced tool choice on next iteration
+      }
+
       if (onToken) {
         return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, onToken, signal)
       }
@@ -259,6 +278,7 @@ export async function runAgentTurn(
       }
     }
 
+    stalledOnce = false  // reset once tools start flowing normally
     rounds++
     messages.push({ role: 'assistant', content: response.content })
 

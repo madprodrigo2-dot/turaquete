@@ -88,7 +88,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   const intencaoConvRef = useRef<string | undefined>(undefined)
   const turnosAteRecRef = useRef(0)
 
-  const STREAM_TIMEOUT_MS = 30_000
+  const STREAM_TIMEOUT_MS = 40_000
 
   // Paced text animation — buffer drains at human typing speed
   const [streamRawText, setStreamRawText] = useState('')
