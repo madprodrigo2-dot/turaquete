@@ -336,6 +336,12 @@ async function streamResponse(
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system: systemBlocks,
+    // Include tools + tool_choice:none so the model understands the conversation
+    // context (which has tool_use/tool_result blocks) without being able to call
+    // tools again. Without this, the model falls back to emitting <function_calls>
+    // XML as visible text — a critical leak of internal machinery to users.
+    tools: agentTools,
+    tool_choice: { type: 'none' },
     messages,
   }, { signal })
 

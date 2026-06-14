@@ -96,6 +96,57 @@ class ThinkingFilter {
   getCollected(): string { return this.collected }
 }
 
+// Strips <function_calls>...</function_calls> blocks from the token stream.
+// Defense-in-depth: the root cause is fixed in agent.ts (tool_choice: none in
+// streamResponse), but this ensures tool XML never reaches the browser even if
+// the model emits it through some other path.
+class ToolCallFilter {
+  private buf = ''
+  private inBlock = false
+
+  feed(chunk: string): string {
+    this.buf += chunk
+    let out = ''
+
+    while (true) {
+      if (!this.inBlock) {
+        const OPEN = '<function_calls>'
+        const idx = this.buf.indexOf(OPEN)
+        if (idx === -1) {
+          // No opening tag found — safe to output everything except the last N-1
+          // chars, which could be the start of a partial tag split across tokens.
+          const safe = Math.max(0, this.buf.length - (OPEN.length - 1))
+          out += this.buf.slice(0, safe)
+          this.buf = this.buf.slice(safe)
+          break
+        }
+        out += this.buf.slice(0, idx)
+        this.buf = this.buf.slice(idx + OPEN.length)
+        this.inBlock = true
+      } else {
+        const CLOSE = '</function_calls>'
+        const idx = this.buf.indexOf(CLOSE)
+        if (idx === -1) {
+          // Safety valve: discard if buffer grows excessively (shouldn't happen).
+          if (this.buf.length > 8_000) this.buf = ''
+          break
+        }
+        this.buf = this.buf.slice(idx + CLOSE.length).replace(/^\n/, '')
+        this.inBlock = false
+      }
+    }
+
+    return out
+  }
+
+  flush(): string {
+    if (this.inBlock) { this.buf = ''; return '' }
+    const out = this.buf
+    this.buf = ''
+    return out
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -154,6 +205,7 @@ export async function POST(req: NextRequest) {
     const agentController = new AbortController()
     const agentTimeout = setTimeout(() => agentController.abort(), 45_000)
     const filter = new ThinkingFilter()
+    const toolFilter = new ToolCallFilter()
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -168,15 +220,19 @@ export async function POST(req: NextRequest) {
         try {
           const result = await runAgentTurn(messages, (rawToken) => {
             const { visible, thinking } = filter.feed(rawToken)
-            if (visible) writeEvent(controller, { type: 'token', token: sanitizeToken(visible) })
+            if (visible) {
+              const safe = toolFilter.feed(visible)
+              if (safe) writeEvent(controller, { type: 'token', token: sanitizeToken(safe) })
+            }
             // Thinking tokens go only to verified admin sessions — never to regular users
             if (thinking && isAdmin) writeEvent(controller, { type: 'thinking_token', token: thinking })
           }, agentController.signal)
           clearTimeout(agentTimeout)
 
-          // Flush any remaining buffered visible content (e.g. partial <thinking> that never closed)
-          const flushed = filter.flush()
-          if (flushed) writeEvent(controller, { type: 'token', token: sanitizeToken(flushed) })
+          // Flush both filters in sequence
+          const thinkFlushed = filter.flush()
+          const safeFlushed = (thinkFlushed ? toolFilter.feed(thinkFlushed) : '') + toolFilter.flush()
+          if (safeFlushed) writeEvent(controller, { type: 'token', token: sanitizeToken(safeFlushed) })
 
           const { text, recommendations, suggestions, isComparison, diagnostico, intencao, usage, debug } = result
           const { usd, brl } = calcCost(usage)
