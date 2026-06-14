@@ -176,8 +176,11 @@ async function executeTool(
 
     if (!confidence.willRecommend && confidence.nextQuestion) {
       const q = confidence.nextQuestion
+      // Do NOT include baseResult here — the faixa numbers are stored in diagnosticoRef.value
+      // and will be injected via FAIXA VINCULANTE when the agent actually recommends.
+      // Exposing peso/balance/prioridades now would cause the agent to show the "SEU PERFIL IDEAL"
+      // block while still gathering info, which contradicts asking a follow-up question.
       return JSON.stringify({
-        ...baseResult,
         CONFIANCA_DO_PERFIL: {
           score_pct: confidence.score,
           threshold_pct: confidence.threshold,
@@ -192,6 +195,7 @@ async function executeTool(
             `Confiança ${confidence.score}% < ${confidence.threshold}% mínima. ` +
             `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com as chips acima para "${q.label}", ` +
             `(2) escreva UMA pergunta calorosa sobre esse campo. ` +
+            `PROIBIDO mostrar perfil ideal, peso ou balance agora. ` +
             `PROIBIDO chamar buscar_raquetas ou recomendar_raquetas nesta resposta.`,
         },
       })
