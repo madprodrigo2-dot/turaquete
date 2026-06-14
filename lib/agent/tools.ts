@@ -15,7 +15,11 @@ export const agentTools: Anthropic.Tool[] = [
       properties: {
         nome: {
           type: 'string',
-          description: 'Termo parcial de busca por nome (case-insensitive). Use para resolver raquetes citadas pelo usuário (ex: "rebel" retorna Rebel 24 e Rebel 25). Nunca passe orçamento ou nível ao buscar por nome específico.',
+          description: 'Termo parcial de busca por nome de modelo (case-insensitive). Use para resolver raquetes citadas pelo usuário (ex: "rebel" retorna Rebel 24 e Rebel 25). Nunca passe orçamento ou nível ao buscar por nome específico.',
+        },
+        atleta: {
+          type: 'string',
+          description: 'Termo parcial de busca por nome de atleta firmante (case-insensitive, match flexível). Use quando o usuário mencionar uma raquete pelo atleta ("a de Gigio Cariani", "a do Russo", "a da Eva Fernandez"). Exemplos: "gigio", "cariani", "hugo russo", "eva", "bazzi". NÃO use o campo nome para isso — o nome do atleta não aparece no nome do modelo.',
         },
         nivel: {
           type: 'string',

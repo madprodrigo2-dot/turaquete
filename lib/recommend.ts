@@ -4,6 +4,7 @@ import type { FilterStep } from './debug-types'
 
 export interface RacketFilters {
   nome?: string
+  atleta?: string
   nivel?: 'iniciante' | 'intermediario' | 'avancado'
   presupuesto_max?: number
   prioridade?: 'potencia' | 'controle' | 'equilibrio' | 'defesa'
@@ -111,6 +112,10 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     query = query.ilike('name', `%${filtros.nome}%`)
   }
 
+  if (filtros.atleta) {
+    query = query.filter('specs_extra->>atleta', 'ilike', `%${filtros.atleta}%`)
+  }
+
   if (filtros.presupuesto_max) {
     query = query.lte('price', filtros.presupuesto_max)
   }
@@ -126,6 +131,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   // Record SQL step
   const sqlParts = ['publicada=true']
   if (filtros.nome) sqlParts.push(`nome="${filtros.nome}"`)
+  if (filtros.atleta) sqlParts.push(`atleta ilike "%${filtros.atleta}%"`)
   if (filtros.presupuesto_max) sqlParts.push(`preço≤${filtros.presupuesto_max}`)
   filterTrace.push({ filtro: `SQL [${sqlParts.join(', ')}]`, depois: allCandidates.length, relaxado: false })
 
