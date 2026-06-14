@@ -6,7 +6,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: '/ir/',
+        disallow: [
+          '/ir/',      // affiliate redirect handler — no crawl value
+          '/api/',     // internal API endpoints
+          '/admin/',   // admin dashboard
+        ],
       },
     ],
     sitemap: 'https://www.turaquete.com.br/sitemap.xml',

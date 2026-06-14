@@ -911,6 +911,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             >
               Privacidade
             </Link>
+            <span className="text-tinta/20 text-xs">·</span>
+            <Link
+              href="/termos"
+              className="text-tinta/40 text-xs hover:text-tinta/70 transition-colors"
+            >
+              Termos de Uso
+            </Link>
           </div>
         </footer>
 

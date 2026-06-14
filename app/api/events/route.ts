@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
+import { checkEventsRateLimit } from '@/lib/rate-limit'
 
 const VALID_TYPES = new Set([
   'rating_positive',
@@ -10,6 +11,14 @@ const VALID_TYPES = new Set([
 ])
 
 export async function POST(req: NextRequest) {
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    '127.0.0.1'
+  if (!checkEventsRateLimit(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   try {
     const body = await req.json() as Record<string, unknown>
     const { event_type, session_id, motivo, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body

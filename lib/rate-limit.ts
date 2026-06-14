@@ -13,9 +13,14 @@ function check(key: string, limit: number, windowMs: number): boolean {
   return true
 }
 
-// 30 req/IP/hour — 20 req/session (janela de 24h, reseta se a sessão for renovada)
+// Chat: 30 req/IP/hour + 20 req/session/24h
 export function checkRateLimit(ip: string, sessionId?: string): boolean {
   if (!check(`ip:${ip}`, 30, HOUR_MS)) return false
   if (sessionId && !check(`sess:${sessionId}`, 20, 24 * HOUR_MS)) return false
   return true
+}
+
+// Events: 120 req/IP/hour — generous for real users, stops bulk writes
+export function checkEventsRateLimit(ip: string): boolean {
+  return check(`ev:${ip}`, 120, HOUR_MS)
 }

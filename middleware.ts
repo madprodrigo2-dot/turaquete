@@ -7,7 +7,7 @@ export default auth((req) => {
   }
 })
 
-// Only protect the analytics page — the login page must remain publicly accessible
+// Protect all admin pages except the login page itself
 export const config = {
-  matcher: ['/admin/intencoes'],
+  matcher: ['/admin/((?!login).+)'],
 }

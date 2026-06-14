@@ -68,7 +68,8 @@ export default function PrivacidadePage() {
         </div>
 
         <p className="text-center text-tinta/30 text-xs">
-          Última atualização: junho de 2026
+          Última atualização: junho de 2026 ·{' '}
+          <Link href="/termos" className="hover:text-tinta/50 transition-colors">Termos de Uso</Link>
         </p>
 
       </div>
