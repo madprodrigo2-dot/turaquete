@@ -8,6 +8,21 @@ import DiagnosticoBlock from './DiagnosticoBlock'
 import TermoGlossario from './TermoGlossario'
 import DebugPanel, { DebugData } from './DebugPanel'
 import { RecommendedRacket } from '@/lib/recommend'
+
+// Calce relativo ao melhor score desta consulta.
+// Só aparece em recomendações (não em comparações) com 2+ opções.
+function calceBadge(recs: RecommendedRacket[], id: number): 'ideal' | 'encaixa' | null {
+  const scored = recs.filter(r => r.match_score != null)
+  if (scored.length < 2) return null
+  const maxScore = Math.max(...scored.map(r => r.match_score!))
+  if (maxScore <= 0) return null
+  const rec = recs.find(r => r.racket.id === id)
+  if (rec?.match_score == null) return null
+  const ratio = rec.match_score / maxScore
+  if (ratio >= 0.92) return 'ideal'
+  if (ratio >= 0.70) return 'encaixa'
+  return null
+}
 import type { FaixaIdeal } from '@/lib/scorer'
 import { findGlossaryMatches } from '@/lib/glossario'
 import { usePacedText } from '@/hooks/usePacedText'
@@ -225,7 +240,12 @@ export default function ChatMessage({
                 className="msg-enter"
                 style={{ animationDelay: `${60 + i * 80}ms` }}
               >
-                <RacketCard racket={rec.racket} razao={rec.razao} sessionId={sessionId} />
+                <RacketCard
+                racket={rec.racket}
+                razao={rec.razao}
+                sessionId={sessionId}
+                calce={!isComparison ? calceBadge(recommendations!, rec.racket.id) : null}
+              />
               </div>
             ))}
           </div>

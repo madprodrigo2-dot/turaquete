@@ -11,6 +11,7 @@ interface Props {
   racket: RacketWithInsights
   razao: string
   sessionId?: string
+  calce?: 'ideal' | 'encaixa' | null
 }
 
 function fireEvent(body: Record<string, unknown>) {
@@ -21,7 +22,7 @@ function fireEvent(body: Record<string, unknown>) {
   }).catch(() => {})
 }
 
-export default function RacketCard({ racket, razao, sessionId }: Props) {
+export default function RacketCard({ racket, razao, sessionId, calce }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
@@ -83,6 +84,15 @@ export default function RacketCard({ racket, razao, sessionId }: Props) {
           {athlete && (
             <div className="absolute top-2 left-2 z-10">
               <AthleteBadge athlete={athlete} />
+            </div>
+          )}
+          {calce && (
+            <div className={`absolute top-2 right-2 z-10 rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none ${
+              calce === 'ideal'
+                ? 'bg-coral text-white shadow-sm'
+                : 'bg-white/90 text-tinta/60 border border-aqua/40'
+            }`}>
+              {calce === 'ideal' ? 'Calce ideal' : 'Também encaixa'}
             </div>
           )}
         </div>

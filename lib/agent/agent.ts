@@ -180,12 +180,14 @@ async function executeTool(
 
     // Construir recommendations preservando el orden y la razao del modelo
     const built: RecommendedRacket[] = capped
-      .map(r => {
+      .flatMap(r => {
         const racket = rackets.find(rk => rk.id === r.id)
-        if (!racket) return null
-        return { racket, razao: r.razao }
+        if (!racket) return []
+        const scoreEntry = debugRef.value.scorerResults?.find(s => s.id === r.id)
+        const rec: RecommendedRacket = { racket, razao: r.razao, match_score: scoreEntry?.score }
+        return [rec]
       })
-      .filter((r): r is RecommendedRacket => r !== null)
+      .sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0))
 
     // Mutate the array passed in — caller reads it after the loop
     pendingRecommendations.push(...built)

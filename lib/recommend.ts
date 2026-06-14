@@ -67,6 +67,7 @@ export interface RacketWithInsights {
 export interface RecommendedRacket {
   racket: RacketWithInsights
   razao: string
+  match_score?: number  // score do scorer para esta consulta; undefined em comparações diretas
 }
 
 // Supabase returns one-to-many joins as arrays — normalise to single object
