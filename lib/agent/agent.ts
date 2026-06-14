@@ -77,11 +77,15 @@ function applyFaixaFilter(
   raquetes: (RacketWithInsights & { match_score: number })[],
   faixa: FaixaIdeal
 ): (RacketWithInsights & { match_score: number; fora_da_faixa: boolean })[] {
-  const TOLERANCIA = 5
+  // Factory variation is ±10g. A racket is only "out of range" when its full
+  // factory range (nominal ±10g) doesn't overlap the faixa at all.
+  // Example: nominal 330g → range 320–340g. Faixa up to 325g → overlap exists → NOT fora.
+  // Example: nominal 345g → range 335–355g. Faixa up to 325g → no overlap → fora.
+  const VARIACAO_FABRICA = 10
   const marked = raquetes.map(r => {
     const peso = r.weight_g
     const fora = peso != null
-      ? peso < faixa.peso_min - TOLERANCIA || peso > faixa.peso_max + TOLERANCIA
+      ? (peso - VARIACAO_FABRICA) > faixa.peso_max || (peso + VARIACAO_FABRICA) < faixa.peso_min
       : false
     return { ...r, fora_da_faixa: fora }
   })
@@ -142,11 +146,11 @@ async function executeTool(
       const faixa = diagnosticoRef.value
       const foraCount = ranked.filter(r => (r as { fora_da_faixa?: boolean }).fora_da_faixa).length
       extendedTrace.push({
-        filtro: `faixa de peso ${faixa.peso_min}–${faixa.peso_max}g (±5g tolerância)`,
+        filtro: `faixa de peso ${faixa.peso_min}–${faixa.peso_max}g (variação fabril ±10g)`,
         antes: ranked.length,
         depois: ranked.length,
         relaxado: false,
-        note: `${ranked.length - foraCount} em faixa, ${foraCount} fora (mantidos, penalizados no ranking)`,
+        note: `${ranked.length - foraCount} com range ±10g sobreposto à faixa, ${foraCount} sem sobreposição (mantidos, penalizados no ranking)`,
       })
     }
     debugRef.value.decisionTrace.filterSteps = extendedTrace

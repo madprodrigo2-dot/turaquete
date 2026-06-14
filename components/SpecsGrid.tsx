@@ -10,7 +10,7 @@ const ADJUSTABLE: Record<string, GlossarioEntry> = {
   },
   'Balance': {
     termo: 'Balance — ajustável',
-    definicao: 'Valor de referência. Dá pra ajustar adicionando peso: no cabo deixa mais ágil e com mais controle; na cabeça dá mais potência.',
+    definicao: 'Valor de referência (pode variar entre unidades de fábrica). Dá pra ajustar adicionando peso: no cabo deixa mais ágil e com mais controle; na cabeça dá mais potência.',
   },
   'Superfície': {
     termo: 'Superfície — ajustável',
