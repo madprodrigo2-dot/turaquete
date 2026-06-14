@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { FaixaIdeal } from '@/lib/scorer'
 import type { DecisionTrace } from '@/lib/debug-types'
+import type { ConfidenceInfo } from '@/lib/agent/confidence'
 
 export type DebugData = {
   thinking?: string
@@ -18,6 +19,7 @@ export type DebugData = {
   criteriosRelaxados?: string[]
   diagnostico?: FaixaIdeal | null
   decisionTrace?: DecisionTrace
+  confidenceInfo?: ConfidenceInfo | null
   usage?: {
     input: number
     output: number
@@ -117,6 +119,76 @@ function DecisionTreeSection({ trace }: { trace: DecisionTrace }) {
   )
 }
 
+function ConfidenceSection({ info }: { info: ConfidenceInfo }) {
+  const { score, threshold, willRecommend, decisionTaken, presentFields, missingFields, nextQuestion, questionRound, maxQuestions, recommendAnyway } = info
+  return (
+    <Section title="Confiança do perfil">
+      {/* Score bar */}
+      <div className="mb-2">
+        <div className="flex justify-between items-baseline mb-0.5">
+          <span className={`text-[11px] font-semibold ${willRecommend ? 'text-green-400' : 'text-orange-400'}`}>
+            {score}% {willRecommend ? '✓' : `(mín ${threshold}%)`}
+          </span>
+          <span className={`text-[10px] font-bold tracking-wider ${decisionTaken === 'recomendar' ? 'text-green-400' : 'text-orange-400'}`}>
+            → {decisionTaken === 'recomendar' ? 'RECOMENDAR' : 'PERGUNTAR'}
+          </span>
+        </div>
+        <div className="h-1.5 bg-gray-700 rounded-full relative overflow-visible">
+          <div
+            className={`h-full rounded-full ${willRecommend ? 'bg-green-500' : 'bg-orange-500'}`}
+            style={{ width: `${Math.min(100, score)}%` }}
+          />
+          {/* Threshold line */}
+          <div
+            className="absolute top-[-2px] bottom-[-2px] w-px bg-yellow-400 opacity-70"
+            style={{ left: `${threshold}%` }}
+            title={`limiar ${threshold}%`}
+          />
+        </div>
+        <div className="text-[9px] text-gray-600 mt-0.5 text-right">limiar {threshold}%</div>
+      </div>
+
+      {recommendAnyway && (
+        <div className="text-[10px] text-orange-300 mb-1.5">⚠ rodadas esgotadas ({questionRound}/{maxQuestions}) — recomenda com caveat</div>
+      )}
+
+      {/* Present fields */}
+      <div className="space-y-0.5 mb-1.5">
+        {presentFields.map(f => (
+          <div key={f.key} className="flex items-center gap-1.5 text-[11px]">
+            <span className="text-green-400 shrink-0 w-3">✓</span>
+            <span className="text-gray-300 flex-1 min-w-0 truncate">{f.label}</span>
+            <span className="text-gray-500 shrink-0 tabular-nums text-[10px]">+{f.weight}%</span>
+          </div>
+        ))}
+        {missingFields.map(f => (
+          <div key={f.key} className="flex items-center gap-1.5 text-[11px]">
+            <span className="text-gray-600 shrink-0 w-3">○</span>
+            <span className="text-gray-500 flex-1 min-w-0 truncate">{f.label}</span>
+            <span className="text-gray-600 shrink-0 tabular-nums text-[10px]">+{f.weight}%</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Next question chosen */}
+      {nextQuestion && (
+        <div className="border-t border-gray-700 pt-1.5 mt-1.5">
+          <div className="text-[10px] text-orange-400 uppercase tracking-wider mb-0.5">Pergunta escolhida</div>
+          <div className="text-[11px] text-orange-200 font-medium">{nextQuestion.label}</div>
+          <div className="text-[10px] text-gray-500 italic mt-0.5 leading-tight">{nextQuestion.justification}</div>
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {nextQuestion.chips.map(c => (
+              <span key={c} className="text-[9px] bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded border border-gray-600">{c}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="text-[9px] text-gray-600 mt-1.5">rodada {questionRound} / máx {maxQuestions}</div>
+    </Section>
+  )
+}
+
 export default function DebugPanel({ data }: { data: DebugData }) {
   return (
     <div className="mt-2 font-mono text-xs bg-gray-800 text-gray-200 rounded-lg overflow-hidden border border-gray-600 select-text">
@@ -129,6 +201,10 @@ export default function DebugPanel({ data }: { data: DebugData }) {
         <Section title="Thinking" defaultOpen={false}>
           <pre className="text-[11px] text-gray-300 whitespace-pre-wrap break-words leading-relaxed max-h-48 overflow-y-auto">{data.thinking}</pre>
         </Section>
+      )}
+
+      {data.confidenceInfo && (
+        <ConfidenceSection info={data.confidenceInfo} />
       )}
 
       {data.decisionTrace && (

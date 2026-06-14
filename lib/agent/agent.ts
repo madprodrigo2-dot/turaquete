@@ -5,6 +5,7 @@ import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep } from '../debug-types'
+import { computeProfileConfidence, CONFIDENCE_CONFIG, type ConfidenceInfo } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -38,6 +39,7 @@ export type AgentDebugInfo = {
   }>
   criteriosRelaxados?: string[]
   decisionTrace?: DecisionTrace
+  confidenceInfo?: ConfidenceInfo
 }
 
 export type AgentResult = {
@@ -102,7 +104,8 @@ async function executeTool(
   pendingSuggestions: string[],
   diagnosticoRef: { value: FaixaIdeal | null },
   intencaoRef: { value: IntencaoTipo | null },
-  debugRef: { value: AgentDebugInfo }
+  debugRef: { value: AgentDebugInfo },
+  conversationTurns: number
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -116,13 +119,56 @@ async function executeTool(
     if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
     debugRef.value.decisionTrace.faixaSteps = trace.steps
     debugRef.value.decisionTrace.conflitos = trace.conflitos
-    return JSON.stringify({
+
+    // Compute profile confidence and store for debug
+    const confidence = computeProfileConfidence(input, conversationTurns)
+    debugRef.value.confidenceInfo = confidence
+
+    const baseResult = {
       peso_min: faixa.peso_min,
       peso_max: faixa.peso_max,
       balance_preferido: faixa.balance_preferido,
       prioridades: faixa.prioridades,
       descricao: `${faixa.peso_min}–${faixa.peso_max}g, balance ${faixa.balance_preferido}, priorize ${faixa.prioridades.join(', ')}`,
       DADO_VINCULANTE: `Narre EXATAMENTE "${faixa.peso_min}–${faixa.peso_max}g" no diagnóstico. PROIBIDO usar outros valores de peso. Estes números vieram do código e são definitivos.`,
+    }
+
+    if (!confidence.willRecommend && confidence.nextQuestion) {
+      const q = confidence.nextQuestion
+      return JSON.stringify({
+        ...baseResult,
+        CONFIANCA_DO_PERFIL: {
+          score_pct: confidence.score,
+          threshold_pct: confidence.threshold,
+          status: 'INSUFICIENTE',
+          proxima_pergunta: {
+            campo: q.field,
+            label: q.label,
+            chips: q.chips,
+            justificativa: q.justification,
+          },
+          instrucao_OBRIGATORIA:
+            `Confiança ${confidence.score}% < ${confidence.threshold}% mínima. ` +
+            `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com as chips acima para "${q.label}", ` +
+            `(2) escreva UMA pergunta calorosa sobre esse campo. ` +
+            `PROIBIDO chamar buscar_raquetas ou recomendar_raquetas nesta resposta.`,
+        },
+      })
+    }
+
+    // Confidence sufficient (or recommend anyway after max turns)
+    const recommendAnywayNote = confidence.recommendAnyway && confidence.score < confidence.threshold
+      ? `Perfil incompleto (${confidence.score}%) mas rodadas esgotadas. Recomende com honestidade: "com o que você me deu, essas são as mais seguras; me conte mais se quiser afinar".`
+      : null
+
+    return JSON.stringify({
+      ...baseResult,
+      CONFIANCA_DO_PERFIL: {
+        score_pct: confidence.score,
+        threshold_pct: confidence.threshold,
+        status: 'SUFICIENTE',
+        ...(recommendAnywayNote ? { aviso: recommendAnywayNote } : {}),
+      },
     })
   }
 
@@ -233,6 +279,7 @@ export async function runAgentTurn(
   const intencaoRef: { value: IntencaoTipo | null } = { value: null }
   const debugRef: { value: AgentDebugInfo } = { value: {} }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
+  const conversationTurns = history.filter(m => m.role === 'user').length
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false
@@ -245,9 +292,10 @@ export async function runAgentTurn(
   while (rounds < MAX_TOOL_ROUNDS) {
     const nothingDoneYet = !diagnosticoRef.value && pendingRecommendations.length === 0 && !hasSearchResults
     // Stall variant: model ran diagnosticar_perfil but then returned text without searching.
-    // nothingDoneYet would be false here (diag is set), so without this check the stall
-    // goes undetected and the turn ends without recommendations.
-    const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0
+    // EXCEPTION: if confidence is insufficient, the agent is SUPPOSED to ask a question and
+    // not search yet — that's not a stall. Only treat as stall when confidence is sufficient.
+    const confidenceInsufficient = debugRef.value.confidenceInfo?.willRecommend === false
+    const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0 && !confidenceInsufficient
 
     // tool_choice priority:
     //   1. Force recomendar_raquetas when search results exist but no picks yet
@@ -306,7 +354,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -350,7 +398,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }
