@@ -132,7 +132,7 @@ function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
       onClick={() => sendGAEvent({ event: 'racket_atleta_aberta', slug: racket.slug })}
       className="block shrink-0 w-[130px] group"
     >
-      <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
         <div className="relative h-[130px] bg-white flex items-center justify-center p-2">
           {racket.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -146,8 +146,8 @@ function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
             </div>
           )}
         </div>
-        <div className="px-2.5 py-2">
-          <p className="font-heading text-tinta text-[10px] font-semibold leading-tight line-clamp-2">{racket.name}</p>
+        <div className="px-2.5 py-2 flex flex-col flex-1">
+          <p className="font-heading text-tinta text-[10px] font-semibold leading-tight line-clamp-2 min-h-[25px]">{racket.name}</p>
           {price && <p className="font-heading text-coral font-bold text-xs mt-0.5">{price}</p>}
         </div>
       </div>
@@ -224,7 +224,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
         </Link>
         <div className="p-3 flex flex-col gap-2 flex-1">
           <Link href={`/raquetes/${racket.slug}`}>
-            <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors">
+            <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors min-h-[33px]">
               {racket.name}
             </p>
           </Link>
