@@ -1,4 +1,4 @@
-import { listarMarcas, getTopRaquetas, getRaquetaPorSlug } from '@/lib/recommend'
+import { listarMarcas, getTopRaquetas, getRaquetasComAtleta } from '@/lib/recommend'
 import HomeClient from '@/components/HomeClient'
 
 // Regenerate every 5 min so the recommendation carousel reflects recent data.
@@ -32,10 +32,10 @@ const jsonLd = {
 }
 
 export default async function Page() {
-  const [brands, featured, previewRacket] = await Promise.all([
+  const [brands, featured, athleteRackets] = await Promise.all([
     listarMarcas().catch(() => []),
     getTopRaquetas().catch(() => ({ rackets: [], source: 'curated' as const })),
-    getRaquetaPorSlug('ceu').catch(() => null),
+    getRaquetasComAtleta().catch(() => []),
   ])
   return (
     <>
@@ -47,7 +47,7 @@ export default async function Page() {
         brands={brands}
         featuredRackets={featured.rackets}
         featuredSource={featured.source}
-        previewRacket={previewRacket ?? undefined}
+        athleteRackets={athleteRackets}
       />
     </>
   )

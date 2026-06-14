@@ -8,13 +8,14 @@ import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
 import RacketImageTile from './RacketImageTile'
+import AthleteBadge from './AthleteBadge'
 
 interface Props {
   onStart: () => void
   brands: Brand[]
   featuredRackets: RacketWithInsights[]
   featuredSource: 'real' | 'curated'
-  previewRacket?: RacketWithInsights
+  athleteRackets: RacketWithInsights[]
 }
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
@@ -106,63 +107,75 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
   )
 }
 
-function ChatPreview({ racket }: { racket?: RacketWithInsights }) {
-  const previewPrice = racket?.price
-    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
-    : 'R$ 2.299'
-  const previewImage = racket?.image_url ?? null
+function RacketFan({ rackets }: { rackets: RacketWithInsights[] }) {
+  const items = rackets.slice(0, 3)
+  if (items.length === 0) return null
+
+  const configs = [
+    { left: 0,  top: 18, rotate: '-9deg', zIndex: 1 },
+    { left: 30, top: 0,  rotate: '-1deg', zIndex: 3 },
+    { left: 60, top: 14, rotate: '8deg',  zIndex: 2 },
+  ]
 
   return (
-    <div className="w-[220px] md:w-[240px] flex-shrink-0 select-none pointer-events-none">
-      <div className="bg-gray-50 rounded-2xl border border-aqua/20 shadow-arena p-3 flex flex-col gap-2 rotate-[2deg]">
-
-        {/* Header simulado */}
-        <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 border border-gray-100 shadow-sm">
-          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0 flex items-center justify-center">
-            <Image src="/logo-symbol.png" alt="" width={16} height={16} className="object-contain" />
-          </div>
-          <span className="font-heading text-tinta text-[10px] font-semibold leading-none">especialista em raquetes</span>
-        </div>
-
-        {/* Burbuja usuário */}
-        <div className="flex justify-end">
-          <div className="bg-tinta rounded-2xl rounded-tr-sm px-3 py-2 max-w-[85%]">
-            <p className="text-white text-[11px] leading-snug">Sinto o cotovelo e jogo mais na defesa</p>
-          </div>
-        </div>
-
-        {/* Burbuja agente */}
-        <div className="flex items-end gap-1.5">
-          <div className="w-5 h-5 rounded-full overflow-hidden bg-tinta shrink-0 flex items-center justify-center">
-            <Image src="/logo-symbol.png" alt="" width={16} height={16} className="object-contain" />
-          </div>
-          <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 border border-gray-100 shadow-sm flex-1">
-            <p className="text-tinta text-[11px] leading-snug">Achei a ideal pra proteger seu braço:</p>
-          </div>
-        </div>
-
-        {/* Mini RacketCard — CÉU */}
-        <div className="bg-white rounded-xl border border-aqua/20 overflow-hidden flex flex-col shadow-sm ml-[26px]">
-          <div className="h-16 bg-white flex items-center justify-center p-1.5">
-            {previewImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewImage} alt="" className="h-full w-full object-contain" />
-            ) : (
-              <IconEstilo />
-            )}
-          </div>
-          <div className="px-2.5 py-2 flex flex-col gap-1">
-            <p className="font-heading text-tinta text-[10px] font-semibold leading-tight">CÉU</p>
-            <p className="font-heading text-coral text-[11px] font-bold">{previewPrice}</p>
-            <p className="text-tinta/50 text-[9px] leading-snug">EVA supersoft + 22mm: conforto e estabilidade na defesa</p>
-            <div className="border border-aqua rounded-lg py-1 text-center mt-0.5">
-              <p className="text-tinta text-[9px] font-semibold">Quero esta raquete</p>
+    <div className="relative w-[170px] h-[210px] select-none pointer-events-none">
+      {items.map((racket, i) => {
+        const cfg = configs[i] ?? configs[1]
+        return (
+          <div
+            key={racket.id}
+            className="absolute w-[110px]"
+            style={{ left: cfg.left, top: cfg.top, transform: `rotate(${cfg.rotate})`, zIndex: cfg.zIndex }}
+          >
+            <div className="rounded-2xl overflow-hidden border border-aqua/20 shadow-arena bg-white">
+              <div className="h-[147px] flex items-center justify-center p-2">
+                {racket.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
+                ) : (
+                  <div className="w-full h-full bg-aqua/10 rounded-xl" />
+                )}
+              </div>
             </div>
           </div>
-        </div>
-
-      </div>
+        )
+      })}
     </div>
+  )
+}
+
+function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
+  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const price = racket.price
+    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
+    : null
+
+  return (
+    <Link
+      href={`/raquetes/${racket.slug}`}
+      onClick={() => sendGAEvent({ event: 'racket_atleta_aberta', slug: racket.slug })}
+      className="block shrink-0 w-[130px] group"
+    >
+      <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow">
+        <div className="relative h-[130px] bg-white flex items-center justify-center p-2">
+          {racket.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+          ) : (
+            <div className="w-full h-full bg-aqua/10 rounded-lg" />
+          )}
+          {athlete && (
+            <div className="absolute top-1.5 left-1.5 z-10 max-w-[calc(100%-12px)]">
+              <AthleteBadge athlete={athlete} />
+            </div>
+          )}
+        </div>
+        <div className="px-2.5 py-2">
+          <p className="font-heading text-tinta text-[10px] font-semibold leading-tight line-clamp-2">{racket.name}</p>
+          {price && <p className="font-heading text-coral font-bold text-xs mt-0.5">{price}</p>}
+        </div>
+      </div>
+    </Link>
   )
 }
 
@@ -506,7 +519,7 @@ function SandMound({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, previewRacket }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
   const arenaRef = useRef<HTMLDivElement>(null)
@@ -571,77 +584,87 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         </div>
       </div>
 
-      {/* ── Seção menta: hero (texto apenas) ── */}
+      {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-2xl px-5 md:px-8 pb-2 md:pb-3">
-        <div className="flex flex-col gap-5 md:gap-7">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_210px] md:gap-8 md:items-center gap-5">
 
-          {/* H1 + subtítulo */}
-          <div className="flex flex-col gap-3 md:gap-4">
-            <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3.75rem] leading-[1.1] tracking-tight">
-              A raquete certa{' '}
-              <span className="relative inline-block text-coral">
-                de primeira.
-                <svg
-                  viewBox="0 0 140 10"
-                  fill="none"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                  className="absolute -bottom-1 left-0 w-full h-[8px]"
-                >
-                  <path
-                    d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
-                    stroke="#FF5E3A"
-                    strokeWidth="3"
-                    strokeLinecap="round"
+          {/* Coluna texto */}
+          <div className="flex flex-col gap-5 md:gap-7">
+
+            {/* H1 + subtítulo */}
+            <div className="flex flex-col gap-3 md:gap-4">
+              <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3rem] leading-[1.1] tracking-tight">
+                A raquete certa{' '}
+                <span className="relative inline-block text-coral">
+                  de primeira.
+                  <svg
+                    viewBox="0 0 140 10"
                     fill="none"
-                  />
-                </svg>
-              </span>
-            </h1>
-            <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
-              Raquete errada custa caro. Conte como você joga e nosso especialista te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
-            </p>
-          </div>
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                    className="absolute -bottom-1 left-0 w-full h-[8px]"
+                  >
+                    <path
+                      d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
+                      stroke="#FF5E3A"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+                </span>
+              </h1>
+              <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
+                Raquete errada custa caro. Conte como você joga e nosso especialista te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
+              </p>
+            </div>
 
-          {/* Franja */}
-          <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
-            <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
-              O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
-            </p>
-          </div>
+            {/* Franja */}
+            <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
+              <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
+                O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
+              </p>
+            </div>
 
-          {/* Badges */}
-          <div className="flex gap-2 flex-wrap">
-            {BADGES.map(badge => (
-              <span
-                key={badge}
-                className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+            {/* Badges */}
+            <div className="flex gap-2 flex-wrap">
+              {BADGES.map(badge => (
+                <span
+                  key={badge}
+                  className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
+                  {badge}
+                </span>
+              ))}
+            </div>
+
+            {/* CTA hero — IntersectionObserver target */}
+            <div className="flex items-center gap-2 md:gap-3">
+              {/* Tury explicando: fora do botão, aponta para ele, zero altura extra */}
+              <Image
+                src="/tury-explicando.png"
+                alt="Tury apontando para o botão Começar agora"
+                width={296}
+                height={376}
+                priority
+                className="max-[359px]:hidden shrink-0 select-none pointer-events-none"
+                style={{ height: '54px', width: 'auto' }}
+              />
+              <button
+                ref={heroCtaRef}
+                onClick={onStart}
+                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
-                {badge}
-              </span>
-            ))}
-          </div>
+                Começar agora
+              </button>
+            </div>
 
-          {/* CTA hero — IntersectionObserver target */}
-          <div className="flex items-center gap-2 md:gap-3">
-            {/* Tury explicando: fora do botão, aponta para ele, zero altura extra */}
-            <Image
-              src="/tury-explicando.png"
-              alt="Tury apontando para o botão Começar agora"
-              width={296}
-              height={376}
-              priority
-              className="max-[359px]:hidden shrink-0 select-none pointer-events-none"
-              style={{ height: '54px', width: 'auto' }}
-            />
-            <button
-              ref={heroCtaRef}
-              onClick={onStart}
-              className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
-            >
-              Começar agora
-            </button>
+          </div>{/* end coluna texto */}
+
+          {/* Coluna visual — raquetes reais do catálogo */}
+          <div className="flex justify-center" aria-hidden="true">
+            <RacketFan rackets={featuredRackets} />
           </div>
 
         </div>
@@ -681,40 +704,30 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
         <div className="max-w-sm md:max-w-2xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 
-          {/* Chat preview (mobile: acima, desktop: direita) + Como funciona */}
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] md:gap-10 md:items-start gap-5">
-
-            {/* Como funciona */}
-            <div className="order-2 md:order-1 bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
-              <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
-              <div className="flex flex-col">
-                {STEPS.map((step, i) => (
-                  <div key={i} className="flex gap-4">
-                    <div className="flex flex-col items-center w-7 shrink-0">
-                      <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0">
-                        {i + 1}
-                      </div>
-                      {i < STEPS.length - 1 && (
-                        <div className="w-px flex-1 min-h-4 bg-aqua/25" />
-                      )}
+          {/* Como funciona */}
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
+            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
+            <div className="flex flex-col">
+              {STEPS.map((step, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="flex flex-col items-center w-7 shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0">
+                      {i + 1}
                     </div>
-                    <div className={`flex flex-col pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
-                      <p className="text-tinta text-sm md:text-base leading-relaxed">{step.label}</p>
-                      {step.desc && (
-                        <p className="text-tinta/60 text-xs md:text-sm leading-relaxed mt-1">{step.desc}</p>
-                      )}
-                    </div>
+                    {i < STEPS.length - 1 && (
+                      <div className="w-px flex-1 min-h-4 bg-aqua/25" />
+                    )}
                   </div>
-                ))}
-              </div>
+                  <div className={`flex flex-col pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
+                    <p className="text-tinta text-sm md:text-base leading-relaxed">{step.label}</p>
+                    {step.desc && (
+                      <p className="text-tinta/60 text-xs md:text-sm leading-relaxed mt-1">{step.desc}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-
-            {/* Preview do chat — flutua sobre a areia */}
-            <div className="order-1 md:order-2 flex justify-center md:justify-end" aria-hidden="true">
-              <ChatPreview racket={previewRacket} />
-            </div>
-
-          </div>{/* end grid chat+como-funciona */}
+          </div>
 
           {/* Analisamos seu jogo */}
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
@@ -771,6 +784,26 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               {brands.map(brand => (
                 <BrandCard key={brand.id} brand={brand} />
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Raquetes dos atletas */}
+        {athleteRackets.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <p className="font-heading font-bold text-tinta text-base md:text-lg">As raquetes dos atletas</p>
+              <p className="text-tinta/50 text-xs">modelos assinados por quem joga de verdade</p>
+            </div>
+            <div className="-mx-5 md:mx-0">
+              <div
+                className="flex gap-3 overflow-x-auto pl-5 pr-5 md:pl-0 md:pr-0 scroll-pl-5 md:scroll-pl-0"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+              >
+                {athleteRackets.map(racket => (
+                  <AthleteRacketCard key={racket.id} racket={racket} />
+                ))}
+              </div>
             </div>
           </div>
         )}

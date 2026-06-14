@@ -156,7 +156,22 @@ async function executeTool(
     debugRef.value.decisionTrace.filterSteps = extendedTrace
     debugRef.value.decisionTrace.scorerWeights = computeScorerWeights(input as RacketFilters)
     if (ranked.length === 0) {
-      return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada dentro do orçamento informado. O preço mínimo das raquetes disponíveis é por volta de R$1.400.' })
+      const filters = input as RacketFilters
+      if (filters.presupuesto_max) {
+        // Budget filter yielded zero — degrade: re-run without budget ceiling and mark results.
+        const { raquetes: raquetesSemOrc, criteriosRelaxados: relSemOrc } = await buscarRaquetas({ ...filters, presupuesto_max: undefined })
+        const rankedSemOrc = diagnosticoRef.value ? applyFaixaFilter(raquetesSemOrc, diagnosticoRef.value) : raquetesSemOrc
+        if (rankedSemOrc.length > 0) {
+          const payload: Record<string, unknown> = {
+            encontradas: rankedSemOrc.length,
+            raquetes: rankedSemOrc,
+            fora_do_orcamento: true,
+          }
+          if (relSemOrc.length > 0) payload.criterios_relaxados = relSemOrc
+          return JSON.stringify(payload)
+        }
+      }
+      return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada com os critérios informados.' })
     }
     const payload: Record<string, unknown> = { encontradas: ranked.length, raquetes: ranked }
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
@@ -229,14 +244,18 @@ export async function runAgentTurn(
 
   while (rounds < MAX_TOOL_ROUNDS) {
     const nothingDoneYet = !diagnosticoRef.value && pendingRecommendations.length === 0 && !hasSearchResults
+    // Stall variant: model ran diagnosticar_perfil but then returned text without searching.
+    // nothingDoneYet would be false here (diag is set), so without this check the stall
+    // goes undetected and the turn ends without recommendations.
+    const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0
 
     // tool_choice priority:
     //   1. Force recomendar_raquetas when search results exist but no picks yet
-    //   2. Force any tool when the model just stalled on a first-round text-only response
+    //   2. Force any tool when the model stalled before completing the search flow
     //   3. Auto otherwise
     const toolChoice = (hasSearchResults && pendingRecommendations.length === 0)
       ? { type: 'tool' as const, name: 'recomendar_raquetas' }
-      : (stalledOnce && nothingDoneYet)
+      : (stalledOnce && (nothingDoneYet || diagWithoutSearch))
       ? { type: 'any' as const }
       : { type: 'auto' as const }
 
@@ -254,10 +273,8 @@ export async function runAgentTurn(
     if (response.stop_reason !== 'tool_use') {
       // Detect stall: model returned pure text (end_turn) on a first round where
       // nothing has been done yet. Retry once with tool_choice:'any'.
-      if (nothingDoneYet && !stalledOnce && response.stop_reason === 'end_turn') {
+      if ((nothingDoneYet || diagWithoutSearch) && !stalledOnce && response.stop_reason === 'end_turn') {
         stalledOnce = true
-        // Don't increment rounds — the stall is a free retry; actual tool budget preserved.
-        // Loop-safety: stalledOnce prevents a second stall detection, bounding this to one retry.
         console.warn('[agent] stall detected — retrying with tool_choice:any')
         continue  // messages unchanged; model gets forced tool choice on next iteration
       }

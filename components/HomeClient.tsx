@@ -57,13 +57,14 @@ interface Props {
   brands: Brand[]
   featuredRackets: RacketWithInsights[]
   featuredSource: 'real' | 'curated'
-  previewRacket?: RacketWithInsights
+  athleteRackets: RacketWithInsights[]
 }
 
-export default function HomeClient({ brands, featuredRackets, featuredSource, previewRacket }: Props) {
+export default function HomeClient({ brands, featuredRackets, featuredSource, athleteRackets }: Props) {
   const [view, setView] = useState<'landing' | 'chat'>('landing')
   const [fading, setFading] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [ballFling, setBallFling] = useState(false)
 
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: OPENING_MESSAGE },
@@ -175,6 +176,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
   const handleStart = () => {
     sendGAEvent({ event: 'chat_iniciado' })
+    if (!ballFling && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setBallFling(true)
+    }
     setFading(true)
     setTimeout(() => {
       setView('chat')
@@ -373,7 +377,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       {view === 'landing' ? (
-        <LandingScreen brands={brands} featuredRackets={featuredRackets} featuredSource={featuredSource} previewRacket={previewRacket} onStart={handleStart} />
+        <LandingScreen brands={brands} featuredRackets={featuredRackets} featuredSource={featuredSource} athleteRackets={athleteRackets} onStart={handleStart} />
       ) : (
         <div className="h-screen flex flex-col bg-gray-50 md:bg-aqua-light">
           <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">
@@ -537,6 +541,25 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, pr
 
             <ChatInput onSend={sendMessage} disabled={loading || isStreaming || isAnimating || atLimit} />
           </div>
+        </div>
+      )}
+
+      {/* Pelota — aparece ao clicar "Começar agora", anima paralelo à transição */}
+      {ballFling && (
+        <div
+          aria-hidden="true"
+          className="fixed pointer-events-none z-50"
+          style={{ left: '10vw', top: '58vh' }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/turaquete-bola.svg"
+            alt=""
+            width={48}
+            height={48}
+            className="ball-fling"
+            onAnimationEnd={() => setBallFling(false)}
+          />
         </div>
       )}
     </div>

@@ -357,3 +357,15 @@ export async function listarMarcas(): Promise<Brand[]> {
   if (error) throw new Error(`Supabase: ${error.message}`)
   return (data as Brand[]) ?? []
 }
+
+export async function getRaquetasComAtleta(): Promise<RacketWithInsights[]> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('publicada', true)
+    .not('specs_extra->>atleta', 'is', null)
+    .order('name')
+
+  if (error) throw new Error(`Supabase: ${error.message}`)
+  return ((data as unknown[]) ?? []).map(normalizeRacket)
+}
