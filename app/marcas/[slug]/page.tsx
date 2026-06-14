@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
-import AthleteBadge from '@/components/AthleteBadge'
+import RacketImageTile from '@/components/RacketImageTile'
 import { NIVEL_LABEL } from '@/components/SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 
@@ -84,28 +84,7 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
       href={`/raquetes/${racket.slug}`}
       className="group bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 transition-all flex flex-col"
     >
-      {racket.image_url ? (
-        <div className="relative aspect-[4/5] bg-white p-3 flex items-center justify-center overflow-hidden">
-          {athlete && (
-            <div className="absolute top-1.5 left-1.5 z-10">
-              <AthleteBadge athlete={athlete} />
-            </div>
-          )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={racket.image_url}
-            alt={racket.name}
-            className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-      ) : (
-        <div className="aspect-square bg-aqua-light flex items-center justify-center">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" />
-            <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" />
-          </svg>
-        </div>
-      )}
+      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
       <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2">{racket.name}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
@@ -132,7 +111,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="min-h-screen bg-aqua-light">
       {/* Nav */}
-      <div className="sticky top-0 z-10 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
+      <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
         <Link
           href="/"
           className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"

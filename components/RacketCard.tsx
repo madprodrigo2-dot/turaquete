@@ -65,7 +65,7 @@ export default function RacketCard({ racket, razao, sessionId, calce }: Props) {
     <>
       <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden w-full">
         {/* Imagem + badge de atleta */}
-        <div className="relative">
+        <div className="relative overflow-hidden">
           {racket.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
