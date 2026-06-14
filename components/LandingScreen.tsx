@@ -562,7 +562,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-2xl px-5 md:px-8 pb-2 md:pb-3">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_210px] md:gap-8 md:items-center gap-5">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_260px] md:gap-8 md:items-start gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-5 md:gap-7">
@@ -653,7 +653,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           {/* Coluna visual — foto hero */}
           <div
-            className="relative w-full h-[200px] md:h-[270px] md:w-[210px] rounded-2xl overflow-hidden shrink-0"
+            className="relative w-full h-[200px] md:h-auto md:self-stretch rounded-2xl overflow-hidden shrink-0"
             style={{ boxShadow: '0 6px 28px rgba(12,192,190,0.14), 0 2px 8px rgba(14,58,64,0.08)' }}
           >
             <Image
