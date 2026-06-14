@@ -47,9 +47,11 @@
       radial-gradient(ellipse 65% 45% at 18% 72%, rgba(160,115,58,0.08) 0%, transparent 60%),
       radial-gradient(ellipse 55% 40% at 55% 90%, rgba(170,125,62,0.07) 0%, transparent 55%),
       url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='250' height='250'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='0.4' numOctaves='1' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='250' height='250' filter='url(%23s)' opacity='0.07'/></svg>"),
-      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='150' height='150' filter='url(%23n)' opacity='0.13'/></svg>");
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
-    background-size: 100% 100%, 100% 100%, 100% 100%, 250px 250px, 150px 150px;
+      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='150' height='150' filter='url(%23n)' opacity='0.13'/></svg>"),
+      linear-gradient(rgba(247, 237, 220, 0.88), rgba(247, 237, 220, 0.88)),
+      url('/textura-areia.webp');
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat, no-repeat, repeat;
+    background-size: 100% 100%, 100% 100%, 100% 100%, 250px 250px, 150px 150px, 100% 100%, 400px auto;
   }
 }
 
