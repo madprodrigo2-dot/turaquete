@@ -65,7 +65,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const [view, setView] = useState<'landing' | 'chat'>('landing')
   const [fading, setFading] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
-  const [ballFling, setBallFling] = useState(false)
 
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: OPENING_MESSAGE },
@@ -177,9 +176,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
 
   const handleStart = () => {
     sendGAEvent({ event: 'chat_iniciado' })
-    if (!ballFling && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setBallFling(true)
-    }
     setFading(true)
     setTimeout(() => {
       setView('chat')
@@ -545,24 +541,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         </div>
       )}
 
-      {/* Pelota — aparece ao clicar "Começar agora", anima paralelo à transição */}
-      {ballFling && (
-        <div
-          aria-hidden="true"
-          className="fixed pointer-events-none z-50"
-          style={{ left: '10vw', top: '58vh' }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/turaquete-bola.svg"
-            alt=""
-            width={48}
-            height={48}
-            className="ball-fling"
-            onAnimationEnd={() => setBallFling(false)}
-          />
-        </div>
-      )}
+
     </div>
   )
 }
