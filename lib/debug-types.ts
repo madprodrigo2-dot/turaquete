@@ -21,9 +21,20 @@ export type FilterStep = {
   note?: string
 }
 
+export type PrecoDecisionStatus = 'similar' | 'disparo' | 'budget_known' | 'sem_preco'
+
+export type PrecoDecision = {
+  status: PrecoDecisionStatus
+  note: string
+  rangeMin?: number
+  rangeMax?: number
+  rangeBrl?: number
+}
+
 export type DecisionTrace = {
   faixaSteps?: FaixaStep[]
   conflitos?: string[]
   filterSteps?: FilterStep[]
   scorerWeights?: Record<string, number>
+  precoDecision?: PrecoDecision
 }

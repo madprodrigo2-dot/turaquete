@@ -4,7 +4,7 @@ import { SYSTEM_PROMPT } from './prompt'
 import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
-import type { DecisionTrace, FilterStep } from '../debug-types'
+import type { DecisionTrace, FilterStep, PrecoDecision } from '../debug-types'
 import { computeProfileConfidence, CONFIDENCE_CONFIG, type ConfidenceInfo } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -12,6 +12,46 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const MODEL = PRICING.model
 const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
 const MAX_TOOL_ROUNDS = 7  // 5 was too tight when stall recovery + multiple auxiliary tools combined
+
+// Price dispersion: if top candidates span more than this, ask for budget before recommending.
+const PRICE_DISPERSION_CONFIG = {
+  topN:       5,    // candidates to examine
+  minRangeBrl: 1000, // R$ threshold that triggers the question
+} as const
+
+function computePriceDispersion(
+  ranked: Array<{ price: number | null; fora_da_faixa?: boolean }>,
+  budgetKnown: boolean
+): PrecoDecision {
+  if (budgetKnown) {
+    return { status: 'budget_known', note: 'usuário informou faixa de preço — filtrado na busca' }
+  }
+  // Prefer in-range candidates; fall back to all if fewer than 2 in-range have prices
+  const inRange = ranked.filter(r => !r.fora_da_faixa)
+  const pool    = (inRange.length >= 2 ? inRange : ranked).slice(0, PRICE_DISPERSION_CONFIG.topN)
+  const prices  = pool.map(r => r.price).filter((p): p is number => p != null && p > 0)
+
+  if (prices.length < 2) {
+    return { status: 'sem_preco', note: 'dados de preço insuficientes nas candidatas top' }
+  }
+
+  const rangeMin = Math.min(...prices)
+  const rangeMax = Math.max(...prices)
+  const rangeBrl = rangeMax - rangeMin
+
+  if (rangeBrl >= PRICE_DISPERSION_CONFIG.minRangeBrl) {
+    return {
+      status: 'disparo',
+      note: `dispersão alta R$${rangeMin}–R$${rangeMax} entre as top candidatas`,
+      rangeMin, rangeMax, rangeBrl,
+    }
+  }
+  return {
+    status: 'similar',
+    note: `preços similares (R$${rangeMin}–R$${rangeMax}) — não precisa perguntar`,
+    rangeMin, rangeMax, rangeBrl,
+  }
+}
 
 // Stable system prompt as a cacheable block — sent on every turn but only billed
 // once per cache TTL (~5 min). Dynamic injections (FAIXA VINCULANTE) are appended
@@ -105,7 +145,8 @@ async function executeTool(
   diagnosticoRef: { value: FaixaIdeal | null },
   intencaoRef: { value: IntencaoTipo | null },
   debugRef: { value: AgentDebugInfo },
-  conversationTurns: number
+  conversationTurns: number,
+  priceAskPendingRef: { value: boolean }
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -219,8 +260,33 @@ async function executeTool(
       }
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada com os critérios informados.' })
     }
+
+    // ── Price dispersion check ─────────────────────────────────────────────────
+    const budgetKnown   = !!(input as RacketFilters).presupuesto_max
+    const priceDecision = computePriceDispersion(ranked, budgetKnown)
+    debugRef.value.decisionTrace!.precoDecision = priceDecision
+    priceAskPendingRef.value = priceDecision.status === 'disparo'
+
     const payload: Record<string, unknown> = { encontradas: ranked.length, raquetes: ranked }
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
+
+    if (priceDecision.status === 'disparo') {
+      payload.PRECO = {
+        status: 'DISPERSAO_ALTA',
+        range_brl: `R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}`,
+        instrucao_OBRIGATORIA:
+          `Dispersão alta de preços entre as top candidatas (R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}). ` +
+          `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com chips ["Até R$1.500","R$1.500–2.500","R$2.500–3.500","Acima de R$3.500"], ` +
+          `(2) pergunte naturalmente, ao final — ex.: "qual faixa faz mais sentido pro seu bolso?". ` +
+          `PROIBIDO chamar recomendar_raquetas antes de receber a resposta do usuário. ` +
+          `Após receber a faixa, chame buscar_raquetas novamente com presupuesto_max antes de recomendar.`,
+      }
+    } else if (priceDecision.status === 'budget_known') {
+      payload.PRECO = { status: 'BUDGET_CONHECIDO', note: priceDecision.note }
+    } else if (priceDecision.status === 'similar') {
+      payload.PRECO = { status: 'PRECO_SIMILAR', note: priceDecision.note }
+    }
+
     return JSON.stringify(payload)
   }
 
@@ -278,6 +344,7 @@ export async function runAgentTurn(
   const diagnosticoRef: { value: FaixaIdeal | null } = { value: null }
   const intencaoRef: { value: IntencaoTipo | null } = { value: null }
   const debugRef: { value: AgentDebugInfo } = { value: {} }
+  const priceAskPendingRef: { value: boolean } = { value: false }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   const conversationTurns = history.filter(m => m.role === 'user').length
   let isComparison = false
@@ -299,9 +366,10 @@ export async function runAgentTurn(
 
     // tool_choice priority:
     //   1. Force recomendar_raquetas when search results exist but no picks yet
+    //      — EXCEPT when waiting for the user's price range (priceAskPending)
     //   2. Force any tool when the model stalled before completing the search flow
     //   3. Auto otherwise
-    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0)
+    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value)
       ? { type: 'tool' as const, name: 'recomendar_raquetas' }
       : (stalledOnce && (nothingDoneYet || diagWithoutSearch))
       ? { type: 'any' as const }
@@ -354,7 +422,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -398,7 +466,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }

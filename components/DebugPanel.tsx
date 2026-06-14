@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { FaixaIdeal } from '@/lib/scorer'
-import type { DecisionTrace } from '@/lib/debug-types'
+import type { DecisionTrace, PrecoDecision } from '@/lib/debug-types'
 import type { ConfidenceInfo } from '@/lib/agent/confidence'
 
 export type DebugData = {
@@ -95,6 +95,36 @@ function DecisionTreeSection({ trace }: { trace: DecisionTrace }) {
               {step.note && <div className="text-[10px] text-gray-500 italic ml-3">{step.note}</div>}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Price decision */}
+      {trace.precoDecision && (
+        <div className="mb-3">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Decisão de preço</div>
+          {(() => {
+            const pd = trace.precoDecision as PrecoDecision
+            const color =
+              pd.status === 'disparo'      ? 'text-orange-300' :
+              pd.status === 'budget_known' ? 'text-green-400'  :
+              pd.status === 'similar'      ? 'text-cyan-300'   : 'text-gray-400'
+            const label =
+              pd.status === 'disparo'      ? '⚠ dispersão alta' :
+              pd.status === 'budget_known' ? '✓ budget conhecido' :
+              pd.status === 'similar'      ? '✓ preços similares' : '— sem dados'
+            return (
+              <>
+                <div className={`text-[11px] font-semibold ${color} mb-0.5`}>{label}</div>
+                <div className="text-[10px] text-gray-500 italic">{pd.note}</div>
+                {pd.rangeMin != null && pd.rangeMax != null && (
+                  <div className="text-[10px] text-gray-500 mt-0.5">
+                    range top candidatas: R${pd.rangeMin}–R${pd.rangeMax}
+                    {pd.rangeBrl != null && <span className="text-orange-400 ml-1">(Δ R${pd.rangeBrl})</span>}
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </div>
       )}
 
