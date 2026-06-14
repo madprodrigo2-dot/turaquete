@@ -186,9 +186,11 @@ export const agentTools: Anthropic.Tool[] = [
   {
     name: 'sugerir_opcoes',
     description:
-      'Apresenta chips tocáveis para o usuário escolher. Use para desambiguar modelos citados sem ano ou versão ' +
-      '(ex.: "Rebel" sem especificar 24 ou 25) ou para oferecer escolhas de fluxo. ' +
-      'Chame ANTES de buscar_raquetas quando o nome for ambíguo. Máximo 4 opções.',
+      'Apresenta chips tocáveis para o usuário escolher entre opções fixas e enumeráveis. ' +
+      'Para desambiguar versões de um modelo: PRIMEIRO chame buscar_raquetas com o nome parcial; ' +
+      'se retornar 2+ raquetes com o mesmo nome base, ENTÃO chame sugerir_opcoes com as versões ' +
+      'concretas que vieram do resultado — nunca ofereça versões fora do catálogo publicado. ' +
+      'Também use para outras escolhas fechadas: faixa de preço, nível de jogo. Máximo 4 opções.',
     input_schema: {
       type: 'object' as const,
       properties: {
