@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { listarRaquetas, listarMarcas } from '@/lib/recommend'
 
-const BASE = 'https://turaquete.com.br'
+const BASE = 'https://www.turaquete.com.br'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [rackets, brands] = await Promise.all([
