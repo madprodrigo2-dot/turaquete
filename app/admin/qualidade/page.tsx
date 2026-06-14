@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
-import { auth, signOut } from '@/auth'
+import { auth } from '@/auth'
 import type { DecisionTrace } from '@/lib/debug-types'
 
 export const dynamic = 'force-dynamic'
@@ -84,21 +84,13 @@ export default async function QualidadeAdmin() {
   const recentNegatives = negatives.slice(0, 20)
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 font-sans text-sm text-gray-800">
-      <div className="max-w-4xl mx-auto flex flex-col gap-8">
+    <div className="flex flex-col gap-8">
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Qualidade das respostas</h1>
-            <p className="text-gray-400 text-xs mt-0.5">Turaquete Admin · {session.user?.email}</p>
-          </div>
-          <form action={async () => { 'use server'; await signOut({ redirectTo: '/admin/login' }) }}>
-            <button type="submit" className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors">
-              Sair
-            </button>
-          </form>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Qualidade das respostas</h1>
+        <p className="text-gray-400 text-xs mt-0.5">{session.user?.email}</p>
+      </div>
 
         {!tableExists && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 text-xs">
@@ -248,7 +240,6 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
           )}
         </section>
 
-      </div>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
-import { auth, signOut } from '@/auth'
+import { auth } from '@/auth'
 import { USD_TO_BRL } from '@/lib/agent/pricing'
 import AdminPeriodFilter from './AdminPeriodFilter'
 import { Suspense } from 'react'
@@ -82,6 +82,8 @@ export default async function IntencoesAdmin({
     .limit(1)
     .then(r => ({ ok: !r.error, errorMsg: r.error?.message ?? null }))
 
+  const supabaseUrl    = process.env.SUPABASE_URL ?? ''
+  const supabaseDomain = supabaseUrl.replace('https://', '').replace(/\/$/, '')
   const primeiraMsgColumnMissing = !columnCheck.ok
 
   // ── Queries em paralelo ─────────────────────────────────────────────────────
@@ -234,66 +236,6 @@ export default async function IntencoesAdmin({
   const sessionsWithRec = sessions.filter(r => r.had_rec)
   const taxaRec         = sessions.length > 0 ? sessionsWithRec.length / sessions.length : null
 
-  // ── Análise Inteligente ─────────────────────────────────────────────────────
-  type Insight = { level: 'ok' | 'warn' | 'info' | 'neutral'; text: string }
-  const insights: Insight[] = []
-  const MIN_DATA = 5
-  const totalConv = sessions.length
-
-  if (totalConv < MIN_DATA) {
-    insights.push({ level: 'neutral', text: `Apenas ${totalConv} conversa${totalConv !== 1 ? 's' : ''} no período — ainda poucos dados para tendências confiáveis.` })
-  } else {
-    // Intenção dominante
-    const totalIntencoes = intencoes.reduce((a, r) => a + r.total, 0)
-    const topIntent = intencoes[0] ?? null
-    if (topIntent && totalIntencoes > 0) {
-      insights.push({
-        level: 'info',
-        text: `"${topIntent.intencao_detectada}" é a intenção #1 (${pct(topIntent.total, totalIntencoes)} das conversas com intenção detectada). Vale priorizar esse fluxo no copy e nos starters.`,
-      })
-    }
-
-    // Starters vs livre
-    const totalMsg   = starters.reduce((a, r) => a + r.total, 0)
-    const livreCount = starters.find(r => r.starter === null)?.total ?? 0
-    if (totalMsg >= MIN_DATA) {
-      if (livreCount / totalMsg > 0.4) {
-        insights.push({ level: 'info', text: `${pct(livreCount, totalMsg)} escrevem livremente (sem starter) — chegam com casos específicos em mente. Analise as mensagens livres para descobrir padrões.` })
-      } else {
-        insights.push({ level: 'ok', text: `${pct(livreCount, totalMsg)} digitam livremente; maioria usa starters. Starters estão guiando bem a conversa.` })
-      }
-    }
-
-    // Taxa de recomendação
-    if (taxaRec !== null) {
-      insights.push({
-        level: taxaRec >= 0.5 ? 'ok' : 'warn',
-        text: `${pct(sessionsWithRec.length, totalConv)} das conversas chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — pode indicar abandono precoce ou dificuldade de qualificação.' : ''}`,
-      })
-    }
-
-    // Taxa de clique
-    if (sessions.length >= MIN_DATA) {
-      const msg = taxaConversao < 0.08
-        ? `${pct(sessionsWithClick.length, totalConv)} clicaram em loja ou análise (${daysLabel}). Abaixo de 8% — verificar se os links de afiliado estão visíveis e ativos.`
-        : `${pct(sessionsWithClick.length, totalConv)} clicaram em loja ou análise (${daysLabel}).`
-      insights.push({ level: taxaConversao >= 0.08 ? 'ok' : 'warn', text: msg })
-    }
-
-    // Custo e turnos
-    if (avgBrl != null && avgTurns != null) {
-      insights.push({
-        level: 'neutral',
-        text: `Custo médio ${fmtBrl(avgBrl, 4)}/conversa · ${avgTurns.toFixed(1)} turnos/sessão em média (${daysLabel}).${avgTurns > 6 ? ' Muitos turnos — agente pode estar demorando para qualificar.' : ''}`,
-      })
-    }
-
-    // Alerta sem dados de primeira mensagem
-    if (primeiraMsgColumnMissing) {
-      insights.push({ level: 'warn', text: 'Coluna primeira_mensagem não encontrada na tabela conversations. Execute a migration abaixo para habilitar o detalhe de conversas.' })
-    }
-  }
-
   // ── Link para detalhe de starter ───────────────────────────────────────────
   const starterDetailHref = (s: string | null) => {
     const p = new URLSearchParams()
@@ -307,74 +249,44 @@ export default async function IntencoesAdmin({
     return p.toString() ? `?${p.toString()}` : '?'
   })()
 
-  // ── Icon helpers ────────────────────────────────────────────────────────────
-  const insightIcon: Record<Insight['level'], string> = {
-    ok:      '✅',
-    warn:    '⚠️',
-    info:    '💡',
-    neutral: '📊',
-  }
-  const insightBg: Record<Insight['level'], string> = {
-    ok:      'bg-emerald-50 border-emerald-200 text-emerald-800',
-    warn:    'bg-amber-50 border-amber-200 text-amber-800',
-    info:    'bg-blue-50 border-blue-200 text-blue-800',
-    neutral: 'bg-gray-50 border-gray-200 text-gray-700',
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6 font-sans text-sm text-gray-800">
-      <div className="max-w-4xl mx-auto flex flex-col gap-8">
+    <div className="flex flex-col gap-8">
 
-        {/* ── Header ── */}
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">Painel de Intenções</h1>
-              <div className="flex gap-2">
-                <Link href="/admin/intencoes" className={`text-xs px-2.5 py-1 rounded-full font-medium ${!filterStarter ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Geral</Link>
-                <Link href="/admin/qualidade" className="text-xs px-2.5 py-1 rounded-full font-medium bg-gray-200 text-gray-600 hover:bg-gray-300">Qualidade</Link>
-              </div>
-            </div>
-            <p className="text-gray-400 text-xs mt-0.5">Turaquete Admin · {session.user?.email}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Suspense fallback={null}>
-              <AdminPeriodFilter current={daysParam} />
-            </Suspense>
-            <form action={async () => { 'use server'; await signOut({ redirectTo: '/admin/login' }) }}>
-              <button type="submit" className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors">
-                Sair
-              </button>
-            </form>
-          </div>
+      {/* ── Header ── */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Geral</h1>
+          <p className="text-gray-400 text-xs mt-0.5">{session.user?.email} · {daysLabel}</p>
         </div>
+        <Suspense fallback={null}>
+          <AdminPeriodFilter current={daysParam} />
+        </Suspense>
+      </div>
 
-        {/* ── Migration notice ── */}
-        {primeiraMsgColumnMissing && (
-          <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col gap-2">
-            <p className="font-semibold text-amber-800 text-sm">⚠️ Coluna <code className="font-mono bg-amber-100 px-1 rounded">primeira_mensagem</code> ausente na tabela <code className="font-mono bg-amber-100 px-1 rounded">conversations</code></p>
-            <p className="text-amber-700 text-xs">O código já grava essa coluna, mas ela precisa existir no banco. Execute no Supabase SQL Editor:</p>
-            <pre className="bg-amber-100 rounded-lg px-4 py-3 text-xs font-mono text-amber-900 overflow-x-auto whitespace-pre-wrap">
-              {`ALTER TABLE public.conversations\n  ADD COLUMN IF NOT EXISTS primeira_mensagem TEXT;\n\n-- Opcional: também garantir as outras colunas\nALTER TABLE public.conversations\n  ADD COLUMN IF NOT EXISTS starter_usado TEXT,\n  ADD COLUMN IF NOT EXISTS intencao_detectada TEXT;`}
-            </pre>
-          </div>
-        )}
-
-        {/* ── Análise Inteligente ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Análise Inteligente <span className="text-gray-400 font-normal text-xs">— {daysLabel}</span></h2>
-          <div className="flex flex-col gap-2">
-            {insights.map((ins, i) => (
-              <div key={i} className={`rounded-xl border px-4 py-3 text-sm flex gap-3 items-start ${insightBg[ins.level]}`}>
-                <span className="text-base shrink-0 mt-px">{insightIcon[ins.level]}</span>
-                <p className="leading-snug">{ins.text}</p>
-              </div>
-            ))}
-            {insights.length === 0 && (
-              <p className="text-gray-400 italic text-xs">Nenhum dado disponível para o período.</p>
+      {/* ── Migration notice ── */}
+      {primeiraMsgColumnMissing && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col gap-2">
+          <p className="font-semibold text-amber-800 text-sm">
+            ⚠️ Coluna <code className="font-mono bg-amber-100 px-1 rounded">primeira_mensagem</code> ausente
+            {supabaseDomain && (
+              <span className="font-normal ml-2 text-amber-600 text-xs">— projeto: <span className="font-mono">{supabaseDomain}</span></span>
             )}
-          </div>
-        </section>
+          </p>
+          {columnCheck.errorMsg && (
+            <p className="text-amber-700 text-xs font-mono bg-amber-100 px-2 py-1 rounded">
+              Erro PostgREST: {columnCheck.errorMsg}
+            </p>
+          )}
+          <p className="text-amber-700 text-xs">Execute no Supabase SQL Editor do projeto acima:</p>
+          <pre className="bg-amber-100 rounded-lg px-4 py-3 text-xs font-mono text-amber-900 overflow-x-auto whitespace-pre-wrap">{`ALTER TABLE public.conversations
+  ADD COLUMN IF NOT EXISTS primeira_mensagem TEXT;
+
+-- Também garantir as outras colunas novas
+ALTER TABLE public.conversations
+  ADD COLUMN IF NOT EXISTS starter_usado TEXT,
+  ADD COLUMN IF NOT EXISTS intencao_detectada TEXT;`}</pre>
+        </div>
+      )}
 
         {/* ── Custos ── */}
         <section>
@@ -657,7 +569,6 @@ export default async function IntencoesAdmin({
           )}
         </section>
 
-      </div>
     </div>
   )
 }
