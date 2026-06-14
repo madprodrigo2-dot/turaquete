@@ -1,5 +1,5 @@
 # Turaquete: clasificación de tecnologías propias
-**Sistema para que las tecnologías de marca entren al producto sin romper el principio anti-marketing. Pendiente de validación de Rodrigo.**
+**Sistema para que las tecnologías de marca entren al producto sin romper el principio anti-marketing.**
 
 ## El principio
 
@@ -24,23 +24,26 @@ Una tecnología solo mueve nota si corresponde a un **componente físico verific
 | ABS Gel | AMA | ANTIVIBRACIÓN | Gel interno de absorción | Sí (conforto) |
 | Delta Rubber AMA Impact | AMA | ANTIVIBRACIÓN | Goma triangular en el coração (visible) | Sí (conforto) |
 | Rubber AMA Impact | AMA | ANTIVIBRACIÓN | Goma en el coração (versión Medusa) | Sí (conforto) |
-| Dampershield / AMA Frame Dampershield | AMA | ESTRUCTURAL | Refuerzo en todo el frame | Sí (estabilidade) |
+| Rubber Anti-Impact | AMA | ANTIVIBRACIÓN | Goma anti-impacto en el coração (Poison Bee 2026) — variante de la línea Rubber AMA Impact | Sí (conforto) |
+| X Rubber AMA Impact | AMA | ANTIVIBRACIÓN | Variante X de la goma AMA Impact (Proteo 2026) | Sí (conforto) |
+| Dampershield / AMA Frame Dampershield / Dampershield System / Sistema Dampershield | AMA | ESTRUCTURAL | Refuerzo en todo el frame (nombres de variante según modelo) | Sí (estabilidade) |
 | Tratamento em quartzo (médio / slim) | AMA | SUPERFICIE | Capa abrasiva aplicada | Sí (spin, vía escala de textura) |
 | Smarter/Easier Ball Absorption | AMA | DECLARATIVA | Sin componente identificable (frase de catálogo) | No |
 | Thermal Color / UV Color Technology | AMA | DECLARATIVA | Cosmética (cambio de color) | No |
-| Sistema Exclusivo de Autenticidade | AMA | DECLARATIVA | Número de serie anti-falsificación (útil, pero no juega) | No |
+| Sistema Exclusivo de Autenticidade / Sistema de Autenticidade | AMA | DECLARATIVA | Número de serie anti-falsificación (útil, pero no juega) | No |
+| AMA Side Grip | AMA | DECLARATIVA | Ergonomía de empuñadura (Kronos 6G, Proteo 2026) | No |
 | Cushion grip híbrido com PET | AMA | DECLARATIVA | Ergonomía de empuñadura menor | No |
 | 3K + Titânio / Metal Fusion / Silk Silver | AMA | (no es tecnología) | Es el material de la cara: ya entra como FIBRA | Vía anclas de fibra |
 
-## Ajuste de ancla propuesto (A VALIDAR por Rodrigo)
+## Ancla de apilamiento antivibración (validado)
 
-Hoy la subnota de antivibração es binaria: sin sistema = 5, con sistema = 8. Con AMA apilando sistemas (la Medusa trae ABS Gel + Rubber AMA Impact), propongo:
+Subnota antivibração por sistemas físicos verificables:
 
-- 0 sistemas antivibración verificables = 5
-- 1 sistema = 8 (sin cambio)
+- 0 sistemas = 5
+- 1 sistema = 8
 - 2 o más sistemas = 9 (el apilamiento suma, pero con rendimiento decreciente)
 
-Impacto inmediato si se aprueba: casi nulo en las notas actuales (la Medusa queda igual en conforto 7 tras redondeo), pero deja el sistema listo para marcas futuras y evita que un fabricante "gane" inflando la lista de nombres: solo cuentan los verificables, y el segundo en adelante suma poco.
+Solo cuentan entradas de tipo `antivibracao`. Nombres declarativos no acumulan, aunque el fabricante los liste junto a los físicos.
 
 ## Convención de datos
 

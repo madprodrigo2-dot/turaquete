@@ -6,7 +6,7 @@ import type { GlossarioEntry } from '@/lib/glossario'
 const ADJUSTABLE: Record<string, GlossarioEntry> = {
   'Peso': {
     termo: 'Peso — ajustável',
-    definicao: 'Valor de fábrica (pode variar ±10g). Dá pra AUMENTAR adicionando fitas de peso no cabo ou na cabeça. Não dá pra reduzir o peso.',
+    definicao: 'Valor de fábrica (varia ±10g entre unidades). Dá pra aumentar adicionando fitas de peso no cabo (mais controle e agilidade) ou na cabeça (mais potência).',
   },
   'Balance': {
     termo: 'Balance — ajustável',
