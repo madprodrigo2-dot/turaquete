@@ -62,4 +62,7 @@ Nenhum fator decide sozinho: peso + balance + material + EVA + espessura trabalh
 - Jogo de defesa → leve, manuseio alto, controle, espessura fina/média, cabeça redonda.
 - Jogo de ataque/potência → mais peso ou balance na cabeça, carbono 12K/18K, EVA médio/hard, espessura grossa, diamante/lágrima.
 - Quem vem do tênis → adapta-se rápido; costuma curtir controle e depois potência; carbono 3K/12K, equilibrada.
-- Muito spin/efeito → textura 3D/abrasiva.`
+- Muito spin/efeito → textura 3D/abrasiva.
+
+## Tecnologias de agarre (ergonomia física)
+O AMA Side Grip é uma faixa de borracha na lateral da moldura que melhora a pega e a firmeza nas defesas de revés/backhand. Quando alguém perguntar sobre defesa, jogo de esquerda ou pega, pode mencionar como vantagem real nas raquetes que têm (Kronos 6G, Proteo 2026, Poison Bee 2026). É conforto de pega, não muda potência nem manuseio: não apresente como ganho de desempenho nas notas.`

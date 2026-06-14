@@ -28,7 +28,7 @@ export const NIVEL_LABEL: Record<string, string> = {
   avancado:     'Jogadores experientes',
 }
 
-export interface SpecRow { label: string; value: string }
+export interface SpecRow { label: string; value: string; tipo?: string }
 
 export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
@@ -65,12 +65,15 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
   const tecnosEstruturadas = extra.tecnologias as TechEntry[] | undefined
 
   let techFisicasRow: SpecRow | null = null
+  let techErgonomiaRow: SpecRow | null = null
   let techDeclarativasRow: SpecRow | null = null
 
   if (Array.isArray(tecnosEstruturadas)) {
     const fisicas = tecnosEstruturadas.filter(t => t.tipo === 'antivibracao' || t.tipo === 'estrutural')
+    const ergonomia = tecnosEstruturadas.filter(t => t.tipo === 'ergonomia')
     const declarativas = tecnosEstruturadas.filter(t => t.tipo === 'declarativa')
     if (fisicas.length > 0) techFisicasRow = { label: 'Tecnologias', value: fisicas.map(t => t.nome).join(', ') }
+    if (ergonomia.length > 0) techErgonomiaRow = { label: 'Agarre', value: ergonomia.map(t => t.nome).join(', '), tipo: 'ergonomia' }
     if (declarativas.length > 0) techDeclarativasRow = { label: 'Acabamentos', value: declarativas.map(t => t.nome).join(', ') }
   } else {
     // Fallback: flat technologies column, filtering material names already in face_material
@@ -100,6 +103,7 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     racket.model_year    ? { label: 'Ano',               value: String(racket.model_year) }       : null,
     athleteLabel         ? { label: 'Atleta',            value: athleteLabel }                    : null,
     techFisicasRow,
+    techErgonomiaRow,
     techDeclarativasRow,
   ] as (SpecRow | null)[]).filter((r): r is SpecRow => r !== null)
 }
@@ -116,11 +120,19 @@ export default function SpecsGrid({ racket, variant = 'page' }: Props) {
   if (variant === 'modal') {
     return (
       <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-        {rows.map(({ label, value }) => {
+        {rows.map(({ label, value, tipo }) => {
           const adj = ADJUSTABLE[label]
+          const isErgonomia = tipo === 'ergonomia'
           return (
             <div key={label} className="flex flex-col gap-1.5">
               <div className="flex items-center gap-1.5">
+                {isErgonomia && (
+                  <svg width="10" height="9" viewBox="0 0 10 9" fill="none" aria-hidden="true">
+                    <rect x="0" y="0"   width="10" height="1.5" rx="0.75" fill="#0CC0BE" opacity="0.7"/>
+                    <rect x="0" y="3.75" width="10" height="1.5" rx="0.75" fill="#0CC0BE" opacity="0.7"/>
+                    <rect x="0" y="7.5" width="10" height="1.5" rx="0.75" fill="#0CC0BE" opacity="0.7"/>
+                  </svg>
+                )}
                 <span className="text-[10px] text-tinta/40 leading-tight">{label}</span>
                 {adj && (
                   <TermoGlossario entry={adj} className="flex items-center focus:outline-none shrink-0">
@@ -130,7 +142,14 @@ export default function SpecsGrid({ racket, variant = 'page' }: Props) {
                   </TermoGlossario>
                 )}
               </div>
-              <span className="text-xs text-tinta font-medium leading-snug">{value}</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs text-tinta font-medium leading-snug">{value}</span>
+                {isErgonomia && (
+                  <span className="text-[9px] font-semibold bg-aqua/10 text-aqua px-1 py-0.5 rounded-full leading-none border border-aqua/25">
+                    agarre real
+                  </span>
+                )}
+              </div>
             </div>
           )
         })}
@@ -140,8 +159,9 @@ export default function SpecsGrid({ racket, variant = 'page' }: Props) {
 
   return (
     <>
-      {rows.map(({ label, value }) => {
+      {rows.map(({ label, value, tipo }) => {
         const adj = ADJUSTABLE[label]
+        const isErgonomia = tipo === 'ergonomia'
         return (
           <div key={label} className="flex justify-between items-center py-2 border-b border-aqua/10 last:border-0">
             <span className="text-tinta/60 text-sm">{label}</span>
@@ -153,6 +173,11 @@ export default function SpecsGrid({ racket, variant = 'page' }: Props) {
                     ajustável
                   </span>
                 </TermoGlossario>
+              )}
+              {isErgonomia && (
+                <span className="text-[10px] font-semibold bg-aqua/10 text-aqua px-1.5 py-0.5 rounded-full leading-none border border-aqua/25">
+                  agarre real
+                </span>
               )}
             </div>
           </div>
