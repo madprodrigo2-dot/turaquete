@@ -10,7 +10,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const MODEL = PRICING.model
 const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
-const MAX_TOOL_ROUNDS = 5
+const MAX_TOOL_ROUNDS = 7  // 5 was too tight when stall recovery + multiple auxiliary tools combined
 
 // Stable system prompt as a cacheable block — sent on every turn but only billed
 // once per cache TTL (~5 min). Dynamic injections (FAIXA VINCULANTE) are appended
@@ -256,7 +256,8 @@ export async function runAgentTurn(
       // nothing has been done yet. Retry once with tool_choice:'any'.
       if (nothingDoneYet && !stalledOnce && response.stop_reason === 'end_turn') {
         stalledOnce = true
-        rounds++ // charge against budget to prevent infinite loop
+        // Don't increment rounds — the stall is a free retry; actual tool budget preserved.
+        // Loop-safety: stalledOnce prevents a second stall detection, bounding this to one retry.
         console.warn('[agent] stall detected — retrying with tool_choice:any')
         continue  // messages unchanged; model gets forced tool choice on next iteration
       }
@@ -310,6 +311,38 @@ export async function runAgentTurn(
     }
 
     messages.push({ role: 'user', content: toolResults })
+  }
+
+  // Post-loop safety: if search results exist but recomendar_raquetas was never
+  // called (rounds exhausted before the forced pick), inject one final forced call.
+  // This guarantees cards are always emitted when the scorer found candidates.
+  if (hasSearchResults && pendingRecommendations.length === 0) {
+    console.warn('[agent] MAX_TOOL_ROUNDS exhausted without recomendar_raquetas — forcing final pick')
+    try {
+      const recResp = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        system: SYSTEM_CACHED,
+        tools: agentTools,
+        tool_choice: { type: 'tool', name: 'recomendar_raquetas' },
+        messages,
+      }, { signal })
+      addUsage(usage, recResp.usage)
+      if (recResp.stop_reason === 'tool_use') {
+        const recBlocks = recResp.content.filter(b => b.type === 'tool_use')
+        const toolResults: Anthropic.ToolResultBlockParam[] = []
+        for (const block of recBlocks) {
+          if (block.type !== 'tool_use') continue
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef)
+          if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
+          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
+        }
+        messages.push({ role: 'assistant', content: recResp.content })
+        messages.push({ role: 'user', content: toolResults })
+      }
+    } catch (recErr) {
+      console.error('[agent] forced recomendar_raquetas failed:', recErr)
+    }
   }
 
   // Fallback if MAX_TOOL_ROUNDS exhausted
