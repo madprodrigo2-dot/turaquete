@@ -120,43 +120,6 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
   )
 }
 
-function RacketFan({ rackets }: { rackets: RacketWithInsights[] }) {
-  const items = rackets.slice(0, 3)
-  if (items.length === 0) return null
-
-  const configs = [
-    { left: 0,  top: 18, rotate: '-9deg', zIndex: 1 },
-    { left: 30, top: 0,  rotate: '-1deg', zIndex: 3 },
-    { left: 60, top: 14, rotate: '8deg',  zIndex: 2 },
-  ]
-
-  return (
-    <div className="relative w-[170px] h-[210px] select-none pointer-events-none">
-      {items.map((racket, i) => {
-        const cfg = configs[i] ?? configs[1]
-        return (
-          <div
-            key={racket.id}
-            className="absolute w-[110px]"
-            style={{ left: cfg.left, top: cfg.top, transform: `rotate(${cfg.rotate})`, zIndex: cfg.zIndex }}
-          >
-            <div className="rounded-2xl overflow-hidden border border-aqua/20 shadow-arena bg-white">
-              <div className="h-[147px] flex items-center justify-center p-2">
-                {racket.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain" />
-                ) : (
-                  <div className="w-full h-full bg-aqua/10 rounded-xl" />
-                )}
-              </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
   const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
   const price = racket.price
@@ -688,9 +651,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           </div>{/* end coluna texto */}
 
-          {/* Coluna visual — raquetes reais do catálogo */}
-          <div className="flex justify-center" aria-hidden="true">
-            <RacketFan rackets={featuredRackets} />
+          {/* Coluna visual — foto hero */}
+          <div className="relative w-full h-[200px] md:h-[270px] md:w-[210px] rounded-2xl overflow-hidden shrink-0">
+            <Image
+              src="/hero-beach-tennis.jpg"
+              alt="Partida de beach tennis"
+              fill
+              className="object-cover object-center"
+              priority
+              sizes="(max-width: 768px) 100vw, 210px"
+            />
           </div>
 
         </div>
@@ -855,7 +825,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
               <p className="font-heading font-bold text-tinta text-base md:text-lg">As raquetes dos atletas que jogam de verdade</p>
-              <p className="text-tinta/50 text-xs">modelos assinados pelos nomes do beach tennis brasileiro</p>
+              <p className="text-tinta/50 text-xs">modelos assinados por atletas do circuito</p>
             </div>
             <div className="-mx-5 md:mx-0">
               <div
