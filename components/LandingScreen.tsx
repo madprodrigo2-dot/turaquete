@@ -651,8 +651,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           </div>{/* end coluna texto */}
 
-          {/* Coluna visual — foto hero */}
-          <div className="relative w-full h-[200px] md:h-[270px] md:w-[210px] rounded-2xl overflow-hidden shrink-0">
+          {/* Coluna visual — foto hero integrada */}
+          <div
+            className="relative w-full h-[200px] md:h-[270px] md:w-[210px] rounded-2xl overflow-hidden shrink-0"
+            style={{ boxShadow: '0 6px 28px rgba(12,192,190,0.14), 0 2px 8px rgba(14,58,64,0.08)' }}
+          >
             <Image
               src="/hero-beach-tennis.jpg"
               alt="Partida de beach tennis"
@@ -661,6 +664,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               priority
               sizes="(max-width: 768px) 100vw, 210px"
             />
+            {/* Teal tint — resfria o laranja do atardecer para harmonizar com a paleta */}
+            <div aria-hidden="true" className="absolute inset-0" style={{ background: 'rgba(12,192,190,0.13)' }} />
+            {/* Fade horizontal — funde laterais com o fundo aqua-light, remove borda dura */}
+            <div aria-hidden="true" className="absolute inset-0" style={{ background: 'linear-gradient(to right, #EAF7F6 0%, transparent 18%, transparent 82%, #EAF7F6 100%)' }} />
+            {/* Fade vertical — topo e rodapé */}
+            <div aria-hidden="true" className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(234,247,246,0.55) 0%, transparent 18%, transparent 68%, rgba(234,247,246,0.8) 100%)' }} />
           </div>
 
         </div>
