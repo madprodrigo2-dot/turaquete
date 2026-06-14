@@ -12,6 +12,9 @@ const DEDUP_WINDOW_MS = 2_000
 const VOCAB_BLOCKLIST: [RegExp, string][] = [
   [/\bforgiveness\b/gi, 'sweet spot'],
   [/\bmaneuverability\b/gi, 'manuseio'],
+  [/\bswing\b/gi, 'batida'],
+  [/médio-alto/gi, 'um pouco mais firme'],
+  [/médio-baixo/gi, 'um pouco mais macio'],
 ]
 
 function sanitizeToken(token: string): string {
