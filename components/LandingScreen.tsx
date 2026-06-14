@@ -16,7 +16,20 @@ interface Props {
   featuredRackets: RacketWithInsights[]
   featuredSource: 'real' | 'curated'
   athleteRackets: RacketWithInsights[]
+  recsCount: number
 }
+
+// Threshold definido por Rodrigo — abaixo disso usa texto alternativo sem número
+const RECS_THRESHOLD = 50
+
+// Perguntas reais anonimizadas curadas manualmente — atualizar conforme o painel cresce
+// Fonte: primeiras mensagens reais de usuários (starters e mensagens livres do painel)
+const CURATED_QUESTIONS = [
+  'Tenho dor no cotovelo',
+  'Quero trocar minha raquete',
+  'Venho do tênis',
+  'Jogo mais na defesa',
+]
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
@@ -519,7 +532,7 @@ function SandMound({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
   const arenaRef = useRef<HTMLDivElement>(null)
@@ -660,6 +673,19 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </button>
             </div>
 
+            {/* A — Contador vivo / trust signal */}
+            {recsCount >= RECS_THRESHOLD ? (
+              <p className="text-tinta/50 text-xs">
+                Já ajudei{' '}
+                <strong className="text-tinta/70">{recsCount.toLocaleString('pt-BR')}</strong>{' '}
+                jogadores a encontrar a raquete certa
+              </p>
+            ) : (
+              <p className="text-tinta/50 text-xs">
+                Consultoria instantânea pra jogadores de todo o Brasil
+              </p>
+            )}
+
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — raquetes reais do catálogo */}
@@ -727,6 +753,18 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 </div>
               ))}
             </div>
+            {/* C — Comparador como diferenciador */}
+            <button
+              onClick={onStart}
+              className="mt-5 pt-4 border-t border-aqua/15 w-full flex items-center justify-between group hover:bg-aqua/5 rounded-xl px-1 py-1 -mx-1 -mb-1 transition-colors"
+            >
+              <span className="text-tinta/65 text-sm leading-snug text-left">
+                Compare qualquer raquete do catálogo lado a lado, na hora
+              </span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 ml-3 text-aqua/50 group-hover:text-aqua transition-colors" aria-hidden="true">
+                <path d="M3.5 8h9M9 4.5L12.5 8 9 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
 
           {/* Analisamos seu jogo */}
@@ -740,6 +778,30 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* B — Perguntas reais anonimizadas */}
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
+            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-1">Dúvidas que o especialista já respondeu</p>
+            <p className="text-tinta/50 text-xs mb-4">perguntas reais de jogadores, sem edição</p>
+            <div className="flex flex-col gap-2">
+              {CURATED_QUESTIONS.map((q, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-aqua/15 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M6 1C3.24 1 1 3.02 1 5.5c0 .98.32 1.89.86 2.63L1.5 11l2.93-1.5C4.9 9.82 5.44 10 6 10c2.76 0 5-2.02 5-4.5S8.76 1 6 1z" fill="#0CC0BE" opacity=".7"/>
+                    </svg>
+                  </div>
+                  <p className="text-tinta/75 text-sm leading-relaxed italic">"{q}"</p>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={onStart}
+              className="mt-5 w-full text-center text-sm font-semibold text-aqua hover:text-tinta/70 transition-colors"
+            >
+              Contar minha situação →
+            </button>
           </div>
 
           {/* Raquetes em destaque / mais recomendadas */}
@@ -792,8 +854,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         {athleteRackets.length > 0 && (
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
-              <p className="font-heading font-bold text-tinta text-base md:text-lg">As raquetes dos atletas</p>
-              <p className="text-tinta/50 text-xs">modelos assinados por quem joga de verdade</p>
+              <p className="font-heading font-bold text-tinta text-base md:text-lg">As raquetes dos atletas que jogam de verdade</p>
+              <p className="text-tinta/50 text-xs">modelos assinados pelos nomes do beach tennis brasileiro</p>
             </div>
             <div className="-mx-5 md:mx-0">
               <div
