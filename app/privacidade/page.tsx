@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacidadePage() {
   return (
-    <div className="min-h-screen bg-aqua-light flex flex-col items-center px-5 py-12 md:py-16">
+    <div className="min-h-screen sand-texture flex flex-col items-center px-5 py-12 md:py-16">
       <div className="w-full max-w-xl flex flex-col gap-6">
 
         <Link href="/" className="text-aqua text-sm font-medium hover:underline">

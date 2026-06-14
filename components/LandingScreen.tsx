@@ -529,7 +529,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
   }
 
   return (
-    <div className="min-h-screen bg-aqua-light flex flex-col items-center pb-10 md:pb-16">
+    <div className="min-h-screen sand-texture flex flex-col items-center pb-10 md:pb-16">
 
       {/* Sticky header — full viewport width */}
       <div className={`sticky top-0 z-30 w-full flex justify-center px-5 md:px-8 bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>

@@ -10,6 +10,16 @@
 }
 
 @layer utilities {
+  /* Sand texture background — 7% visible, keeps aqua-light tone */
+  .sand-texture {
+    background-color: var(--color-aqua-light);
+    background-image:
+      linear-gradient(rgba(234, 247, 246, 0.93), rgba(234, 247, 246, 0.93)),
+      url('/textura-areia.webp');
+    background-size: 100% 100%, 400px auto;
+    background-repeat: no-repeat, repeat;
+  }
+
   .font-heading {
     font-family: var(--font-sora), sans-serif;
   }

@@ -90,7 +90,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(product) }}
       />
 
-      <div className="min-h-screen bg-aqua-light">
+      <div className="min-h-screen sand-texture">
         {/* Nav */}
         <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
           <Link
