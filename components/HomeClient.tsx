@@ -286,7 +286,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
             turnosAteRecRef.current = updated.filter(m => m.role === 'user').length
           }
           setMessages([...updated, {
-            role: 'assistant', content: partialText || '...',
+            role: 'assistant', content: partialText,
             recommendations: recs, suggestions: sugs, isComparison: isCmp,
             diagnostico: diag, debug: dbg,
             isFirstRec: isFirstRec || undefined,

@@ -183,39 +183,41 @@ export default function ChatMessage({
           />
         )}
 
-        {/* Burbuja — click/tap flushes animation while draining (video-game skip) */}
-        <div
-          className={`px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
-            ${isAssistant
-              ? `${turyConfig ? 'max-w-[85%]' : 'w-full'} bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100`
-              : 'max-w-[85%] bg-tinta text-white rounded-tr-sm'
-            }`}
-          onClick={holdBack ? flush : undefined}
-        >
-          {loading ? (
-            <div className="flex items-center gap-1.5 py-0.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
-            </div>
-          ) : isPacing ? (
-            // Stable DOM container — hook appends chars here directly, zero React re-renders
-            <span style={{ whiteSpace: 'pre-wrap' }}>
-              <span ref={containerRef} />
-              {isAnimating && <span className="typing-cursor" aria-hidden="true" />}
-            </span>
-          ) : (
-            <span style={{ whiteSpace: 'pre-wrap' }}>
-              {isAssistant && !disableGlossary
-                ? renderAssistantText(content)
-                : renderText(content)
-              }
-            </span>
-          )}
-        </div>
+        {/* Burbuja — only rendered when there's actual content to show */}
+        {(loading || isPacing || content) && (
+          <div
+            className={`px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
+              ${isAssistant
+                ? `${turyConfig ? 'max-w-[85%]' : 'w-full'} bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100`
+                : 'max-w-[85%] bg-tinta text-white rounded-tr-sm'
+              }`}
+            onClick={holdBack ? flush : undefined}
+          >
+            {loading ? (
+              <div className="flex items-center gap-1.5 py-0.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/turaquete-bola.svg" alt="" className="bt-ball" width={10} height={10} />
+              </div>
+            ) : isPacing ? (
+              // Stable DOM container — hook appends chars here directly, zero React re-renders
+              <span style={{ whiteSpace: 'pre-wrap' }}>
+                <span ref={containerRef} />
+                {isAnimating && <span className="typing-cursor" aria-hidden="true" />}
+              </span>
+            ) : (
+              <span style={{ whiteSpace: 'pre-wrap' }}>
+                {isAssistant && !disableGlossary
+                  ? renderAssistantText(content)
+                  : renderText(content)
+                }
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Diagnóstico de fitting — held back until animation finishes */}
