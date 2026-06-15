@@ -98,12 +98,6 @@ const ANALYSIS_ITEMS = [
   { Icon: IconOrcamento, label: 'Orçamento' },
 ]
 
-const BRAND_TAGLINES: Record<string, string> = {
-  'heroes':     'Italiana · linha premium',
-  'drop-shot':  'Espanhola · todas as faixas de nível',
-  'ama-sports': 'Brasileira · novidades em breve',
-}
-
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function StatusIndicator({ status }: { status: Brand['status'] }) {
@@ -163,29 +157,21 @@ function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
 
 function BrandCard({ brand }: { brand: Brand }) {
   const isAvailable = brand.status === 'disponivel'
-  const tagline = BRAND_TAGLINES[brand.slug]
 
   const inner = (
     <>
-      <div className="flex flex-col gap-0.5 min-w-0">
-        {brand.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={brand.logo_url}
-            alt={brand.name}
-            className={`h-6 w-auto object-contain shrink-0 ${isAvailable ? '' : 'opacity-40 grayscale'}`}
-          />
-        ) : (
-          <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
-            {brand.name}
-          </span>
-        )}
-        {tagline && (
-          <span className={`text-[11px] ${isAvailable ? 'text-tinta/50' : 'text-tinta/30'}`}>
-            {tagline}
-          </span>
-        )}
-      </div>
+      {brand.logo_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={brand.logo_url}
+          alt={brand.name}
+          className={`h-7 w-auto max-w-[120px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+        />
+      ) : (
+        <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
+          {brand.name}
+        </span>
+      )}
       <div className="flex items-center gap-2 shrink-0">
         <StatusIndicator status={brand.status} />
         {isAvailable && (
