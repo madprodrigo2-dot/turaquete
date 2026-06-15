@@ -11,7 +11,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const MODEL = PRICING.model
 const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
-const MAX_TOOL_ROUNDS = 7  // 5 was too tight when stall recovery + multiple auxiliary tools combined
+const MAX_TOOL_ROUNDS = 5  // nominal flow needs 3-4 rounds; 5 covers stall+chips edge cases
 
 // Budget decision: ask whenever the user hasn't told us their budget.
 // The old "price dispersion" criterion was wrong — candidates can be similar to
