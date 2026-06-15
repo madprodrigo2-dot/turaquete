@@ -34,7 +34,7 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
   const [summary, setSummary] = useState(ins?.summary ?? '')
   const [perfilResumo, setPerfilResumo] = useState(ins?.perfil_resumo ?? '')
   const [observations, setObservations] = useState(
-    (ins?.observations ?? []).join(', ')
+    Array.isArray(ins?.observations) ? ins.observations.join(', ') : ''
   )
   const [aiDrafted, setAiDrafted] = useState(ins?.ai_drafted ?? false)
   const [reviewed, setReviewed] = useState(ins?.reviewed ?? false)

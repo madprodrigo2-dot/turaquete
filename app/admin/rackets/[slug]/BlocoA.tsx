@@ -29,7 +29,9 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
   const [espessura, setEspessura] = useState<string>((se.espessura_mm as number | null)?.toString() ?? '')
   const [furos, setFuros] = useState<string>((se.furos as number | null)?.toString() ?? '')
   const [superficie, setSuperficie] = useState<string>((se.superficie as string | null) ?? '')
-  const [techs, setTechs] = useState<TechEntry[]>((se.tecnologias as TechEntry[] | null) ?? [])
+  const [techs, setTechs] = useState<TechEntry[]>(
+    Array.isArray(se.tecnologias) ? (se.tecnologias as TechEntry[]) : []
+  )
 
   const [motorResult, setMotorResult] = useState<MotorFeedback | null>(null)
   const [error, setError] = useState<string | null>(null)
