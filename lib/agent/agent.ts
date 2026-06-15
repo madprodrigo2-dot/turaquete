@@ -182,8 +182,8 @@ async function executeTool(
           },
           instrucao_OBRIGATORIA:
             `Confiança ${confidence.score}% < ${confidence.threshold}% mínima. ` +
-            `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com as chips acima para "${q.label}", ` +
-            `(2) escreva UMA pergunta calorosa sobre esse campo. ` +
+            `AÇÃO OBRIGATÓRIA: (1) escreva UMA pergunta calorosa sobre "${q.label}" no texto — sem ela os chips ficam órfãos e o usuário não sabe o que os botões significam; ` +
+            `(2) chame sugerir_opcoes com os chips acima. ` +
             `PROIBIDO mostrar perfil ideal, peso ou balance agora. ` +
             `PROIBIDO chamar buscar_raquetas ou recomendar_raquetas nesta resposta.`,
         },
@@ -273,8 +273,8 @@ async function executeTool(
         candidatas: priceDecision.rangeMin != null ? `R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}` : undefined,
         instrucao_OBRIGATORIA:
           `Orçamento não informado. ` +
-          `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com chips ${JSON.stringify(chips)}, ` +
-          `(2) pergunte de forma natural — ex.: "qual faixa faz mais sentido pro seu bolso?". ` +
+          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase de pergunta sobre faixa de preço no texto — ex.: "Pra fechar a indicação certa, qual faixa de preço faz mais sentido pro seu bolso?" — sem essa frase os chips ficam órfãos e o usuário não entende o que os botões significam; ` +
+          `(2) chame sugerir_opcoes com chips ${JSON.stringify(chips)}. ` +
           `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
           `Após receber a faixa, chame buscar_raquetas novamente com os filtros abaixo ANTES de recomendar: ` +
           `"Até R$1.500" → presupuesto_max=1500; ` +
@@ -521,6 +521,15 @@ async function streamResponse(
     systemBlocks.push({
       type: 'text',
       text: `\n\n[FAIXA VINCULANTE CALCULADA PELO CÓDIGO]\npeso_min=${diagnosticoRef.value.peso_min}g  peso_max=${diagnosticoRef.value.peso_max}g  balance=${diagnosticoRef.value.balance_preferido}\nNarre EXATAMENTE estes valores. É proibido usar qualquer outro número de peso no diagnóstico desta conversa.`,
+    })
+  }
+  // When chips are pending without a recommendation, the streaming model MUST write
+  // a question so the chips don't appear orphaned. Inject a mandatory uncached block
+  // to guarantee this regardless of what the tool-call rounds already said.
+  if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
+    systemBlocks.push({
+      type: 'text',
+      text: `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta de texto DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos" e o usuário não sabe o que responder. Escreva a pergunta no corpo do texto; os chips aparecem abaixo automaticamente. Exemplos:\n- Faixa de preço: "Pra eu fechar a indicação certa, qual faixa de preço faz mais sentido pro seu bolso?"\n- Nível: "Qual é o seu nível de jogo hoje?"\n- Estilo: "Como você prefere jogar — mais no ataque ou segurando no fundo?"\nAdapte ao campo sendo perguntado. Esta frase introdutória é OBRIGATÓRIA nesta resposta.`,
     })
   }
 
