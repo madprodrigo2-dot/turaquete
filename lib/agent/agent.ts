@@ -13,53 +13,32 @@ const MODEL = PRICING.model
 const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
 const MAX_TOOL_ROUNDS = 7  // 5 was too tight when stall recovery + multiple auxiliary tools combined
 
-// Price dispersion: if top candidates span more than this, ask for budget before recommending.
-const PRICE_DISPERSION_CONFIG = {
-  topN:       5,    // candidates to examine
-  minRangeBrl: 1000, // R$ threshold that triggers the question
-} as const
-
-function computePriceDispersion(
-  ranked: Array<{ price: number | null; fora_da_faixa?: boolean }>,
+// Budget decision: ask whenever the user hasn't told us their budget.
+// The old "price dispersion" criterion was wrong — candidates can be similar to
+// each other but still entirely out of the user's budget. Only skip when we
+// already know the budget (presupuesto_max set, OR presupuesto_min !== undefined
+// which covers "tanto faz" = min=0 and "acima de R$X" = min>0).
+function computePrecoDecision(
+  ranked: Array<{ price: number | null }>,
   budgetKnown: boolean,
-  isInicianteProfile: boolean,
 ): PrecoDecision {
   if (budgetKnown) {
     return { status: 'budget_known', note: 'usuário informou faixa de preço — filtrado na busca' }
   }
-  // Prefer in-range candidates; fall back to all if fewer than 2 in-range have prices
-  const inRange = ranked.filter(r => !r.fora_da_faixa)
-  const pool    = (inRange.length >= 2 ? inRange : ranked).slice(0, PRICE_DISPERSION_CONFIG.topN)
-  const prices  = pool.map(r => r.price).filter((p): p is number => p != null && p > 0)
 
-  if (prices.length < 2) {
-    return { status: 'sem_preco', note: 'dados de preço insuficientes nas candidatas top' }
-  }
+  const prices = ranked.slice(0, 5).map(r => r.price).filter((p): p is number => p != null && p > 0)
+  const rangeMin = prices.length > 0 ? Math.min(...prices) : null
+  const rangeMax = prices.length > 0 ? Math.max(...prices) : null
+  const rangeNote = rangeMin != null && rangeMax != null
+    ? `candidatas R$${rangeMin}–R$${rangeMax}`
+    : 'sem dados de preço'
 
-  const rangeMin = Math.min(...prices)
-  const rangeMax = Math.max(...prices)
-  const rangeBrl = rangeMax - rangeMin
-
-  // For iniciantes, price always discriminates — always ask even if range < R$1000
-  if (isInicianteProfile) {
-    return {
-      status: 'disparo',
-      note: `iniciante: preço sempre perguntado (R$${rangeMin}–R$${rangeMax})`,
-      rangeMin, rangeMax, rangeBrl,
-    }
-  }
-
-  if (rangeBrl >= PRICE_DISPERSION_CONFIG.minRangeBrl) {
-    return {
-      status: 'disparo',
-      note: `dispersão alta R$${rangeMin}–R$${rangeMax} entre as top candidatas`,
-      rangeMin, rangeMax, rangeBrl,
-    }
-  }
   return {
-    status: 'similar',
-    note: `preços similares (R$${rangeMin}–R$${rangeMax}) — não precisa perguntar`,
-    rangeMin, rangeMax, rangeBrl,
+    status: 'disparo',
+    note: `orçamento desconhecido + ${rangeNote} → perguntar faixa`,
+    rangeMin:  rangeMin  ?? undefined,
+    rangeMax:  rangeMax  ?? undefined,
+    rangeBrl:  rangeMin != null && rangeMax != null ? rangeMax - rangeMin : undefined,
   }
 }
 
@@ -275,12 +254,12 @@ async function executeTool(
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada com os critérios informados.' })
     }
 
-    // ── Price dispersion check ─────────────────────────────────────────────────
-    // presupuesto_min !== undefined covers "tanto faz" (min=0) and "acima de R$X" (min>0) — both signal "price was handled"
-    const budgetKnown         = !!(input as RacketFilters).presupuesto_max || (input as RacketFilters).presupuesto_min !== undefined
-    const profileNivel        = debugRef.value.perfilInput?.nivel
-    const isInicianteProfile  = typeof profileNivel === 'string' && profileNivel.toLowerCase().includes('inici')
-    const priceDecision = computePriceDispersion(ranked, budgetKnown, isInicianteProfile)
+    // ── Budget decision ────────────────────────────────────────────────────────
+    // presupuesto_min !== undefined covers "tanto faz" (min=0) and "acima de R$X" (min>0).
+    // Ask whenever the budget is unknown — candidates being similar in price to each
+    // other doesn't help: all of them could be out of the user's budget.
+    const budgetKnown = !!(input as RacketFilters).presupuesto_max || (input as RacketFilters).presupuesto_min !== undefined
+    const priceDecision = computePrecoDecision(ranked, budgetKnown)
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
 
@@ -289,16 +268,13 @@ async function executeTool(
 
     if (priceDecision.status === 'disparo') {
       const chips = ['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções']
-      const pergunta = isInicianteProfile
-        ? 'e sobre investimento, qual faixa faz mais sentido pra começar?'
-        : 'qual faixa faz mais sentido pro seu bolso?'
       payload.PRECO = {
-        status: 'DISPERSAO_ALTA',
-        range_brl: `R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}`,
+        status: 'ORCAMENTO_DESCONHECIDO',
+        candidatas: priceDecision.rangeMin != null ? `R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}` : undefined,
         instrucao_OBRIGATORIA:
-          `${isInicianteProfile ? 'Perfil iniciante: preço é relevante aqui.' : `Dispersão alta (R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}).`} ` +
+          `Orçamento não informado. ` +
           `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com chips ${JSON.stringify(chips)}, ` +
-          `(2) pergunte ao final de forma natural — ex.: "${pergunta}". ` +
+          `(2) pergunte de forma natural — ex.: "qual faixa faz mais sentido pro seu bolso?". ` +
           `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
           `Após receber a faixa, chame buscar_raquetas novamente com os filtros abaixo ANTES de recomendar: ` +
           `"Até R$1.500" → presupuesto_max=1500; ` +
@@ -307,10 +283,8 @@ async function executeTool(
           `"Tanto faz" → presupuesto_min=0 (sem filtro de preço). ` +
           `Se a faixa escolhida retornar 0 raquetes: diga honestamente e mostre a opção mais próxima fora da faixa.`,
       }
-    } else if (priceDecision.status === 'budget_known') {
+    } else {
       payload.PRECO = { status: 'BUDGET_CONHECIDO', note: priceDecision.note }
-    } else if (priceDecision.status === 'similar') {
-      payload.PRECO = { status: 'PRECO_SIMILAR', note: priceDecision.note }
     }
 
     return JSON.stringify(payload)

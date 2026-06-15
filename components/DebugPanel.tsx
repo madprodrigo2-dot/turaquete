@@ -106,12 +106,10 @@ function DecisionTreeSection({ trace }: { trace: DecisionTrace }) {
             const pd = trace.precoDecision as PrecoDecision
             const color =
               pd.status === 'disparo'      ? 'text-orange-300' :
-              pd.status === 'budget_known' ? 'text-green-400'  :
-              pd.status === 'similar'      ? 'text-cyan-300'   : 'text-gray-400'
+              pd.status === 'budget_known' ? 'text-green-400'  : 'text-gray-400'
             const label =
-              pd.status === 'disparo'      ? '⚠ dispersão alta' :
-              pd.status === 'budget_known' ? '✓ budget conhecido' :
-              pd.status === 'similar'      ? '✓ preços similares' : '— sem dados'
+              pd.status === 'disparo'      ? '⚠ orçamento desconhecido' :
+              pd.status === 'budget_known' ? '✓ budget conhecido'        : '— sem dados'
             return (
               <>
                 <div className={`text-[11px] font-semibold ${color} mb-0.5`}>{label}</div>
