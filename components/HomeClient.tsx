@@ -51,6 +51,7 @@ type Message = {
   intencao?: string      // conversation intencao, stored here for persistence
   turnosAteRec?: number  // user turn count when this first rec was shown
   _isTimeout?: true  // internal flag: stripped from API payloads, triggers history rollback on retry
+  _retryText?: string  // original user text to resend when retry chip is tapped
 }
 
 interface Props {
@@ -329,7 +330,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         setMessages([...updated, {
           role: 'assistant',
           content: stuck ? 'Parece que tô com lentidão no servidor agora. Aguarda uns minutinhos e tenta de novo.' : TIMEOUT_MESSAGE,
-          suggestions: stuck ? undefined : [text],
+          suggestions: stuck ? undefined : ['↻ Tentar de novo'],
+          _retryText: stuck ? undefined : text,
           _isTimeout: true,
         }])
       }
@@ -343,7 +345,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
           {
             role: 'assistant',
             content: stuck ? 'Parece que tô com lentidão no servidor agora. Aguarda uns minutinhos e tenta de novo.' : TIMEOUT_MESSAGE,
-            suggestions: stuck ? undefined : [text],
+            suggestions: stuck ? undefined : ['↻ Tentar de novo'],
+            _retryText: stuck ? undefined : text,
             _isTimeout: true,
           },
         ])
@@ -470,7 +473,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                       sessionId={sessionId}
                       onSuggestion={
                         isLast && !loading && !isStreaming && !isAnimating && !atLimit
-                          ? sendMessage
+                          ? (s) => sendMessage(m._retryText && s === '↻ Tentar de novo' ? m._retryText : s)
                           : undefined
                       }
                       disableGlossary={(isStreaming || isAnimating) && isLast}

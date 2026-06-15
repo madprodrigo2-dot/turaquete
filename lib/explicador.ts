@@ -73,6 +73,10 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
       parts.push(`${furos} furos`)
       used.add('furos')
     }
+    if (espessuraMm != null && espessuraMm >= 23 && !used.has('espessura')) {
+      parts.push(`perfil grosso ${espessuraMm}mm`)
+      used.add('espessura')
+    }
     if (parts.length > 0) {
       const desc = spin >= 8
         ? 'máxima geração de efeito — coloca giro intenso em qualquer batida'
@@ -93,15 +97,22 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     push('comfort', `Conforto ${comfort}: ${tecNames} — ${desc}`)
   }
 
-  // ── STABILITY (≥ 7 → sempre por estrutural techs no motor) ───────────────
-  if (stability != null && stability >= 7 && estruturalTechs.length > 0) {
-    const parts = estruturalTechs.map(t => t.nome)
-    used.add('estrutural')
-    if (espessuraMm != null && espessuraMm >= 23) {
-      parts.push(`perfil ${espessuraMm}mm`)
+  // ── STABILITY (≥ 7) ──────────────────────────────────────────────────────
+  // Motor inputs: estrutural techs (+2/+4 to stability) and espessura ≥23mm (+1).
+  // Show the block when at least one contributing factor exists.
+  if (stability != null && stability >= 7) {
+    const parts: string[] = []
+    if (estruturalTechs.length > 0) {
+      parts.push(...estruturalTechs.map(t => t.nome))
+      used.add('estrutural')
+    }
+    if (espessuraMm != null && espessuraMm >= 23 && !used.has('espessura')) {
+      parts.push(`perfil grosso ${espessuraMm}mm`)
       used.add('espessura')
     }
-    push('stability', `Estabilidade ${stability}: ${parts.join(' + ')} — mantém controle nas trocas longas e nos smashes`)
+    if (parts.length > 0) {
+      push('stability', `Estabilidade ${stability}: ${parts.join(' + ')} — mantém controle nas trocas longas e nos smashes`)
+    }
   }
 
   // ── POWER (≥ 8) ───────────────────────────────────────────────────────────
@@ -121,6 +132,13 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     if (parts.length > 0) {
       push('power', `Potência ${power}: ${parts.join(' + ')} — resposta explosiva na bola`)
     }
+  }
+
+  // ── ESPESSURA standalone para perfil fino (≤20mm) ────────────────────────
+  // Motor: fino reduz stability em 1 ponto e favorece controle e toque.
+  // Grosso (≥23mm) já foi coberto nos blocos spin/stability acima.
+  if (!used.has('espessura') && espessuraMm != null && espessuraMm <= 20 && linhas.length < 5) {
+    push('espessura', `Perfil fino (${espessuraMm}mm): mais controle e toque — exige precisão na batida`)
   }
 
   // ═════════════════════════════════════════════════════════════════════════

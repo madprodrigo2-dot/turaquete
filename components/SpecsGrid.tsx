@@ -37,7 +37,11 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
   const espessuraLegacy = extra.espessura as string | number | undefined
   const espessuraStr = (() => {
     if (espessuraMm != null) {
-      const perfil = espessuraMm <= 20 ? 'fino' : espessuraMm <= 22 ? 'médio' : 'grosso'
+      const perfil = espessuraMm <= 20
+        ? 'fino — mais controle'
+        : espessuraMm <= 22
+        ? 'médio'
+        : 'grosso — mais potência'
       return `${espessuraMm}mm · perfil ${perfil}`
     }
     if (espessuraLegacy != null) {
