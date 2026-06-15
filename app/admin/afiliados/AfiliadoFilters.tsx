@@ -1,6 +1,7 @@
 'use client'
 
-import { useRouter, useSearchParams, Suspense } from 'react'
+import { Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface Props {
   brands: { slug: string; name: string }[]
