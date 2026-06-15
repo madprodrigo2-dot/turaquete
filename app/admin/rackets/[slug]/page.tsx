@@ -1,15 +1,8 @@
 import { auth } from '@/auth'
 import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '@/lib/supabase'
 import Link from 'next/link'
 
-function getAdmin() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  )
-}
 import BlocoA from './BlocoA'
 import BlocoB from './BlocoB'
 import BlocoC from './BlocoC'
@@ -79,7 +72,7 @@ export default async function EditRaquetaPage({
   if (session?.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
   const { slug } = await params
-  const sb = getAdmin()
+  const sb = getSupabase()
 
   const { data, error } = await sb
     .from('rackets')

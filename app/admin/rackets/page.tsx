@@ -1,15 +1,7 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '@/lib/supabase'
 import Link from 'next/link'
-
-function getAdmin() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  )
-}
 
 type RacketRow = {
   id: number
@@ -40,7 +32,7 @@ export default async function AdminRaquetasPage({
   if (session?.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
   const sp = await searchParams
-  const sb = getAdmin()
+  const sb = getSupabase()
 
   let query = sb
     .from('rackets')
