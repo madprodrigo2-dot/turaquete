@@ -638,7 +638,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-5xl px-5 md:px-8 pb-2 md:pb-3">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_320px] md:gap-10 md:items-center gap-5">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_380px] md:gap-6 md:items-center gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-5 md:gap-5">
@@ -672,8 +672,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
 
             {/* Franja */}
-            <div className="bg-aqua/15 border-l-4 border-coral rounded-r-xl px-4 py-3 md:px-5 md:py-4">
-              <p className="text-tinta font-medium text-sm md:text-base leading-relaxed">
+            <div className="bg-coral/10 border-l-[5px] border-coral rounded-r-xl px-4 py-3.5 md:px-5 md:py-4">
+              <p className="text-tinta font-semibold text-sm md:text-base leading-relaxed">
                 O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
               </p>
             </div>
@@ -692,8 +692,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
 
             {/* CTA hero — IntersectionObserver target */}
-            <div className="flex items-center gap-2 md:gap-3">
-              {/* Tury explicando: fora do botão, aponta para ele, zero altura extra */}
+            <div className="flex items-end gap-2 md:gap-3">
+              {/* Tury: alinhada pela base com o botão, levemente acima por marginBottom */}
               <Image
                 src="/tury-explicando.png"
                 alt="Tury apontando para o botão Começar agora"
@@ -701,7 +701,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 height={376}
                 priority
                 className="max-[359px]:hidden shrink-0 select-none pointer-events-none"
-                style={{ height: '54px', width: 'auto' }}
+                style={{ height: '72px', width: 'auto', marginBottom: '-4px' }}
               />
               <button
                 ref={heroCtaRef}
@@ -728,17 +728,20 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div
-            className="relative w-full h-[200px] md:h-auto md:aspect-[1/1] rounded-2xl overflow-hidden shrink-0"
-            style={{ boxShadow: '0 6px 28px rgba(12,192,190,0.14), 0 2px 8px rgba(14,58,64,0.08)' }}
-          >
+          <div className="relative w-full h-[200px] md:h-auto md:aspect-[1/1] rounded-2xl overflow-hidden shrink-0">
             <Image
               src="/hero-beach-tennis.jpg"
               alt="Raquetes de beach tennis na areia"
               fill
               className="object-cover object-center"
               priority
-              sizes="(max-width: 768px) 100vw, 210px"
+              sizes="(max-width: 768px) 100vw, 380px"
+            />
+            {/* Gradiente que funde a borda esquerda da foto com o fundo do hero (apenas desktop) */}
+            <div
+              className="absolute inset-0 hidden md:block pointer-events-none"
+              aria-hidden="true"
+              style={{ background: 'linear-gradient(to right, #EAF7F6 0%, rgba(234,247,246,0.45) 22%, transparent 52%)' }}
             />
           </div>
 
