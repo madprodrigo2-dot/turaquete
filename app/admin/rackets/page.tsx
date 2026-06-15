@@ -17,7 +17,7 @@ type RacketRow = {
   slug: string
   publicada: boolean
   price: number | null
-  brand: { name: string } | { name: string }[] | null
+  brand_id: number | null
   racket_insights:
     | { power: number | null; control: number | null; comfort: number | null; spin: number | null; nivel_sugerido: string | null }
     | { power: number | null; control: number | null; comfort: number | null; spin: number | null; nivel_sugerido: string | null }[]
@@ -44,23 +44,27 @@ export default async function AdminRaquetasPage({
 
   let query = sb
     .from('rackets')
-    .select(
-      'id, name, slug, publicada, price, brand_id, brand:brands(name), racket_insights(power, control, comfort, spin, nivel_sugerido)'
-    )
+    .select('id, name, slug, publicada, price, brand_id, racket_insights(power, control, comfort, spin, nivel_sugerido)')
     .order('publicada', { ascending: false })
     .order('name')
 
   if (sp.q) query = query.ilike('name', `%${sp.q}%`)
 
-  const { data, error } = await query
+  const [{ data, error }, { data: brandsData }] = await Promise.all([
+    query,
+    sb.from('brands').select('id, name'),
+  ])
+
   if (error) console.error('[admin/rackets] query error:', error.message, error.details)
+
+  const brandMap = new Map((brandsData ?? []).map((b: { id: number; name: string }) => [b.id, b.name]))
 
   const rackets = ((data ?? []) as RacketRow[]).map(r => ({
     ...r,
+    brandName: r.brand_id ? (brandMap.get(r.brand_id) ?? '—') : '—',
     racket_insights: Array.isArray(r.racket_insights)
       ? (r.racket_insights[0] ?? null)
       : r.racket_insights,
-    brand: Array.isArray(r.brand) ? (r.brand[0] ?? null) : r.brand,
   }))
 
   return (
@@ -110,7 +114,6 @@ export default async function AdminRaquetasPage({
                 spin: number | null
                 nivel_sugerido: string | null
               } | null
-              const brand = r.brand as { name: string } | null
               return (
                 <tr
                   key={r.id}
@@ -124,7 +127,7 @@ export default async function AdminRaquetasPage({
                     />
                     <span className="text-gray-800 font-medium">{r.name}</span>
                   </td>
-                  <td className="px-3 py-2.5 text-gray-400">{brand?.name ?? '—'}</td>
+                  <td className="px-3 py-2.5 text-gray-400">{r.brandName}</td>
                   <td className="px-3 py-2.5 text-gray-400">{nivLabel(ins?.nivel_sugerido ?? null)}</td>
                   <td className="px-2 py-2.5 text-center text-gray-500">{ins?.power ?? '—'}</td>
                   <td className="px-2 py-2.5 text-center text-gray-500">{ins?.comfort ?? '—'}</td>
