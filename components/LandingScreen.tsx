@@ -49,7 +49,7 @@ const FAQS = [
   },
   {
     q: 'Como vocês escolhem as raquetes?',
-    a: 'Com base em specs reais e análise especializada: peso, balance, material do núcleo e da face. Sem achismo, sem patrocínio.',
+    a: 'Com base nas especificações reais de cada raquete: peso, balance, material do núcleo e da face. Sem achismo, sem patrocínio.',
   },
   {
     q: 'Vocês vendem raquetes?',
@@ -946,7 +946,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
         {/* Linha de confiança */}
         <p className="text-center text-tinta/50 text-xs md:text-sm leading-relaxed">
-          Recomendações baseadas em specs reais e análise especializada. Sem achismo.
+          Recomendações baseadas nas especificações reais de cada raquete. Sem achismo.
         </p>
 
         {/* Footer */}

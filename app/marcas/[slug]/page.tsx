@@ -21,7 +21,7 @@ export async function generateMetadata(
   if (!result) return {}
   const { brand } = result
   const title = `${brand.name} — Raquetes de Beach Tennis | Turaquete`
-  const description = `Conheça todas as raquetes ${brand.name} disponíveis. Specs, avaliação e onde comprar cada modelo.`
+  const description = `Conheça todas as raquetes ${brand.name} disponíveis. Especificações reais, avaliação e onde comprar cada modelo.`
   return { title, description }
 }
 

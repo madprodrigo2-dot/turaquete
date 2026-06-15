@@ -29,7 +29,7 @@ export async function generateMetadata(
   const title = `${racket.name} — Raquete de Beach Tennis | Turaquete`
   const description =
     ins?.perfil_resumo ??
-    `Specs, avaliação e onde comprar a ${racket.name}.${price ? ` A partir de ${price}.` : ''}`
+    `Especificações reais, avaliação e onde comprar a ${racket.name}.${price ? ` A partir de ${price}.` : ''}`
 
   return {
     title,
