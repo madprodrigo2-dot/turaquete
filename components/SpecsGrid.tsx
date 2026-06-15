@@ -33,10 +33,18 @@ export interface SpecRow { label: string; value: string; tipo?: string }
 export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
 
-  const rawEspessura = extra.espessura as string | number | undefined
-  const espessuraStr = rawEspessura != null
-    ? (String(rawEspessura).includes('mm') ? String(rawEspessura) : `${rawEspessura}mm`)
-    : undefined
+  const espessuraMm = extra.espessura_mm as number | null | undefined
+  const espessuraLegacy = extra.espessura as string | number | undefined
+  const espessuraStr = (() => {
+    if (espessuraMm != null) {
+      const perfil = espessuraMm <= 20 ? 'fino' : espessuraMm <= 22 ? 'médio' : 'grosso'
+      return `${espessuraMm}mm · perfil ${perfil}`
+    }
+    if (espessuraLegacy != null) {
+      return String(espessuraLegacy).includes('mm') ? String(espessuraLegacy) : `${espessuraLegacy}mm`
+    }
+    return undefined
+  })()
 
   const furos = (extra.furos ?? extra.furos_quantidade) as number | string | undefined
 

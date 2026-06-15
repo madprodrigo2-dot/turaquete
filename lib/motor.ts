@@ -38,13 +38,20 @@ function furosScore(furos: number | null | undefined): number {
   return 8
 }
 
+// spin contribution: fino(≤20)→4, médio(≤22)→5, grosso(≥23)→6, null→5 (neutral)
 function espessuraScore(mm: number | null | undefined): number {
   if (mm == null) return 5
-  if (mm <= 33) return 3
-  if (mm <= 35) return 4
-  if (mm <= 37) return 5
-  if (mm <= 39) return 6
-  return 8
+  if (mm <= 20) return 4
+  if (mm <= 22) return 5
+  return 6
+}
+
+// stability modifier: fino reduces rigidity (-1), grosso increases it (+1)
+function espessuraStabilityMod(mm: number | null | undefined): number {
+  if (mm == null) return 0
+  if (mm <= 20) return -1
+  if (mm <= 22) return 0
+  return 1
 }
 
 export function calcularMotor(input: MotorInput): MotorResult {
@@ -63,8 +70,9 @@ export function calcularMotor(input: MotorInput): MotorResult {
   // Comfort: antivib anchor — 0 systems→5, 1→8, 2+→9
   const comfort = antivibCount === 0 ? 5 : antivibCount === 1 ? 8 : 9
 
-  // Stability: estrutural anchor — 0 systems→5, 1→7, 2+→9
-  const stability = estruturalCount === 0 ? 5 : estruturalCount === 1 ? 7 : 9
+  // Stability: estrutural anchor + espessura modifier (fino→-1, grosso→+1)
+  const stabilityBase = estruturalCount === 0 ? 5 : estruturalCount === 1 ? 7 : 9
+  const stability = Math.min(10, Math.max(1, stabilityBase + espessuraStabilityMod(input.espessura_mm)))
 
   return { spin, comfort, stability }
 }

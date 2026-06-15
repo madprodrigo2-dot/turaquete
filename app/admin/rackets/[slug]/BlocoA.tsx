@@ -122,7 +122,7 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
               value={espessura}
               onChange={e => setEspessura(e.target.value)}
               className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
-              placeholder="38"
+              placeholder="22"
             />
           </div>
           <div>
