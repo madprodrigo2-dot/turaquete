@@ -198,6 +198,22 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
           >
             + Adicionar tecnologia
           </button>
+
+          <div className="mt-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2.5 space-y-1.5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Tipos de tecnologia</p>
+            {[
+              { tipo: 'antivibração', desc: 'Absorção de vibração. Eleva o Conforto: 1 sistema → 8, 2+ → 9.' },
+              { tipo: 'estrutural',   desc: 'Reforço de frame/carbono. Eleva a Estabilidade: 1 → 7, 2+ → 9.' },
+              { tipo: 'superficie',   desc: 'Tratamento da face que amplifica o efeito da textura no Spin.' },
+              { tipo: 'ergonomia',    desc: 'Tecnologia de cabo/punho. Aparece como "agarre real" na ficha; não altera notas.' },
+              { tipo: 'declarativa',  desc: 'Nome comercial sem efeito físico classificado. Aparece em Acabamentos; não altera notas.' },
+            ].map(({ tipo, desc }) => (
+              <div key={tipo} className="flex gap-2 text-[10px] leading-snug">
+                <span className="shrink-0 font-medium text-gray-500 w-20">{tipo}</span>
+                <span className="text-gray-400">{desc}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Feedback do motor */}
