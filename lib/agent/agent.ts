@@ -5,7 +5,7 @@ import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision } from '../debug-types'
-import { computeProfileConfidence, CONFIDENCE_CONFIG, type ConfidenceInfo } from './confidence'
+import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, PRECO_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -135,7 +135,8 @@ async function executeTool(
   intencaoRef: { value: IntencaoTipo | null },
   debugRef: { value: AgentDebugInfo },
   conversationTurns: number,
-  priceAskPendingRef: { value: boolean }
+  priceAskPendingRef: { value: boolean },
+  pendingQuestionFieldRef: { value: FieldKey | 'preco' | null }
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -165,6 +166,9 @@ async function executeTool(
 
     if (!confidence.willRecommend && confidence.nextQuestion) {
       const q = confidence.nextQuestion
+      // Record which field is being asked so streamResponse can inject the exact
+      // fixed question text — preventing chips from appearing without a question.
+      pendingQuestionFieldRef.value = q.field
       // Do NOT include baseResult here — the faixa numbers are stored in diagnosticoRef.value
       // and will be injected via FAIXA VINCULANTE when the agent actually recommends.
       // Exposing peso/balance/prioridades now would cause the agent to show the "SEU PERFIL IDEAL"
@@ -182,8 +186,9 @@ async function executeTool(
           },
           instrucao_OBRIGATORIA:
             `Confiança ${confidence.score}% < ${confidence.threshold}% mínima. ` +
-            `AÇÃO OBRIGATÓRIA: (1) escreva UMA pergunta calorosa sobre "${q.label}" no texto — sem ela os chips ficam órfãos e o usuário não sabe o que os botões significam; ` +
-            `(2) chame sugerir_opcoes com os chips acima. ` +
+            `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com os chips acima; ` +
+            `(2) a pergunta já será emitida automaticamente pelo sistema — NÃO a escreva você mesmo. ` +
+            `Você pode escrever uma frase CURTA de acolhimento do que o usuário disse (ex: "Entendido!", "Boa!") ANTES dos chips. ` +
             `PROIBIDO mostrar perfil ideal, peso ou balance agora. ` +
             `PROIBIDO chamar buscar_raquetas ou recomendar_raquetas nesta resposta.`,
         },
@@ -283,6 +288,7 @@ async function executeTool(
     const priceDecision = computePrecoDecision(ranked, budgetKnown)
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
+    if (priceDecision.status === 'disparo') pendingQuestionFieldRef.value = 'preco'
 
     const topCandidates = ranked.slice(0, MAX_CANDIDATES).map(slimForModel)
     const payload: Record<string, unknown> = {
@@ -371,6 +377,7 @@ export async function runAgentTurn(
   const intencaoRef: { value: IntencaoTipo | null } = { value: null }
   const debugRef: { value: AgentDebugInfo } = { value: {} }
   const priceAskPendingRef: { value: boolean } = { value: false }
+  const pendingQuestionFieldRef: { value: FieldKey | 'preco' | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   const conversationTurns = history.filter(m => m.role === 'user').length
   let isComparison = false
@@ -422,7 +429,7 @@ export async function runAgentTurn(
       }
 
       if (onToken) {
-        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, onToken, signal)
+        return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
       }
       const textBlock = response.content.find(b => b.type === 'text')
       const text = textBlock?.type === 'text' ? textBlock.text : ''
@@ -448,7 +455,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -492,7 +499,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }
@@ -506,7 +513,7 @@ export async function runAgentTurn(
 
   // Fallback if MAX_TOOL_ROUNDS exhausted
   if (onToken) {
-    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, onToken, signal)
+    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
   }
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
@@ -538,6 +545,7 @@ async function streamResponse(
   intencaoRef: { value: IntencaoTipo | null },
   debugRef: { value: AgentDebugInfo },
   usage: TokenUsage,
+  pendingQuestionFieldRef: { value: FieldKey | 'preco' | null },
   onToken: (token: string) => void,
   signal?: AbortSignal
 ): Promise<AgentResult> {
@@ -549,13 +557,19 @@ async function streamResponse(
       text: `\n\n[FAIXA VINCULANTE CALCULADA PELO CÓDIGO]\npeso_min=${diagnosticoRef.value.peso_min}g  peso_max=${diagnosticoRef.value.peso_max}g  balance=${diagnosticoRef.value.balance_preferido}\nNarre EXATAMENTE estes valores. É proibido usar qualquer outro número de peso no diagnóstico desta conversa.`,
     })
   }
-  // When chips are pending without a recommendation, the streaming model MUST write
-  // a question so the chips don't appear orphaned. Inject a mandatory uncached block
-  // to guarantee this regardless of what the tool-call rounds already said.
+  // When chips are pending, inject the EXACT fixed question text for the field.
+  // The model must use that phrase verbatim — preventing improvisation and orphaned chips.
+  // A code-level fallback below covers the case where the model still returns empty text.
   if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
+    const field = pendingQuestionFieldRef.value
+    const fixedText = field
+      ? (field === 'preco' ? PRECO_QUESTION_TEXT : getFixedQuestionText(field))
+      : null
     systemBlocks.push({
       type: 'text',
-      text: `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta de texto DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos" e o usuário não sabe o que responder. Escreva a pergunta no corpo do texto; os chips aparecem abaixo automaticamente. Exemplos:\n- Faixa de preço: "Pra eu fechar a indicação certa, qual faixa de preço faz mais sentido pro seu bolso?"\n- Nível: "Qual é o seu nível de jogo hoje?"\n- Estilo: "Como você prefere jogar — mais no ataque ou segurando no fundo?"\nAdapte ao campo sendo perguntado. Esta frase introdutória é OBRIGATÓRIA nesta resposta.`,
+      text: fixedText
+        ? `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta DEVE conter EXATAMENTE esta pergunta, sem alterar uma palavra:\n"${fixedText}"\nVocê pode escrever UMA frase curta de acolhimento do que a pessoa disse ANTES da pergunta (ex: "Entendido!", "Boa!"). Nada depois da pergunta. Não improvise outra formulação.`
+        : `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos".`,
     })
   }
 
@@ -582,6 +596,20 @@ async function streamResponse(
 
   const finalMsg = await stream.finalMessage()
   addUsage(usage, finalMsg.usage)
+
+  // Code-level fallback: if the model returned empty text but chips are pending,
+  // emit the fixed question directly. This guarantees chips are never orphaned even
+  // if the model ignores the system block instruction.
+  if (!text.trim() && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
+    const field = pendingQuestionFieldRef.value
+    const fallback = field
+      ? (field === 'preco' ? PRECO_QUESTION_TEXT : getFixedQuestionText(field))
+      : null
+    if (fallback) {
+      text = fallback
+      onToken(fallback)
+    }
+  }
 
   return {
     text,

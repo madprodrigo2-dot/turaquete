@@ -45,6 +45,7 @@ export const CONFIDENCE_CONFIG = {
 type FieldDef = {
   key: FieldKey
   label: string
+  question: string  // Fixed question text — always shown verbatim, never model-generated
   weight: number
   chips: string[]
   justification: string
@@ -54,6 +55,7 @@ const FIELD_DEFS: FieldDef[] = [
   {
     key: 'estilo',
     label: 'Estilo de jogo',
+    question: 'Como você mais gosta de jogar?',
     weight: 32,
     chips: ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado'],
     justification: 'maior discriminador: separa raquetes de potência vs controle vs equilíbrio',
@@ -61,6 +63,7 @@ const FIELD_DEFS: FieldDef[] = [
   {
     key: 'nivel',
     label: 'Nível / categoria',
+    question: 'Qual é o seu nível hoje?',
     weight: 28,
     chips: ['Estou começando', 'Intermediário (cat. C/B)', 'Avançado (cat. A/Pro)'],
     justification: 'base do fitting: define faixa de peso, prioridades e sweet spot esperado',
@@ -68,6 +71,7 @@ const FIELD_DEFS: FieldDef[] = [
   {
     key: 'lesao',
     label: 'Lesão / dor no braço',
+    question: 'Você sente dor em algum lugar quando joga?',
     weight: 22,
     chips: ['Sim, cotovelo', 'Sim, ombro', 'Não tenho dor'],
     justification: 'ativa filtro duplo conforto≥8 + saída fácil, mudando todo o conjunto de candidatas',
@@ -75,6 +79,7 @@ const FIELD_DEFS: FieldDef[] = [
   {
     key: 'forca_declarada',
     label: 'Força / potência de batida',
+    question: 'Como você descreveria a força da sua batida?',
     weight: 11,
     chips: ['Minha batida é forte', 'Minha batida é suave'],
     justification: 'determina se saída exigente é viável (regra inquebrável: swing fraco → exclui saída exigente)',
@@ -82,11 +87,19 @@ const FIELD_DEFS: FieldDef[] = [
   {
     key: 'jogo_aereo',
     label: 'Jogo aéreo / posição em quadra',
+    question: 'Você joga mais na rede ou prefere o fundo de quadra?',
     weight: 7,
     chips: ['Jogo muito na rede', 'Prefiro o fundo de quadra'],
     justification: 'sinal suave: rede → sobe prioridade de manuseio e estabilidade',
   },
 ]
+
+// Fixed question text for price — emitted verbatim, never model-generated
+export const PRECO_QUESTION_TEXT = 'Pra fechar a indicação certa, qual faixa de preço faz mais sentido pro seu bolso?'
+
+export function getFixedQuestionText(field: FieldKey): string {
+  return FIELD_DEFS.find(d => d.key === field)?.question ?? ''
+}
 
 const TOTAL_WEIGHT = FIELD_DEFS.reduce((s, f) => s + f.weight, 0) // = 100
 
