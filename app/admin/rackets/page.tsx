@@ -1,7 +1,15 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import { getSupabaseAdmin } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+
+function getAdmin() {
+  return createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  )
+}
 
 type RacketRow = {
   id: number
@@ -32,19 +40,21 @@ export default async function AdminRaquetasPage({
   if (session?.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
   const sp = await searchParams
-  const sb = getSupabaseAdmin()
+  const sb = getAdmin()
 
   let query = sb
     .from('rackets')
     .select(
-      'id, name, slug, publicada, price, brand:brands(name), racket_insights(power, control, comfort, spin, nivel_sugerido)'
+      'id, name, slug, publicada, price, brand_id, brand:brands(name), racket_insights(power, control, comfort, spin, nivel_sugerido)'
     )
     .order('publicada', { ascending: false })
     .order('name')
 
-  if (sp.q) query = (query as typeof query).ilike('name', `%${sp.q}%`)
+  if (sp.q) query = query.ilike('name', `%${sp.q}%`)
 
-  const { data } = await query
+  const { data, error } = await query
+  if (error) console.error('[admin/rackets] query error:', error.message, error.details)
+
   const rackets = ((data ?? []) as RacketRow[]).map(r => ({
     ...r,
     racket_insights: Array.isArray(r.racket_insights)
