@@ -1,5 +1,6 @@
 import { auth, signOut } from '@/auth'
 import AdminNav from './AdminNav'
+import AdminShell from './AdminShell'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -8,7 +9,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!isAdmin) return <>{children}</>
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-sm text-gray-800">
+    <AdminShell>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 h-11 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -31,6 +32,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </div>
       <div className="max-w-4xl mx-auto px-6 py-6">{children}</div>
-    </div>
+    </AdminShell>
   )
 }

@@ -127,6 +127,22 @@ body {
 }
 
 
+/* ── Admin dark mode — inverts Tailwind's gray scale within .dark wrapper ───
+   No individual page files need dark: variants; CSS variable cascade handles it. */
+.dark {
+  --color-white:    oklch(0.21 0 0);
+  --color-gray-50:  oklch(0.21 0 0);
+  --color-gray-100: oklch(0.268 0 0);
+  --color-gray-200: oklch(0.371 0 0);
+  --color-gray-300: oklch(0.439 0 0);
+  --color-gray-400: oklch(0.556 0 0);
+  --color-gray-500: oklch(0.65 0 0);
+  --color-gray-600: oklch(0.75 0 0);
+  --color-gray-700: oklch(0.83 0 0);
+  --color-gray-800: oklch(0.922 0 0);
+  --color-gray-900: oklch(0.967 0 0);
+}
+
 /* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .bt-ball,
