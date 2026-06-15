@@ -2,38 +2,23 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
-import { USD_TO_BRL } from '@/lib/agent/pricing'
 import AdminPeriodFilter from './AdminPeriodFilter'
 import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-interface IntencaoRow   { intencao_detectada: string | null; total: number }
-interface StarterRow    { starter: string | null; total: number }
-interface MensagemRow   {
-  created_at:         string
-  starter_usado:      string | null
-  intencao_detectada: string | null
-  primeira_mensagem:  string | null
-}
 interface SessionCostRow {
-  session_id:    string
-  total_brl:     number
-  total_usd:     number
-  turns:         number
-  had_rec:       boolean
+  session_id: string
+  total_brl:  number
+  total_usd:  number
+  turns:      number
+  had_rec:    boolean
   first_turn_at: string
 }
-interface ClickRow    { session_id: string; event_type: string; created_at: string }
-interface RecEventRow { racket_id: number }
+interface ClickRow    { session_id: string; event_type: string }
+interface IntencaoRow { intencao_detectada: string | null; total: number }
 interface RacketRow   { id: number; name: string }
 
-// ── Rentabilidade — ajustar quando tiver dados reais ───────────────────────────
-const COMISSAO_ESTIMADA_BRL: number | null = null
-const TAXA_CLIQUE_TO_VENDA:  number | null = null
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 function getAdmin() {
   return createClient(
     process.env.SUPABASE_URL!,
@@ -42,556 +27,172 @@ function getAdmin() {
   )
 }
 
-function fmtBrl(v: number, decimals = 4) {
-  return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`
-}
-function fmtUsd(v: number) { return `US$ ${v.toFixed(4)}` }
-function avg(arr: number[]): number | null {
-  return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
-}
 function pct(num: number, den: number): string {
   return den === 0 ? '—' : `${Math.round((num / den) * 100)}%`
 }
+function fmtBrl(v: number) {
+  return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`
+}
+function avg(arr: number[]): number | null {
+  return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
+}
 
-// ── Page ───────────────────────────────────────────────────────────────────────
-export default async function IntencoesAdmin({
+export default async function GeralAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; starter?: string }>
+  searchParams: Promise<{ days?: string }>
 }) {
   const session = await auth()
-  if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
-    redirect('/admin/login')
-  }
+  if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30', starter: starterParam } = await searchParams
-  const daysBack    = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
-  const cutoffDate  = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
-  const filterStarter = starterParam !== undefined ? decodeURIComponent(starterParam) : null
-  const daysLabel   = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
+  const { days: daysParam = '30' } = await searchParams
+  const daysBack   = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
+  const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+  const daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
 
-  const sb  = getAdmin()
-  const now = Date.now()
-  const ago7  = new Date(now -  7 * 24 * 60 * 60 * 1000).toISOString()
-  const ago1  = new Date(now -  1 * 24 * 60 * 60 * 1000).toISOString()
-
-  // ── Verificar se coluna primeira_mensagem existe ────────────────────────────
-  const columnCheck = await sb
-    .from('conversations')
-    .select('primeira_mensagem')
-    .limit(1)
-    .then(r => ({ ok: !r.error, errorMsg: r.error?.message ?? null }))
+  const sb = getAdmin()
 
   const supabaseUrl    = process.env.SUPABASE_URL ?? ''
   const supabaseDomain = supabaseUrl.replace('https://', '').replace(/\/$/, '')
-  const primeiraMsgColumnMissing = !columnCheck.ok
 
-  // ── Queries em paralelo ─────────────────────────────────────────────────────
-  const [
-    intentRows,
-    starterRows,
-    msgRows,
-    sessionCostRows,
-    clickRows,
-    recEventRows,
-    semAfiliadoRows,
-    starterDetailRows,
-  ] = await Promise.all([
-    sb.rpc('admin_intencao_counts').then(r => (r.data ?? []) as IntencaoRow[]),
-    sb.rpc('admin_starter_counts').then(r => (r.data ?? []) as StarterRow[]),
-
-    primeiraMsgColumnMissing
-      ? Promise.resolve([] as MensagemRow[])
-      : sb
-          .from('conversations')
-          .select('created_at, starter_usado, intencao_detectada, primeira_mensagem')
-          .not('primeira_mensagem', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(50)
-          .then(r => (r.data ?? []) as MensagemRow[]),
-
-    sb.rpc('admin_cost_by_session', { days_back: daysBack })
-      .then(r => (r.data ?? []) as SessionCostRow[]),
-
+  const [sessionCostRows, clickRows, intentRows, semAfiliadoRows, columnCheck] = await Promise.all([
+    sb.rpc('admin_cost_by_session', { days_back: daysBack }).then(r => (r.data ?? []) as SessionCostRow[]),
     sb.from('feedback_events')
-      .select('session_id, event_type, created_at')
+      .select('session_id, event_type')
       .in('event_type', ['ver_na_loja', 'ver_analise'])
       .gte('created_at', cutoffDate)
       .then(r => (r.data ?? []) as ClickRow[]),
-
-    sb.from('recommendation_events')
-      .select('racket_id')
-      .gte('created_at', cutoffDate)
-      .then(r => (r.data ?? []) as RecEventRow[]),
-
-    // Raquetes publicadas sem link afiliado
-    sb.from('rackets')
-      .select('id, name')
-      .eq('publicada', true)
-      .is('affiliate_url', null)
-      .order('name')
+    sb.rpc('admin_intencao_counts').then(r => (r.data ?? []) as IntencaoRow[]),
+    sb.from('rackets').select('id, name').eq('publicada', true).is('affiliate_url', null).order('name')
       .then(r => (r.data ?? []) as RacketRow[]),
-
-    // Detalhe de um starter específico
-    filterStarter === null || primeiraMsgColumnMissing
-      ? Promise.resolve([] as MensagemRow[])
-      : filterStarter === 'livre'
-        ? sb.from('conversations')
-            .select('created_at, primeira_mensagem, intencao_detectada')
-            .is('starter_usado', null)
-            .not('primeira_mensagem', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(100)
-            .then(r => (r.data ?? []) as MensagemRow[])
-        : sb.from('conversations')
-            .select('created_at, primeira_mensagem, intencao_detectada')
-            .eq('starter_usado', filterStarter)
-            .not('primeira_mensagem', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(100)
-            .then(r => (r.data ?? []) as MensagemRow[]),
+    sb.from('conversations').select('primeira_mensagem').limit(1)
+      .then(r => ({ ok: !r.error, errorMsg: r.error?.message ?? null })),
   ])
 
-  // ── Fallback RPCs ───────────────────────────────────────────────────────────
-  const intencoes: IntencaoRow[] = intentRows.length
-    ? intentRows
-    : await sb.from('conversations').select('intencao_detectada')
-        .not('intencao_detectada', 'is', null)
-        .then(r => {
-          const c: Record<string, number> = {}
-          for (const row of (r.data ?? []) as { intencao_detectada: string }[])
-            c[row.intencao_detectada] = (c[row.intencao_detectada] ?? 0) + 1
-          return Object.entries(c)
-            .map(([intencao_detectada, total]) => ({ intencao_detectada, total }))
-            .sort((a, b) => b.total - a.total)
-        })
+  const sessions          = sessionCostRows.filter(r => r.total_brl > 0)
+  const sessionsWithRec   = sessions.filter(r => r.had_rec)
+  const clickSessionIds   = new Set(clickRows.map(r => r.session_id))
+  const sessionsWithClick = sessions.filter(r => clickSessionIds.has(r.session_id))
+  const avgBrl            = avg(sessions.map(r => r.total_brl))
+  const primeiraMsgColumnMissing = !columnCheck.ok
 
-  const starters: StarterRow[] = starterRows.length
-    ? starterRows
-    : await sb.from('conversations').select('starter_usado')
-        .not('primeira_mensagem', 'is', null)
-        .then(r => {
-          const c: Record<string, number> = {}
-          for (const row of (r.data ?? []) as { starter_usado: string | null }[]) {
-            const k = row.starter_usado ?? 'livre'
-            c[k] = (c[k] ?? 0) + 1
-          }
-          return Object.entries(c)
-            .map(([starter, total]) => ({ starter: starter === 'livre' ? null : starter, total }))
-            .sort((a, b) => b.total - a.total)
-        })
+  // Top intenção (all-time from RPC)
+  const totalInt = intentRows.reduce((a, r) => a + r.total, 0)
+  const topIntent = intentRows[0] ?? null
 
-  // ── Top raquetes recomendadas ───────────────────────────────────────────────
-  const racketCounts: Record<number, number> = {}
-  for (const e of recEventRows) {
-    racketCounts[e.racket_id] = (racketCounts[e.racket_id] ?? 0) + 1
-  }
-  const topRacketIds = Object.entries(racketCounts)
-    .sort((a, b) => Number(b[1]) - Number(a[1]))
-    .slice(0, 10)
-    .map(([id]) => Number(id))
-
-  const racketNames: RacketRow[] = topRacketIds.length
-    ? await sb.from('rackets').select('id, name').in('id', topRacketIds)
-        .then(r => (r.data ?? []) as RacketRow[])
-    : []
-
-  const topRaquetes = topRacketIds.map(id => ({
-    id,
-    name: racketNames.find(r => r.id === id)?.name ?? `ID ${id}`,
-    count: racketCounts[id] ?? 0,
-  }))
-
-  // ── Cost stats ──────────────────────────────────────────────────────────────
-  const sessions    = sessionCostRows.filter(r => r.total_brl > 0)
-  const sessions7   = sessions.filter(r => r.first_turn_at >= ago7)
-  const sessions1   = sessions.filter(r => r.first_turn_at >= ago1)
-
-  // Para as 3 janelas temporais, usamos sempre os dados do período selecionado
-  // mas também mostramos comparativos 7d/1d quando daysBack >= 7
-  const avgBrl  = avg(sessions.map(r => r.total_brl))
-  const avg7Brl = avg(sessions7.map(r => r.total_brl))
-  const avg1Brl = avg(sessions1.map(r => r.total_brl))
-  const avgUsd  = avg(sessions.map(r => r.total_usd))
-  const avg7Usd = avg(sessions7.map(r => r.total_usd))
-  const avg1Usd = avg(sessions1.map(r => r.total_usd))
-
-  const totalBrl = sessions.reduce((a, r) => a + r.total_brl, 0)
-  const total7Brl = sessions7.reduce((a, r) => a + r.total_brl, 0)
-  const totalUsd = sessions.reduce((a, r) => a + r.total_usd, 0)
-  const total7Usd = sessions7.reduce((a, r) => a + r.total_usd, 0)
-
-  const maxCost     = sessions.length > 0 ? Math.max(...sessions.map(r => r.total_brl)) : null
-  const avgTurns    = avg(sessions.map(r => r.turns))
-  const avgCostTurn = avgBrl != null && avgTurns != null && avgTurns > 0 ? avgBrl / avgTurns : null
-  const hasCostData = sessions.length > 0
-
-  // ── Cliques ─────────────────────────────────────────────────────────────────
-  const clickSessionIds       = new Set(clickRows.map(r => r.session_id))
-  const affiliateClicks       = clickRows.filter(r => r.event_type === 'ver_na_loja')
-  const sessionsWithClick     = sessions.filter(r => clickSessionIds.has(r.session_id))
-  const taxaConversao         = sessions.length > 0 ? sessionsWithClick.length / sessions.length : 0
-  const custoPorClique        = affiliateClicks.length > 0 ? totalBrl / affiliateClicks.length : null
-
-  // ── Rentabilidade ───────────────────────────────────────────────────────────
-  const pontoEquilibrio        = COMISSAO_ESTIMADA_BRL != null && avgBrl != null && avgBrl > 0
-    ? Math.round(COMISSAO_ESTIMADA_BRL / avgBrl) : null
-  const receitaEstimadaConv   = COMISSAO_ESTIMADA_BRL != null && TAXA_CLIQUE_TO_VENDA != null && sessions.length > 0
-    ? COMISSAO_ESTIMADA_BRL * taxaConversao * TAXA_CLIQUE_TO_VENDA : null
-  const isAboveEquilibrio     = receitaEstimadaConv != null && avgBrl != null
-    ? receitaEstimadaConv >= avgBrl : null
-
-  // ── Taxa de recomendação ────────────────────────────────────────────────────
-  const sessionsWithRec = sessions.filter(r => r.had_rec)
-  const taxaRec         = sessions.length > 0 ? sessionsWithRec.length / sessions.length : null
-
-  // ── Link para detalhe de starter ───────────────────────────────────────────
-  const starterDetailHref = (s: string | null) => {
-    const p = new URLSearchParams()
-    if (daysParam !== '30') p.set('days', daysParam)
-    p.set('starter', s ?? 'livre')
-    return `?${p.toString()}`
-  }
-  const backHref = (() => {
-    const p = new URLSearchParams()
-    if (daysParam !== '30') p.set('days', daysParam)
-    return p.toString() ? `?${p.toString()}` : '?'
-  })()
+  const analiseHref = `/admin/analise?days=${daysParam}`
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
 
-      {/* ── Header ── */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Geral</h1>
-          <p className="text-gray-400 text-xs mt-0.5">{session.user?.email} · {daysLabel}</p>
+          <h1 className="text-sm font-semibold text-gray-800">Geral</h1>
+          <p className="text-[11px] text-gray-400 mt-0.5">{daysLabel}</p>
         </div>
         <Suspense fallback={null}>
           <AdminPeriodFilter current={daysParam} />
         </Suspense>
       </div>
 
-      {/* ── Migration notice ── */}
+      {/* Migration notice */}
       {primeiraMsgColumnMissing && (
-        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col gap-2">
-          <p className="font-semibold text-amber-800 text-sm">
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 text-xs text-amber-800 flex flex-col gap-2">
+          <p className="font-semibold">
             ⚠️ Coluna <code className="font-mono bg-amber-100 px-1 rounded">primeira_mensagem</code> ausente
-            {supabaseDomain && (
-              <span className="font-normal ml-2 text-amber-600 text-xs">— projeto: <span className="font-mono">{supabaseDomain}</span></span>
-            )}
+            {supabaseDomain && <span className="font-normal text-amber-600 ml-2">— {supabaseDomain}</span>}
           </p>
-          {columnCheck.errorMsg && (
-            <p className="text-amber-700 text-xs font-mono bg-amber-100 px-2 py-1 rounded">
-              Erro PostgREST: {columnCheck.errorMsg}
-            </p>
-          )}
-          <p className="text-amber-700 text-xs">Execute no Supabase SQL Editor do projeto acima:</p>
-          <pre className="bg-amber-100 rounded-lg px-4 py-3 text-xs font-mono text-amber-900 overflow-x-auto whitespace-pre-wrap">{`ALTER TABLE public.conversations
-  ADD COLUMN IF NOT EXISTS primeira_mensagem TEXT;
-
--- Também garantir as outras colunas novas
-ALTER TABLE public.conversations
+          <pre className="bg-amber-100 rounded px-3 py-2 font-mono text-amber-900 text-[11px] overflow-x-auto whitespace-pre-wrap">{`ALTER TABLE public.conversations
+  ADD COLUMN IF NOT EXISTS primeira_mensagem TEXT,
   ADD COLUMN IF NOT EXISTS starter_usado TEXT,
   ADD COLUMN IF NOT EXISTS intencao_detectada TEXT;`}</pre>
         </div>
       )}
 
-      {/* ── Sem afiliado ── */}
+      {/* Sem afiliado warning */}
       {semAfiliadoRows.length > 0 && (
-        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col gap-2">
-          <p className="font-semibold text-amber-800 text-sm">
+        <div className="bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 text-xs text-amber-800 flex flex-col gap-1.5">
+          <p className="font-semibold">
             ⚠️ {semAfiliadoRows.length} raquete{semAfiliadoRows.length !== 1 ? 's' : ''} publicada{semAfiliadoRows.length !== 1 ? 's' : ''} sem link afiliado
           </p>
           <div className="flex flex-wrap gap-1.5">
             {semAfiliadoRows.map(r => (
-              <span key={r.id} className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-mono">{r.name}</span>
+              <span key={r.id} className="font-mono bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{r.name}</span>
             ))}
           </div>
-          <p className="text-amber-700 text-xs">Adicione <code className="font-mono bg-amber-100 px-1 rounded">affiliate_url</code> a estas raquetes para habilitar o botão &ldquo;Ver na loja&rdquo;.</p>
+          <Link href="/admin/afiliados" className="text-amber-700 underline w-fit">Gerenciar afiliados →</Link>
         </div>
       )}
 
-        {/* ── Custos ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Custos (API Anthropic) <span className="text-gray-400 font-normal text-xs">— {daysLabel}</span></h2>
-          {!hasCostData ? (
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-3 text-gray-400 italic text-xs">
-              Sem dados de custo para o período selecionado.
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                {([
-                  { label: 'Custo médio — hoje',     brl: avg1Brl, usd: avg1Usd, n: sessions1.length  },
-                  { label: 'Custo médio — 7 dias',   brl: avg7Brl, usd: avg7Usd, n: sessions7.length  },
-                  { label: `Custo médio — ${daysLabel}`, brl: avgBrl,  usd: avgUsd,  n: sessions.length, star: true },
-                ] as { label: string; brl: number | null; usd: number | null; n: number; star?: boolean }[]).map(({ label, brl, usd, n, star }) => (
-                  <div key={label} className={`bg-white rounded-xl border shadow-sm p-4 flex flex-col gap-1 ${star ? 'border-teal-300' : 'border-gray-100'}`}>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
-                    <p className={`font-bold text-gray-900 ${star ? 'text-2xl' : 'text-lg'}`}>{brl != null ? fmtBrl(brl) : '—'}</p>
-                    {usd != null && <p className="text-[11px] text-gray-400">{fmtUsd(usd)}</p>}
-                    <p className="text-[10px] text-gray-300">{n} conv.</p>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { label: 'Total — 7 dias',          value: fmtBrl(total7Brl, 2),  sub: fmtUsd(total7Usd)   },
-                  { label: `Total — ${daysLabel}`,     value: fmtBrl(totalBrl, 2),   sub: fmtUsd(totalUsd)    },
-                  { label: 'Conversa mais cara',       value: maxCost != null ? fmtBrl(maxCost) : '—', sub: 'detectar anomalias' },
-                  { label: 'Custo médio / turno',      value: avgCostTurn != null ? fmtBrl(avgCostTurn) : '—', sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/conv` : '' },
-                ].map(({ label, value, sub }) => (
-                  <div key={label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
-                    <p className="text-base font-bold text-gray-800">{value}</p>
-                    <p className="text-[10px] text-gray-300">{sub}</p>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
+      {/* Hero card — taxa de clique (métrica crítica) */}
+      <Link
+        href={analiseHref}
+        className="group block rounded-2xl border-2 border-teal-200 bg-teal-50 hover:bg-teal-100/60 hover:border-teal-300 transition-all px-8 py-7"
+      >
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-teal-500 mb-1">
+          Taxa de clique em loja
+        </p>
+        <p className="text-6xl font-bold text-teal-700 leading-none">
+          {pct(sessionsWithClick.length, sessions.length)}
+        </p>
+        <p className="text-sm text-teal-500 mt-2">
+          {sessionsWithClick.length} de {sessions.length} conversas · {daysLabel}
+        </p>
+        <p className="text-xs text-teal-400 mt-3 group-hover:text-teal-600 transition-colors">
+          Ver detalhes em Análise →
+        </p>
+      </Link>
 
-        {/* ── Rentabilidade ── */}
-        {hasCostData && (
-          <section>
-            <h2 className="text-base font-semibold text-gray-700 mb-3">Rentabilidade</h2>
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Taxa recomendação</p>
-                  <p className="text-base font-bold text-gray-800">{taxaRec !== null ? pct(sessionsWithRec.length, sessions.length) : '—'}</p>
-                  <p className="text-[10px] text-gray-300">{sessionsWithRec.length} de {sessions.length} conv. receberam raquete</p>
-                </div>
-                <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Taxa clique em loja</p>
-                  <p className="text-base font-bold text-gray-800">{pct(sessionsWithClick.length, sessions.length)}</p>
-                  <p className="text-[10px] text-gray-300">{sessionsWithClick.length} de {sessions.length} conv.</p>
-                </div>
-                <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Custo / clique afiliado</p>
-                  <p className="text-base font-bold text-gray-800">{custoPorClique != null ? fmtBrl(custoPorClique) : '—'}</p>
-                  <p className="text-[10px] text-gray-300">{affiliateClicks.length} cliques &ldquo;Ver na loja&rdquo;</p>
-                </div>
-              </div>
-              <div className={`rounded-xl border px-5 py-4 ${
-                isAboveEquilibrio === true ? 'bg-emerald-50 border-emerald-200' :
-                isAboveEquilibrio === false ? 'bg-amber-50 border-amber-200' :
-                'bg-gray-50 border-gray-200'
-              }`}>
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">Ponto de equilíbrio</p>
-                {COMISSAO_ESTIMADA_BRL == null ? (
-                  <p className="text-xs text-gray-400 italic">
-                    Defina <code className="font-mono bg-gray-100 px-1 rounded">COMISSAO_ESTIMADA_BRL</code> em{' '}
-                    <code className="font-mono bg-gray-100 px-1 rounded">app/admin/intencoes/page.tsx</code>{' '}
-                    para calcular o ponto de equilíbrio.
-                    <br /><span className="text-gray-300">Referência: ticket médio ~R$2.000–2.400 · comissão ML ~5–8% → R$100–192/venda.</span>
-                  </p>
-                ) : (
-                  <div className="flex items-start gap-6 flex-wrap">
-                    <div>
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wide">1 comissão cobre</p>
-                      <p className="text-2xl font-bold text-gray-900">{pontoEquilibrio != null ? `${pontoEquilibrio.toLocaleString('pt-BR')} conv.` : '—'}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">comissão est.: {fmtBrl(COMISSAO_ESTIMADA_BRL, 2)} · custo médio: {avgBrl != null ? fmtBrl(avgBrl) : '—'}/conv</p>
-                    </div>
-                    {receitaEstimadaConv != null && avgBrl != null && (
-                      <div className={`px-3 py-2 rounded-lg text-sm font-semibold ${isAboveEquilibrio ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {isAboveEquilibrio ? 'Acima do ponto ✓' : 'Abaixo do ponto'}
-                        <p className="text-[11px] font-normal mt-0.5">receita est. {fmtBrl(receitaEstimadaConv)} vs custo {fmtBrl(avgBrl)}/conv</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
+      {/* Grid 2×2 — outros titulares */}
+      <div className="grid grid-cols-2 gap-3">
 
-        {/* ── Top raquetes recomendadas ── */}
-        {topRaquetes.length > 0 && (
-          <section>
-            <h2 className="text-base font-semibold text-gray-700 mb-3">Top raquetes recomendadas <span className="text-gray-400 font-normal text-xs">— {daysLabel}</span></h2>
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
-              <table className="w-full border-collapse">
-                <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-                  <tr>
-                    <th className="text-left px-4 py-2">#</th>
-                    <th className="text-left px-4 py-2">Raquete</th>
-                    <th className="text-right px-4 py-2">Recomendações</th>
-                    <th className="text-right px-4 py-2">% do total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topRaquetes.map((r, i) => (
-                    <tr key={r.id} className="border-t border-gray-100">
-                      <td className="px-4 py-2 text-gray-400 text-xs">{i + 1}</td>
-                      <td className="px-4 py-2 font-medium text-gray-800">{r.name}</td>
-                      <td className="px-4 py-2 text-right font-semibold">{r.count}</td>
-                      <td className="px-4 py-2 text-right text-gray-500">
-                        {pct(r.count, recEventRows.length)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="text-[10px] text-gray-300 px-4 py-2">{recEventRows.length} recomendações totais no período</p>
-            </div>
-          </section>
-        )}
+        <Link
+          href={analiseHref}
+          className="group rounded-xl border border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm transition-all px-5 py-5"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Taxa de recomendação</p>
+          <p className="text-4xl font-bold text-gray-900 leading-none">{pct(sessionsWithRec.length, sessions.length)}</p>
+          <p className="text-xs text-gray-400 mt-1.5">{sessionsWithRec.length} de {sessions.length} conv.</p>
+          <p className="text-[10px] text-gray-300 mt-3 group-hover:text-teal-500 transition-colors">→ Análise</p>
+        </Link>
 
-        {/* ── Intenções ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-1">Por intenção</h2>
-          <p className="text-[11px] text-gray-400 mb-3">Todos os tempos (filtro de período não afeta esta tabela)</p>
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-2">Intenção</th>
-                <th className="text-right px-4 py-2">Total</th>
-                <th className="text-right px-4 py-2">%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {intencoes.map(r => {
-                const total = intencoes.reduce((a, x) => a + x.total, 0)
-                return (
-                  <tr key={r.intencao_detectada} className="border-t border-gray-100">
-                    <td className="px-4 py-2 font-mono text-gray-700">{r.intencao_detectada}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{r.total}</td>
-                    <td className="px-4 py-2 text-right text-gray-400">{pct(r.total, total)}</td>
-                  </tr>
-                )
-              })}
-              {intencoes.length === 0 && (
-                <tr><td colSpan={3} className="px-4 py-3 text-gray-400 italic">Sem dados ainda.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </section>
+        <div className="rounded-xl border border-gray-100 bg-white px-5 py-5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Conversas</p>
+          <p className="text-4xl font-bold text-gray-900 leading-none">{sessions.length}</p>
+          <p className="text-xs text-gray-400 mt-1.5">{daysLabel}</p>
+        </div>
 
-        {/* ── Starters ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-1">Starters usados</h2>
-          <p className="text-[11px] text-gray-400 mb-3">Todos os tempos · clique num starter para ver as primeiras mensagens</p>
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-2">Starter</th>
-                <th className="text-right px-4 py-2">Total</th>
-                <th className="text-right px-4 py-2">%</th>
-                <th className="px-4 py-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {starters.map(r => {
-                const total   = starters.reduce((a, x) => a + x.total, 0)
-                const isActive = filterStarter !== null && (filterStarter === (r.starter ?? 'livre'))
-                return (
-                  <tr key={r.starter ?? 'livre'} className={`border-t border-gray-100 ${isActive ? 'bg-teal-50' : ''}`}>
-                    <td className="px-4 py-2">
-                      {r.starter ?? <span className="italic text-gray-500">livre (digitou)</span>}
-                    </td>
-                    <td className="px-4 py-2 text-right font-semibold">{r.total}</td>
-                    <td className="px-4 py-2 text-right text-gray-400">{pct(r.total, total)}</td>
-                    <td className="px-4 py-2 text-right">
-                      {primeiraMsgColumnMissing ? (
-                        <span className="text-gray-300 text-[10px]">migration pendente</span>
-                      ) : (
-                        <Link
-                          href={starterDetailHref(r.starter)}
-                          className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                            isActive
-                              ? 'bg-teal-600 text-white'
-                              : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'
-                          }`}
-                        >
-                          {isActive ? 'Aberto ↓' : 'Ver mensagens'}
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-              {starters.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-3 text-gray-400 italic">Sem dados ainda.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </section>
+        <Link
+          href={analiseHref}
+          className="group rounded-xl border border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm transition-all px-5 py-5"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Custo médio / conversa</p>
+          <p className="text-4xl font-bold text-gray-900 leading-none">{avgBrl != null ? fmtBrl(avgBrl) : '—'}</p>
+          <p className="text-xs text-gray-400 mt-1.5">{sessions.length} sessões com custo</p>
+          <p className="text-[10px] text-gray-300 mt-3 group-hover:text-teal-500 transition-colors">→ Detalhes em Análise</p>
+        </Link>
 
-        {/* ── Detalhe de starter ── */}
-        {filterStarter !== null && !primeiraMsgColumnMissing && (
-          <section className="border-2 border-teal-200 rounded-2xl p-5 bg-teal-50">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-base font-semibold text-teal-900">
-                  Mensagens: <span className="font-normal italic">&ldquo;{filterStarter === 'livre' ? 'livre (digitou)' : filterStarter}&rdquo;</span>
-                </h2>
-                <p className="text-teal-600 text-xs mt-0.5">
-                  {starterDetailRows.length} mensagem{starterDetailRows.length !== 1 ? 's' : ''} encontrada{starterDetailRows.length !== 1 ? 's' : ''}
-                  {filterStarter === 'livre' && ' — texto original do usuário, sem edição'}
-                </p>
-              </div>
-              <Link href={backHref} className="text-xs text-teal-600 hover:text-teal-800 border border-teal-300 rounded-lg px-3 py-1.5 transition-colors bg-white">
-                ← Fechar
-              </Link>
-            </div>
-            <div className="flex flex-col gap-2">
-              {starterDetailRows.map((r, i) => (
-                <div key={i} className="bg-white rounded-lg px-4 py-3 border border-teal-100 shadow-sm">
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
-                    <span>{new Date(r.created_at).toLocaleString('pt-BR')}</span>
-                    {r.intencao_detectada && (
-                      <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>
-                    )}
-                  </div>
-                  <p className="text-gray-800 leading-snug text-sm">{r.primeira_mensagem}</p>
-                </div>
-              ))}
-              {starterDetailRows.length === 0 && (
-                <p className="text-teal-600 italic text-sm">Nenhuma mensagem encontrada para este starter.</p>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ── Últimas 50 primeiras mensagens ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Últimas 50 primeiras mensagens</h2>
-          {primeiraMsgColumnMissing ? (
-            <p className="text-amber-600 italic text-xs bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-              Execute a migration SQL acima para habilitar esta seção.
+        {topIntent ? (
+          <Link
+            href={analiseHref}
+            className="group rounded-xl border border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm transition-all px-5 py-5"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
+              Intenção #1{' '}
+              <span className="font-normal normal-case tracking-normal text-gray-300">(todos os tempos)</span>
             </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {msgRows.map((r, i) => (
-                <div key={i} className="bg-white rounded-lg px-4 py-3 border border-gray-100 shadow-sm">
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
-                    <span>{new Date(r.created_at).toLocaleString('pt-BR')}</span>
-                    {r.starter_usado && (
-                      <Link href={starterDetailHref(r.starter_usado)} className="bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5 font-medium hover:bg-emerald-200 transition-colors">
-                        {r.starter_usado}
-                      </Link>
-                    )}
-                    {!r.starter_usado && (
-                      <Link href={starterDetailHref(null)} className="bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 font-medium italic hover:bg-gray-200 transition-colors">
-                        livre
-                      </Link>
-                    )}
-                    {r.intencao_detectada && (
-                      <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>
-                    )}
-                  </div>
-                  <p className="text-gray-800 leading-snug">{r.primeira_mensagem}</p>
-                </div>
-              ))}
-              {msgRows.length === 0 && (
-                <p className="text-gray-400 italic">Sem primeiras mensagens registradas ainda.</p>
-              )}
-            </div>
-          )}
-        </section>
+            <p className="text-2xl font-bold text-gray-900 leading-tight break-words">{topIntent.intencao_detectada}</p>
+            <p className="text-xs text-gray-400 mt-1.5">{pct(topIntent.total, totalInt)} das conv. · {topIntent.total} total</p>
+            <p className="text-[10px] text-gray-300 mt-3 group-hover:text-teal-500 transition-colors">→ Ver distribuição em Análise</p>
+          </Link>
+        ) : (
+          <div className="rounded-xl border border-gray-100 bg-white px-5 py-5">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Intenção #1</p>
+            <p className="text-sm text-gray-300 italic">sem dados ainda</p>
+          </div>
+        )}
+      </div>
 
     </div>
   )
