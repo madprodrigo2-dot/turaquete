@@ -42,3 +42,7 @@ next-env.d.ts
 
 # brand source material — imagens crudas, scripts one-shot, outputs intermediários
 brand-raw/
+
+# scripts e backups one-shot locais
+backups/
+scripts/
