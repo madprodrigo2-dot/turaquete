@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
+import { getSupabase } from '@/lib/supabase'
 import AfiliadoRow from './AfiliadoRow'
 import AfiliadoFilters from './AfiliadoFilters'
 
@@ -22,14 +22,6 @@ interface BrandRow {
   slug: string
 }
 
-function getAdmin() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  )
-}
-
 export default async function AfiliadosPage({
   searchParams,
 }: {
@@ -41,7 +33,7 @@ export default async function AfiliadosPage({
   }
 
   const { filter, brand } = await searchParams
-  const sb = getAdmin()
+  const sb = getSupabase()
 
   const [{ data: rackets }, { data: brandsData }] = await Promise.all([
     sb
