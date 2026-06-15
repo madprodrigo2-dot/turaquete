@@ -94,8 +94,8 @@ export default async function IntencoesAdmin({
     sessionCostRows,
     clickRows,
     recEventRows,
-    starterDetailRows,
     semAfiliadoRows,
+    starterDetailRows,
   ] = await Promise.all([
     sb.rpc('admin_intencao_counts').then(r => (r.data ?? []) as IntencaoRow[]),
     sb.rpc('admin_starter_counts').then(r => (r.data ?? []) as StarterRow[]),
