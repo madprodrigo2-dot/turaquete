@@ -82,7 +82,7 @@ function IconBraco() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 2L4 5.5v5.5C4 16 7.5 20.5 12 22c4.5-1.5 8-6 8-11V5.5L12 2z" fill="#0CC0BE" />
-      <path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#0E3A40" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -785,15 +785,15 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <div className="flex flex-col">
               {STEPS.map((step, i) => (
                 <div key={i} className="flex gap-4">
-                  <div className="flex flex-col items-center w-7 shrink-0">
-                    <div className="w-7 h-7 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0">
+                  <div className="flex flex-col items-center w-8 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0 shadow-sm">
                       {i + 1}
                     </div>
                     {i < STEPS.length - 1 && (
-                      <div className="w-px flex-1 min-h-4 bg-aqua/25" />
+                      <div className="w-px flex-1 min-h-4 bg-aqua/35" />
                     )}
                   </div>
-                  <div className={`flex flex-col pt-0.5${i < STEPS.length - 1 ? ' pb-6' : ''}`}>
+                  <div className={`flex flex-col pt-1${i < STEPS.length - 1 ? ' pb-5' : ''}`}>
                     <p className="text-tinta text-sm md:text-base leading-relaxed">{step.label}</p>
                     {step.desc && (
                       <p className="text-tinta/60 text-xs md:text-sm leading-relaxed mt-1">{step.desc}</p>
@@ -816,14 +816,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </button>
           </div>
 
-          {/* Analisamos seu jogo */}
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
-            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-4">Analisamos seu jogo</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Analisamos seu jogo — card escuro, diferenciador */}
+          <div className="bg-tinta rounded-2xl p-5 md:p-6 shadow-md">
+            <p className="font-heading font-bold text-white text-base md:text-lg mb-4">Analisamos seu jogo</p>
+            <div className="grid grid-cols-2 gap-2.5">
               {ANALYSIS_ITEMS.map(({ Icon, label }) => (
-                <div key={label} className="flex items-center gap-3">
-                  <Icon />
-                  <span className="text-tinta text-sm md:text-base">{label}</span>
+                <div key={label} className="flex items-center gap-2.5 bg-white/10 rounded-xl px-3 py-3">
+                  <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                    <Icon />
+                  </div>
+                  <span className="text-white/90 text-sm font-medium leading-snug">{label}</span>
                 </div>
               ))}
             </div>
@@ -836,8 +838,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <div className="flex flex-col gap-2">
               {CURATED_QUESTIONS.map((q, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-aqua/15 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <div className="w-7 h-7 rounded-full bg-aqua/15 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                       <path d="M6 1C3.24 1 1 3.02 1 5.5c0 .98.32 1.89.86 2.63L1.5 11l2.93-1.5C4.9 9.82 5.44 10 6 10c2.76 0 5-2.02 5-4.5S8.76 1 6 1z" fill="#0CC0BE" opacity=".7"/>
                     </svg>
                   </div>
