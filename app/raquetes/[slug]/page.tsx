@@ -172,13 +172,6 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 tratamentoFabrica={tratamentoFabrica}
               />
               <RacketKeyStats racket={racket} />
-              {/* Shown only for baixa/media — used when a new racket enters with incomplete
-                  or conflicting specs, until data is filled in. alta = hide silently. */}
-              {ins.confianca && ins.confianca !== 'alta' && (
-                <p className="text-tinta/40 text-xs">
-                  Confiança da avaliação: {ins.confianca}
-                </p>
-              )}
             </div>
           )}
 

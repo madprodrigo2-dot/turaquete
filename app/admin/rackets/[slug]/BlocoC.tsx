@@ -217,6 +217,20 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
               <span className="block text-[10px] text-gray-400 leading-tight">dados e notas validados por humano</span>
             </span>
           </label>
+          {ins?.confianca && (
+            <div className="flex items-start gap-2">
+              <span
+                className={`mt-0.5 w-3.5 h-3.5 shrink-0 rounded-full ${
+                  ins.confianca === 'alta' ? 'bg-teal-500' :
+                  ins.confianca === 'media' ? 'bg-amber-400' : 'bg-red-400'
+                }`}
+              />
+              <span>
+                <span className="text-xs text-gray-600 font-medium">confiança: {ins.confianca}</span>
+                <span className="block text-[10px] text-gray-400 leading-tight">solidez da avaliação (QA interno)</span>
+              </span>
+            </div>
+          )}
         </div>
 
         {error && <p className="text-xs text-red-500">{error}</p>}

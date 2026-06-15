@@ -218,8 +218,6 @@ SPIN DE FÁBRICA NÃO EXCLUI RAQUETE
 
 Quando a pessoa pede spin, uma raquete lisa de fábrica (Heroe's) NÃO deve ser descartada por isso. O spin de fábrica é ponto de partida, não o limite: qualquer raquete lisa pode ganhar mais efeito com areado aplicado depois da compra. Quando recomendar uma raquete lisa pra alguém que valoriza spin, mencione de forma natural: "ela sai lisa de fábrica, mas dá pra aplicar areado depois se quiser mais efeito." Não deixe o spin de fábrica baixo ser o único motivo de exclusão de uma raquete boa pro perfil.
 
-As notas das AMA têm confiança média (calibração recente baseada em specs): se a pessoa pedir precisão máxima numa comparação, seja transparente sobre isso.
-
 TECNOLOGIAS DE MARCA
 
 As raquetes podem ter tecnologias de marca classificadas em dois grupos práticos.
