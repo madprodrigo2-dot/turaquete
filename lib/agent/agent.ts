@@ -235,6 +235,26 @@ async function executeTool(
     }
     debugRef.value.decisionTrace.filterSteps = extendedTrace
     debugRef.value.decisionTrace.scorerWeights = computeScorerWeights(input as RacketFilters)
+
+    // Trim the payload sent to the model: top 8 candidates (scorer already ranked them)
+    // + strip fields the model doesn't use for narration, reducing token cost ~85%.
+    const ADMIN_SPECS = new Set(['imagem_fonte', 'preco_fonte', 'preco_tipo', 'preco_atualizado_em'])
+    type RankedRacket = RacketWithInsights & { match_score: number; fora_da_faixa?: boolean }
+    const slimForModel = (r: RankedRacket) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { affiliate_url, source_url, image_url, currency, publicada, slug, technologies, specs_extra, racket_insights, ...base } = r
+      const specsClean = Object.fromEntries(
+        Object.entries((specs_extra ?? {}) as Record<string, unknown>).filter(([k]) => !ADMIN_SPECS.has(k))
+      )
+      const { observations: _obs, summary: _sum, good_for_beginners: _gb, good_for_intermediate: _gi, good_for_advanced: _ga, ...insClean } = (racket_insights ?? {}) as Record<string, unknown>
+      return {
+        ...base,
+        ...(Object.keys(specsClean).length > 0 ? { specs_extra: specsClean } : {}),
+        ...(Object.keys(insClean).length > 0 ? { racket_insights: insClean } : {}),
+      }
+    }
+    const MAX_CANDIDATES = 8
+
     if (ranked.length === 0) {
       const filters = input as RacketFilters
       if (filters.presupuesto_max) {
@@ -242,9 +262,10 @@ async function executeTool(
         const { raquetes: raquetesSemOrc, criteriosRelaxados: relSemOrc } = await buscarRaquetas({ ...filters, presupuesto_max: undefined })
         const rankedSemOrc = diagnosticoRef.value ? applyFaixaFilter(raquetesSemOrc, diagnosticoRef.value) : raquetesSemOrc
         if (rankedSemOrc.length > 0) {
+          const topSemOrc = rankedSemOrc.slice(0, MAX_CANDIDATES).map(slimForModel)
           const payload: Record<string, unknown> = {
             encontradas: rankedSemOrc.length,
-            raquetes: rankedSemOrc,
+            raquetes: topSemOrc,
             fora_do_orcamento: true,
           }
           if (relSemOrc.length > 0) payload.criterios_relaxados = relSemOrc
@@ -263,7 +284,12 @@ async function executeTool(
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
 
-    const payload: Record<string, unknown> = { encontradas: ranked.length, raquetes: ranked }
+    const topCandidates = ranked.slice(0, MAX_CANDIDATES).map(slimForModel)
+    const payload: Record<string, unknown> = {
+      encontradas: ranked.length,
+      raquetes: topCandidates,
+      ...(ranked.length > MAX_CANDIDATES ? { nota: `Exibindo top ${MAX_CANDIDATES} de ${ranked.length} candidatas ordenadas por relevância.` } : {}),
+    }
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
 
     if (priceDecision.status === 'disparo') {
