@@ -133,12 +133,15 @@ function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
       className="block shrink-0 w-[130px] group"
     >
       <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
-        <div className="relative h-[130px] bg-white flex items-center justify-center p-2">
+        <div className="relative h-40 bg-white flex items-center justify-center overflow-hidden shrink-0">
           {racket.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+            <img src={racket.image_url} alt={racket.name} className="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" />
           ) : (
-            <div className="w-full h-full bg-aqua/10 rounded-lg" />
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" opacity="0.4" />
+              <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" opacity="0.4" />
+            </svg>
           )}
           {athlete && (
             <div className="absolute top-1.5 left-1.5 z-10 max-w-[calc(100%-12px)]">

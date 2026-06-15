@@ -21,13 +21,13 @@ function Placeholder() {
 // and can never escape card bounds or bleed over a sticky header (z-10 < z-30).
 export default function RacketImageTile({ src, alt, athlete, hoverScale }: Props) {
   return (
-    <div className="relative aspect-[4/5] bg-white p-3 flex items-center justify-center overflow-hidden">
+    <div className="relative h-40 bg-white flex items-center justify-center overflow-hidden shrink-0">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt}
-          className={`object-contain w-full h-full${hoverScale ? ' group-hover:scale-105 transition-transform duration-300' : ''}`}
+          className={`object-contain w-full h-full p-3${hoverScale ? ' group-hover:scale-105 transition-transform duration-300' : ''}`}
         />
       ) : (
         <Placeholder />
