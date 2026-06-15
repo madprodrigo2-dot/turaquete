@@ -192,24 +192,30 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
         </div>
 
         {/* Meta flags */}
-        <div className="flex gap-4 pt-1">
-          <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+        <div className="flex gap-6 pt-1">
+          <label className="flex items-start gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={aiDrafted}
               onChange={e => setAiDrafted(e.target.checked)}
-              className="accent-gray-400 w-3.5 h-3.5"
+              className="accent-gray-400 w-3.5 h-3.5 mt-0.5 shrink-0"
             />
-            ai_drafted
+            <span>
+              <span className="text-xs text-gray-600 font-medium">ai_drafted</span>
+              <span className="block text-[10px] text-gray-400 leading-tight">resumo/perfil gerado por IA, não revisado</span>
+            </span>
           </label>
-          <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+          <label className="flex items-start gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={reviewed}
               onChange={e => setReviewed(e.target.checked)}
-              className="accent-teal-600 w-3.5 h-3.5"
+              className="accent-teal-600 w-3.5 h-3.5 mt-0.5 shrink-0"
             />
-            reviewed
+            <span>
+              <span className="text-xs text-gray-600 font-medium">reviewed</span>
+              <span className="block text-[10px] text-gray-400 leading-tight">dados e notas validados por humano</span>
+            </span>
           </label>
         </div>
 

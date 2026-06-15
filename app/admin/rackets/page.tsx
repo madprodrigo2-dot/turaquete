@@ -11,6 +11,7 @@ type RacketRow = {
   price: number | null
   affiliate_url: string | null
   brand_id: number | null
+  model_year: number | null
   racket_insights:
     | { power: number | null; control: number | null; comfort: number | null; spin: number | null; nivel_sugerido: string | null }
     | { power: number | null; control: number | null; comfort: number | null; spin: number | null; nivel_sugerido: string | null }[]
@@ -26,7 +27,7 @@ export default async function AdminRaquetasPage() {
   const [{ data, error }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, slug, publicada, price, affiliate_url, brand_id, racket_insights(power, control, comfort, spin, nivel_sugerido)')
+      .select('id, name, slug, publicada, price, affiliate_url, brand_id, model_year, racket_insights(power, control, comfort, spin, nivel_sugerido)')
       .order('name'),
     sb.from('brands').select('id, name').order('name'),
   ])
@@ -42,6 +43,7 @@ export default async function AdminRaquetasPage() {
     publicada: r.publicada,
     price: r.price,
     affiliate_url: r.affiliate_url,
+    model_year: r.model_year,
     brandName: r.brand_id ? (brandMap.get(r.brand_id) ?? '—') : '—',
     ins: Array.isArray(r.racket_insights)
       ? (r.racket_insights[0] ?? null)

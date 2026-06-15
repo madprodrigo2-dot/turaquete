@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { togglePublicada } from './actions'
 
 export type RacketData = {
   id: number
@@ -10,6 +12,7 @@ export type RacketData = {
   publicada: boolean
   price: number | null
   affiliate_url: string | null
+  model_year: number | null
   brandName: string
   ins: {
     power: number | null
@@ -20,7 +23,7 @@ export type RacketData = {
   } | null
 }
 
-type SortCol = 'name' | 'brand' | 'nivel' | 'power' | 'comfort' | 'control' | 'spin' | 'price'
+type SortCol = 'name' | 'brand' | 'year' | 'nivel' | 'power' | 'comfort' | 'control' | 'spin' | 'price'
 type SortDir = 'asc' | 'desc'
 
 function nivLabel(n: string | null) {
@@ -42,6 +45,34 @@ function SortIcon({ col, active, dir }: { col: SortCol; active: SortCol; dir: So
   return <span className="ml-0.5 text-teal-500">{dir === 'asc' ? '↑' : '↓'}</span>
 }
 
+function PublicadaToggle({ racket }: { racket: RacketData & { publicadaLocal: boolean } }) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  function handle() {
+    startTransition(async () => {
+      await togglePublicada(racket.id, !racket.publicadaLocal)
+      router.refresh()
+    })
+  }
+
+  return (
+    <button
+      onClick={handle}
+      disabled={pending}
+      title={racket.publicadaLocal ? 'Clique para despublicar' : 'Clique para publicar'}
+      className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border transition-colors disabled:opacity-40 ${
+        racket.publicadaLocal
+          ? 'border-teal-200 bg-teal-50 text-teal-600 hover:bg-red-50 hover:border-red-200 hover:text-red-500'
+          : 'border-gray-200 bg-gray-50 text-gray-400 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-600'
+      }`}
+    >
+      <span className={`inline-block w-1.5 h-1.5 rounded-full ${racket.publicadaLocal ? 'bg-teal-500' : 'bg-gray-300'}`} />
+      {pending ? '…' : racket.publicadaLocal ? 'pub' : 'não'}
+    </button>
+  )
+}
+
 export default function RaquetasTable({
   rackets,
   brands,
@@ -55,61 +86,67 @@ export default function RaquetasTable({
   const [sortCol, setSortCol] = useState<SortCol>('name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [filterMarca, setFilterMarca] = useState('')
+  const [filterAno, setFilterAno] = useState('')
   const [filterNivel, setFilterNivel] = useState('')
   const [filterAfiliado, setFilterAfiliado] = useState('')
   const [filterPublicada, setFilterPublicada] = useState('')
+  // Optimistic publicada overrides
+  const [pubOverrides, setPubOverrides] = useState<Record<number, boolean>>({})
 
-  const hasFilters = !!(search || filterMarca || filterNivel || filterAfiliado || filterPublicada)
+  const uniqueYears = useMemo(() => {
+    const years = rackets.map(r => r.model_year).filter((y): y is number => y != null)
+    return [...new Set(years)].sort((a, b) => b - a)
+  }, [rackets])
+
+  const hasFilters = !!(search || filterMarca || filterAno || filterNivel || filterAfiliado || filterPublicada)
 
   function handleSort(col: SortCol) {
-    if (sortCol === col) {
-      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortCol(col)
-      setSortDir('asc')
-    }
+    if (sortCol === col) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
+    else { setSortCol(col); setSortDir('asc') }
   }
 
   function clearFilters() {
-    setSearch('')
-    setFilterMarca('')
-    setFilterNivel('')
-    setFilterAfiliado('')
-    setFilterPublicada('')
+    setSearch(''); setFilterMarca(''); setFilterAno('')
+    setFilterNivel(''); setFilterAfiliado(''); setFilterPublicada('')
   }
 
+  const racketRows = useMemo(() =>
+    rackets.map(r => ({ ...r, publicadaLocal: pubOverrides[r.id] ?? r.publicada })),
+  [rackets, pubOverrides])
+
   const filtered = useMemo(() => {
-    let result = rackets
+    let result = racketRows
 
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       result = result.filter(r => r.name.toLowerCase().includes(q))
     }
     if (filterMarca) result = result.filter(r => r.brandName === filterMarca)
+    if (filterAno)   result = result.filter(r => r.model_year === Number(filterAno))
     if (filterNivel) result = result.filter(r => r.ins?.nivel_sugerido === filterNivel)
     if (filterAfiliado === 'com') result = result.filter(r => r.affiliate_url != null)
     if (filterAfiliado === 'sem') result = result.filter(r => r.affiliate_url == null)
-    if (filterPublicada === 'publicada') result = result.filter(r => r.publicada)
-    if (filterPublicada === 'nao') result = result.filter(r => !r.publicada)
+    if (filterPublicada === 'publicada') result = result.filter(r => r.publicadaLocal)
+    if (filterPublicada === 'nao')       result = result.filter(r => !r.publicadaLocal)
 
     return [...result].sort((a, b) => {
-      let av: string | number = 0
-      let bv: string | number = 0
+      let av: string | number = 0, bv: string | number = 0
       switch (sortCol) {
-        case 'name':    av = a.name;                              bv = b.name; break
-        case 'brand':   av = a.brandName;                         bv = b.brandName; break
-        case 'nivel':   av = nivOrder(a.ins?.nivel_sugerido ?? null); bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
-        case 'power':   av = a.ins?.power   ?? -1;               bv = b.ins?.power   ?? -1; break
-        case 'comfort': av = a.ins?.comfort ?? -1;               bv = b.ins?.comfort ?? -1; break
-        case 'control': av = a.ins?.control ?? -1;               bv = b.ins?.control ?? -1; break
-        case 'spin':    av = a.ins?.spin    ?? -1;               bv = b.ins?.spin    ?? -1; break
-        case 'price':   av = a.price        ?? -1;               bv = b.price        ?? -1; break
+        case 'name':    av = a.name;                                   bv = b.name; break
+        case 'brand':   av = a.brandName;                              bv = b.brandName; break
+        case 'year':    av = a.model_year ?? 0;                        bv = b.model_year ?? 0; break
+        case 'nivel':   av = nivOrder(a.ins?.nivel_sugerido ?? null);  bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
+        case 'power':   av = a.ins?.power   ?? -1;                    bv = b.ins?.power   ?? -1; break
+        case 'comfort': av = a.ins?.comfort ?? -1;                    bv = b.ins?.comfort ?? -1; break
+        case 'control': av = a.ins?.control ?? -1;                    bv = b.ins?.control ?? -1; break
+        case 'spin':    av = a.ins?.spin    ?? -1;                    bv = b.ins?.spin    ?? -1; break
+        case 'price':   av = a.price        ?? -1;                    bv = b.price        ?? -1; break
       }
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
       return 0
     })
-  }, [rackets, search, sortCol, sortDir, filterMarca, filterNivel, filterAfiliado, filterPublicada])
+  }, [racketRows, search, sortCol, sortDir, filterMarca, filterAno, filterNivel, filterAfiliado, filterPublicada])
 
   const selectCls = 'text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 text-gray-600'
 
@@ -145,6 +182,11 @@ export default function RaquetasTable({
           {brands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
         </select>
 
+        <select value={filterAno} onChange={e => setFilterAno(e.target.value)} className={selectCls}>
+          <option value="">Todos os anos</option>
+          {uniqueYears.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+
         <select value={filterNivel} onChange={e => setFilterNivel(e.target.value)} className={selectCls}>
           <option value="">Todos os níveis</option>
           <option value="iniciante">Iniciante</option>
@@ -165,10 +207,7 @@ export default function RaquetasTable({
         </select>
 
         {hasFilters && (
-          <button
-            onClick={clearFilters}
-            className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 transition-colors"
-          >
+          <button onClick={clearFilters} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 transition-colors">
             Limpar ✕
           </button>
         )}
@@ -176,7 +215,7 @@ export default function RaquetasTable({
 
       {/* Table */}
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden overflow-x-auto">
-        <table className="w-full text-xs min-w-[640px]">
+        <table className="w-full text-xs min-w-[740px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 font-medium">
               <th className={thCls('name')} onClick={() => handleSort('name')}>
@@ -184,6 +223,9 @@ export default function RaquetasTable({
               </th>
               <th className={thCls('brand')} onClick={() => handleSort('brand')}>
                 Marca <SortIcon col="brand" active={sortCol} dir={sortDir} />
+              </th>
+              <th className={thCls('year', 'center')} onClick={() => handleSort('year')}>
+                Ano <SortIcon col="year" active={sortCol} dir={sortDir} />
               </th>
               <th className={thCls('nivel')} onClick={() => handleSort('nivel')}>
                 Nível <SortIcon col="nivel" active={sortCol} dir={sortDir} />
@@ -203,33 +245,35 @@ export default function RaquetasTable({
               <th className={thCls('price', 'right')} onClick={() => handleSort('price')}>
                 Preço <SortIcon col="price" active={sortCol} dir={sortDir} />
               </th>
+              <th className="px-3 py-2.5 text-gray-400 font-medium text-center whitespace-nowrap">Pub.</th>
               <th className="px-3 py-2.5" />
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={11} className="px-4 py-8 text-center text-gray-400">
                   Nenhuma raqueta encontrada
                 </td>
               </tr>
             ) : (
               filtered.map(r => (
                 <tr key={r.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-2.5">
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle ${r.publicada ? 'bg-teal-500' : 'bg-gray-300'}`} />
-                    <span className="text-gray-800 font-medium">{r.name}</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-gray-400">{r.brandName}</td>
-                  <td className="px-3 py-2.5 text-gray-400">{nivLabel(r.ins?.nivel_sugerido ?? null)}</td>
-                  <td className="px-2 py-2.5 text-center text-gray-500">{r.ins?.power   ?? '—'}</td>
-                  <td className="px-2 py-2.5 text-center text-gray-500">{r.ins?.comfort ?? '—'}</td>
-                  <td className="px-2 py-2.5 text-center text-gray-500">{r.ins?.control ?? '—'}</td>
-                  <td className="px-2 py-2.5 text-center text-gray-500">{r.ins?.spin    ?? '—'}</td>
-                  <td className="px-4 py-2.5 text-right text-gray-400">
+                  <td className="px-4 py-2 text-gray-800 font-medium">{r.name}</td>
+                  <td className="px-3 py-2 text-gray-400">{r.brandName}</td>
+                  <td className="px-2 py-2 text-center text-gray-400">{r.model_year ?? '—'}</td>
+                  <td className="px-3 py-2 text-gray-400">{nivLabel(r.ins?.nivel_sugerido ?? null)}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.power   ?? '—'}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.comfort ?? '—'}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.control ?? '—'}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.spin    ?? '—'}</td>
+                  <td className="px-4 py-2 text-right text-gray-400">
                     {r.price ? `R$ ${r.price.toLocaleString('pt-BR')}` : '—'}
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-3 py-2 text-center">
+                    <PublicadaToggle racket={r} />
+                  </td>
+                  <td className="px-3 py-2 text-right">
                     <Link href={`/admin/rackets/${r.slug}`} className="text-teal-600 hover:text-teal-800 font-medium">
                       Editar →
                     </Link>
@@ -242,15 +286,8 @@ export default function RaquetasTable({
       </div>
 
       <p className="mt-3 text-xs text-gray-400 flex items-center gap-3">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-500" />
-          publicada
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-300" />
-          não publicada
-        </span>
-        <span>· Pot=potência Conf=conforto Ctrl=controle</span>
+        <span>Pot=potência · Conf=conforto · Ctrl=controle</span>
+        <span>· Clique em <strong>pub/não</strong> para publicar ou despublicar</span>
       </p>
     </div>
   )
