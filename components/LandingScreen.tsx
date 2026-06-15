@@ -399,6 +399,81 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
   )
 }
 
+// ── Athlete Carousel ──────────────────────────────────────────────────────────
+
+function AthleteCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd] = useState(false)
+
+  const syncState = () => {
+    const el = trackRef.current
+    if (!el) return
+    const { scrollLeft, clientWidth, scrollWidth } = el
+    setAtStart(scrollLeft <= 2)
+    setAtEnd(scrollLeft + clientWidth >= scrollWidth - 2)
+  }
+
+  useEffect(() => {
+    syncState()
+    const el = trackRef.current
+    if (!el) return
+    const ro = new ResizeObserver(syncState)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const scroll = (dir: 'prev' | 'next') => {
+    const el = trackRef.current
+    if (!el) return
+    // Scroll by ~3 cards (130px card + 12px gap = 142px × 3)
+    el.scrollBy({ left: dir === 'next' ? 426 : -426, behavior: 'smooth' })
+  }
+
+  const arrowCls = (disabled: boolean) =>
+    `hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border shadow-sm items-center justify-center transition-all
+     ${disabled ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => scroll('prev')}
+        disabled={atStart}
+        aria-label="Raquetes anteriores"
+        className={`${arrowCls(atStart)} left-0 -translate-x-full -ml-2`}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+          <path d="M8.5 2L4 6.5l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      <div className="-mx-5 md:mx-0">
+        <div
+          ref={trackRef}
+          onScroll={syncState}
+          className="flex gap-3 overflow-x-auto scroll-smooth pl-5 pr-5 md:pl-0 md:pr-0 scroll-pl-5 md:scroll-pl-0"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+        >
+          {rackets.map(racket => (
+            <AthleteRacketCard key={racket.id} racket={racket} />
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={() => scroll('next')}
+        disabled={atEnd}
+        aria-label="Próximas raquetes"
+        className={`${arrowCls(atEnd)} right-0 translate-x-full ml-2`}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+          <path d="M4.5 2L9 6.5 4.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  )
+}
+
 // ── Arena decorative ball ──────────────────────────────────────────────────────
 
 function ArenaBall({
@@ -831,16 +906,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <p className="font-heading font-bold text-tinta text-base md:text-lg">As raquetes dos atletas que jogam de verdade</p>
               <p className="text-tinta/50 text-xs">modelos assinados por atletas do circuito</p>
             </div>
-            <div className="-mx-5 md:mx-0">
-              <div
-                className="flex gap-3 overflow-x-auto pl-5 pr-5 md:pl-0 md:pr-0 scroll-pl-5 md:scroll-pl-0"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
-              >
-                {athleteRackets.map(racket => (
-                  <AthleteRacketCard key={racket.id} racket={racket} />
-                ))}
-              </div>
-            </div>
+            <AthleteCarousel rackets={athleteRackets} />
           </div>
         )}
 
