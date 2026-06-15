@@ -282,7 +282,7 @@ export async function listarRaquetasPorMarca(
   if (error) throw new Error(`Supabase: ${error.message}`)
   return {
     brand: brandData as Brand,
-    rackets: (data as unknown as RacketWithInsights[]) ?? [],
+    rackets: ((data as unknown[]) ?? []).map(normalizeRacket),
   }
 }
 

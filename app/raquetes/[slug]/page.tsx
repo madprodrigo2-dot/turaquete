@@ -9,8 +9,6 @@ import ScoreSection from '@/components/ScoreSection'
 import RacketKeyStats from '@/components/RacketKeyStats'
 import { derivarNivel } from '@/lib/nivel'
 
-export const dynamicParams = false
-
 export async function generateStaticParams() {
   const rackets = await listarRaquetas().catch(() => [])
   return rackets.map(r => ({ slug: r.slug }))
@@ -107,16 +105,24 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
         <div className="max-w-xl mx-auto px-5 py-8 flex flex-col gap-6">
 
           {/* Imagem */}
-          {racket.image_url && (
-            <div className="bg-white rounded-2xl p-6 flex items-center justify-center border border-aqua/20 shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="bg-white rounded-2xl p-6 flex items-center justify-center border border-aqua/20 shadow-sm min-h-[180px]">
+            {racket.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={racket.image_url}
                 alt={racket.name}
                 className="object-contain max-h-64 w-auto"
               />
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-aqua/30">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="currentColor" />
+                  <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="currentColor" />
+                </svg>
+                <span className="text-xs text-tinta/30">{racket.name}</span>
+              </div>
+            )}
+          </div>
 
           {/* Título + preço + badges */}
           <div className="flex flex-col gap-2">

@@ -6,8 +6,6 @@ import RacketImageTile from '@/components/RacketImageTile'
 import { NIVEL_LABEL } from '@/components/SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 
-export const dynamicParams = false
-
 export async function generateStaticParams() {
   const brands = await listarMarcas().catch(() => [])
   return brands
