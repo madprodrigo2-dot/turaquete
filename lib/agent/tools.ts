@@ -26,6 +26,10 @@ export const agentTools: Anthropic.Tool[] = [
           enum: ['iniciante', 'intermediario', 'avancado'],
           description: 'Nível do jogador — ajusta os pesos do scorer (não filtra candidatas; raquetes tolerantes são válidas para todos os níveis, especialmente em casos de lesão)',
         },
+        presupuesto_min: {
+          type: 'number',
+          description: 'Piso de preço em BRL. Use 0 para sinalizar "tanto faz" (sem mínimo real, mas confirma que orçamento foi tratado). Use >0 para limitar a raquetes acima desse valor (ex: 2500 para "acima de R$2.500").',
+        },
         presupuesto_max: {
           type: 'number',
           description: 'Orçamento máximo em BRL',

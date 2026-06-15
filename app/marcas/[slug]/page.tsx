@@ -63,10 +63,27 @@ function FlagBrazil() {
   )
 }
 
+function FlagSpain() {
+  return (
+    <svg
+      width="20" height="14" viewBox="0 0 3 2"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Espanha"
+      role="img"
+      className="inline-block align-middle rounded-[1px]"
+      style={{ boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.15)', shapeRendering: 'crispEdges' }}
+    >
+      <rect width="3" height="2" fill="#c60b1e"/>
+      <rect y="0.5" width="3" height="1" fill="#ffc400"/>
+    </svg>
+  )
+}
+
 function CountryFlag({ country }: { country: string }) {
   const c = country.toLowerCase()
   if (c === 'itália' || c === 'italia' || c === 'italy') return <FlagItaly />
   if (c === 'brasil' || c === 'brazil' || c === 'br') return <FlagBrazil />
+  if (c === 'espanha' || c === 'spain' || c === 'es') return <FlagSpain />
   return null
 }
 

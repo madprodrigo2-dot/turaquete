@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const TABS = [
-  { label: 'Geral',     href: '/admin/intencoes' },
-  { label: 'Análise',   href: '/admin/analise'   },
-  { label: 'Qualidade', href: '/admin/qualidade'  },
+  { label: 'Geral',      href: '/admin/intencoes' },
+  { label: 'Análise',    href: '/admin/analise'   },
+  { label: 'Qualidade',  href: '/admin/qualidade'  },
+  { label: 'Afiliados',  href: '/admin/afiliados'  },
 ]
 
 export default function AdminNav() {

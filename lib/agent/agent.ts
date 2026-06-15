@@ -21,7 +21,8 @@ const PRICE_DISPERSION_CONFIG = {
 
 function computePriceDispersion(
   ranked: Array<{ price: number | null; fora_da_faixa?: boolean }>,
-  budgetKnown: boolean
+  budgetKnown: boolean,
+  isInicianteProfile: boolean,
 ): PrecoDecision {
   if (budgetKnown) {
     return { status: 'budget_known', note: 'usuário informou faixa de preço — filtrado na busca' }
@@ -38,6 +39,15 @@ function computePriceDispersion(
   const rangeMin = Math.min(...prices)
   const rangeMax = Math.max(...prices)
   const rangeBrl = rangeMax - rangeMin
+
+  // For iniciantes, price always discriminates — always ask even if range < R$1000
+  if (isInicianteProfile) {
+    return {
+      status: 'disparo',
+      note: `iniciante: preço sempre perguntado (R$${rangeMin}–R$${rangeMax})`,
+      rangeMin, rangeMax, rangeBrl,
+    }
+  }
 
   if (rangeBrl >= PRICE_DISPERSION_CONFIG.minRangeBrl) {
     return {
@@ -266,8 +276,11 @@ async function executeTool(
     }
 
     // ── Price dispersion check ─────────────────────────────────────────────────
-    const budgetKnown   = !!(input as RacketFilters).presupuesto_max
-    const priceDecision = computePriceDispersion(ranked, budgetKnown)
+    // presupuesto_min !== undefined covers "tanto faz" (min=0) and "acima de R$X" (min>0) — both signal "price was handled"
+    const budgetKnown         = !!(input as RacketFilters).presupuesto_max || (input as RacketFilters).presupuesto_min !== undefined
+    const profileNivel        = debugRef.value.perfilInput?.nivel
+    const isInicianteProfile  = typeof profileNivel === 'string' && profileNivel.toLowerCase().includes('inici')
+    const priceDecision = computePriceDispersion(ranked, budgetKnown, isInicianteProfile)
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
 
@@ -275,15 +288,24 @@ async function executeTool(
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
 
     if (priceDecision.status === 'disparo') {
+      const chips = ['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções']
+      const pergunta = isInicianteProfile
+        ? 'e sobre investimento, qual faixa faz mais sentido pra começar?'
+        : 'qual faixa faz mais sentido pro seu bolso?'
       payload.PRECO = {
         status: 'DISPERSAO_ALTA',
         range_brl: `R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}`,
         instrucao_OBRIGATORIA:
-          `Dispersão alta de preços entre as top candidatas (R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}). ` +
-          `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com chips ["Até R$1.500","R$1.500–2.500","R$2.500–3.500","Acima de R$3.500"], ` +
-          `(2) pergunte naturalmente, ao final — ex.: "qual faixa faz mais sentido pro seu bolso?". ` +
-          `PROIBIDO chamar recomendar_raquetas antes de receber a resposta do usuário. ` +
-          `Após receber a faixa, chame buscar_raquetas novamente com presupuesto_max antes de recomendar.`,
+          `${isInicianteProfile ? 'Perfil iniciante: preço é relevante aqui.' : `Dispersão alta (R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}).`} ` +
+          `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com chips ${JSON.stringify(chips)}, ` +
+          `(2) pergunte ao final de forma natural — ex.: "${pergunta}". ` +
+          `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
+          `Após receber a faixa, chame buscar_raquetas novamente com os filtros abaixo ANTES de recomendar: ` +
+          `"Até R$1.500" → presupuesto_max=1500; ` +
+          `"R$1.500–2.500" → presupuesto_min=1500 + presupuesto_max=2500; ` +
+          `"Acima de R$2.500" → presupuesto_min=2500 (sem teto); ` +
+          `"Tanto faz" → presupuesto_min=0 (sem filtro de preço). ` +
+          `Se a faixa escolhida retornar 0 raquetes: diga honestamente e mostre a opção mais próxima fora da faixa.`,
       }
     } else if (priceDecision.status === 'budget_known') {
       payload.PRECO = { status: 'BUDGET_CONHECIDO', note: priceDecision.note }

@@ -150,7 +150,7 @@ function DecisionTreeSection({ trace }: { trace: DecisionTrace }) {
 }
 
 function ConfidenceSection({ info }: { info: ConfidenceInfo }) {
-  const { score, threshold, willRecommend, decisionTaken, presentFields, missingFields, nextQuestion, questionRound, maxQuestions, recommendAnyway } = info
+  const { score, threshold, thresholdReason, willRecommend, decisionTaken, presentFields, missingFields, nextQuestion, questionRound, maxQuestions, recommendAnyway } = info
   return (
     <Section title="Confiança do perfil">
       {/* Score bar */}
@@ -175,7 +175,7 @@ function ConfidenceSection({ info }: { info: ConfidenceInfo }) {
             title={`limiar ${threshold}%`}
           />
         </div>
-        <div className="text-[9px] text-gray-600 mt-0.5 text-right">limiar {threshold}%</div>
+        <div className="text-[9px] text-gray-600 mt-0.5 text-right">limiar {threshold}%{thresholdReason ? ` · ${thresholdReason}` : ''}</div>
       </div>
 
       {recommendAnyway && (

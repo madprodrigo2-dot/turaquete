@@ -95,6 +95,7 @@ export default async function IntencoesAdmin({
     clickRows,
     recEventRows,
     starterDetailRows,
+    semAfiliadoRows,
   ] = await Promise.all([
     sb.rpc('admin_intencao_counts').then(r => (r.data ?? []) as IntencaoRow[]),
     sb.rpc('admin_starter_counts').then(r => (r.data ?? []) as StarterRow[]),
@@ -122,6 +123,14 @@ export default async function IntencoesAdmin({
       .select('racket_id')
       .gte('created_at', cutoffDate)
       .then(r => (r.data ?? []) as RecEventRow[]),
+
+    // Raquetes publicadas sem link afiliado
+    sb.from('rackets')
+      .select('id, name')
+      .eq('publicada', true)
+      .is('affiliate_url', null)
+      .order('name')
+      .then(r => (r.data ?? []) as RacketRow[]),
 
     // Detalhe de um starter específico
     filterStarter === null || primeiraMsgColumnMissing
@@ -285,6 +294,21 @@ export default async function IntencoesAdmin({
 ALTER TABLE public.conversations
   ADD COLUMN IF NOT EXISTS starter_usado TEXT,
   ADD COLUMN IF NOT EXISTS intencao_detectada TEXT;`}</pre>
+        </div>
+      )}
+
+      {/* ── Sem afiliado ── */}
+      {semAfiliadoRows.length > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col gap-2">
+          <p className="font-semibold text-amber-800 text-sm">
+            ⚠️ {semAfiliadoRows.length} raquete{semAfiliadoRows.length !== 1 ? 's' : ''} publicada{semAfiliadoRows.length !== 1 ? 's' : ''} sem link afiliado
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {semAfiliadoRows.map(r => (
+              <span key={r.id} className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-mono">{r.name}</span>
+            ))}
+          </div>
+          <p className="text-amber-700 text-xs">Adicione <code className="font-mono bg-amber-100 px-1 rounded">affiliate_url</code> a estas raquetes para habilitar o botão &ldquo;Ver na loja&rdquo;.</p>
         </div>
       )}
 

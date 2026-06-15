@@ -6,6 +6,7 @@ export interface RacketFilters {
   nome?: string
   atleta?: string
   nivel?: 'iniciante' | 'intermediario' | 'avancado'
+  presupuesto_min?: number  // 0 = "tanto faz" (acknowledges price without filtering); >0 = real floor
   presupuesto_max?: number
   prioridade?: 'potencia' | 'controle' | 'equilibrio' | 'defesa'
   cotovelo_sensivel?: boolean
@@ -116,6 +117,10 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     query = query.filter('specs_extra->>atleta', 'ilike', `%${filtros.atleta}%`)
   }
 
+  if (filtros.presupuesto_min && filtros.presupuesto_min > 0) {
+    query = query.gte('price', filtros.presupuesto_min)
+  }
+
   if (filtros.presupuesto_max) {
     query = query.lte('price', filtros.presupuesto_max)
   }
@@ -132,6 +137,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   const sqlParts = ['publicada=true']
   if (filtros.nome) sqlParts.push(`nome="${filtros.nome}"`)
   if (filtros.atleta) sqlParts.push(`atleta ilike "%${filtros.atleta}%"`)
+  if (filtros.presupuesto_min && filtros.presupuesto_min > 0) sqlParts.push(`preço≥${filtros.presupuesto_min}`)
   if (filtros.presupuesto_max) sqlParts.push(`preço≤${filtros.presupuesto_max}`)
   filterTrace.push({ filtro: `SQL [${sqlParts.join(', ')}]`, depois: allCandidates.length, relaxado: false })
 
@@ -363,7 +369,7 @@ export async function getRaquetasComAtleta(): Promise<RacketWithInsights[]> {
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('publicada', true)
-    .not('specs_extra->>atleta', 'is', null)
+    .eq('destaque_atleta', true)
     .order('name')
 
   if (error) throw new Error(`Supabase: ${error.message}`)
