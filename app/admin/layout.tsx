@@ -2,9 +2,7 @@ import { auth, signOut } from '@/auth'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
 
-const sha = process.env.BUILD_SHA
-const date = process.env.BUILD_DATE
-const buildLabel = sha ? (date ? `${sha} · ${date}` : sha) : null
+const buildLabel = process.env.NEXT_PUBLIC_BUILD_LABEL ?? null
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
