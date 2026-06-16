@@ -571,6 +571,11 @@ function SandMound({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
+// Sky effect — tune this single value to calibrate intensity:
+// 0.07 = whisper (barely there), 0.10 = subtle (default), 0.14 = visible but still discreet
+const SKY_OP = 0.10
+const SKY_RGB = '140, 192, 215'  // desaturated sky blue — doesn't compete with aqua or coral
+
 export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
@@ -605,7 +610,23 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
   }
 
   return (
-    <div className="min-h-screen sand-texture flex flex-col items-center pb-10 md:pb-16">
+    <div className="relative min-h-screen sand-texture flex flex-col items-center pb-10 md:pb-16">
+
+      {/* ── Sky overlay — diffuse cloud suggestions at top of hero, purely decorative ── */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute inset-x-0 top-0"
+        style={{
+          height: 'min(520px, 65vh)',
+          zIndex: 0,
+          background: [
+            `radial-gradient(ellipse 120% 55% at 50% -8%, rgba(${SKY_RGB},${SKY_OP}) 0%, transparent 68%)`,
+            `radial-gradient(ellipse 58% 32% at 18% 18%, rgba(${SKY_RGB},${SKY_OP * 0.62}) 0%, transparent 75%)`,
+            `radial-gradient(ellipse 46% 26% at 80% 22%, rgba(${SKY_RGB},${SKY_OP * 0.52}) 0%, transparent 70%)`,
+            `radial-gradient(ellipse 34% 20% at 60%  6%, rgba(${SKY_RGB},${SKY_OP * 0.42}) 0%, transparent 65%)`,
+          ].join(', '),
+        } as React.CSSProperties}
+      />
 
       {/* Sticky header — full viewport width */}
       <div className={`sticky top-0 z-30 w-full flex justify-center px-5 md:px-8 bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
