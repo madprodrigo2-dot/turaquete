@@ -177,7 +177,8 @@ async function executeTool(
   marcaAskPendingRef: { value: boolean },
   brandAskedRef: { value: boolean },
   currentRacketIds: Set<number>,
-  confirmedProfile: Record<string, unknown>
+  confirmedProfile: Record<string, unknown>,
+  budgetAnsweredRef: { value: boolean }
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -370,7 +371,9 @@ async function executeTool(
     const isNameSearch = !!(input as RacketFilters).nome
     // "tanto faz" = presupuesto_min=0 explicitly set (user confirmed open budget), no max ceiling
     const isBudgetOpen = !isNameSearch && (input as RacketFilters).presupuesto_min === 0 && !(input as RacketFilters).presupuesto_max
-    const budgetKnown = isNameSearch || !!(input as RacketFilters).presupuesto_max || (input as RacketFilters).presupuesto_min !== undefined
+    const budgetKnown = isNameSearch || !!(input as RacketFilters).presupuesto_max
+      || (input as RacketFilters).presupuesto_min !== undefined
+      || budgetAnsweredRef.value
     const priceDecision = computePrecoDecision(ranked, budgetKnown)
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
@@ -571,7 +574,16 @@ export async function runAgentTurn(
   const debugRef: { value: AgentDebugInfo } = { value: {} }
   const priceAskPendingRef: { value: boolean } = { value: false }
   const marcaAskPendingRef: { value: boolean } = { value: false }
-  const brandAskedRef: { value: boolean } = { value: false }
+  // Derive brand/budget answered state from history — prevents re-asking when the model
+  // omits marca_preferida or presupuesto_min in subsequent turns after the user answered.
+  const BRAND_ANSWERS = new Set([...MARCA_CHIPS])
+  const PRICE_ANSWERS = new Set(['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções'])
+  const brandAskedRef: { value: boolean } = {
+    value: history.some(m => m.role === 'user' && BRAND_ANSWERS.has(m.content.trim()))
+  }
+  const budgetAnsweredRef: { value: boolean } = {
+    value: history.some(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
+  }
   const pendingQuestionFieldRef: { value: string | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   // Count only the Akinator questions actually presented in history, not total user messages.
@@ -688,7 +700,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -747,7 +759,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }
