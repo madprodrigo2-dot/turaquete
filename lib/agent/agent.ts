@@ -263,6 +263,16 @@ async function executeTool(
   }
 
   if (name === 'buscar_raquetas') {
+    // Block re-search while a price or brand question is pending in this same turn.
+    // Prevents the model from calling buscar_raquetas with presupuesto_min=0 before
+    // the user has actually answered the price question.
+    const isLookupCall = !!(input as RacketFilters).nome || !!(input as RacketFilters).atleta
+    if ((priceAskPendingRef.value || marcaAskPendingRef.value) && !isLookupCall) {
+      return JSON.stringify({
+        erro: 'AGUARDANDO_RESPOSTA_USUARIO',
+        instrucao: 'Uma pergunta foi emitida ao usuário neste turno. Aguarde a resposta antes de buscar novamente. NÃO use presupuesto_min=0 como substituto — aguarde a resposta real.',
+      })
+    }
     // Any call to buscar_raquetas after the brand question clears the pending flag
     if (marcaAskPendingRef.value && (input as RacketFilters).marca_preferida !== undefined) {
       marcaAskPendingRef.value = false
@@ -494,7 +504,7 @@ async function executeTool(
         ? ['Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar', 'Não tenho dor']
         : opcoes.slice(0, 4)
     }
-    pendingSuggestions.push(...chips)
+    pendingSuggestions.splice(0, pendingSuggestions.length, ...chips)
     return JSON.stringify({ exibidas: chips.length })
   }
 

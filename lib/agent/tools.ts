@@ -28,7 +28,7 @@ export const agentTools: Anthropic.Tool[] = [
         },
         presupuesto_min: {
           type: 'number',
-          description: 'Piso de preço em BRL. Use 0 para sinalizar "tanto faz" (sem mínimo real, mas confirma que orçamento foi tratado). Use >0 para limitar a raquetes acima desse valor (ex: 2500 para "acima de R$2.500").',
+          description: 'Piso de preço em BRL. Só passe após o usuário responder à pergunta de faixa de preço: use 0 quando o usuário respondeu "Tanto faz", use >0 para limitar a raquetes acima desse valor (ex: 2500 para "Acima de R$2.500"). NÃO passe este campo antes do usuário responder — aguarde a resposta real.',
         },
         presupuesto_max: {
           type: 'number',
