@@ -126,7 +126,7 @@ export const agentTools: Anthropic.Tool[] = [
         estilo: {
           type: 'string',
           enum: ['ofensivo', 'defensivo', 'misto'],
-          description: 'Estilo de jogo predominante',
+          description: 'Estilo de jogo predominante. SOMENTE se o usuário declarou explicitamente ("jogo no ataque", "gosto de defender", ou respondeu um chip de estilo). PROIBIDO inferir a partir da raquete atual, da queja ("solta a bola" não é estilo) ou de qualquer outro contexto. Se não foi declarado, omita este campo.',
         },
         idade: {
           type: 'number',
