@@ -481,11 +481,13 @@ function ArenaBall({
   rotation = 0,
   settled = false,
   className = '',
+  opacity = 1,
 }: {
   size: number
   rotation?: number
   settled?: boolean
   className?: string
+  opacity?: number
 }) {
   const deprW = Math.round(size * 1.7)
   const deprH = Math.round(size * 0.28)
@@ -495,7 +497,7 @@ function ArenaBall({
     <div
       aria-hidden="true"
       className={`pointer-events-none select-none absolute${className ? ' ' + className : ''}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, opacity }}
     >
       {/* Contact shadow at base */}
       <div
@@ -570,6 +572,20 @@ function SandMound({
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
+
+// Tune: adicionar/remover entradas para calibrar densidade de bolas na arena
+// Todas hidden lg:block → só em desktop onde o gutter tem ≥176px (conteúdo nunca tapado)
+const ARENA_EXTRA_BALLS: Array<{ size: number; rotation: number; opacity: number; className: string }> = [
+  // gutter esquerdo
+  { size: 20, rotation:  18, opacity: 0.50, className: 'hidden lg:block left-[2%]    top-[12%]' },
+  { size: 32, rotation:  -8, opacity: 0.65, className: 'hidden lg:block left-[3.5%] top-[38%]' },
+  { size: 16, rotation:  55, opacity: 0.38, className: 'hidden lg:block left-[1.5%] top-[62%]' },
+  { size: 26, rotation: -20, opacity: 0.55, className: 'hidden lg:block left-[2.5%] top-[80%]' },
+  // gutter direito
+  { size: 24, rotation: -35, opacity: 0.60, className: 'hidden lg:block right-[2%]    top-[20%]' },
+  { size: 18, rotation:  12, opacity: 0.42, className: 'hidden lg:block right-[1.5%] top-[48%]' },
+  { size: 36, rotation: -12, opacity: 0.72, className: 'hidden lg:block right-[3%]   top-[70%]' },
+]
 
 // Sky effect — tune this single value to calibrate intensity:
 // 0.07 = whisper (barely there), 0.10 = subtle (default), 0.14 = visible but still discreet
@@ -790,6 +806,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
         {/* Bola C: 28px, rotation -25°, animada (1x), rodapé — mobile + desktop */}
         <ArenaBall size={28} rotation={-25} settled={ballSettled} className="bottom-[6px] right-5 md:bottom-8 md:right-[3%]" />
+
+        {/* ── Bolas extras — gutter desktop (lg+) ── */}
+        {ARENA_EXTRA_BALLS.map((b, i) => (
+          <ArenaBall key={i} size={b.size} rotation={b.rotation} opacity={b.opacity} className={b.className} />
+        ))}
 
         {/* ── Montes de areia decorativos ── */}
         {/* 1: rodapé centro — visível em todos */}
