@@ -367,7 +367,8 @@ async function executeTool(
 export async function runAgentTurn(
   history: ChatMessage[],
   onToken?: (token: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  conversationIntento?: IntencaoTipo
 ): Promise<AgentResult> {
   const messages: Anthropic.MessageParam[] = history.map(m => ({
     role: m.role,
@@ -409,12 +410,18 @@ export async function runAgentTurn(
     const confidenceInsufficient = debugRef.value.confidenceInfo?.willRecommend === false
     const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0 && !confidenceInsufficient
 
-    // Force diagnosticar_perfil right after registrar_intencao for profile-building intents.
-    // The model decides the arguments (extracts what it knows from the conversation), but
-    // calling the tool is mandatory — this routes all questions through the Akinator system
-    // instead of letting the model improvise freeform questions without chips.
-    const needsDiagnostic = intencaoRef.value != null
-      && INTENTS_NEEDING_PROFILE.includes(intencaoRef.value)
+    // effectiveIntent re-evaluated each round so it picks up intencaoRef.value set by
+    // registrar_intencao mid-turn (turn 1), while also falling back to the client-supplied
+    // conversationIntento for turns 2+ where registrar_intencao never fires again.
+    const effectiveIntent = intencaoRef.value ?? conversationIntento ?? null
+
+    // Force diagnosticar_perfil when the conversation is in a profile-building flow.
+    // Turn 1: registrar_intencao fires in round 1 → round 2 sees effectiveIntent set.
+    // Turns 2+: intencaoRef stays null but effectiveIntent = conversationIntento (turn-1 intent
+    // persisted client-side and passed back with every request). This ensures the Akinator
+    // system (not the model) controls all questions across the full conversation.
+    const needsDiagnostic = effectiveIntent != null
+      && INTENTS_NEEDING_PROFILE.includes(effectiveIntent)
       && !diagnosticoRef.value
       && !hasSearchResults
       && pendingRecommendations.length === 0

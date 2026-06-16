@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runAgentTurn, ChatMessage } from '@/lib/agent/agent'
+import { runAgentTurn, ChatMessage, type IntencaoTipo } from '@/lib/agent/agent'
 import { calcCost, PRICING } from '@/lib/agent/pricing'
 import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -153,11 +153,12 @@ class ToolCallFilter {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { messages, sessionId, primeiraMensagem, starterUsado } = body as {
+    const { messages, sessionId, primeiraMensagem, starterUsado, intencaoConversacao } = body as {
       messages: ChatMessage[]
       sessionId: string
       primeiraMensagem?: string
       starterUsado?: string | null
+      intencaoConversacao?: IntencaoTipo
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -229,7 +230,7 @@ export async function POST(req: NextRequest) {
             }
             // Thinking tokens go only to verified admin sessions — never to regular users
             if (thinking && isAdmin) writeEvent(controller, { type: 'thinking_token', token: thinking })
-          }, agentController.signal)
+          }, agentController.signal, intencaoConversacao)
           clearTimeout(agentTimeout)
 
           // Flush both filters in sequence
