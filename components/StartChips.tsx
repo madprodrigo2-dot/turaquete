@@ -2,7 +2,7 @@ const CHIPS = [
   'Sou iniciante',
   'Quero trocar minha raquete',
   'Tenho dor no cotovelo',
-  'Quero mais potência',
+  'Venho do tênis',
 ]
 
 interface Props {
