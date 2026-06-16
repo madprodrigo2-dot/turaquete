@@ -448,6 +448,14 @@ async function executeTool(
   }
 
   if (name === 'recomendar_raquetas') {
+    // Hard gate: block recommendation if profile confidence is still insufficient.
+    // Prevents the model from recommending mid-questionnaire even if it tries.
+    if (debugRef.value.confidenceInfo?.willRecommend === false) {
+      return JSON.stringify({
+        erro: 'GATE_CONFIANCA: perfil incompleto — lesão não respondida.',
+        instrucao: 'NÃO repita recomendar_raquetas agora. Faça a pergunta indicada por diagnosticar_perfil antes de recomendar.',
+      })
+    }
     const { raquetes } = input as RecommendInput
     // Limitar a 3 aunque el modelo mande más
     const capped = raquetes.slice(0, 3)
@@ -547,7 +555,7 @@ export async function runAgentTurn(
     //   2. Force diagnosticar_perfil for profile-building intents after intent registration
     //   3. Force any tool when the model stalled before completing the search flow
     //   4. Auto otherwise
-    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value && !marcaAskPendingRef.value)
+    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value && !marcaAskPendingRef.value && !confidenceInsufficient)
       ? { type: 'tool' as const, name: 'recomendar_raquetas' }
       : needsDiagnostic
       ? { type: 'tool' as const, name: 'diagnosticar_perfil' }
@@ -610,12 +618,16 @@ export async function runAgentTurn(
 
       if (block.name === 'buscar_raquetas') {
         searchWasCalled = true
+        const inp = block.input as RacketFilters
+        // Lookup calls (nome or atleta present) identify a specific racket — they are NOT
+        // a recommendation pool. Only profile-based searches (no nome/atleta) count as
+        // "results ready to recommend". This prevents a TROCA identification call from
+        // contaminating hasSearchResults and forcing recomendar_raquetas with the wrong pool.
+        const isLookup = !!(inp.nome || inp.atleta)
         try {
           const parsed = JSON.parse(result) as { encontradas: number; fora_do_orcamento?: boolean }
-          // Only mark hasSearchResults when results are in-budget.
-          // fora_do_orcamento=true means 0 in-budget results — we must not force recomendar_raquetas
-          // immediately; the agent should first explain and ask the user.
-          if (parsed.encontradas > 0 && !parsed.fora_do_orcamento) hasSearchResults = true
+          // Only mark hasSearchResults when results are in-budget AND it's a profile search.
+          if (parsed.encontradas > 0 && !parsed.fora_do_orcamento && !isLookup) hasSearchResults = true
         } catch { /* ignore parse errors */ }
       }
 
@@ -633,7 +645,8 @@ export async function runAgentTurn(
   // Post-loop safety: if search results exist but recomendar_raquetas was never
   // called (rounds exhausted before the forced pick), inject one final forced call.
   // This guarantees cards are always emitted when the scorer found candidates.
-  if (hasSearchResults && pendingRecommendations.length === 0) {
+  // Guard: skip if confidence is still insufficient (e.g. lesão not yet answered).
+  if (hasSearchResults && pendingRecommendations.length === 0 && !confidenceInsufficient) {
     console.warn('[agent] MAX_TOOL_ROUNDS exhausted without recomendar_raquetas — forcing final pick')
     try {
       const recResp = await anthropic.messages.create({
