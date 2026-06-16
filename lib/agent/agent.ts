@@ -278,10 +278,26 @@ async function executeTool(
         const rankedSemOrc = diagnosticoRef.value ? applyFaixaFilter(raquetesSemOrc, diagnosticoRef.value) : raquetesSemOrc
         if (rankedSemOrc.length > 0) {
           const topSemOrc = rankedSemOrc.slice(0, MAX_CANDIDATES).map(slimForModel)
+          // Sort by price to surface the most affordable option in the instruction
+          const cheapest = [...rankedSemOrc].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))[0]
+          const cheapestDesc = cheapest.price != null ? `${cheapest.name} (R$${cheapest.price})` : cheapest.name
           const payload: Record<string, unknown> = {
             encontradas: rankedSemOrc.length,
             raquetes: topSemOrc,
             fora_do_orcamento: true,
+            AVISO_ORCAMENTO_OBRIGATORIO: {
+              status: 'ZERO_NA_FAIXA',
+              faixa_solicitada: `até R$${filters.presupuesto_max}`,
+              mais_acessivel: cheapestDesc,
+              instrucao_OBRIGATORIA:
+                `Nenhuma raquete disponível dentro de R$${filters.presupuesto_max}. ` +
+                `As raquetes listadas estão ACIMA desse valor. ` +
+                `AÇÃO OBRIGATÓRIA: ` +
+                `(1) diga com honestidade que não há opções nessa faixa — ex.: "Dentro de R$${filters.presupuesto_max} não tenho opções. A mais em conta que tenho é a ${cheapestDesc}."; ` +
+                `(2) ofereça alternativas: "Quer que eu te mostre as mais acessíveis, ou prefere ajustar o valor?"; ` +
+                `(3) NÃO chame recomendar_raquetas nesta resposta — espere o usuário confirmar que quer ver opções acima do orçamento. ` +
+                `PROIBIDO apresentar essas raquetes como se cumprissem o orçamento pedido.`,
+            },
           }
           if (relSemOrc.length > 0) payload.criterios_relaxados = relSemOrc
           return JSON.stringify(payload)
@@ -474,7 +490,8 @@ export async function runAgentTurn(
     .length
   let isComparison = false
   let rounds = 0
-  let hasSearchResults = false
+  let hasSearchResults = false  // true only when in-budget results exist (fora_do_orcamento excluded)
+  let searchWasCalled = false   // true whenever buscar_raquetas ran, even with fora_do_orcamento
   // Stall recovery: if the model emits pure text with no tool calls on the first
   // round (e.g. "Um segundo." / "Deixa eu buscar..."), we retry once with
   // tool_choice:'any' to force it to actually call a tool. The stall response is
@@ -496,7 +513,9 @@ export async function runAgentTurn(
     // EXCEPTION: if confidence is insufficient, the agent is SUPPOSED to ask a question and
     // not search yet — that's not a stall. Only treat as stall when confidence is sufficient.
     const confidenceInsufficient = debugRef.value.confidenceInfo?.willRecommend === false
-    const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0 && !confidenceInsufficient && !marcaAskPendingRef.value
+    // Use searchWasCalled (not hasSearchResults) so that a fora_do_orcamento search
+    // (which intentionally leaves hasSearchResults=false) doesn't trigger stall detection.
+    const diagWithoutSearch = !!diagnosticoRef.value && !searchWasCalled && pendingRecommendations.length === 0 && !confidenceInsufficient && !marcaAskPendingRef.value
 
     // Force diagnosticar_perfil right after registrar_intencao for profile-building intents.
     // The model decides the arguments (extracts what it knows from the conversation), but
@@ -576,9 +595,13 @@ export async function runAgentTurn(
       }
 
       if (block.name === 'buscar_raquetas') {
+        searchWasCalled = true
         try {
-          const parsed = JSON.parse(result) as { encontradas: number }
-          if (parsed.encontradas > 0) hasSearchResults = true
+          const parsed = JSON.parse(result) as { encontradas: number; fora_do_orcamento?: boolean }
+          // Only mark hasSearchResults when results are in-budget.
+          // fora_do_orcamento=true means 0 in-budget results — we must not force recomendar_raquetas
+          // immediately; the agent should first explain and ask the user.
+          if (parsed.encontradas > 0 && !parsed.fora_do_orcamento) hasSearchResults = true
         } catch { /* ignore parse errors */ }
       }
 

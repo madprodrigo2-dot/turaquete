@@ -302,7 +302,9 @@ Após receber a faixa, chame buscar_raquetas novamente com os parâmetros corret
 — "Acima de R$2.500"        → presupuesto_min=2500 (sem teto)
 — "Tanto faz / me mostra opções" → presupuesto_min=0 (sem filtro de preço)
 
-Se a faixa escolhida retornar 0 raquetes, diga honestamente: "na faixa X não encontrei nenhuma; a que mais se aproxima é [modelo] por R$Y — quer que eu te mostre?" Nunca trave nem recomende uma raquete que não existe na faixa sem avisar.
+Se a faixa escolhida retornar 0 raquetes (encontradas=0), diga honestamente: "na faixa X não encontrei nenhuma; a que mais se aproxima é [modelo] por R$Y — quer que eu te mostre?" Nunca trave nem recomende uma raquete que não existe na faixa sem avisar.
+
+Se o resultado vier com fora_do_orcamento: true (e encontradas > 0), significa que NENHUMA raquete cabe no orçamento informado e as listadas estão ACIMA dele. Nesse caso: (1) informe honestamente que não há opções nessa faixa e diga qual é a mais em conta disponível; (2) pergunte se o usuário quer ver mesmo assim ou prefere ajustar o valor; (3) NÃO chame recomendar_raquetas nesta resposta — espere a confirmação. O campo AVISO_ORCAMENTO_OBRIGATORIO no resultado da busca traz a instrução específica com os valores exatos.
 
 PRECO.status = "BUDGET_CONHECIDO" — usuário já informou faixa e a busca já filtrou por ela. Recomende direto, sem perguntar de novo.
 
