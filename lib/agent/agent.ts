@@ -280,6 +280,16 @@ async function executeTool(
     // Prevents the model from calling buscar_raquetas with presupuesto_min=0 before
     // the user has actually answered the price question.
     const isLookupCall = !!(input as RacketFilters).nome || !!(input as RacketFilters).atleta
+    // Block profile search when diagnosticar_perfil already signalled INSUFICIENTE this turn.
+    // Without this guard: diagnosticar returns lesão-pending → model calls buscar_raquetas →
+    // pendingQuestionFieldRef is overwritten with 'preco' → two questions bundled, chips for only one.
+    // Lookup calls (nome/atleta) are exempt — they identify the current racket in TROCA flow.
+    if (debugRef.value.confidenceInfo?.willRecommend === false && !isLookupCall) {
+      return JSON.stringify({
+        erro: 'PERFIL_INSUFICIENTE',
+        instrucao: 'Confiança do perfil insuficiente: chame sugerir_opcoes com a pergunta indicada por diagnosticar_perfil e aguarde o usuário responder ANTES de buscar raquetes. Não chame buscar_raquetas nesta resposta.',
+      })
+    }
     if ((priceAskPendingRef.value || marcaAskPendingRef.value) && !isLookupCall) {
       return JSON.stringify({
         erro: 'AGUARDANDO_RESPOSTA_USUARIO',
@@ -851,7 +861,7 @@ async function streamResponse(
     systemBlocks.push({
       type: 'text',
       text: fixedText
-        ? `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta DEVE conter EXATAMENTE esta pergunta, sem alterar uma palavra:\n"${fixedText}"\nVocê pode escrever UMA frase curta de acolhimento do que a pessoa disse ANTES da pergunta (ex: "Entendido!", "Boa!"). Nada depois da pergunta. Não improvise outra formulação.`
+        ? `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta DEVE conter EXATAMENTE esta pergunta, sem alterar uma palavra:\n"${fixedText}"\nVocê pode escrever UMA frase curta de acolhimento do que a pessoa disse ANTES da pergunta (ex: "Entendido!", "Boa!"). Nada depois da pergunta. Não improvise outra formulação.\nPROIBIDO escrever mais de uma pergunta nesta mensagem. Não mencione nenhuma outra dimensão (lesão, nível, estilo, orçamento, preço, marca) além da frase exata acima.`
         : `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos".`,
     })
   }
