@@ -4,7 +4,7 @@ import { SYSTEM_PROMPT } from './prompt'
 import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
-import type { DecisionTrace, FilterStep, PrecoDecision } from '../debug-types'
+import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, PRECO_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -12,6 +12,10 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const MODEL = PRICING.model
 const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
 const MAX_TOOL_ROUNDS = 5  // nominal flow needs 3-4 rounds; 5 covers stall+chips edge cases
+
+const MARCA_QUESTION_TEXT = 'Tem alguma marca que você curte ou tanto faz?'
+const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']
+const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
 
 // Budget decision: ask whenever the user hasn't told us their budget.
 // The old "price dispersion" criterion was wrong — candidates can be similar to
@@ -136,7 +140,9 @@ async function executeTool(
   debugRef: { value: AgentDebugInfo },
   conversationTurns: number,
   priceAskPendingRef: { value: boolean },
-  pendingQuestionFieldRef: { value: FieldKey | 'preco' | null }
+  pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null },
+  marcaAskPendingRef: { value: boolean },
+  brandAskedRef: { value: boolean }
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -212,6 +218,10 @@ async function executeTool(
   }
 
   if (name === 'buscar_raquetas') {
+    // Any call to buscar_raquetas after the brand question clears the pending flag
+    if (marcaAskPendingRef.value && (input as RacketFilters).marca_preferida !== undefined) {
+      marcaAskPendingRef.value = false
+    }
     const { raquetes, criteriosRelaxados, filterTrace } = await buscarRaquetas(input as RacketFilters)
     const ranked = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
     debugRef.value.scorerResults = ranked.slice(0, 10).map(r => ({
@@ -322,6 +332,34 @@ async function executeTool(
     }
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
 
+    // ── Marca decision ─────────────────────────────────────────────────────────
+    // Ask brand preference once, after budget is known, for profile-based searches.
+    // marca_preferida === undefined means "not yet provided" (distinct from null = "tanto faz").
+    const marcaJaFornecida = (input as RacketFilters).marca_preferida !== undefined
+    const shouldAskMarca = budgetKnown && !isNameSearch && !marcaJaFornecida && !brandAskedRef.value && !priceAskPendingRef.value
+    if (shouldAskMarca) {
+      brandAskedRef.value = true
+      marcaAskPendingRef.value = true
+      pendingQuestionFieldRef.value = 'marca'
+    }
+
+    // Capture MarcaDecision for debug
+    const marcaPreferida = (input as RacketFilters).marca_preferida ?? null
+    const racketsDaMarca = marcaPreferida
+      ? ranked.filter(r => (r as { brands?: { name: string } | null }).brands?.name?.toLowerCase() === marcaPreferida.toLowerCase()).length
+      : 0
+    const topNaoEDaMarca = marcaPreferida && ranked.length > 0
+      ? (ranked[0] as { brands?: { name: string } | null }).brands?.name?.toLowerCase() !== marcaPreferida.toLowerCase()
+      : false
+    const marcaDecisionData: MarcaDecision = {
+      marcaPreferida,
+      boost: BRAND_BOOST,
+      racketsDaMarca,
+      topNaoEDaMarca: !!topNaoEDaMarca,
+    }
+    if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
+    debugRef.value.decisionTrace.marcaDecision = marcaDecisionData
+
     if (priceDecision.status === 'disparo') {
       const chips = ['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções']
       payload.PRECO = {
@@ -346,6 +384,21 @@ async function executeTool(
         ...(isBudgetOpen ? {
           instrucao_custo_beneficio: 'Orçamento aberto ("tanto faz"). Na recomendação, mencione brevemente qual opção oferece melhor custo-benefício — ex.: "a [modelo] rende quase igual às outras e é a mais em conta".',
         } : {}),
+      }
+    }
+
+    if (shouldAskMarca) {
+      payload.MARCA = {
+        status: 'PREFERENCIA_NAO_PERGUNTADA',
+        marcas_disponiveis: MARCA_CHIPS.slice(0, -1),
+        instrucao_OBRIGATORIA:
+          `Preferência de marca não informada. ` +
+          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase curta perguntando sobre preferência de marca no texto — ex.: "${MARCA_QUESTION_TEXT}" — sem essa frase os chips ficam órfãos; ` +
+          `(2) chame sugerir_opcoes com chips ${JSON.stringify(MARCA_CHIPS)}. ` +
+          `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
+          `Após receber a resposta, chame buscar_raquetas novamente com o campo marca_preferida: ` +
+          `"AMA Sport" → marca_preferida="AMA Sport"; "Drop Shot" → marca_preferida="Drop Shot"; "Heroe's" → marca_preferida="Heroe's"; "Tanto faz" → marca_preferida=null. ` +
+          `Se a marca preferida não tiver raquetes aptas no perfil: diga honestamente e mostre as melhores disponíveis de outras marcas.`,
       }
     }
 
@@ -407,7 +460,9 @@ export async function runAgentTurn(
   const intencaoRef: { value: IntencaoTipo | null } = { value: null }
   const debugRef: { value: AgentDebugInfo } = { value: {} }
   const priceAskPendingRef: { value: boolean } = { value: false }
-  const pendingQuestionFieldRef: { value: FieldKey | 'preco' | null } = { value: null }
+  const marcaAskPendingRef: { value: boolean } = { value: false }
+  const brandAskedRef: { value: boolean } = { value: false }
+  const pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   const conversationTurns = history.filter(m => m.role === 'user').length
   let isComparison = false
@@ -434,7 +489,7 @@ export async function runAgentTurn(
     // EXCEPTION: if confidence is insufficient, the agent is SUPPOSED to ask a question and
     // not search yet — that's not a stall. Only treat as stall when confidence is sufficient.
     const confidenceInsufficient = debugRef.value.confidenceInfo?.willRecommend === false
-    const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0 && !confidenceInsufficient
+    const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0 && !confidenceInsufficient && !marcaAskPendingRef.value
 
     // Force diagnosticar_perfil right after registrar_intencao for profile-building intents.
     // The model decides the arguments (extracts what it knows from the conversation), but
@@ -452,7 +507,7 @@ export async function runAgentTurn(
     //   2. Force diagnosticar_perfil for profile-building intents after intent registration
     //   3. Force any tool when the model stalled before completing the search flow
     //   4. Auto otherwise
-    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value)
+    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value && !marcaAskPendingRef.value)
       ? { type: 'tool' as const, name: 'recomendar_raquetas' }
       : needsDiagnostic
       ? { type: 'tool' as const, name: 'diagnosticar_perfil' }
@@ -507,7 +562,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -551,7 +606,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }
@@ -597,7 +652,7 @@ async function streamResponse(
   intencaoRef: { value: IntencaoTipo | null },
   debugRef: { value: AgentDebugInfo },
   usage: TokenUsage,
-  pendingQuestionFieldRef: { value: FieldKey | 'preco' | null },
+  pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null },
   onToken: (token: string) => void,
   signal?: AbortSignal
 ): Promise<AgentResult> {
@@ -615,7 +670,7 @@ async function streamResponse(
   if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
     const fixedText = field
-      ? (field === 'preco' ? PRECO_QUESTION_TEXT : getFixedQuestionText(field))
+      ? (field === 'preco' ? PRECO_QUESTION_TEXT : field === 'marca' ? MARCA_QUESTION_TEXT : getFixedQuestionText(field))
       : null
     systemBlocks.push({
       type: 'text',
@@ -655,7 +710,7 @@ async function streamResponse(
   if (!text.trim() && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
     const fallback = field
-      ? (field === 'preco' ? PRECO_QUESTION_TEXT : getFixedQuestionText(field))
+      ? (field === 'preco' ? PRECO_QUESTION_TEXT : field === 'marca' ? MARCA_QUESTION_TEXT : getFixedQuestionText(field))
       : null
     if (fallback) {
       text = fallback

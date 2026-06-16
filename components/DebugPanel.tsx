@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { FaixaIdeal } from '@/lib/scorer'
-import type { DecisionTrace, PrecoDecision } from '@/lib/debug-types'
+import type { DecisionTrace, PrecoDecision, LimitesState, MarcaDecision } from '@/lib/debug-types'
 import type { ConfidenceInfo } from '@/lib/agent/confidence'
 
 export type DebugData = {
@@ -28,6 +28,7 @@ export type DebugData = {
     usd: number
     brl: number
   }
+  limites?: LimitesState
 }
 
 function Section({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
@@ -118,6 +119,33 @@ function DecisionTreeSection({ trace }: { trace: DecisionTrace }) {
                   <div className="text-[10px] text-gray-500 mt-0.5">
                     range top candidatas: R${pd.rangeMin}–R${pd.rangeMax}
                     {pd.rangeBrl != null && <span className="text-orange-400 ml-1">(Δ R${pd.rangeBrl})</span>}
+                  </div>
+                )}
+              </>
+            )
+          })()}
+        </div>
+      )}
+
+      {/* Marca decision */}
+      {trace.marcaDecision && (
+        <div className="mb-3">
+          <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Preferência de marca</div>
+          {(() => {
+            const md = trace.marcaDecision as MarcaDecision
+            const hasPref = !!md.marcaPreferida
+            const color = !hasPref ? 'text-gray-400' : md.topNaoEDaMarca ? 'text-orange-300' : 'text-green-400'
+            const label = !hasPref
+              ? '— sem preferência (tanto faz)'
+              : md.topNaoEDaMarca
+              ? `⚠ top candidata não é ${md.marcaPreferida}`
+              : `✓ top candidata é ${md.marcaPreferida}`
+            return (
+              <>
+                <div className={`text-[11px] font-semibold ${color} mb-0.5`}>{label}</div>
+                {hasPref && (
+                  <div className="text-[10px] text-gray-500 italic">
+                    {md.racketsDaMarca} raquete(s) da marca no pool · boost +{md.boost} pts
                   </div>
                 )}
               </>
@@ -217,6 +245,48 @@ function ConfidenceSection({ info }: { info: ConfidenceInfo }) {
   )
 }
 
+function fmtMs(ms: number): string {
+  if (ms <= 0) return 'agora'
+  if (ms < 60_000) return `${Math.ceil(ms / 1000)}s`
+  return `${Math.ceil(ms / 60_000)}min`
+}
+
+function LimitRow({ label, count, limit, resetInMs }: { label: string; count: number; limit: number; resetInMs: number }) {
+  const pct = Math.min(100, (count / limit) * 100)
+  const hot = count >= limit * 0.8
+  return (
+    <div className="mb-1.5">
+      <div className="flex justify-between items-baseline mb-0.5">
+        <span className="text-[10px] text-gray-400">{label}</span>
+        <span className={`text-[11px] tabular-nums font-semibold ${hot ? 'text-orange-400' : 'text-gray-200'}`}>
+          {count}/{limit}
+          {resetInMs > 0 && <span className="text-gray-500 font-normal text-[9px] ml-1">reset {fmtMs(resetInMs)}</span>}
+        </span>
+      </div>
+      <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${hot ? 'bg-orange-500' : 'bg-cyan-500'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function LimitesSection({ limites }: { limites: LimitesState }) {
+  const ipShort = limites.ip.split('.').slice(-2).join('.')
+  return (
+    <Section title="Limites de uso" defaultOpen={false}>
+      <div className="text-[9px] text-gray-600 mb-2">IP: …{ipShort}</div>
+      <LimitRow label="por minuto (IP)" count={limites.ipPerMin.count} limit={limites.ipPerMin.limit} resetInMs={limites.ipPerMin.resetInMs} />
+      <LimitRow label="por dia (IP)" count={limites.ipPerDay.count} limit={limites.ipPerDay.limit} resetInMs={limites.ipPerDay.resetInMs} />
+      {limites.sessao && (
+        <LimitRow label="esta conversa" count={limites.sessao.count} limit={limites.sessao.limit} resetInMs={limites.sessao.resetInMs} />
+      )}
+    </Section>
+  )
+}
+
 export default function DebugPanel({ data }: { data: DebugData }) {
   return (
     <div className="mt-2 font-mono text-xs bg-gray-800 text-gray-200 rounded-lg overflow-hidden border border-gray-600 select-text">
@@ -274,6 +344,10 @@ export default function DebugPanel({ data }: { data: DebugData }) {
             <div className="mt-1.5 text-orange-400 text-[10px]">relaxados: {data.criteriosRelaxados.join(' · ')}</div>
           )}
         </Section>
+      )}
+
+      {data.limites && (
+        <LimitesSection limites={data.limites} />
       )}
 
       {data.usage && (

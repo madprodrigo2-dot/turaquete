@@ -31,10 +31,27 @@ export type PrecoDecision = {
   rangeBrl?: number
 }
 
+export type MarcaDecision = {
+  marcaPreferida: string | null
+  boost: number
+  racketsDaMarca: number
+  topNaoEDaMarca: boolean
+}
+
 export type DecisionTrace = {
   faixaSteps?: FaixaStep[]
   conflitos?: string[]
   filterSteps?: FilterStep[]
   scorerWeights?: Record<string, number>
   precoDecision?: PrecoDecision
+  marcaDecision?: MarcaDecision
+}
+
+export type LimitWindow = { count: number; limit: number; resetInMs: number }
+
+export type LimitesState = {
+  ipPerMin: LimitWindow
+  ipPerDay: LimitWindow
+  sessao:   LimitWindow | null
+  ip: string
 }

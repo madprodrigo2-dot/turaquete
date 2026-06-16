@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json() as Record<string, unknown>
-    const { event_type, session_id, motivo, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body
+    const { event_type, session_id, motivo, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body
 
     if (typeof event_type !== 'string' || !VALID_TYPES.has(event_type)) {
       return NextResponse.json({ error: 'event_type inválido' }, { status: 400 })
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
         session_id,
         event_type,
         motivo:                   typeof motivo === 'string'                   ? motivo : null,
+        comentario:               typeof comentario === 'string'               ? comentario.slice(0, 1000) : null,
         decision_trace:           decision_trace != null                        ? decision_trace : null,
         intencao:                 typeof intencao === 'string'                  ? intencao : null,
         turnos_ate_recomendacao:  typeof turnos_ate_recomendacao === 'number'   ? turnos_ate_recomendacao : null,

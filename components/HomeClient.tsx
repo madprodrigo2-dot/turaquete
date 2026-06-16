@@ -19,6 +19,7 @@ const OPENING_MESSAGE =
 
 const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
 const MESSAGE_LIMIT = 25
+const WARN_AT       = 20
 
 const BUDGET_CHIPS = ['Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500']
 const LEVEL_CHIPS  = ['Iniciante', 'Intermediário', 'Avançado']
@@ -89,6 +90,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const firstRecShownRef = useRef(false)
   const intencaoConvRef = useRef<string | undefined>(undefined)
   const turnosAteRecRef = useRef(0)
+  const viewRef = useRef(view)
 
   const STREAM_TIMEOUT_MS = 40_000
 
@@ -137,6 +139,26 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     }
   }, [isAnimating, streamRawText, view])
 
+  // Keep viewRef in sync so the popstate handler never sees a stale closure
+  useEffect(() => { viewRef.current = view }, [view])
+
+  // Android/browser back button: if user is in chat, return to landing instead of exiting the site.
+  // handleStart pushes a history entry; popstate fires when the user navigates back.
+  useEffect(() => {
+    const onPopState = () => {
+      if (viewRef.current === 'chat') {
+        setFading(true)
+        setTimeout(() => {
+          setView('landing')
+          setFading(false)
+          window.scrollTo(0, 0)
+        }, 150)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   // Close confirm on outside interaction
   useEffect(() => {
     if (!confirmReset) return
@@ -177,6 +199,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
 
   const handleStart = () => {
     sendGAEvent({ event: 'chat_iniciado' })
+    history.pushState({ view: 'chat' }, '')
     setFading(true)
     setTimeout(() => {
       setView('chat')
@@ -268,7 +291,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
           setStreamRawText(partialText)
           setMessages([...updated, { role: 'assistant', content: partialText }])
         } else if (evt.type === 'debug') {
-          pendingDebugRef.current = { thinking: evt.thinking, perfilInput: evt.perfilInput, scorerResults: evt.scorerResults, criteriosRelaxados: evt.criteriosRelaxados, diagnostico: evt.diagnostico, decisionTrace: evt.decisionTrace, confidenceInfo: evt.confidenceInfo, usage: evt.usage }
+          pendingDebugRef.current = { thinking: evt.thinking, perfilInput: evt.perfilInput, scorerResults: evt.scorerResults, criteriosRelaxados: evt.criteriosRelaxados, diagnostico: evt.diagnostico, decisionTrace: evt.decisionTrace, confidenceInfo: evt.confidenceInfo, usage: evt.usage, limites: evt.limites }
         } else if (evt.type === 'done') {
           streamFinished = true
           consecutiveTimeoutsRef.current = 0
@@ -366,7 +389,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   }
 
   const hasUserMessages = messages.some(m => m.role === 'user')
-  const atLimit = messages.length >= MESSAGE_LIMIT
+  const atLimit   = messages.length >= MESSAGE_LIMIT
+  const nearLimit = !atLimit && messages.length >= WARN_AT
 
   const lastMsg = messages[messages.length - 1]
   // Context chips and other reactive UI only appear after the full animation settles
@@ -392,7 +416,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                   href="/"
                   aria-label="Voltar à página inicial"
                   className="cursor-pointer"
-                  onClick={e => { e.preventDefault(); setView('landing'); window.scrollTo(0, 0) }}
+                  onClick={e => { e.preventDefault(); history.back() }}
                 >
                   <Image
                     src="/logo-header.png"
@@ -499,11 +523,19 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
               })}
               {loading && <ChatMessage role="assistant" content="" loading />}
 
+              {/* Aviso de aproximação do limite */}
+              {nearLimit && !loading && !isStreaming && (
+                <div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
+                  Estamos chegando ao fim desta conversa — ainda dá pra trocar mais {MESSAGE_LIMIT - messages.length} mensagens. Se quiser continuar de outro ângulo, você pode{' '}
+                  <button onClick={resetConversation} className="underline font-semibold hover:text-amber-900 transition-colors">recomeçar a qualquer hora</button>.
+                </div>
+              )}
+
               {/* Limite de mensagens */}
               {atLimit && !loading && (
-                <div className="flex flex-col items-center gap-3 py-4 text-center">
-                  <p className="text-tinta/50 text-sm leading-relaxed max-w-xs">
-                    Chegamos ao limite desta consultoria. Quer começar uma nova?
+                <div className="flex flex-col items-center gap-3 py-4 text-center px-4">
+                  <p className="text-tinta/60 text-sm leading-relaxed max-w-xs">
+                    Acho que já exploramos bastante juntos! Que tal começar uma conversa nova do zero?
                   </p>
                   <button
                     onClick={resetConversation}

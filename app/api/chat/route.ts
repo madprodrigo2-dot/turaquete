@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { runAgentTurn, ChatMessage } from '@/lib/agent/agent'
 import { calcCost, PRICING } from '@/lib/agent/pricing'
 import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
-import { checkRateLimit } from '@/lib/rate-limit'
+import { checkRateLimit, getRateLimitState } from '@/lib/rate-limit'
 import { auth } from '@/auth'
 
 // In-memory dedup: rejects the same message arriving twice within 2s for the same session.
@@ -292,6 +292,7 @@ export async function POST(req: NextRequest) {
               decisionTrace: debug?.decisionTrace,
               confidenceInfo: debug?.confidenceInfo ?? null,
               usage: { ...usage, usd, brl },
+              limites: getRateLimitState(ip, sessionId || undefined),
             })
           }
 

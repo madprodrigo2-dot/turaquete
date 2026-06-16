@@ -13,6 +13,7 @@ export interface RacketFilters {
   ombro_sensivel?: boolean
   frequencia_alta?: boolean
   contexto_vento?: boolean
+  marca_preferida?: string | null  // undefined = not asked yet; null = "tanto faz"; string = brand name
 }
 
 // ── FIELD SEMANTICS — do not mix these up ─────────────────────────────────────
@@ -64,6 +65,7 @@ export interface RacketWithInsights {
   specs_extra: Record<string, unknown> | null
   publicada: boolean
   racket_insights: Insights | null
+  brands?: { name: string } | null
 }
 
 export interface RecommendedRacket {
@@ -87,6 +89,7 @@ const SELECT_FIELDS = `
   id, name, slug, model_year, weight_g, balance, format,
   face_material, core, price, currency, affiliate_url, source_url, image_url, technologies,
   specs_extra, publicada,
+  brands ( name ),
   racket_insights (
     power, control, comfort, maneuverability, stability, spin, forgiveness,
     good_for_beginners, good_for_intermediate, good_for_advanced,
@@ -196,10 +199,27 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   }
 
   // Deterministic scorer — ranks by profile weights (turaquete-matriz-pesos.md Level 2)
+  const BRAND_BOOST = 1.5
   const scored = results
-    .map(r => ({ ...r, match_score: scoreRacket(r, filtros) }))
+    .map(r => {
+      const base = scoreRacket(r, filtros)
+      const preferred = filtros.marca_preferida
+        ? r.brands?.name?.toLowerCase() === filtros.marca_preferida.toLowerCase()
+        : false
+      return { ...r, match_score: base + (preferred ? BRAND_BOOST : 0) }
+    })
     .sort((a, b) => b.match_score - a.match_score)
   filterTrace.push({ filtro: 'scorer (ranking por pesos)', antes: results.length, depois: scored.length, relaxado: false, note: 'sem eliminação, apenas ordenação' })
+  if (filtros.marca_preferida) {
+    const ndaMarca = scored.filter(r => r.brands?.name?.toLowerCase() === filtros.marca_preferida!.toLowerCase()).length
+    const topNaoE = scored.length > 0 && scored[0].brands?.name?.toLowerCase() !== filtros.marca_preferida.toLowerCase()
+    filterTrace.push({
+      filtro: `marca preferida "${filtros.marca_preferida}" (+${BRAND_BOOST} pts boost)`,
+      depois: scored.length,
+      relaxado: false,
+      note: `${ndaMarca} raquete(s) da marca no pool; top candidata ${topNaoE ? 'NÃO é' : 'é'} da marca preferida`,
+    })
+  }
 
   return { raquetes: scored, criteriosRelaxados, filterTrace }
 }
