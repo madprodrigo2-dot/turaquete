@@ -911,7 +911,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       </div>
 
       {/* ── Seção menta: marcas + FAQ + CTA + footer ── */}
-      <div className="w-full arena-bleed-top">
       <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 md:px-8 pt-3 md:pt-4">
 
         {/* Marcas disponíveis */}
@@ -1015,7 +1014,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
         </footer>
 
-      </div>
       </div>{/* end seção 3 */}
 
     </div>
