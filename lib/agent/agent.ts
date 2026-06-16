@@ -5,7 +5,7 @@ import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
-import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, PRECO_QUESTION_TEXT, AKINATOR_QUESTION_TEXTS, type ConfidenceInfo, type FieldKey } from './confidence'
+import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, AKINATOR_QUESTION_TEXTS, type ConfidenceInfo, type FieldKey } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -429,8 +429,22 @@ async function executeTool(
 
   if (name === 'sugerir_opcoes') {
     const { opcoes } = input as SuggestInput
-    pendingSuggestions.push(...opcoes.slice(0, 4))
-    return JSON.stringify({ exibidas: opcoes.length })
+    // When a fixed question is active, override model's chip choice with canonical set.
+    // Prevents the model from sending price chips when the marca question is pending, etc.
+    const field = pendingQuestionFieldRef.value
+    let chips: string[]
+    if (field === 'preco') {
+      chips = ['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções']
+    } else if (field === 'marca') {
+      chips = MARCA_CHIPS
+    } else if (field) {
+      const canonical = getChipsForField(field)
+      chips = canonical.length > 0 ? canonical : opcoes.slice(0, 4)
+    } else {
+      chips = opcoes.slice(0, 4)
+    }
+    pendingSuggestions.push(...chips)
+    return JSON.stringify({ exibidas: chips.length })
   }
 
   if (name === 'recomendar_raquetas') {
