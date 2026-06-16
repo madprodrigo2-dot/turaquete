@@ -29,6 +29,7 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
   const [espessura, setEspessura] = useState<string>((se.espessura_mm as number | null)?.toString() ?? '')
   const [furos, setFuros] = useState<string>((se.furos as number | null)?.toString() ?? '')
   const [superficie, setSuperficie] = useState<string>((se.superficie as string | null) ?? '')
+  const [modelYear, setModelYear] = useState<string>(racket.model_year?.toString() ?? '')
   const [techs, setTechs] = useState<TechEntry[]>(
     Array.isArray(se.tecnologias) ? (se.tecnologias as TechEntry[]) : []
   )
@@ -61,6 +62,7 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
           espessura_mm: espessura !== '' ? Number(espessura) : null,
           furos: furos !== '' ? Number(furos) : null,
           superficie,
+          model_year: modelYear !== '' ? Number(modelYear) : null,
           tecnologias: techs.filter(t => t.nome.trim()),
         })
         setMotorResult(result.motor)
@@ -105,8 +107,8 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
           </div>
         </div>
 
-        {/* Peso + Espessura + Balance + Furos */}
-        <div className="grid grid-cols-4 gap-3">
+        {/* Peso + Espessura + Balance + Furos + Ano */}
+        <div className="grid grid-cols-5 gap-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Peso (g)</label>
             <input
@@ -148,6 +150,16 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
               onChange={e => setFuros(e.target.value)}
               className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
               placeholder="34"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Ano</label>
+            <input
+              type="number"
+              value={modelYear}
+              onChange={e => setModelYear(e.target.value)}
+              className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
+              placeholder="2025"
             />
           </div>
         </div>

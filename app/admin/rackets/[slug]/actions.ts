@@ -25,6 +25,7 @@ export interface FisicosData {
   espessura_mm: number | null
   furos: number | null
   superficie: string
+  model_year: number | null
   tecnologias: TechEntry[]
 }
 
@@ -78,6 +79,7 @@ export async function salvarFisicos(slug: string, data: FisicosData) {
     core: data.core || null,
     weight_g: data.weight_g,
     balance: data.balance || null,
+    model_year: data.model_year,
     specs_extra: newExtra,
   }).eq('slug', slug)
 
