@@ -226,11 +226,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         reqBody.primeiraMensagem = text
         reqBody.starterUsado = starterUsadoRef.current ?? null
       }
-      // Pass detected conversation intent on turns 2+ so the agent can maintain
-      // Akinator control (needsDiagnostic) without re-calling registrar_intencao.
-      if (intencaoConvRef.current) {
-        reqBody.intencaoConversacao = intencaoConvRef.current
-      }
       starterUsadoRef.current = null
 
       const res = await fetch('/api/chat', {
