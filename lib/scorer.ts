@@ -16,6 +16,7 @@ export interface FittingProfile {
   jogo_aereo_predominante?: boolean
   cotovelo_sensivel?: boolean
   ombro_sensivel?: boolean
+  punho_sensivel?: boolean
   // Gender: pass only when revealed organically (grammar, context). Never ask.
   genero_organico?: 'masculino' | 'feminino'
 }
@@ -32,7 +33,7 @@ export interface FaixaIdeal {
 const CATALOGO_FLOOR = 315
 
 export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
-  const dor = p.cotovelo_sensivel || p.ombro_sensivel
+  const dor = p.cotovelo_sensivel || p.ombro_sensivel || p.punho_sensivel
 
   // Base range by nivel + estilo
   let peso_min: number
@@ -110,7 +111,8 @@ export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
   //   ombro, or both sites: lighter IS genuinely better → strict 315–320g.
   if (dor) {
     if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
-    if (p.cotovelo_sensivel && !p.ombro_sensivel) {
+    if (p.cotovelo_sensivel && !p.ombro_sensivel && !p.punho_sensivel) {
+      // Cotovelo only: moderate weight (mass absorbs vibration, very light can worsen epicondilite)
       peso_min = Math.max(315, Math.min(peso_min, 330))
       peso_max = 335
       prioridades = ['conforto', 'estabilidade', 'sweet spot generoso', 'manuseio']
@@ -153,6 +155,7 @@ export interface ScorerProfile {
   prioridade?: 'potencia' | 'controle' | 'equilibrio' | 'defesa'
   cotovelo_sensivel?: boolean
   ombro_sensivel?: boolean
+  punho_sensivel?: boolean
   frequencia_alta?: boolean
   contexto_vento?: boolean
 }
@@ -163,7 +166,7 @@ interface Weights {
 }
 
 function baseWeights(profile: ScorerProfile): Weights {
-  const dor = profile.cotovelo_sensivel || profile.ombro_sensivel
+  const dor = profile.cotovelo_sensivel || profile.ombro_sensivel || profile.punho_sensivel
 
   // Dor overrides all other profiles
   if (dor) return {
@@ -248,7 +251,7 @@ export function scoreRacket(racket: RacketData, profile: ScorerProfile): number 
 // ── Decision-trace variants (admin debug only) ────────────────────────────────
 
 export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaIdeal; trace: FaixaTrace } {
-  const dor = p.cotovelo_sensivel || p.ombro_sensivel
+  const dor = p.cotovelo_sensivel || p.ombro_sensivel || p.punho_sensivel
   const steps: FaixaStep[] = []
   const conflitos: string[] = []
 
@@ -339,10 +342,10 @@ export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaId
   }
 
   if (dor) {
-    const lesaoDesc = [p.cotovelo_sensivel && 'cotovelo', p.ombro_sensivel && 'ombro'].filter(Boolean).join('+')
+    const lesaoDesc = [p.cotovelo_sensivel && 'cotovelo', p.ombro_sensivel && 'ombro', p.punho_sensivel && 'punho'].filter(Boolean).join('+')
     if (balance_preferido === 'medio_ou_cabeca') conflitos.push(`lesão (${lesaoDesc}) + balance cabeça: balance excluído por lesão`)
 
-    if (p.cotovelo_sensivel && !p.ombro_sensivel) {
+    if (p.cotovelo_sensivel && !p.ombro_sensivel && !p.punho_sensivel) {
       // Cotovelo only: profile-driven range capped at 315–335g.
       // Mass absorbs impact; very light forces the arm to generate power → can worsen epicondilite.
       if (porte_grande) conflitos.push(`lesão cotovelo + porte grande: porte elevou o peso; teto modulado para 335g (não 320g)`)
@@ -354,7 +357,7 @@ export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaId
       prioridades = ['conforto', 'estabilidade', 'sweet spot generoso', 'manuseio']
       steps.push({ label: `+ LESÃO cotovelo ─ faixa modulada`, result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g → ${peso_min}–${peso_max}g (perfil mantido, teto 335g; massa amortece impacto)`, isOverride: true })
     } else {
-      // Ombro, or cotovelo+ombro: lighter is genuinely better → strict 315–320g
+      // Ombro, punho, or cotovelo+ombro: lighter is genuinely better → strict 315–320g
       if (porte_grande) conflitos.push(`lesão (${lesaoDesc}) + porte grande: porte elevou o peso mas lesão força teto 320g`)
       if (p.estilo === 'ofensivo') conflitos.push(`lesão (${lesaoDesc}) + estilo ofensivo: faixa 325–345g forçada para 315–320g, balance cabeça excluído`)
       const prev = { peso_min, peso_max, b: balance_preferido }

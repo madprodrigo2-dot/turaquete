@@ -148,15 +148,19 @@ export const agentTools: Anthropic.Tool[] = [
         },
         cotovelo_sensivel: {
           type: 'boolean',
-          description: 'Tem dor ou histórico no cotovelo. Passe `true` se sim.',
+          description: 'Tem dor ou histórico no cotovelo. SOMENTE se o usuário confirmou cotovelo via chip de localização ou frase explícita ("dói no cotovelo", "epicondilite"). "Dor no braço" sem localizar NÃO mapeia aqui — espere a resposta ao chip de localização.',
         },
         ombro_sensivel: {
           type: 'boolean',
-          description: 'Tem dor ou histórico no ombro. Passe `true` se sim.',
+          description: 'Tem dor ou histórico no ombro. SOMENTE se confirmado via chip "Sim, ombro" ou declaração explícita de ombro. "Dor no braço" genérico NÃO mapeia aqui.',
+        },
+        punho_sensivel: {
+          type: 'boolean',
+          description: 'Tem dor no punho ou outro local do braço que não seja cotovelo nem ombro. Passe `true` quando o usuário escolher o chip "Punho ou outro lugar" ou declarar dor no punho/pulso. Ativa o mesmo filtro de proteção que cotovelo e ombro.',
         },
         sem_lesao: {
           type: 'boolean',
-          description: 'Usuário confirmou explicitamente NÃO ter dor nem lesão no braço (cotovelo, ombro, punho). Passe `true` quando a resposta for "Não tenho dor" ou equivalente — isso marca a pergunta de lesão como respondida para o sistema de confiança.',
+          description: 'Usuário confirmou explicitamente NÃO ter dor (chip "Não tenho dor" ou equivalente). Isso marca a pergunta de lesão como respondida. Inclui ausência de dor em cotovelo, ombro e punho.',
         },
         genero_organico: {
           type: 'string',

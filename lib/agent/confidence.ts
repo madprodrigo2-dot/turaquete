@@ -75,7 +75,7 @@ const FIELD_DEFS: FieldDef[] = [
     label: 'Lesão / dor no braço',
     question: 'Você sente dor em algum lugar quando joga?',
     weight: 22,
-    chips: ['Sim, cotovelo', 'Sim, ombro', 'Não tenho dor'],
+    chips: ['Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar', 'Não tenho dor'],
     justification: 'ativa filtro duplo conforto≥8 + saída fácil, mudando todo o conjunto de candidatas',
   },
   {
@@ -115,9 +115,10 @@ function detectPresence(input: Record<string, unknown>, key: FieldKey): { presen
   if (key === 'lesao') {
     const c = 'cotovelo_sensivel' in input && input.cotovelo_sensivel != null
     const o = 'ombro_sensivel' in input && input.ombro_sensivel != null
+    const p = 'punho_sensivel' in input && input.punho_sensivel != null
     const sem = input.sem_lesao === true  // explicit "no pain" answer counts as answered
-    return (c || o || sem)
-      ? { present: true, value: input.cotovelo_sensivel ?? input.ombro_sensivel ?? null }
+    return (c || o || p || sem)
+      ? { present: true, value: input.cotovelo_sensivel ?? input.ombro_sensivel ?? input.punho_sensivel ?? null }
       : { present: false }
   }
   if (key === 'jogo_aereo') {

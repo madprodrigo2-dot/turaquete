@@ -11,6 +11,7 @@ export interface RacketFilters {
   prioridade?: 'potencia' | 'controle' | 'equilibrio' | 'defesa'
   cotovelo_sensivel?: boolean
   ombro_sensivel?: boolean
+  punho_sensivel?: boolean
   frequencia_alta?: boolean
   contexto_vento?: boolean
   marca_preferida?: string | null  // undefined = not asked yet; null = "tanto faz"; string = brand name
@@ -195,6 +196,24 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     } else {
       criteriosRelaxados.push('ombro sensível: nenhuma raquete com flag ou conforto≥8 — avalie manualmente')
       filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+    }
+  }
+
+  // Injury filter: punho / outro — same DUPLO logic as cotovelo/ombro
+  if (filtros.punho_sensivel && results.length > 0) {
+    const before = results.length
+    const filtered = results.filter(r => {
+      const ins = r.racket_insights
+      if (!ins) return false
+      const saida = r.specs_extra?.saida_de_bola as string | undefined
+      return (ins.comfort ?? 0) >= 8 && saida !== 'exigente'
+    })
+    if (filtered.length >= 1) {
+      results = filtered
+      filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída não exigente)', antes: before, depois: results.length, relaxado: false })
+    } else {
+      criteriosRelaxados.push('punho/outro sensível: nenhuma raquete com conforto≥8 sem saída exigente — avalie manualmente')
+      filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída não exigente)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
     }
   }
 
