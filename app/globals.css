@@ -10,6 +10,20 @@
 }
 
 @layer utilities {
+  /* Warm sand bleed — bottom sections. Tune --sand-bleed-op to calibrate:
+     0.06 = ghost, 0.09 = subtle (default), 0.13 = noticeable */
+  :root {
+    --sand-bleed-op: 0.09;
+  }
+  .arena-bleed-top {
+    background: linear-gradient(
+      to bottom,
+      rgb(247 237 220 / var(--sand-bleed-op)) 0%,
+      rgb(247 237 220 / calc(var(--sand-bleed-op) * 0.45)) 35%,
+      transparent 75%
+    );
+  }
+
   /* Sand texture background — 7% visible, keeps aqua-light tone */
   .sand-texture {
     background-color: var(--color-aqua-light);
