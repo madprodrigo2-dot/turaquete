@@ -36,9 +36,11 @@ export type ConfidenceInfo = {
 
 // ── Parametrizable config ─────────────────────────────────────────────────────
 export const CONFIDENCE_CONFIG = {
-  threshold:               55,  // % default minimum to proceed to recommendation
-  thresholdInicianteOverride: 68,  // % for iniciantes: forces lesao question (estilo+nivel=60% < 68%)
-  maxQuestions:             4,  // after this many user turns, recommend anyway with caveat
+  // 80% makes lesão mandatory for ALL profiles: max score without lesão is
+  // estilo(32)+nivel(28)+forca(11)+jogo_aereo(7) = 78% < 80%. The minimum
+  // passing score including lesão is estilo+nivel+lesão = 82% > 80%.
+  threshold:    80,
+  maxQuestions:  4,  // after this many user turns, recommend anyway with caveat
 }
 
 // ── Field definitions (weights sum to 100) ────────────────────────────────────
@@ -143,13 +145,8 @@ export function computeProfileConfidence(
   const rawScore = presentFields.reduce((s, f) => s + f.weight, 0)
   const score = Math.round((rawScore / TOTAL_WEIGHT) * 100)
 
-  const { threshold: defaultThreshold, thresholdInicianteOverride, maxQuestions } = CONFIDENCE_CONFIG
-  const isInicianteRaw = input.nivel
-  const isIniciante = typeof isInicianteRaw === 'string' && isInicianteRaw.toLowerCase().includes('inici')
-  const threshold       = isIniciante ? thresholdInicianteOverride : defaultThreshold
-  const thresholdReason = isIniciante
-    ? `iniciante → ${thresholdInicianteOverride}% (lesão obrigatória, estilo+nível=${60}% < limiar)`
-    : `padrão → ${defaultThreshold}%`
+  const { threshold, maxQuestions } = CONFIDENCE_CONFIG
+  const thresholdReason = `lesão obrigatória → ${threshold}% (estilo+nível=60% < limiar; estilo+nível+lesão=82% ≥ limiar)`
 
   const recommendAnyway = conversationTurns >= maxQuestions
   const willRecommend   = score >= threshold || recommendAnyway
