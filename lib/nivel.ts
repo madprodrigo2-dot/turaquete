@@ -5,7 +5,8 @@ import { RacketWithInsights } from './recommend'
  * Single source of truth — used by all display components and SQL sync script.
  *
  * Logic (in priority order):
- *   AVANCADO  : saida exigente  OR  forgiveness ≤ 5
+ *   AVANCADO  : nivel_sugerido='avancado' (admin override — algorithm can miss high-perf rackets)
+ *               OR saida exigente  OR  forgiveness ≤ 5
  *   INICIANTE : forgiveness ≥ 9
  *               forgiveness = 8 + saida fácil
  *               forgiveness = 7 + maneuverability ≥ 8 + saida ≠ exigente  (Beast condition)
@@ -25,7 +26,10 @@ export function derivarNivel(
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
   const saida = (extra.saida_de_bola as string | undefined)?.toLowerCase() ?? null
 
-  // AVANCADO
+  // AVANCADO — admin override wins: algorithm only detects a subset of avancado conditions
+  // (saida=exigente, low forgiveness), but high-performance rackets (e.g. 24K TeXtreme face)
+  // require human judgment. nivel_sugerido='avancado' is an explicit editorial decision.
+  if (ins.nivel_sugerido === 'avancado') return 'avancado'
   if (saida === 'exigente') return 'avancado'
   if (forgiveness <= 5) return 'avancado'
 
