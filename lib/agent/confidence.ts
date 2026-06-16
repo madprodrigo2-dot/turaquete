@@ -65,7 +65,7 @@ const FIELD_DEFS: FieldDef[] = [
     label: 'Nível / categoria',
     question: 'Qual é o seu nível hoje?',
     weight: 28,
-    chips: ['Estou começando', 'Intermediário (cat. C/B)', 'Avançado (cat. A/Pro)'],
+    chips: ['Estou começando (cat. E/D)', 'Intermediário (cat. C/B)', 'Avançado (cat. A/Pro)'],
     justification: 'base do fitting: define faixa de peso, prioridades e sweet spot esperado',
   },
   {

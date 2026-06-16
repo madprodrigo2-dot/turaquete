@@ -370,7 +370,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
 
   const lastMsg = messages[messages.length - 1]
   // Context chips and other reactive UI only appear after the full animation settles
-  const contextChips = (!loading && !isStreaming && !isAnimating && !atLimit && lastMsg?.role === 'assistant')
+  // Suppress detectContextChips when the Akinator already provided inline chips (suggestions):
+  // showing both at once duplicates the same question in two places with different labels.
+  const hasAkinatorChips = !!(lastMsg?.suggestions?.length)
+  const contextChips = (!loading && !isStreaming && !isAnimating && !atLimit && lastMsg?.role === 'assistant' && !hasAkinatorChips)
     ? detectContextChips(lastMsg.content)
     : null
 
