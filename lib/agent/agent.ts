@@ -392,6 +392,12 @@ export async function runAgentTurn(
   // discarded — messages stays untouched so the forced retry gets a clean slate.
   let stalledOnce = false
 
+  // Intents that require profile-building: force diagnosticar_perfil immediately
+  // after registrar_intencao so the Akinator system (not the model) decides what
+  // to ask next. Excludes troca/ajuste (need current-racket question first),
+  // comparacao (name-based search), curiosidade (no recommendation needed).
+  const INTENTS_NEEDING_PROFILE: IntencaoTipo[] = ['primeira_raquete', 'lesao_dor', 'presente', 'preco_orcamento']
+
   while (rounds < MAX_TOOL_ROUNDS) {
     // intencaoRef is excluded: registrar_intencao legitimately ends with a clarifying question
     // (e.g. "qual sua raquete atual?") — that is not a stall. Including it here prevented
@@ -403,13 +409,26 @@ export async function runAgentTurn(
     const confidenceInsufficient = debugRef.value.confidenceInfo?.willRecommend === false
     const diagWithoutSearch = !!diagnosticoRef.value && !hasSearchResults && pendingRecommendations.length === 0 && !confidenceInsufficient
 
+    // Force diagnosticar_perfil right after registrar_intencao for profile-building intents.
+    // The model decides the arguments (extracts what it knows from the conversation), but
+    // calling the tool is mandatory — this routes all questions through the Akinator system
+    // instead of letting the model improvise freeform questions without chips.
+    const needsDiagnostic = intencaoRef.value != null
+      && INTENTS_NEEDING_PROFILE.includes(intencaoRef.value)
+      && !diagnosticoRef.value
+      && !hasSearchResults
+      && pendingRecommendations.length === 0
+
     // tool_choice priority:
     //   1. Force recomendar_raquetas when search results exist but no picks yet
     //      — EXCEPT when waiting for the user's price range (priceAskPending)
-    //   2. Force any tool when the model stalled before completing the search flow
-    //   3. Auto otherwise
+    //   2. Force diagnosticar_perfil for profile-building intents after intent registration
+    //   3. Force any tool when the model stalled before completing the search flow
+    //   4. Auto otherwise
     const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value)
       ? { type: 'tool' as const, name: 'recomendar_raquetas' }
+      : needsDiagnostic
+      ? { type: 'tool' as const, name: 'diagnosticar_perfil' }
       : (stalledOnce && (nothingDoneYet || diagWithoutSearch))
       ? { type: 'any' as const }
       : { type: 'auto' as const }
