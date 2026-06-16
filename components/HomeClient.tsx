@@ -523,6 +523,39 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
               })}
               {loading && <ChatMessage role="assistant" content="" loading />}
 
+              {/* Total acumulado da conversa — admin/debug only */}
+              {debugMode && isAdmin && (() => {
+                const usages = messages.flatMap(m => m.debug?.usage ? [m.debug.usage] : [])
+                if (usages.length === 0) return null
+                const tot = usages.reduce(
+                  (acc, u) => ({
+                    input:      acc.input      + u.input,
+                    output:     acc.output     + u.output,
+                    cacheWrite: acc.cacheWrite + u.cacheWrite,
+                    cacheRead:  acc.cacheRead  + u.cacheRead,
+                    usd:        acc.usd        + u.usd,
+                    brl:        acc.brl        + u.brl,
+                  }),
+                  { input: 0, output: 0, cacheWrite: 0, cacheRead: 0, usd: 0, brl: 0 }
+                )
+                return (
+                  <div className="font-mono text-xs bg-gray-800 text-gray-200 rounded-lg border border-yellow-600/40 px-3 py-2">
+                    <div className="text-[10px] text-yellow-400 font-bold uppercase tracking-wider mb-1.5">
+                      ∑ Total da conversa · {usages.length} {usages.length === 1 ? 'turno' : 'turnos'}
+                    </div>
+                    <div className="space-y-0.5 tabular-nums text-[11px]">
+                      <div><span className="text-gray-400">input: </span><span>{tot.input.toLocaleString()}</span></div>
+                      <div><span className="text-gray-400">output: </span><span>{tot.output.toLocaleString()}</span></div>
+                      <div><span className="text-gray-400">cache↑: </span><span>{tot.cacheWrite.toLocaleString()}</span></div>
+                      <div><span className="text-gray-400">cache↓: </span><span>{tot.cacheRead.toLocaleString()}</span></div>
+                      <div className="mt-1 text-green-300 font-semibold text-[12px]">
+                        US${tot.usd.toFixed(4)} / R${tot.brl.toFixed(3)}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Aviso de aproximação do limite */}
               {nearLimit && !loading && !isStreaming && (
                 <div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
