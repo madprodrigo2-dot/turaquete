@@ -574,17 +574,23 @@ function SandMound({
 // ── Main component ─────────────────────────────────────────────────────────────
 
 // Tune: adicionar/remover entradas para calibrar densidade de bolas na arena
-// Todas hidden lg:block → só em desktop onde o gutter tem ≥176px (conteúdo nunca tapado)
+// md+ = zona livre topo/base (padding da seção, sem card à frente)
+// lg+ = gutters laterais (≥176px de largura em 1024px, conteúdo nunca tapado)
 const ARENA_EXTRA_BALLS: Array<{ size: number; rotation: number; opacity: number; className: string }> = [
-  // gutter esquerdo
-  { size: 20, rotation:  18, opacity: 0.50, className: 'hidden lg:block left-[2%]    top-[12%]' },
-  { size: 32, rotation:  -8, opacity: 0.65, className: 'hidden lg:block left-[3.5%] top-[38%]' },
-  { size: 16, rotation:  55, opacity: 0.38, className: 'hidden lg:block left-[1.5%] top-[62%]' },
-  { size: 26, rotation: -20, opacity: 0.55, className: 'hidden lg:block left-[2.5%] top-[80%]' },
-  // gutter direito
-  { size: 24, rotation: -35, opacity: 0.60, className: 'hidden lg:block right-[2%]    top-[20%]' },
-  { size: 18, rotation:  12, opacity: 0.42, className: 'hidden lg:block right-[1.5%] top-[48%]' },
-  { size: 36, rotation: -12, opacity: 0.72, className: 'hidden lg:block right-[3%]   top-[70%]' },
+  // zona livre TOPO (acima da 1ª card, py-9=36px) — spread horizontal
+  { size: 22, rotation:  28, opacity: 0.52, className: 'hidden md:block left-[20%] top-[2%]'   },
+  { size: 16, rotation: -45, opacity: 0.38, className: 'hidden md:block left-[62%] top-[3%]'   },
+  // gutter esquerdo — mais afastado da borda que antes
+  { size: 28, rotation:  -8, opacity: 0.65, className: 'hidden lg:block left-[9%]  top-[28%]'  },
+  { size: 18, rotation:  48, opacity: 0.42, className: 'hidden lg:block left-[13%] top-[54%]'  },
+  { size: 20, rotation: -18, opacity: 0.50, className: 'hidden lg:block left-[6%]  top-[74%]'  },
+  // gutter direito — mais afastado da borda que antes
+  { size: 24, rotation: -32, opacity: 0.58, className: 'hidden lg:block right-[9%]  top-[20%]' },
+  { size: 16, rotation:  18, opacity: 0.40, className: 'hidden lg:block right-[13%] top-[46%]' },
+  { size: 32, rotation: -14, opacity: 0.68, className: 'hidden lg:block right-[6%]  top-[66%]' },
+  // zona livre BASE (abaixo da última card) — spread horizontal
+  { size: 18, rotation:  42, opacity: 0.45, className: 'hidden md:block left-[25%] bottom-[2%]' },
+  { size: 14, rotation: -55, opacity: 0.32, className: 'hidden md:block left-[70%] bottom-[3%]' },
 ]
 
 // Sky effect — tune this single value to calibrate intensity:
