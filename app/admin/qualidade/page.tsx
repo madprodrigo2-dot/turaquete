@@ -11,6 +11,7 @@ interface FeedbackRow {
   session_id: string
   event_type: string
   motivo: string | null
+  comentario: string | null
   decision_trace: DecisionTrace | null
   intencao: string | null
   turnos_ate_recomendacao: number | null
@@ -41,7 +42,7 @@ export default async function QualidadeAdmin() {
   // Graceful fallback if table doesn't exist yet
   const { data: rows, error } = await sb
     .from('feedback_events')
-    .select('id, created_at, session_id, event_type, motivo, decision_trace, intencao, turnos_ate_recomendacao, racket_id')
+    .select('id, created_at, session_id, event_type, motivo, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id')
     .in('event_type', ['rating_positive', 'rating_negative', 'ver_na_loja', 'ver_analise', 'nova_conversa_pos_rec'])
     .order('created_at', { ascending: false })
     .limit(200)
@@ -79,6 +80,11 @@ export default async function QualidadeAdmin() {
   const avgTurnos = turnosValues.length > 0
     ? (turnosValues.reduce((a, b) => a + b, 0) / turnosValues.length).toFixed(1)
     : null
+
+  // Free-text "Outro" comments
+  const outroComentarios = negatives
+    .filter(e => e.motivo === 'Outro' && e.comentario)
+    .slice(0, 50)
 
   // Recent negatives with trace
   const recentNegatives = negatives.slice(0, 20)
@@ -170,6 +176,21 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
           )}
         </section>
 
+        {/* ── Comentários livres (Outro) ── */}
+        {outroComentarios.length > 0 && (
+          <section>
+            <h2 className="text-base font-semibold text-gray-700 mb-3">Comentários livres (Outro)</h2>
+            <div className="flex flex-col gap-1.5">
+              {outroComentarios.map(e => (
+                <div key={e.id} className="flex gap-3 items-start text-xs text-gray-600 bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-2.5">
+                  <span className="text-gray-300 shrink-0 pt-0.5">{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
+                  <p className="leading-relaxed">{e.comentario}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── Por intenção ── */}
         <section>
           <h2 className="text-base font-semibold text-gray-700 mb-3">Por intenção</h2>
@@ -201,16 +222,17 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
           )}
         </section>
 
-        {/* ── Últimos 👎 com trace ── */}
+        {/* ── Últimos 👎 ── */}
         <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Últimos 👎 (com trace de decisão)</h2>
+          <h2 className="text-base font-semibold text-gray-700 mb-3">Últimos 👎</h2>
           {recentNegatives.length === 0 ? (
             <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
           ) : (
             <div className="flex flex-col gap-2">
               {recentNegatives.map(e => (
                 <div key={e.id} className="bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-3">
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
+                  {/* Meta */}
+                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-2 flex-wrap">
                     <span>{new Date(e.created_at).toLocaleString('pt-BR')}</span>
                     {e.intencao && (
                       <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{e.intencao}</span>
@@ -222,6 +244,13 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                       <span className="text-gray-300">{e.turnos_ate_recomendacao} turnos</span>
                     )}
                   </div>
+                  {/* Comentário livre */}
+                  {e.comentario && (
+                    <blockquote className="border-l-2 border-red-300 pl-3 text-sm text-gray-700 italic leading-relaxed mb-2">
+                      {e.comentario}
+                    </blockquote>
+                  )}
+                  {/* Trace */}
                   {e.decision_trace ? (
                     <details className="mt-1">
                       <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 select-none">
@@ -232,7 +261,7 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                       </pre>
                     </details>
                   ) : (
-                    <p className="text-xs text-gray-300 italic mt-1">Sem trace (conversa sem diagnóstico)</p>
+                    <p className="text-xs text-gray-300 italic">Sem trace (conversa sem diagnóstico)</p>
                   )}
                 </div>
               ))}
