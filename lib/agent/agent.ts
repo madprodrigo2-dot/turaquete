@@ -173,7 +173,7 @@ async function executeTool(
   debugRef: { value: AgentDebugInfo },
   profileQuestionsAsked: number,
   priceAskPendingRef: { value: boolean },
-  pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null },
+  pendingQuestionFieldRef: { value: string | null },
   marcaAskPendingRef: { value: boolean },
   brandAskedRef: { value: boolean },
   currentRacketIds: Set<number>,
@@ -395,6 +395,14 @@ async function executeTool(
         })
       : ranked
 
+    // Disambiguation: when a lookup (nome/atleta) returns multiple candidates, inject a
+    // fixed question text so the model's sugerir_opcoes chips are never orphaned.
+    if (isLookupCall && ranked.length > 1) {
+      const rawTerm = (input as RacketFilters).nome ?? (input as RacketFilters).atleta ?? 'raquete'
+      const term = rawTerm.charAt(0).toUpperCase() + rawTerm.slice(1)
+      pendingQuestionFieldRef.value = `disambig:${term}`
+    }
+
     const topCandidates = candidatePool.slice(0, MAX_CANDIDATES).map(slimForModel)
     const payload: Record<string, unknown> = {
       encontradas: ranked.length,
@@ -492,8 +500,10 @@ async function executeTool(
       chips = ['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções']
     } else if (field === 'marca') {
       chips = MARCA_CHIPS
+    } else if (field?.startsWith('disambig:')) {
+      chips = opcoes.slice(0, 4)
     } else if (field) {
-      const canonical = getChipsForField(field)
+      const canonical = getChipsForField(field as FieldKey)
       chips = canonical.length > 0 ? canonical : opcoes.slice(0, 4)
     } else {
       // Fallback: detect lesão chips by content when pendingQuestionFieldRef wasn't set
@@ -562,7 +572,7 @@ export async function runAgentTurn(
   const priceAskPendingRef: { value: boolean } = { value: false }
   const marcaAskPendingRef: { value: boolean } = { value: false }
   const brandAskedRef: { value: boolean } = { value: false }
-  const pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null } = { value: null }
+  const pendingQuestionFieldRef: { value: string | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   // Count only the Akinator questions actually presented in history, not total user messages.
   // Total user messages reach maxQuestions (4) fast in long "quero trocar" flows, firing
@@ -783,7 +793,7 @@ async function streamResponse(
   intencaoRef: { value: IntencaoTipo | null },
   debugRef: { value: AgentDebugInfo },
   usage: TokenUsage,
-  pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null },
+  pendingQuestionFieldRef: { value: string | null },
   onToken: (token: string) => void,
   signal?: AbortSignal
 ): Promise<AgentResult> {
@@ -801,7 +811,10 @@ async function streamResponse(
   if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
     const fixedText = field
-      ? (field === 'preco' ? PRECO_QUESTION_TEXT : field === 'marca' ? MARCA_QUESTION_TEXT : getFixedQuestionText(field))
+      ? field === 'preco' ? PRECO_QUESTION_TEXT
+        : field === 'marca' ? MARCA_QUESTION_TEXT
+        : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
+        : getFixedQuestionText(field as FieldKey)
       : null
     systemBlocks.push({
       type: 'text',
@@ -841,7 +854,10 @@ async function streamResponse(
   if (!text.trim() && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
     const fallback = field
-      ? (field === 'preco' ? PRECO_QUESTION_TEXT : field === 'marca' ? MARCA_QUESTION_TEXT : getFixedQuestionText(field))
+      ? field === 'preco' ? PRECO_QUESTION_TEXT
+        : field === 'marca' ? MARCA_QUESTION_TEXT
+        : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
+        : getFixedQuestionText(field as FieldKey)
       : null
     if (fallback) {
       text = fallback
