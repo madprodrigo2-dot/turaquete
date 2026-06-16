@@ -23,6 +23,22 @@ function calceBadge(recs: RecommendedRacket[], id: number): 'ideal' | 'encaixa' 
   if (ratio >= 0.70) return 'encaixa'
   return null
 }
+
+// "Melhor custo-benefício": cheapest among rackets within ±0.3 of the best score.
+// Only shown when price spread ≥ R$300 — below that all options cost roughly the same
+// and the label adds no information. One badge per card group; can coexist with calce.
+function custoBeneficioBadge(recs: RecommendedRacket[], id: number): boolean {
+  const scored = recs.filter(r => r.match_score != null && r.racket.price != null && r.racket.price > 0)
+  if (scored.length < 2) return false
+  const prices = scored.map(r => r.racket.price!)
+  if (Math.max(...prices) - Math.min(...prices) < 300) return false
+  const maxScore = Math.max(...scored.map(r => r.match_score!))
+  if (maxScore <= 0) return false
+  const nearBest = scored.filter(r => maxScore - r.match_score! <= 0.3)
+  if (nearBest.length === 0) return false
+  const best = nearBest.reduce((prev, curr) => curr.racket.price! < prev.racket.price! ? curr : prev)
+  return best.racket.id === id
+}
 import type { FaixaIdeal } from '@/lib/scorer'
 import { findGlossaryMatches } from '@/lib/glossario'
 import { usePacedText } from '@/hooks/usePacedText'
@@ -247,6 +263,7 @@ export default function ChatMessage({
                 razao={rec.razao}
                 sessionId={sessionId}
                 calce={!isComparison ? calceBadge(recommendations!, rec.racket.id) : null}
+                custoBeneficio={!isComparison ? custoBeneficioBadge(recommendations!, rec.racket.id) : false}
               />
               </div>
             ))}

@@ -287,13 +287,34 @@ async function executeTool(
     // Name-based searches (comparison / "mostra essa X") don't need a budget question —
     // the user asked about specific rackets, not a profile-filtered recommendation.
     const isNameSearch = !!(input as RacketFilters).nome
+    // "tanto faz" = presupuesto_min=0 explicitly set (user confirmed open budget), no max ceiling
+    const isBudgetOpen = !isNameSearch && (input as RacketFilters).presupuesto_min === 0 && !(input as RacketFilters).presupuesto_max
     const budgetKnown = isNameSearch || !!(input as RacketFilters).presupuesto_max || (input as RacketFilters).presupuesto_min !== undefined
     const priceDecision = computePrecoDecision(ranked, budgetKnown)
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
     if (priceDecision.status === 'disparo') pendingQuestionFieldRef.value = 'preco'
 
-    const topCandidates = ranked.slice(0, MAX_CANDIDATES).map(slimForModel)
+    // Price tiebreaker: when budget is open, among near-equal candidates (score diff ≤ 0.3)
+    // the cheaper one rises — so the model is more likely to pick/present it first.
+    // Never sacrifices aptitude: only breaks genuine ties, preserves fora_da_faixa priority.
+    type AnyRanked = { match_score: number; price: number | null; fora_da_faixa?: boolean }
+    const candidatePool = isBudgetOpen
+      ? [...ranked].sort((a, b) => {
+          const aFora = (a as AnyRanked).fora_da_faixa ?? false
+          const bFora = (b as AnyRanked).fora_da_faixa ?? false
+          if (aFora !== bFora) return aFora ? 1 : -1
+          const scoreDiff = b.match_score - a.match_score
+          const aPrice = a.price
+          const bPrice = b.price
+          if (Math.abs(scoreDiff) <= 0.3 && aPrice != null && bPrice != null && aPrice !== bPrice) {
+            return aPrice - bPrice
+          }
+          return scoreDiff
+        })
+      : ranked
+
+    const topCandidates = candidatePool.slice(0, MAX_CANDIDATES).map(slimForModel)
     const payload: Record<string, unknown> = {
       encontradas: ranked.length,
       raquetes: topCandidates,
@@ -319,7 +340,13 @@ async function executeTool(
           `Se a faixa escolhida retornar 0 raquetes: diga honestamente e mostre a opção mais próxima fora da faixa.`,
       }
     } else {
-      payload.PRECO = { status: 'BUDGET_CONHECIDO', note: priceDecision.note }
+      payload.PRECO = {
+        status: 'BUDGET_CONHECIDO',
+        note: priceDecision.note,
+        ...(isBudgetOpen ? {
+          instrucao_custo_beneficio: 'Orçamento aberto ("tanto faz"). Na recomendação, mencione brevemente qual opção oferece melhor custo-benefício — ex.: "a [modelo] rende quase igual às outras e é a mais em conta".',
+        } : {}),
+      }
     }
 
     return JSON.stringify(payload)

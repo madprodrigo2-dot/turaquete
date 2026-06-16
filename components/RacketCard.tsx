@@ -12,6 +12,7 @@ interface Props {
   razao: string
   sessionId?: string
   calce?: 'ideal' | 'encaixa' | null
+  custoBeneficio?: boolean
 }
 
 function fireEvent(body: Record<string, unknown>) {
@@ -22,7 +23,7 @@ function fireEvent(body: Record<string, unknown>) {
   }).catch(() => {})
 }
 
-export default function RacketCard({ racket, razao, sessionId, calce }: Props) {
+export default function RacketCard({ racket, razao, sessionId, calce, custoBeneficio }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
@@ -84,13 +85,22 @@ export default function RacketCard({ racket, razao, sessionId, calce }: Props) {
               <AthleteBadge athlete={athlete} />
             </div>
           )}
-          {calce && (
-            <div className={`absolute top-2 right-2 z-10 rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none ${
-              calce === 'ideal'
-                ? 'bg-coral text-white shadow-sm'
-                : 'bg-white/90 text-tinta/60 border border-aqua/40'
-            }`}>
-              {calce === 'ideal' ? 'Calce ideal' : 'Também encaixa'}
+          {(calce || custoBeneficio) && (
+            <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
+              {calce && (
+                <div className={`rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none ${
+                  calce === 'ideal'
+                    ? 'bg-coral text-white shadow-sm'
+                    : 'bg-white/90 text-tinta/60 border border-aqua/40'
+                }`}>
+                  {calce === 'ideal' ? 'Calce ideal' : 'Também encaixa'}
+                </div>
+              )}
+              {custoBeneficio && (
+                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                  Melhor custo-benefício
+                </div>
+              )}
             </div>
           )}
         </div>
