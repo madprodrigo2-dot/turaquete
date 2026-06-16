@@ -102,8 +102,8 @@ export const agentTools: Anthropic.Tool[] = [
         },
         tipo: {
           type: 'string',
-          enum: ['recomendacao', 'comparacao'],
-          description: "Tipo de saída: 'recomendacao' (padrão, quando o agente escolheu as melhores raquetes pro perfil) ou 'comparacao' (quando o usuário pediu explicitamente a diferença entre modelos).",
+          enum: ['recomendacao', 'comparacao', 'compra_direta'],
+          description: "Tipo de saída: 'recomendacao' (padrão, quando o agente escolheu as melhores raquetes pro perfil), 'comparacao' (quando o usuário pediu explicitamente a diferença entre modelos), ou 'compra_direta' (usuário já escolheu a raquete e quer comprá-la — mostra a card com o link direto, sem questionário de perfil).",
         },
       },
       required: ['raquetes'],
@@ -188,6 +188,7 @@ export const agentTools: Anthropic.Tool[] = [
             'ajuste_da_atual',
             'lesao_dor',
             'comparacao',
+            'compra_direta',
             'presente',
             'preco_orcamento',
             'curiosidade',

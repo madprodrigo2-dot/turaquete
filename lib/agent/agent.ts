@@ -62,7 +62,7 @@ export type ChatMessage = {
 
 export type IntencaoTipo =
   | 'primeira_raquete' | 'troca' | 'ajuste_da_atual' | 'lesao_dor'
-  | 'comparacao' | 'presente' | 'preco_orcamento' | 'curiosidade' | 'outra'
+  | 'comparacao' | 'compra_direta' | 'presente' | 'preco_orcamento' | 'curiosidade' | 'outra'
 
 export type AgentDebugInfo = {
   perfilInput?: Record<string, unknown>
@@ -554,16 +554,21 @@ async function executeTool(
   if (name === 'recomendar_raquetas') {
     // Hard gate: block recommendation if profile confidence is still insufficient.
     // Prevents the model from recommending mid-questionnaire even if it tries.
-    if (debugRef.value.confidenceInfo?.willRecommend === false) {
+    // Exception: compra_direta skips the profile flow entirely — user already decided.
+    const tipoDaRec = (input as Record<string, unknown>).tipo as string | undefined
+    if (debugRef.value.confidenceInfo?.willRecommend === false && tipoDaRec !== 'compra_direta') {
       return JSON.stringify({
         erro: 'GATE_CONFIANCA: perfil incompleto — lesão não respondida.',
         instrucao: 'NÃO repita recomendar_raquetas agora. Faça a pergunta indicada por diagnosticar_perfil antes de recomendar.',
       })
     }
     const { raquetes } = input as RecommendInput
-    // Cap at 3, then exclude the current racket identified by lookup in TROCA flow
+    // Cap at 3, then exclude the current racket identified by lookup in TROCA flow.
+    // Exception: compra_direta — the looked-up racket IS what the user wants, never exclude it.
     const capped = raquetes.slice(0, 3)
-    const filtered = currentRacketIds.size > 0 ? capped.filter(r => !currentRacketIds.has(r.id)) : capped
+    const filtered = currentRacketIds.size > 0 && tipoDaRec !== 'compra_direta'
+      ? capped.filter(r => !currentRacketIds.has(r.id))
+      : capped
     const ids = filtered.map(r => r.id)
     const rackets = await getRaquetasByIds(ids)
 
