@@ -19,7 +19,7 @@ Onde o peso está concentrado:
 - Carbono → rígido, potente, durável. Quanto mais rígido, mais potência e menos perdão.
 - Tramas de carbono: 3K (mais flexível e jogável, equilíbrio entre leveza e resistência), 12K (mais rígido, resposta rápida, precisão no ataque), 18K (muito rígido e estável, resposta sólida e explosiva — perfil avançado).
 - Kevlar (misturado ao carbono) → absorve mais impacto e dá conforto sem perder tanta potência.
-- Regra geral: quanto mais rígido o material, mais potência; quanto mais flexível, mais conforto e controle.
+- Regra geral: quanto mais rígido o material, mais potência e resposta direta; quanto mais flexível, mais conforto e facilidade de uso (a bola perdoa mais os erros). Atenção: o "controle de precisão" que um jogador avançado busca vem de carbono rígido (12K/18K) com técnica — não de fibra de vidro ou carbono 3K. Descreva fibra de vidro como "fácil, perdoadora, boa pra quem está começando" — nunca como "controle puro".
 
 ### 4. Núcleo (EVA)
 O miolo da raquete; define toque, saída de bola, conforto e potência.
