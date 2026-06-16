@@ -160,6 +160,18 @@ function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<stri
     const update = CHIP_TO_PROFILE[m.content.trim()]
     if (update) Object.assign(confirmed, update)
   }
+  // Also capture nivel from first-person declarations in free text when no chip was used.
+  // Covers TROCA/lesao flows where the user states their level in the opening message.
+  // First-person pattern ("sou iniciante") avoids false positives like "meu parceiro é avançado".
+  if (confirmed.nivel == null) {
+    for (const m of history) {
+      if (m.role !== 'user') continue
+      const t = m.content.toLowerCase()
+      if (/\bsou iniciante\b|\bestou começando\b|\bsou novato\b/.test(t)) { confirmed.nivel = 'iniciante'; break }
+      if (/\bsou intermediári[oa]\b/.test(t))                             { confirmed.nivel = 'intermediario'; break }
+      if (/\bsou avançad[oa]\b/.test(t))                                  { confirmed.nivel = 'avancado'; break }
+    }
+  }
   return confirmed
 }
 
@@ -509,13 +521,21 @@ async function executeTool(
       const canonical = getChipsForField(field as FieldKey)
       chips = canonical.length > 0 ? canonical : opcoes.slice(0, 4)
     } else {
-      // Fallback: detect lesão chips by content when pendingQuestionFieldRef wasn't set
-      // (model called sugerir_opcoes directly without going through diagnosticar_perfil)
-      const LESAO_KW = ['cotovelo', 'ombro', 'punho', 'tenho dor']
-      const looksLikeLesao = opcoes.some(o => LESAO_KW.some(kw => o.toLowerCase().includes(kw)))
-      chips = looksLikeLesao
-        ? ['Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar', 'Não tenho dor']
-        : opcoes.slice(0, 4)
+      // Fallback: detect field from model's chip content → use canonical chips + set the
+      // field ref so streamResponse injects the fixed question text (prevents orphaned chips).
+      const looksLike = (kws: string[]) => opcoes.some(o => kws.some(kw => o.toLowerCase().includes(kw)))
+      let detected: FieldKey | null = null
+      if      (looksLike(['cotovelo', 'ombro', 'punho', 'tenho dor']))          detected = 'lesao'
+      else if (looksLike(['começando', 'intermediár', 'avançad', 'iniciante'])) detected = 'nivel'
+      else if (looksLike(['ataque', 'defesa', 'equilibr']))                      detected = 'estilo'
+      else if (looksLike(['forte', 'suave', 'batida']))                          detected = 'forca_declarada'
+      else if (looksLike(['rede', 'fundo']))                                      detected = 'jogo_aereo'
+      if (detected) {
+        pendingQuestionFieldRef.value = detected
+        chips = getChipsForField(detected)
+      } else {
+        chips = opcoes.slice(0, 4)
+      }
     }
     pendingSuggestions.splice(0, pendingSuggestions.length, ...chips)
     return JSON.stringify({ exibidas: chips.length })
