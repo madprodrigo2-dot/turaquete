@@ -1,5 +1,6 @@
 const store = new Map<string, { count: number; resetAt: number }>()
-const HOUR_MS = 60 * 60 * 1000
+const MINUTE_MS = 60_000
+const HOUR_MS   = 60 * 60 * 1000
 
 function check(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now()
@@ -13,8 +14,10 @@ function check(key: string, limit: number, windowMs: number): boolean {
   return true
 }
 
-// Chat: 30 req/IP/hour + 20 req/session/24h
+// Chat: 5 req/IP/min (burst guard) + 30 req/IP/hour + 20 req/session/24h
+// Human pace: one message every 15-45s → 5/min is never reached legitimately.
 export function checkRateLimit(ip: string, sessionId?: string): boolean {
+  if (!check(`ip_min:${ip}`, 5, MINUTE_MS)) return false
   if (!check(`ip:${ip}`, 30, HOUR_MS)) return false
   if (sessionId && !check(`sess:${sessionId}`, 20, 24 * HOUR_MS)) return false
   return true

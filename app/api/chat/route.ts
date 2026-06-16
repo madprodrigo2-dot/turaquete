@@ -170,6 +170,7 @@ export async function POST(req: NextRequest) {
       '127.0.0.1'
 
     if (!checkRateLimit(ip, sessionId || undefined)) {
+      console.warn(`[rate-limit] blocked ip=${ip} session=${sessionId ?? '-'} ua=${req.headers.get('user-agent')?.slice(0, 80) ?? '-'}`)
       return NextResponse.json(
         { error: 'Opa, muitas mensagens! Tenta de novo em alguns minutos.' },
         { status: 429 }
