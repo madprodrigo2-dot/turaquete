@@ -293,11 +293,6 @@ export default function DebugPanel({ data }: { data: DebugData }) {
       <div className="bg-gray-700 px-3 py-1.5 flex items-center gap-2">
         <span className="text-yellow-400 font-bold text-[11px]">⚙ DEBUG</span>
         <span className="text-gray-400 text-[10px]">admin only</span>
-        {process.env.NEXT_PUBLIC_BUILD_LABEL && (
-          <span className="ml-auto text-[9px] font-mono text-gray-500 select-all">
-            build {process.env.NEXT_PUBLIC_BUILD_LABEL}
-          </span>
-        )}
       </div>
 
       {data.thinking && (
