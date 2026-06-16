@@ -5,7 +5,7 @@ import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
-import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, PRECO_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
+import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, PRECO_QUESTION_TEXT, AKINATOR_QUESTION_TEXTS, type ConfidenceInfo, type FieldKey } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -138,7 +138,7 @@ async function executeTool(
   diagnosticoRef: { value: FaixaIdeal | null },
   intencaoRef: { value: IntencaoTipo | null },
   debugRef: { value: AgentDebugInfo },
-  conversationTurns: number,
+  profileQuestionsAsked: number,
   priceAskPendingRef: { value: boolean },
   pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null },
   marcaAskPendingRef: { value: boolean },
@@ -158,7 +158,7 @@ async function executeTool(
     debugRef.value.decisionTrace.conflitos = trace.conflitos
 
     // Compute profile confidence and store for debug
-    const confidence = computeProfileConfidence(input, conversationTurns)
+    const confidence = computeProfileConfidence(input, profileQuestionsAsked)
     debugRef.value.confidenceInfo = confidence
 
     const baseResult = {
@@ -464,7 +464,14 @@ export async function runAgentTurn(
   const brandAskedRef: { value: boolean } = { value: false }
   const pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
-  const conversationTurns = history.filter(m => m.role === 'user').length
+  // Count only the Akinator questions actually presented in history, not total user messages.
+  // Total user messages reach maxQuestions (4) fast in long "quero trocar" flows, firing
+  // recommendAnyway before lesão is asked. Akinator question texts are fixed/verbatim,
+  // so an includes() check on assistant messages gives the real question round count.
+  const profileQuestionsAsked = history
+    .filter(m => m.role === 'assistant')
+    .filter(m => AKINATOR_QUESTION_TEXTS.some(q => m.content.includes(q)))
+    .length
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false
@@ -562,7 +569,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -606,7 +613,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, conversationTurns, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }

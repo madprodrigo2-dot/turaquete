@@ -397,7 +397,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   // Suppress detectContextChips when the Akinator already provided inline chips (suggestions):
   // showing both at once duplicates the same question in two places with different labels.
   const hasAkinatorChips = !!(lastMsg?.suggestions?.length)
-  const contextChips = (!loading && !isStreaming && !isAnimating && !atLimit && lastMsg?.role === 'assistant' && !hasAkinatorChips)
+  const contextChips = (!loading && !isStreaming && !isAnimating && !atLimit && lastMsg?.role === 'assistant' && !hasAkinatorChips && !lastMsg?.recommendations)
     ? detectContextChips(lastMsg.content)
     : null
 

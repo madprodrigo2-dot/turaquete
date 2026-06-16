@@ -103,6 +103,8 @@ export function getFixedQuestionText(field: FieldKey): string {
   return FIELD_DEFS.find(d => d.key === field)?.question ?? ''
 }
 
+export const AKINATOR_QUESTION_TEXTS: readonly string[] = FIELD_DEFS.map(d => d.question)
+
 const TOTAL_WEIGHT = FIELD_DEFS.reduce((s, f) => s + f.weight, 0) // = 100
 
 function detectPresence(input: Record<string, unknown>, key: FieldKey): { present: boolean; value?: unknown } {
