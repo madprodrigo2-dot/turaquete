@@ -62,11 +62,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR">
       <body className={`${sora.variable} ${inter.variable} antialiased`}>
         {children}
-        {process.env.NEXT_PUBLIC_BUILD_LABEL && (
-          <div className="fixed bottom-2 right-2 text-[9px] text-gray-400/70 select-none pointer-events-none z-50 font-mono">
-            {process.env.NEXT_PUBLIC_BUILD_LABEL}
-          </div>
-        )}
         <Analytics />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (

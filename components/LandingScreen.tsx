@@ -975,6 +975,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
         {/* Footer */}
         <footer className="pt-3 pb-2 flex flex-col items-center gap-3 border-t border-tinta/10">
+          {process.env.NEXT_PUBLIC_BUILD_LABEL && (
+            <p className="text-[9px] font-mono text-tinta/25 select-none">{process.env.NEXT_PUBLIC_BUILD_LABEL}</p>
+          )}
           <p className="text-center text-tinta/40 text-xs leading-relaxed max-w-xs">
             A Turaquete pode receber comissão por compras feitas pelos links indicados, sem custo extra pra você.
           </p>
