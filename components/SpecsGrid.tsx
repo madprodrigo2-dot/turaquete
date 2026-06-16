@@ -52,10 +52,13 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
 
   const furos = (extra.furos ?? extra.furos_quantidade) as number | string | undefined
 
-  const textura = extra.textura as string | undefined
-  const tratamentoFabrica = extra.tratamento_fabrica
+  const superficieNova = extra.superficie as string | undefined  // field written by BlocoA
+  const textura = extra.textura as string | undefined            // legacy
+  const tratamentoFabrica = extra.tratamento_fabrica             // legacy boolean
   let superficieValue: string | undefined
-  if (textura != null || tratamentoFabrica != null) {
+  if (superficieNova) {
+    superficieValue = cap(superficieNova)
+  } else if (textura != null || tratamentoFabrica != null) {
     const tex = textura ? cap(textura) : null
     if (tratamentoFabrica === false) {
       superficieValue = tex ? `${tex}, sem tratamento de fábrica` : 'Lisa, sem tratamento de fábrica'

@@ -284,7 +284,10 @@ async function executeTool(
     // presupuesto_min !== undefined covers "tanto faz" (min=0) and "acima de R$X" (min>0).
     // Ask whenever the budget is unknown — candidates being similar in price to each
     // other doesn't help: all of them could be out of the user's budget.
-    const budgetKnown = !!(input as RacketFilters).presupuesto_max || (input as RacketFilters).presupuesto_min !== undefined
+    // Name-based searches (comparison / "mostra essa X") don't need a budget question —
+    // the user asked about specific rackets, not a profile-filtered recommendation.
+    const isNameSearch = !!(input as RacketFilters).nome
+    const budgetKnown = isNameSearch || !!(input as RacketFilters).presupuesto_max || (input as RacketFilters).presupuesto_min !== undefined
     const priceDecision = computePrecoDecision(ranked, budgetKnown)
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
@@ -390,7 +393,10 @@ export async function runAgentTurn(
   let stalledOnce = false
 
   while (rounds < MAX_TOOL_ROUNDS) {
-    const nothingDoneYet = !diagnosticoRef.value && pendingRecommendations.length === 0 && !hasSearchResults
+    // intencaoRef is excluded: registrar_intencao legitimately ends with a clarifying question
+    // (e.g. "qual sua raquete atual?") — that is not a stall. Including it here prevented
+    // a cascade of ~10 spurious API retries per turn in TROCA/lesao flows.
+    const nothingDoneYet = !diagnosticoRef.value && pendingRecommendations.length === 0 && !hasSearchResults && !intencaoRef.value
     // Stall variant: model ran diagnosticar_perfil but then returned text without searching.
     // EXCEPTION: if confidence is insufficient, the agent is SUPPOSED to ask a question and
     // not search yet — that's not a stall. Only treat as stall when confidence is sufficient.

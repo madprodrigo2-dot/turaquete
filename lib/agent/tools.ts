@@ -148,11 +148,15 @@ export const agentTools: Anthropic.Tool[] = [
         },
         cotovelo_sensivel: {
           type: 'boolean',
-          description: 'Tem dor ou histórico no cotovelo',
+          description: 'Tem dor ou histórico no cotovelo. Passe `true` se sim.',
         },
         ombro_sensivel: {
           type: 'boolean',
-          description: 'Tem dor ou histórico no ombro',
+          description: 'Tem dor ou histórico no ombro. Passe `true` se sim.',
+        },
+        sem_lesao: {
+          type: 'boolean',
+          description: 'Usuário confirmou explicitamente NÃO ter dor nem lesão no braço (cotovelo, ombro, punho). Passe `true` quando a resposta for "Não tenho dor" ou equivalente — isso marca a pergunta de lesão como respondida para o sistema de confiança.',
         },
         genero_organico: {
           type: 'string',

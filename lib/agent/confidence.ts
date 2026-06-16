@@ -107,8 +107,9 @@ function detectPresence(input: Record<string, unknown>, key: FieldKey): { presen
   if (key === 'lesao') {
     const c = 'cotovelo_sensivel' in input && input.cotovelo_sensivel != null
     const o = 'ombro_sensivel' in input && input.ombro_sensivel != null
-    return c || o
-      ? { present: true, value: input.cotovelo_sensivel ?? input.ombro_sensivel }
+    const sem = input.sem_lesao === true  // explicit "no pain" answer counts as answered
+    return (c || o || sem)
+      ? { present: true, value: input.cotovelo_sensivel ?? input.ombro_sensivel ?? null }
       : { present: false }
   }
   if (key === 'jogo_aereo') {
