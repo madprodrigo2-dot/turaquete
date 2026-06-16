@@ -121,6 +121,14 @@ export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
     }
   }
 
+  // Guarantee minimum window — narrower than factory variation (±10g) is inconsistent.
+  // Skip for safety overrides: injury rules and age ≥50 intentionally restrict range.
+  const hasOverride = (p.idade != null && p.idade >= 50) || !!dor
+  if (!hasOverride) {
+    const MIN_WINDOW = 15
+    if (peso_max - peso_min < MIN_WINDOW) peso_max = peso_min + MIN_WINDOW
+  }
+
   // Clamp to physical floor — 315g minimum, inviolable
   peso_min = Math.max(peso_min, CATALOGO_FLOOR)
   peso_max = Math.max(peso_max, CATALOGO_FLOOR + 5)
@@ -355,6 +363,16 @@ export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaId
       if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
       prioridades = ['conforto', 'sweet spot generoso', 'manuseio', 'estabilidade']
       steps.push({ label: `+ LESÃO (${lesaoDesc}) ─ regra hard 315–320g`, result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g → 315–${Math.min(prev.peso_max, 320)}g, prioridades: conforto first`, isOverride: true })
+    }
+  }
+
+  const hasOverride = (p.idade != null && p.idade >= 50) || !!dor
+  if (!hasOverride) {
+    const MIN_WINDOW = 15
+    if (peso_max - peso_min < MIN_WINDOW) {
+      const prevMax = peso_max
+      peso_max = peso_min + MIN_WINDOW
+      steps.push({ label: `+ janela mínima ${MIN_WINDOW}g`, result: { peso_min, peso_max }, note: `max ${prevMax} → ${peso_max}g (variação fabril ±10g exige janela ≥${MIN_WINDOW}g)` })
     }
   }
 
