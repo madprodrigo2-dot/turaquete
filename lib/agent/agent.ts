@@ -130,6 +130,21 @@ function applyFaixaFilter(
   })
 }
 
+// Derive lesão state from user chip answers in history — never from model inference.
+// The model cannot be trusted to distinguish "braço" (generic) from "cotovelo" (confirmed).
+// Chip texts are exact matches from FIELD_DEFS['lesao'].chips.
+function extractLesaoFromHistory(history: ChatMessage[]): Record<string, boolean> | null {
+  for (const m of history) {
+    if (m.role !== 'user') continue
+    const c = m.content.trim()
+    if (c === 'Sim, cotovelo') return { cotovelo_sensivel: true }
+    if (c === 'Sim, ombro')    return { ombro_sensivel: true }
+    if (c === 'Punho ou outro lugar') return { punho_sensivel: true }
+    if (c === 'Não tenho dor') return { sem_lesao: true }
+  }
+  return null
+}
+
 async function executeTool(
   name: string,
   input: Record<string, unknown>,
@@ -142,7 +157,8 @@ async function executeTool(
   priceAskPendingRef: { value: boolean },
   pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null },
   marcaAskPendingRef: { value: boolean },
-  brandAskedRef: { value: boolean }
+  brandAskedRef: { value: boolean },
+  confirmedLesao: Record<string, boolean> | null
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -150,15 +166,25 @@ async function executeTool(
   }
 
   if (name === 'diagnosticar_perfil') {
-    const { faixa, trace } = calcular_faixa_ideal_traced(input as FittingProfile)
+    // Strip any lesão fields the model included (prevents inference from "braço" or stale context),
+    // then re-inject the chip-confirmed state from history. This makes lesão state immutable to
+    // the model: it can only change through actual chip selection by the user.
+    const safeInput = { ...input }
+    delete safeInput.cotovelo_sensivel
+    delete safeInput.ombro_sensivel
+    delete safeInput.punho_sensivel
+    delete safeInput.sem_lesao
+    if (confirmedLesao) Object.assign(safeInput, confirmedLesao)
+
+    const { faixa, trace } = calcular_faixa_ideal_traced(safeInput as FittingProfile)
     diagnosticoRef.value = faixa
-    debugRef.value.perfilInput = input
+    debugRef.value.perfilInput = safeInput
     if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
     debugRef.value.decisionTrace.faixaSteps = trace.steps
     debugRef.value.decisionTrace.conflitos = trace.conflitos
 
-    // Compute profile confidence and store for debug
-    const confidence = computeProfileConfidence(input, profileQuestionsAsked)
+    // Compute profile confidence and store for debug — use safeInput (lesão from chip, not model)
+    const confidence = computeProfileConfidence(safeInput, profileQuestionsAsked)
     debugRef.value.confidenceInfo = confidence
 
     const baseResult = {
@@ -441,7 +467,13 @@ async function executeTool(
       const canonical = getChipsForField(field)
       chips = canonical.length > 0 ? canonical : opcoes.slice(0, 4)
     } else {
-      chips = opcoes.slice(0, 4)
+      // Fallback: detect lesão chips by content when pendingQuestionFieldRef wasn't set
+      // (model called sugerir_opcoes directly without going through diagnosticar_perfil)
+      const LESAO_KW = ['cotovelo', 'ombro', 'punho', 'tenho dor']
+      const looksLikeLesao = opcoes.some(o => LESAO_KW.some(kw => o.toLowerCase().includes(kw)))
+      chips = looksLikeLesao
+        ? ['Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar', 'Não tenho dor']
+        : opcoes.slice(0, 4)
     }
     pendingSuggestions.push(...chips)
     return JSON.stringify({ exibidas: chips.length })
@@ -510,6 +542,10 @@ export async function runAgentTurn(
     .filter(m => m.role === 'assistant')
     .filter(m => AKINATOR_QUESTION_TEXTS.some(q => m.content.includes(q)))
     .length
+  // Lesão state is derived from chip answers in history, not from the model's diagnosticar_perfil
+  // input. This prevents the model from inferring cotovelo from "braço" and ensures the state
+  // never disappears between turns (chip answers persist in history across all requests).
+  const confirmedLesao = extractLesaoFromHistory(history)
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false  // true only when in-budget results exist (fora_do_orcamento excluded)
@@ -610,7 +646,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, confirmedLesao)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -663,7 +699,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, confirmedLesao)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }
