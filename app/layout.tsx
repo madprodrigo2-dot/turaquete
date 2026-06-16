@@ -57,11 +57,20 @@ export const metadata: Metadata = {
   },
 };
 
+const sha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7)
+const date = process.env.BUILD_DATE
+const buildLabel = sha ? (date ? `${sha} · ${date}` : sha) : null
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
       <body className={`${sora.variable} ${inter.variable} antialiased`}>
         {children}
+        {buildLabel && (
+          <div className="fixed bottom-2 right-2 text-[9px] text-gray-300/50 select-none pointer-events-none z-50 font-mono">
+            {buildLabel}
+          </div>
+        )}
         <Analytics />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (

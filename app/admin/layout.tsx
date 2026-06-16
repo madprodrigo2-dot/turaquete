@@ -2,6 +2,10 @@ import { auth, signOut } from '@/auth'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
 
+const sha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7)
+const date = process.env.BUILD_DATE
+const buildLabel = sha ? (date ? `${sha} · ${date}` : sha) : null
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   const isAdmin = !!session?.user?.email && session.user.email === process.env.ADMIN_EMAIL
@@ -24,6 +28,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
             <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
           </div>
+          {buildLabel && (
+            <span className="hidden md:block shrink-0 text-[10px] font-mono text-gray-300">
+              {buildLabel}
+            </span>
+          )}
           <form action={async () => { 'use server'; await signOut({ redirectTo: '/admin/login' }) }}>
             <button
               type="submit"
