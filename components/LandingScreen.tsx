@@ -27,7 +27,7 @@ const RECS_THRESHOLD = 50
 const CURATED_QUESTIONS = [
   'Tenho dor no cotovelo',
   'Quero trocar minha raquete',
-  'Venho do tênis',
+  'Sou iniciante',
   'Jogo mais na defesa',
 ]
 

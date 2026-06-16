@@ -130,19 +130,37 @@ function applyFaixaFilter(
   })
 }
 
-// Derive lesão state from user chip answers in history — never from model inference.
-// The model cannot be trusted to distinguish "braço" (generic) from "cotovelo" (confirmed).
-// Chip texts are exact matches from FIELD_DEFS['lesao'].chips.
-function extractLesaoFromHistory(history: ChatMessage[]): Record<string, boolean> | null {
+// Chip text → deterministic profile field value.
+// Texts must match FIELD_DEFS exactly (confidence.ts) plus the starter chip "Sou iniciante".
+// Keys match FittingProfile (scorer.ts) and the confidence input shape.
+const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
+  'Ataque (potência, smash)':   { estilo: 'ofensivo' },
+  'Defesa e controle':           { estilo: 'defensivo' },
+  'Equilibrado':                 { estilo: 'misto' },
+  'Estou começando (cat. E/D)': { nivel: 'iniciante' },
+  'Intermediário (cat. C/B)':   { nivel: 'intermediario' },
+  'Avançado (cat. A/Pro)':      { nivel: 'avancado' },
+  'Sou iniciante':              { nivel: 'iniciante' },
+  'Minha batida é forte':       { forca_declarada: 'forte' },
+  'Minha batida é suave':       { forca_declarada: 'fraca' },
+  'Jogo muito na rede':         { jogo_aereo_predominante: true },
+  'Prefiro o fundo de quadra':  { jogo_aereo_predominante: false },
+  'Sim, cotovelo':              { cotovelo_sensivel: true },
+  'Sim, ombro':                 { ombro_sensivel: true },
+  'Punho ou outro lugar':       { punho_sensivel: true },
+  'Não tenho dor':              { sem_lesao: true },
+}
+
+// Scan user chip messages in history → build confirmed profile.
+// Chip-answered fields are immune to model omission or re-inference between turns.
+function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<string, unknown> {
+  const confirmed: Record<string, unknown> = {}
   for (const m of history) {
     if (m.role !== 'user') continue
-    const c = m.content.trim()
-    if (c === 'Sim, cotovelo') return { cotovelo_sensivel: true }
-    if (c === 'Sim, ombro')    return { ombro_sensivel: true }
-    if (c === 'Punho ou outro lugar') return { punho_sensivel: true }
-    if (c === 'Não tenho dor') return { sem_lesao: true }
+    const update = CHIP_TO_PROFILE[m.content.trim()]
+    if (update) Object.assign(confirmed, update)
   }
-  return null
+  return confirmed
 }
 
 async function executeTool(
@@ -158,7 +176,8 @@ async function executeTool(
   pendingQuestionFieldRef: { value: FieldKey | 'preco' | 'marca' | null },
   marcaAskPendingRef: { value: boolean },
   brandAskedRef: { value: boolean },
-  confirmedLesao: Record<string, boolean> | null
+  currentRacketIds: Set<number>,
+  confirmedProfile: Record<string, unknown>
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -166,15 +185,15 @@ async function executeTool(
   }
 
   if (name === 'diagnosticar_perfil') {
-    // Strip any lesão fields the model included (prevents inference from "braço" or stale context),
-    // then re-inject the chip-confirmed state from history. This makes lesão state immutable to
-    // the model: it can only change through actual chip selection by the user.
+    // Strip lesão fields — prevent model from inferring cotovelo/ombro from free text like "braço".
+    // Then inject all chip-confirmed fields (estilo, nível, força, jogo aéreo, lesão).
+    // Chip answers override model values, guaranteeing no dimension reappears as missing once answered.
     const safeInput = { ...input }
     delete safeInput.cotovelo_sensivel
     delete safeInput.ombro_sensivel
     delete safeInput.punho_sensivel
     delete safeInput.sem_lesao
-    if (confirmedLesao) Object.assign(safeInput, confirmedLesao)
+    Object.assign(safeInput, confirmedProfile)
 
     const { faixa, trace } = calcular_faixa_ideal_traced(safeInput as FittingProfile)
     diagnosticoRef.value = faixa
@@ -183,8 +202,8 @@ async function executeTool(
     debugRef.value.decisionTrace.faixaSteps = trace.steps
     debugRef.value.decisionTrace.conflitos = trace.conflitos
 
-    // Compute profile confidence and store for debug — use safeInput (lesão from chip, not model)
-    const confidence = computeProfileConfidence(safeInput, profileQuestionsAsked)
+    // Compute profile confidence — pass intent so lesao_dor forces lesão question first
+    const confidence = computeProfileConfidence(safeInput, profileQuestionsAsked, intencaoRef.value ?? undefined)
     debugRef.value.confidenceInfo = confidence
 
     const baseResult = {
@@ -489,13 +508,14 @@ async function executeTool(
       })
     }
     const { raquetes } = input as RecommendInput
-    // Limitar a 3 aunque el modelo mande más
+    // Cap at 3, then exclude the current racket identified by lookup in TROCA flow
     const capped = raquetes.slice(0, 3)
-    const ids = capped.map(r => r.id)
+    const filtered = currentRacketIds.size > 0 ? capped.filter(r => !currentRacketIds.has(r.id)) : capped
+    const ids = filtered.map(r => r.id)
     const rackets = await getRaquetasByIds(ids)
 
     // Construir recommendations preservando el orden y la razao del modelo
-    const built: RecommendedRacket[] = capped
+    const built: RecommendedRacket[] = filtered
       .flatMap(r => {
         const racket = rackets.find(rk => rk.id === r.id)
         if (!racket) return []
@@ -542,10 +562,11 @@ export async function runAgentTurn(
     .filter(m => m.role === 'assistant')
     .filter(m => AKINATOR_QUESTION_TEXTS.some(q => m.content.includes(q)))
     .length
-  // Lesão state is derived from chip answers in history, not from the model's diagnosticar_perfil
-  // input. This prevents the model from inferring cotovelo from "braço" and ensures the state
-  // never disappears between turns (chip answers persist in history across all requests).
-  const confirmedLesao = extractLesaoFromHistory(history)
+  // Profile state derived from chip answers in history — immune to model omission between turns.
+  // Lesão fields are also stripped from model input and re-injected from here (prevents inference).
+  const confirmedProfile = extractConfirmedProfileFromHistory(history)
+  // Current racket IDs from lookup searches (TROCA flow) — excluded from recomendar_raquetas
+  const currentRacketIds = new Set<number>()
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false  // true only when in-budget results exist (fora_do_orcamento excluded)
@@ -555,6 +576,7 @@ export async function runAgentTurn(
   // tool_choice:'any' to force it to actually call a tool. The stall response is
   // discarded — messages stays untouched so the forced retry gets a clean slate.
   let stalledOnce = false
+  let confidenceInsufficient = false
 
   // Intents that require profile-building: force diagnosticar_perfil immediately
   // after registrar_intencao so the Akinator system (not the model) decides what
@@ -570,7 +592,7 @@ export async function runAgentTurn(
     // Stall variant: model ran diagnosticar_perfil but then returned text without searching.
     // EXCEPTION: if confidence is insufficient, the agent is SUPPOSED to ask a question and
     // not search yet — that's not a stall. Only treat as stall when confidence is sufficient.
-    const confidenceInsufficient = debugRef.value.confidenceInfo?.willRecommend === false
+    confidenceInsufficient = debugRef.value.confidenceInfo?.willRecommend === false
     // Use searchWasCalled (not hasSearchResults) so that a fora_do_orcamento search
     // (which intentionally leaves hasSearchResults=false) doesn't trigger stall detection.
     const diagWithoutSearch = !!diagnosticoRef.value && !searchWasCalled && pendingRecommendations.length === 0 && !confidenceInsufficient && !marcaAskPendingRef.value
@@ -646,7 +668,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, confirmedLesao)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -661,9 +683,15 @@ export async function runAgentTurn(
         // contaminating hasSearchResults and forcing recomendar_raquetas with the wrong pool.
         const isLookup = !!(inp.nome || inp.atleta)
         try {
-          const parsed = JSON.parse(result) as { encontradas: number; fora_do_orcamento?: boolean }
+          const parsed = JSON.parse(result) as { encontradas: number; fora_do_orcamento?: boolean; raquetes?: Array<{ id: number }> }
           // Only mark hasSearchResults when results are in-budget AND it's a profile search.
           if (parsed.encontradas > 0 && !parsed.fora_do_orcamento && !isLookup) hasSearchResults = true
+          // Track lookup IDs so recomendar_raquetas can exclude the current racket (TROCA flow)
+          if (isLookup) {
+            for (const r of parsed.raquetes ?? []) {
+              if (typeof r.id === 'number') currentRacketIds.add(r.id)
+            }
+          }
         } catch { /* ignore parse errors */ }
       }
 
@@ -699,7 +727,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, confirmedLesao)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }

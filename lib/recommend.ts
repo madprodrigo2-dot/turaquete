@@ -168,14 +168,14 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
       if (ins.elbow_friendly === true) return true
       if (ins.elbow_friendly === false) return false
       const saida = r.specs_extra?.saida_de_bola as string | undefined
-      return (ins.comfort ?? 0) >= 8 && saida !== 'exigente'
+      return (ins.comfort ?? 0) >= 8 && saida === 'fácil'
     })
     if (filtered.length >= 1) {
       results = filtered
-      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: false })
+      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: false })
     } else {
       criteriosRelaxados.push('cotovelo sensível: nenhuma raquete com flag ou conforto≥8 — avalie manualmente')
-      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
     }
   }
 
@@ -188,14 +188,14 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
       if (ins.shoulder_friendly === true) return true
       if (ins.shoulder_friendly === false) return false
       const saida = r.specs_extra?.saida_de_bola as string | undefined
-      return (ins.comfort ?? 0) >= 8 && saida !== 'exigente'
+      return (ins.comfort ?? 0) >= 8 && saida === 'fácil'
     })
     if (filtered.length >= 1) {
       results = filtered
-      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: false })
+      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: false })
     } else {
       criteriosRelaxados.push('ombro sensível: nenhuma raquete com flag ou conforto≥8 — avalie manualmente')
-      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
     }
   }
 
@@ -206,14 +206,14 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
       const ins = r.racket_insights
       if (!ins) return false
       const saida = r.specs_extra?.saida_de_bola as string | undefined
-      return (ins.comfort ?? 0) >= 8 && saida !== 'exigente'
+      return (ins.comfort ?? 0) >= 8 && saida === 'fácil'
     })
     if (filtered.length >= 1) {
       results = filtered
-      filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída não exigente)', antes: before, depois: results.length, relaxado: false })
+      filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: false })
     } else {
-      criteriosRelaxados.push('punho/outro sensível: nenhuma raquete com conforto≥8 sem saída exigente — avalie manualmente')
-      filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída não exigente)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      criteriosRelaxados.push('punho/outro sensível: nenhuma raquete com conforto≥8 e saída fácil — avalie manualmente')
+      filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
     }
   }
 

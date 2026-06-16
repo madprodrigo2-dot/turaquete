@@ -131,7 +131,8 @@ function detectPresence(input: Record<string, unknown>, key: FieldKey): { presen
 
 export function computeProfileConfidence(
   input: Record<string, unknown>,
-  conversationTurns: number
+  conversationTurns: number,
+  intencao?: string
 ): ConfidenceInfo {
   const presentFields: ConfidenceFieldInfo[] = []
   const missingFields: ConfidenceFieldInfo[] = []
@@ -160,7 +161,12 @@ export function computeProfileConfidence(
 
   let nextQuestion: ConfidenceQuestion | null = null
   if (!willRecommend && missingFields.length > 0) {
-    const top = [...missingFields].sort((a, b) => b.weight - a.weight)[0]
+    let top: ConfidenceFieldInfo
+    if (intencao === 'lesao_dor') {
+      top = missingFields.find(f => f.key === 'lesao') ?? [...missingFields].sort((a, b) => b.weight - a.weight)[0]
+    } else {
+      top = [...missingFields].sort((a, b) => b.weight - a.weight)[0]
+    }
     const def = FIELD_DEFS.find(d => d.key === top.key)!
     nextQuestion = {
       field:         def.key,

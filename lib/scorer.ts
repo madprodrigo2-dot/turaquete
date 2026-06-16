@@ -110,17 +110,12 @@ export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
   //     racket — which lacks mass to dampen the blow and forces the arm to generate power.
   //   ombro, or both sites: lighter IS genuinely better → strict 315–320g.
   if (dor) {
+    // All injuries: profile-driven range capped at 315–335g.
+    // Mass absorbs impact; very light forces the arm to generate power, worsening symptoms.
     if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
-    if (p.cotovelo_sensivel && !p.ombro_sensivel && !p.punho_sensivel) {
-      // Cotovelo only: moderate weight (mass absorbs vibration, very light can worsen epicondilite)
-      peso_min = Math.max(315, Math.min(peso_min, 330))
-      peso_max = 335
-      prioridades = ['conforto', 'estabilidade', 'sweet spot generoso', 'manuseio']
-    } else {
-      peso_min = 315
-      peso_max = Math.min(peso_max, 320)
-      prioridades = ['conforto', 'sweet spot generoso', 'manuseio', 'estabilidade']
-    }
+    peso_min = Math.max(315, Math.min(peso_min, 330))
+    peso_max = 335
+    prioridades = ['conforto', 'estabilidade', 'sweet spot generoso', 'manuseio']
   }
 
   // Guarantee minimum window — narrower than factory variation (±10g) is inconsistent.
@@ -345,28 +340,16 @@ export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaId
     const lesaoDesc = [p.cotovelo_sensivel && 'cotovelo', p.ombro_sensivel && 'ombro', p.punho_sensivel && 'punho'].filter(Boolean).join('+')
     if (balance_preferido === 'medio_ou_cabeca') conflitos.push(`lesão (${lesaoDesc}) + balance cabeça: balance excluído por lesão`)
 
-    if (p.cotovelo_sensivel && !p.ombro_sensivel && !p.punho_sensivel) {
-      // Cotovelo only: profile-driven range capped at 315–335g.
-      // Mass absorbs impact; very light forces the arm to generate power → can worsen epicondilite.
-      if (porte_grande) conflitos.push(`lesão cotovelo + porte grande: porte elevou o peso; teto modulado para 335g (não 320g)`)
-      if (p.estilo === 'ofensivo') conflitos.push(`lesão cotovelo + estilo ofensivo: faixa ofensiva contida em ≤335g, balance cabeça excluído`)
-      const prev = { peso_min, peso_max, b: balance_preferido }
-      peso_min = Math.max(315, Math.min(peso_min, 330))
-      peso_max = 335
-      if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
-      prioridades = ['conforto', 'estabilidade', 'sweet spot generoso', 'manuseio']
-      steps.push({ label: `+ LESÃO cotovelo ─ faixa modulada`, result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g → ${peso_min}–${peso_max}g (perfil mantido, teto 335g; massa amortece impacto)`, isOverride: true })
-    } else {
-      // Ombro, punho, or cotovelo+ombro: lighter is genuinely better → strict 315–320g
-      if (porte_grande) conflitos.push(`lesão (${lesaoDesc}) + porte grande: porte elevou o peso mas lesão força teto 320g`)
-      if (p.estilo === 'ofensivo') conflitos.push(`lesão (${lesaoDesc}) + estilo ofensivo: faixa 325–345g forçada para 315–320g, balance cabeça excluído`)
-      const prev = { peso_min, peso_max, b: balance_preferido }
-      peso_min = 315
-      peso_max = Math.min(peso_max, 320)
-      if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
-      prioridades = ['conforto', 'sweet spot generoso', 'manuseio', 'estabilidade']
-      steps.push({ label: `+ LESÃO (${lesaoDesc}) ─ regra hard 315–320g`, result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g → 315–${Math.min(prev.peso_max, 320)}g, prioridades: conforto first`, isOverride: true })
-    }
+    // All injuries: profile-driven range capped at 315–335g.
+    // Mass absorbs impact; very light forces the arm to generate power, worsening symptoms.
+    if (porte_grande) conflitos.push(`lesão (${lesaoDesc}) + porte grande: porte elevou o peso; teto modulado para 335g`)
+    if (p.estilo === 'ofensivo') conflitos.push(`lesão (${lesaoDesc}) + estilo ofensivo: faixa ofensiva contida em ≤335g, balance cabeça excluído`)
+    const prev = { peso_min, peso_max, b: balance_preferido }
+    peso_min = Math.max(315, Math.min(peso_min, 330))
+    peso_max = 335
+    if (balance_preferido === 'medio_ou_cabeca') balance_preferido = 'medio'
+    prioridades = ['conforto', 'estabilidade', 'sweet spot generoso', 'manuseio']
+    steps.push({ label: `+ LESÃO (${lesaoDesc}) ─ faixa modulada 315–335g`, result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g → ${peso_min}–${peso_max}g (perfil mantido, teto 335g; massa amortece impacto)`, isOverride: true })
   }
 
   const hasOverride = (p.idade != null && p.idade >= 50) || !!dor
