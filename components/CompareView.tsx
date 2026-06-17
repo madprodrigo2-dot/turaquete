@@ -158,7 +158,7 @@ export default function CompareView({ rackets }: Props) {
 
       {/* Hexagon radar */}
       {hasTwoRackets && (
-        <section className="bg-white rounded-2xl border border-aqua/15 shadow-sm p-5">
+        <section className="bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] p-5">
           <SectionLabel>Perfil</SectionLabel>
           <CompareHexagon rackets={rackets as [RacketWithInsights, RacketWithInsights]} />
         </section>
@@ -170,7 +170,7 @@ export default function CompareView({ rackets }: Props) {
         const scored = placar.winsA + placar.winsB
         const pctA = scored > 0 ? (placar.winsA / scored) * 100 : 50
         return (
-          <section className="bg-white rounded-2xl border border-aqua/15 shadow-sm overflow-hidden">
+          <section className="bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] overflow-hidden">
             <div className="px-5 pt-5 pb-5">
               <SectionLabel>Placar</SectionLabel>
               <div className="flex items-center">
@@ -224,7 +224,7 @@ export default function CompareView({ rackets }: Props) {
       })()}
 
       {/* Scores */}
-      <section className="bg-white rounded-2xl border border-aqua/15 shadow-sm p-5">
+      <section className="bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] p-5">
         <SectionLabel>Pontuações</SectionLabel>
         {hasTwoRackets && (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-5">

@@ -10,9 +10,9 @@
 }
 
 @layer utilities {
-  /* Sand texture background — 7% visible, keeps aqua-light tone */
+  /* Sand texture background — warm crema base */
   .sand-texture {
-    background-color: var(--color-aqua-light);
+    background-color: #FBF6EF;
     background-image:
       linear-gradient(rgba(234, 247, 246, 0.93), rgba(234, 247, 246, 0.93)),
       url('/textura-areia.webp');
@@ -26,6 +26,19 @@
   .font-body {
     font-family: var(--font-sans), system-ui, sans-serif;
   }
+  /* Modern petróleo-tinted card shadow — works on crema and white backgrounds */
+  .shadow-card {
+    box-shadow:
+      0 2px 8px rgba(14, 58, 64, 0.06),
+      0 14px 34px rgba(14, 58, 64, 0.09);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .shadow-card:hover {
+    box-shadow:
+      0 4px 12px rgba(14, 58, 64, 0.08),
+      0 20px 44px rgba(14, 58, 64, 0.13);
+  }
+
   /* Warm two-layer shadow: ambient (wide) + contact (tight) — cards resting on sand */
   .shadow-arena {
     box-shadow:

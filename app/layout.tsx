@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Plus_Jakarta_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
-const display = Archivo({
+const display = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 })
 

@@ -23,7 +23,7 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
   return (
     <Link
       href={`/raquetes/${racket.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden border border-aqua/12 shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-aqua/35 transition-all duration-200 flex flex-col"
+      className="group bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 hover:border-aqua/30 transition-all duration-200 flex flex-col"
     >
       <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
       <div className="p-3 flex flex-col gap-1 flex-1">
@@ -39,7 +39,7 @@ export default function DiscoveryPageLayout({ icon, title, subtitle, rackets, em
   return (
     <div className="min-h-screen sand-texture">
       {/* Nav */}
-      <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20">
+      <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
         <div className="max-w-4xl mx-auto px-5 md:px-8 py-3">
           <Link
             href="/"

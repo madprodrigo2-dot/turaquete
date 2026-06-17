@@ -143,7 +143,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
           />
 
           {/* Anatomia da raquete */}
-          <div className="border border-aqua/12 rounded-xl overflow-hidden -mt-1">
+          <div className="border border-[rgba(14,58,64,0.08)] rounded-xl overflow-hidden -mt-1">
             <button
               className="flex items-center justify-between w-full px-3 py-2.5 text-xs text-tinta/50 hover:text-tinta/70 transition-colors"
               onClick={() => {
@@ -176,7 +176,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
 
           {/* Perfil resumo */}
           {ins.perfil_resumo && (
-            <div className="bg-aqua/[0.08] rounded-xl p-4 border border-aqua/15">
+            <div className="bg-[#FBF6EF] rounded-xl p-4 border border-[rgba(14,58,64,0.06)]">
               <p className="text-tinta text-sm leading-relaxed">{ins.perfil_resumo}</p>
             </div>
           )}

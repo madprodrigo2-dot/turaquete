@@ -73,7 +73,7 @@ function DiscoveryTile({
   return (
     <Link
       href={href}
-      className={`group bg-white rounded-xl p-4 flex items-center gap-3.5 border border-tinta/10 shadow-sm ${hoverBorderClass} hover:shadow-md active:scale-[0.98] transition-all`}
+      className={`group bg-white rounded-xl p-4 flex items-center gap-3.5 shadow-card border border-[rgba(14,58,64,0.06)] ${hoverBorderClass} active:scale-[0.98] transition-all`}
     >
       <div className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center ${chipClass}`}>
         {icon}
@@ -678,7 +678,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       />
 
       {/* Sticky header — full viewport width */}
-      <div className={`sticky top-0 z-30 w-full flex justify-center bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
+      <div className={`sticky top-0 z-30 w-full flex justify-center bg-[#FBF6EF]/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
         <div className="w-full max-w-sm md:max-w-4xl flex items-center justify-between px-5 md:px-8 py-3 md:py-4">
           <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
             <div className="relative h-10 md:h-[3.25rem] aspect-[322/128]">
@@ -800,9 +800,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           {/* Coluna visual — foto hero */}
           <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:aspect-[3/4]">
-            {/* Mobile: imagem horizontal (ocupa menos espaço vertical) */}
+            {/* Mobile: horizontal */}
             <Image
-              src="/hero-beach-tenniss3horizontal.png"
+              src="/hero-beach-tennis-horizontal-caricatura.png"
               alt="Raquetes de beach tennis na areia"
               width={1200}
               height={800}
@@ -810,15 +810,30 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               priority
               sizes="100vw"
             />
-            {/* Desktop: imagem retrato com fill */}
+            {/* Desktop: vertical com fill */}
             <Image
-              src="/hero-beach-tennis3.png"
+              src="/hero-beach-tennis-vertical-caricatura.png"
               alt="Raquetes de beach tennis na areia"
               fill
-              className="hidden md:block object-cover object-center"
+              className="hidden md:block object-cover object-top"
               priority
               sizes="260px"
             />
+            {/* Score overlays — desktop only, decorativos */}
+            <div className="hidden md:flex absolute top-4 right-3 flex-col gap-2 pointer-events-none select-none" aria-hidden="true">
+              {([{label:'Potência',v:8},{label:'Conforto',v:9}] as const).map(({label,v}) => (
+                <div key={label} className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-[0_2px_12px_rgba(14,58,64,.12)] border border-white/70 flex items-center gap-2">
+                  <span className="text-aqua font-bold text-base leading-none">{v}</span>
+                  <span className="text-tinta/65 text-[11px] font-medium">{label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="hidden md:block absolute bottom-4 left-3 pointer-events-none select-none" aria-hidden="true">
+              <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-[0_2px_12px_rgba(14,58,64,.12)] border border-white/70 flex items-center gap-2">
+                <span className="text-aqua font-bold text-base leading-none">7</span>
+                <span className="text-tinta/65 text-[11px] font-medium">Controle</span>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -864,7 +879,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 
           {/* Como funciona */}
-          <div className="bg-white/85 backdrop-blur-[2px] rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/15">
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
             <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
             <div className="flex flex-col">
               {STEPS.map((step, i) => (
@@ -889,7 +904,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
 
           {/* Quem é a Tury? — transparência */}
-          <div className="bg-white/85 backdrop-blur-[2px] rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/15">
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
             <div className="flex items-start gap-3 mb-4">
               <Image
                 src="/tury-explicando.png"
@@ -924,7 +939,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           {/* Veja como funciona na prática — preview com raquete real */}
           {exampleRacket && (
-            <div className="bg-white/85 backdrop-blur-[2px] rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/15">
+            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
               <p className="font-heading font-bold text-tinta text-base md:text-lg mb-1">
                 Veja como funciona na prática
               </p>
@@ -1061,7 +1076,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
           <Link
             href={featuredRackets[0] ? `/comparar?a=${featuredRackets[0].slug}` : '/comparar'}
-            className="bg-white rounded-2xl border border-aqua/12 shadow-sm overflow-hidden hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:scale-[0.99]"
+            className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99]"
           >
             <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3">
               <div className="flex flex-col gap-2">
@@ -1111,7 +1126,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         {/* Perguntas frequentes */}
         <div className="flex flex-col gap-3">
           <p className="font-heading font-bold text-tinta text-base md:text-lg">Perguntas frequentes</p>
-          <div className="bg-white rounded-2xl border border-aqua/12 shadow-sm overflow-hidden divide-y divide-aqua/10">
+          <div className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] divide-y divide-tinta/5">
             {FAQS.map(({ q, a }, i) => (
               <details key={i} className="group" open={i === 0}>
                 <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-tinta font-heading font-semibold text-sm md:text-base [list-style:none] select-none [&::-webkit-details-marker]:hidden">
