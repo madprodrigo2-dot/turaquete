@@ -164,7 +164,7 @@ function BrandCard({ brand }: { brand: Brand }) {
           className={`h-8 w-auto max-w-[140px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
           style={
             brand.slug === 'mormaii'    ? { marginLeft: '-14px' } :
-            brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
+            brand.slug === 'minimalist' ? { marginLeft: '-10px', height: '42px' } :
             brand.slug === 'adidas'     ? { height: '20px' } :
             brand.slug === 'kona'       ? { height: '26px' } :
             undefined
