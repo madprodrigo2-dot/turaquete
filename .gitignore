@@ -46,3 +46,10 @@ brand-raw/
 # scripts e backups one-shot locais
 backups/
 scripts/
+
+# backups de normalização de imagens e artefatos intermediários
+public/raquetes/_original/
+public/raquetes/_normalized/
+docs/normalize-preview/
+docs/image-analysis.json
+docs/image-analysis-report.md
