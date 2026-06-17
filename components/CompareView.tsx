@@ -17,13 +17,13 @@ const SCORES = [
 
 const COLORS = ['#FF5E3A', '#0CC0BE'] as const
 
-const SCORE_FOR_LABEL: Record<string, string> = {
-  power:           'quem quer potência',
-  control:         'quem quer controle',
-  comfort:         'quem quer conforto',
-  maneuverability: 'quem prefere manuseio ágil',
-  spin:            'quem joga com muito spin',
-  stability:       'quem quer estabilidade',
+const SCORE_USE_LABEL: Record<string, string> = {
+  power:           'ataque e potência',
+  control:         'controle e precisão',
+  comfort:         'conforto e proteção do braço',
+  maneuverability: 'jogo rápido na rede',
+  spin:            'efeitos',
+  stability:       'defesa e bloqueios',
 }
 
 function computePlacar(rackets: RacketWithInsights[]) {
@@ -41,21 +41,25 @@ function computePlacar(rackets: RacketWithInsights[]) {
   return { winsA, winsB, ties }
 }
 
-function melhorPara(racket: RacketWithInsights): string[] {
-  const ins = racket.racket_insights
-  if (!ins) return []
-  const result: string[] = []
-  if (ins.elbow_friendly || ins.shoulder_friendly) {
-    result.push('quem tem histórico de lesão')
+function melhorPara(a: RacketWithInsights, b: RacketWithInsights): [string[], string[]] {
+  const insA = a.racket_insights
+  const insB = b.racket_insights
+  const winsA: { key: string; margin: number }[] = []
+  const winsB: { key: string; margin: number }[] = []
+  for (const { key } of SCORES) {
+    const va = insA ? (insA[key] as number | null) : null
+    const vb = insB ? (insB[key] as number | null) : null
+    if (va == null || vb == null) continue
+    if (va > vb) winsA.push({ key, margin: va - vb })
+    else if (vb > va) winsB.push({ key, margin: vb - va })
   }
-  const top = SCORES
-    .map(({ key }) => ({ key, val: ins[key] as number | null }))
-    .filter(x => x.val != null && (x.val as number) >= 7)
-    .sort((a, b) => (b.val as number) - (a.val as number))
-    .slice(0, 2)
-    .map(({ key }) => SCORE_FOR_LABEL[key])
-  result.push(...top)
-  return result.slice(0, 2)
+  const toLabels = (wins: { key: string; margin: number }[]) =>
+    wins
+      .sort((x, y) => y.margin - x.margin)
+      .slice(0, 2)
+      .map(w => SCORE_USE_LABEL[w.key])
+      .filter(Boolean)
+  return [toLabels(winsA), toLabels(winsB)]
 }
 
 function alignedSpecs(rackets: RacketWithInsights[]) {
@@ -81,8 +85,9 @@ export default function CompareView({ rackets }: Props) {
   const specs = alignedSpecs(rackets)
   const hasTwoRackets = rackets.length === 2
   const placar = hasTwoRackets ? computePlacar(rackets) : null
-  const melA   = hasTwoRackets ? melhorPara(rackets[0]) : []
-  const melB   = hasTwoRackets ? melhorPara(rackets[1]) : []
+  const [melA, melB] = hasTwoRackets
+    ? melhorPara(rackets[0], rackets[1])
+    : [[], []]
 
   return (
     <div className="flex flex-col gap-7">
@@ -248,7 +253,7 @@ export default function CompareView({ rackets }: Props) {
                       <span key={j} className="text-[11px] text-tinta/65 leading-snug">{m}</span>
                     ))
                   ) : (
-                    <span className="text-[11px] text-tinta/30">—</span>
+                    <span className="text-[11px] text-tinta/35 italic leading-snug">equilibrada</span>
                   )}
                 </div>
               )
