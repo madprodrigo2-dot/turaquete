@@ -64,9 +64,9 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
 
   return (
     <>
-      <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden w-full">
+      <div className="rounded-2xl border border-aqua/12 bg-white shadow-sm overflow-hidden w-full hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
         {/* Imagem + badge de atleta */}
-        <div className="relative h-40 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+        <div className="relative h-40 bg-gradient-to-b from-gray-50 to-gray-50/60 flex items-center justify-center overflow-hidden shrink-0">
           {racket.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -133,7 +133,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               {topDims.map(d => (
                 <span
                   key={d.label}
-                  className="bg-aqua-light text-tinta text-xs font-medium px-2 py-0.5 rounded-full"
+                  className="bg-aqua/[0.08] text-tinta text-xs font-semibold px-2 py-0.5 rounded-full border border-aqua/20"
                 >
                   {d.label} {d.v}
                 </span>
@@ -150,7 +150,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
                 sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })
                 if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_na_loja', racket_id: racket.id })
               }}
-              className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-md active:scale-[0.98] transition-all"
+              className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-[0_4px_16px_rgba(255,94,58,0.30)] active:scale-[0.98] transition-all"
             >
               Ver na loja →
             </a>

@@ -741,7 +741,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
 
             {/* Franja */}
-            <div className="bg-coral/10 border-l-[5px] border-coral rounded-r-xl px-4 py-3.5 md:px-5 md:py-4">
+            <div className="bg-coral/[0.07] border-l-[4px] border-coral rounded-r-xl px-4 py-3.5 md:px-5 md:py-4 backdrop-blur-[2px]">
               <p className="text-tinta font-semibold text-sm md:text-base leading-relaxed">
                 O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
               </p>
@@ -752,7 +752,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               {BADGES.map(badge => (
                 <span
                   key={badge}
-                  className="bg-aqua/15 text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                  className="bg-aqua/[0.12] text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-aqua/20"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
                   {badge}
@@ -775,7 +775,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <button
                 ref={heroCtaRef}
                 onClick={onStart}
-                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
+                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md"
               >
                 Começar agora
               </button>
@@ -851,17 +851,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 
           {/* Como funciona */}
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
+          <div className="bg-white/85 backdrop-blur-[2px] rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/15">
             <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
             <div className="flex flex-col">
               {STEPS.map((step, i) => (
                 <div key={i} className="flex gap-4">
                   <div className="flex flex-col items-center w-8 shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-8 h-8 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0 shadow-[0_0_14px_rgba(12,192,190,0.35)]">
                       {i + 1}
                     </div>
                     {i < STEPS.length - 1 && (
-                      <div className="w-px flex-1 min-h-4 bg-aqua/35" />
+                      <div className="w-px flex-1 min-h-4 bg-gradient-to-b from-aqua/50 to-aqua/10" />
                     )}
                   </div>
                   <div className={`flex flex-col pt-1${i < STEPS.length - 1 ? ' pb-5' : ''}`}>
