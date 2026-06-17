@@ -709,7 +709,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8 pb-2 md:pb-3">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_260px] md:gap-6 md:items-center gap-5">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_300px] md:gap-6 md:items-start gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-5 md:gap-5">
@@ -799,7 +799,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:aspect-[3/4]">
+          <div className="relative w-full rounded-2xl overflow-hidden shrink-0">
             {/* Mobile: horizontal */}
             <Image
               src="/hero-beach-tennis-horizontal-caricatura.png"
@@ -810,30 +810,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               priority
               sizes="100vw"
             />
-            {/* Desktop: vertical com fill */}
+            {/* Desktop: vertical completa, sem recorte */}
             <Image
               src="/hero-beach-tennis-vertical-caricatura.png"
               alt="Raquetes de beach tennis na areia"
-              fill
-              className="hidden md:block object-cover object-top"
+              width={768}
+              height={1376}
+              className="hidden md:block w-full h-auto"
               priority
-              sizes="260px"
+              sizes="300px"
             />
-            {/* Score overlays — desktop only, decorativos */}
-            <div className="hidden md:flex absolute top-4 right-3 flex-col gap-2 pointer-events-none select-none" aria-hidden="true">
-              {([{label:'Potência',v:8},{label:'Conforto',v:9}] as const).map(({label,v}) => (
-                <div key={label} className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-[0_2px_12px_rgba(14,58,64,.12)] border border-white/70 flex items-center gap-2">
-                  <span className="text-aqua font-bold text-base leading-none">{v}</span>
-                  <span className="text-tinta/65 text-[11px] font-medium">{label}</span>
-                </div>
-              ))}
-            </div>
-            <div className="hidden md:block absolute bottom-4 left-3 pointer-events-none select-none" aria-hidden="true">
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-[0_2px_12px_rgba(14,58,64,.12)] border border-white/70 flex items-center gap-2">
-                <span className="text-aqua font-bold text-base leading-none">7</span>
-                <span className="text-tinta/65 text-[11px] font-medium">Controle</span>
-              </div>
-            </div>
           </div>
 
         </div>
