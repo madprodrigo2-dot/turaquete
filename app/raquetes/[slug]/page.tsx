@@ -109,19 +109,21 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
 
       <div className="min-h-screen sand-texture">
         {/* Nav */}
-        <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Voltar
-          </Link>
+        <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20">
+          <div className="max-w-2xl mx-auto px-5 py-3">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Voltar
+            </Link>
+          </div>
         </div>
 
-        <div className="max-w-xl mx-auto px-5 py-8 flex flex-col gap-6">
+        <div className="max-w-2xl mx-auto px-5 py-8 flex flex-col gap-6">
 
           {/* Imagem */}
           <div className="bg-white rounded-2xl p-6 flex items-center justify-center border border-aqua/20 shadow-sm min-h-[180px]">

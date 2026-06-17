@@ -5,8 +5,10 @@ const WIDTHS = [72, 58, 80, 65, 75, 60]
 export default function CompararParLoading() {
   return (
     <div className="min-h-screen sand-texture">
-      <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20 px-5 py-3">
-        <div className="h-4 w-20 rounded-full bg-tinta/12 animate-pulse" />
+      <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20">
+        <div className="max-w-2xl mx-auto px-5 py-3">
+          <div className="h-4 w-20 rounded-full bg-tinta/12 animate-pulse" />
+        </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-5 py-8">
