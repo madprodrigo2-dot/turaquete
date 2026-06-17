@@ -876,7 +876,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
 
           {/* Quem é a Tury? — transparência */}
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
+          <div className="bg-white/85 backdrop-blur-[2px] rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/15">
             <div className="flex items-start gap-3 mb-4">
               <Image
                 src="/tury-explicando.png"
@@ -898,7 +898,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 'Explica o porquê de cada recomendação, não só o resultado',
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 w-4 h-4 rounded-full bg-aqua/15 flex items-center justify-center shrink-0">
+                  <span className="mt-0.5 w-4 h-4 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0">
                     <svg width="8" height="8" viewBox="0 0 9 9" fill="none" aria-hidden="true">
                       <path d="M1.5 4.5l2 2 4-4" stroke="#0CC0BE" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -911,7 +911,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           {/* Veja como funciona na prática — preview com raquete real */}
           {exampleRacket && (
-            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
+            <div className="bg-white/85 backdrop-blur-[2px] rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/15">
               <p className="font-heading font-bold text-tinta text-base md:text-lg mb-1">
                 Veja como funciona na prática
               </p>
@@ -945,7 +945,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </div>
               <button
                 onClick={onStart}
-                className="mt-5 w-full font-heading font-semibold bg-coral text-white text-sm py-3 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all"
+                className="mt-5 w-full font-heading font-semibold bg-coral text-white text-sm py-3 rounded-xl hover:opacity-90 hover:shadow-[0_4px_16px_rgba(255,94,58,0.30)] active:scale-[0.98] transition-all"
               >
                 Receber minha recomendação
               </button>
@@ -1048,7 +1048,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
           <Link
             href={featuredRackets[0] ? `/comparar?a=${featuredRackets[0].slug}` : '/comparar'}
-            className="bg-white rounded-2xl border border-aqua/20 shadow-sm overflow-hidden hover:shadow-md transition-shadow active:scale-[0.99]"
+            className="bg-white rounded-2xl border border-aqua/12 shadow-sm overflow-hidden hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 active:scale-[0.99]"
           >
             <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3">
               <div className="flex flex-col gap-2">
@@ -1098,7 +1098,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         {/* Perguntas frequentes */}
         <div className="flex flex-col gap-3">
           <p className="font-heading font-bold text-tinta text-base md:text-lg">Perguntas frequentes</p>
-          <div className="bg-white rounded-2xl border border-aqua/20 shadow-sm overflow-hidden divide-y divide-aqua/10">
+          <div className="bg-white rounded-2xl border border-aqua/12 shadow-sm overflow-hidden divide-y divide-aqua/10">
             {FAQS.map(({ q, a }, i) => (
               <details key={i} className="group" open={i === 0}>
                 <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-tinta font-heading font-semibold text-sm md:text-base [list-style:none] select-none [&::-webkit-details-marker]:hidden">
@@ -1123,7 +1123,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <button
           ref={mainCtaRef}
           onClick={onStart}
-          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
+          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md"
         >
           Começar agora
         </button>

@@ -53,7 +53,7 @@ export default function RacketKeyStats({ racket }: Props) {
         )}
       </div>
       {saidaDeBola && (
-        <div className="flex items-start gap-2 bg-aqua-light border border-aqua/20 rounded-xl px-3 py-2.5">
+        <div className="flex items-start gap-2 bg-aqua/[0.08] border border-aqua/15 rounded-xl px-3 py-2.5">
           <span className="text-aqua shrink-0 mt-0.5 text-sm">ℹ</span>
           <div className="flex flex-col gap-1.5">
             <p className="text-tinta/70 text-xs leading-relaxed">

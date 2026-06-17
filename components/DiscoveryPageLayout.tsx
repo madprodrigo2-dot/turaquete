@@ -23,7 +23,7 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
   return (
     <Link
       href={`/raquetes/${racket.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 transition-all flex flex-col"
+      className="group bg-white rounded-2xl overflow-hidden border border-aqua/12 shadow-sm hover:-translate-y-0.5 hover:shadow-md hover:border-aqua/35 transition-all duration-200 flex flex-col"
     >
       <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
       <div className="p-3 flex flex-col gap-1 flex-1">
@@ -81,7 +81,7 @@ export default function DiscoveryPageLayout({ icon, title, subtitle, rackets, em
         {/* CTA */}
         <Link
           href="/"
-          className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md text-center block"
+          className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md text-center block"
         >
           Encontrar minha raquete ideal
         </Link>

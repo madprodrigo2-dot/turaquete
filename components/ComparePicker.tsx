@@ -225,7 +225,7 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                   <Link
                     key={i}
                     href={`/comparar/${a.slug}-vs-${b.slug}`}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-aqua/15 bg-white hover:border-aqua/30 hover:bg-aqua/5 transition-all"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-aqua/12 bg-white hover:-translate-y-0.5 hover:border-aqua/30 hover:shadow-sm transition-all duration-200"
                   >
                     <span className="text-sm text-tinta/70 leading-snug flex-1 min-w-0 truncate">
                       <span className="font-medium">{a.name}</span>

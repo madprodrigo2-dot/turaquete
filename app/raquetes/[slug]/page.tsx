@@ -126,7 +126,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
         <div className="max-w-4xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
 
           {/* Imagem */}
-          <div className="bg-white rounded-2xl p-6 flex items-center justify-center border border-aqua/20 shadow-sm min-h-[180px]">
+          <div className="bg-white rounded-2xl p-6 flex items-center justify-center border border-aqua/12 shadow-sm min-h-[180px]">
             {racket.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -154,7 +154,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               {(() => {
                 const nivel = derivarNivel(racket)
                 return nivel ? (
-                  <span className="bg-aqua/15 text-aqua text-xs font-semibold px-3 py-1 rounded-full">
+                  <span className="bg-aqua/[0.08] text-aqua text-xs font-semibold px-3 py-1 rounded-full border border-aqua/20">
                     {NIVEL_LABEL[nivel] ?? nivel}
                   </span>
                 ) : null
@@ -169,14 +169,14 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
 
           {/* Perfil resumo */}
           {ins?.perfil_resumo && (
-            <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm">
+            <div className="bg-white rounded-2xl p-5 border border-aqua/12 shadow-sm">
               <p className="text-tinta leading-relaxed text-sm md:text-base">{ins.perfil_resumo}</p>
             </div>
           )}
 
           {/* Pontuações */}
           {ins && (ins.power !== null || ins.control !== null) && (
-            <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm flex flex-col gap-4">
+            <div className="bg-white rounded-2xl p-5 border border-aqua/12 shadow-sm flex flex-col gap-4">
               <p className="text-tinta font-semibold text-sm md:text-base">Avaliação</p>
               <RacketHexagon racket={racket} />
               <ScoreSection
@@ -193,7 +193,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           )}
 
           {/* Comparar */}
-          <div className="bg-white rounded-2xl px-5 py-4 border border-aqua/20 shadow-sm flex flex-col gap-3">
+          <div className="bg-white rounded-2xl px-5 py-4 border border-aqua/12 shadow-sm flex flex-col gap-3">
             <Link
               href={`/comparar?a=${racket.slug}`}
               className="flex items-center justify-between gap-3 w-full border border-aqua/35 text-aqua font-semibold text-sm py-3 px-4 rounded-xl hover:bg-aqua/5 active:scale-[0.98] transition-all"
@@ -222,7 +222,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           </div>
 
           {/* Specs */}
-          <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm">
+          <div className="bg-white rounded-2xl p-5 border border-aqua/12 shadow-sm">
             <p className="text-tinta font-semibold text-sm md:text-base mb-3">Especificações</p>
             <SpecsGrid racket={racket} />
           </div>
@@ -234,7 +234,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               racketName={racket.name}
               racketSlug={racket.slug}
               linkTipo={linkTipo}
-              className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md text-center block"
+              className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md text-center block"
             >
               {price ? `Comprar por ${price}` : 'Ver onde comprar'}
             </BuyButton>
