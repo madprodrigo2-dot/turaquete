@@ -10,8 +10,14 @@ export const metadata: Metadata = {
   description: 'Compare raquetes de beach tennis lado a lado. Veja pontuacoes, especificacoes e precos para escolher a melhor opcao para o seu jogo.',
 }
 
-export default async function CompararPage() {
+export default async function CompararPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ a?: string }>
+}) {
+  const { a } = await searchParams
   const rackets = await listarRaquetas().catch(() => [])
+  const initialSlotA = a ? rackets.find(r => r.slug === a) : undefined
 
   return (
     <div className="min-h-screen sand-texture">
@@ -31,10 +37,12 @@ export default async function CompararPage() {
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl md:text-3xl font-bold text-tinta">Comparar raquetes</h1>
           <p className="text-tinta/60 text-sm">
-            Escolha duas raquetes para comparar pontuacoes e especificacoes lado a lado.
+            {initialSlotA
+              ? `${initialSlotA.name} já está no slot A — escolha a segunda raquete.`
+              : 'Escolha duas raquetes para comparar pontuacoes e especificacoes lado a lado.'}
           </p>
         </div>
-        <ComparePicker rackets={rackets} />
+        <ComparePicker rackets={rackets} initialSlotA={initialSlotA} />
       </div>
     </div>
   )

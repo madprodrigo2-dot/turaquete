@@ -48,8 +48,26 @@ export async function generateMetadata(
 
 export default async function RaquetaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const racket = await getRaquetaPorSlug(slug)
+  const [racket, allRackets] = await Promise.all([
+    getRaquetaPorSlug(slug),
+    listarRaquetas().catch(() => []),
+  ])
   if (!racket) notFound()
+
+  const sugestoes = allRackets
+    .filter(r => r.slug !== racket.slug)
+    .map(r => ({
+      r,
+      score:
+        (r.brands?.name === racket.brands?.name ? 10 : 0) +
+        (racket.price && r.price
+          ? Math.abs(r.price - racket.price) / racket.price < 0.3 ? 5 : 0
+          : 0),
+    }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2)
+    .map(x => x.r)
 
   const ins = racket.racket_insights
   const price = racket.price
@@ -174,6 +192,35 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               <RacketKeyStats racket={racket} />
             </div>
           )}
+
+          {/* Comparar */}
+          <div className="bg-white rounded-2xl px-5 py-4 border border-aqua/20 shadow-sm flex flex-col gap-3">
+            <Link
+              href={`/comparar?a=${racket.slug}`}
+              className="flex items-center justify-between gap-3 w-full border border-aqua/35 text-aqua font-semibold text-sm py-3 px-4 rounded-xl hover:bg-aqua/5 active:scale-[0.98] transition-all"
+            >
+              <span>Comparar a {racket.name} com outra</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
+            {sugestoes.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <p className="text-xs text-tinta/40 font-medium">Comparações sugeridas</p>
+                <div className="flex flex-col gap-1">
+                  {sugestoes.map(s => (
+                    <Link
+                      key={s.slug}
+                      href={`/comparar/${racket.slug}-vs-${s.slug}`}
+                      className="text-xs text-aqua/70 hover:text-aqua transition-colors hover:underline leading-relaxed"
+                    >
+                      {racket.name} vs {s.name} →
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Specs */}
           <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm">
