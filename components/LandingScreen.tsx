@@ -705,7 +705,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8 pb-2 md:pb-3">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_320px] md:gap-6 md:items-center gap-5">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_260px] md:gap-6 md:items-end gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-5 md:gap-5">
