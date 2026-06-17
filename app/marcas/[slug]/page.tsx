@@ -79,7 +79,7 @@ function FlagSpain() {
 
 function CountryFlag({ country }: { country: string }) {
   const c = country.toLowerCase()
-  if (c === 'itália' || c === 'italia' || c === 'italy') return <FlagItaly />
+  if (c === 'itália' || c === 'italia' || c === 'italy' || c === 'it') return <FlagItaly />
   if (c === 'brasil' || c === 'brazil' || c === 'br') return <FlagBrazil />
   if (c === 'espanha' || c === 'spain' || c === 'es') return <FlagSpain />
   return null
