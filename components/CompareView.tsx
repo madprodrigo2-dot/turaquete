@@ -191,10 +191,10 @@ export default function CompareView({ rackets }: Props) {
           Ainda com dúvida? Tury analisa o seu perfil e ajuda a decidir qual é a certa pra você.
         </p>
         <Link
-          href="/"
+          href="/?chat=1"
           className="bg-aqua text-tinta font-semibold text-sm py-3 px-5 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-center block"
         >
-          Perguntar ao Tury
+          Perguntar à Tury
         </Link>
       </div>
 

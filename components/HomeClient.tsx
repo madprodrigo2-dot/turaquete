@@ -208,6 +208,14 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     }, 150)
   }
 
+  // Auto-open chat when arriving from a ?chat=1 link (racket/compare pages)
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('chat') === '1') {
+      handleStart()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const TIMEOUT_MESSAGE = 'Opa, travei aqui. Pode mandar de novo?'
 
   const sendMessage = async (text: string) => {

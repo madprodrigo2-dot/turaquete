@@ -236,20 +236,20 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
             </BuyButton>
           ) : (
             <Link
-              href="/"
+              href="/?chat=1"
               className="w-full bg-aqua text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md text-center block"
             >
-              Falar com o especialista
+              Falar com a especialista
             </Link>
           )}
 
           {/* Falar com especialista (secundário, sempre presente) */}
           {irUrl && (
             <Link
-              href="/"
+              href="/?chat=1"
               className="w-full border border-aqua/40 text-aqua font-semibold text-sm py-3 rounded-2xl hover:bg-aqua/10 active:scale-[0.98] transition-all text-center block"
             >
-              Não tem certeza? Fale com o especialista
+              Não tem certeza? Fale com a especialista
             </Link>
           )}
 
