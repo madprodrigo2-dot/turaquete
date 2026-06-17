@@ -14,8 +14,23 @@ const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recomm
 const MAX_TOOL_ROUNDS = 5  // nominal flow needs 3-4 rounds; 5 covers stall+chips edge cases
 
 const MARCA_QUESTION_TEXT = 'Tem alguma marca que você curte ou tanto faz?'
-const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']
+const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']  // kept for backward compat
 const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
+
+const PRECO_BUCKETS: Array<{ label: string; instrucao: string; min: number; max: number | null }> = [
+  { label: 'Até R$1.000',       instrucao: 'presupuesto_max=1000',                        min: 0,    max: 1000 },
+  { label: 'R$1.000 a R$2.000', instrucao: 'presupuesto_min=1000 + presupuesto_max=2000', min: 1001, max: 2000 },
+  { label: 'R$2.000 a R$3.000', instrucao: 'presupuesto_min=2000 + presupuesto_max=3000', min: 2001, max: 3000 },
+  { label: 'Acima de R$3.000',  instrucao: 'presupuesto_min=3000 (sem teto)',              min: 3001, max: null },
+]
+
+function computePrecoChips(ranked: Array<{ price: number | null }>): string[] {
+  const prices = ranked.map(r => r.price).filter((p): p is number => p != null && p > 0)
+  const active = PRECO_BUCKETS.filter(b =>
+    prices.some(p => p >= b.min && (b.max == null || p <= b.max))
+  )
+  return [...active.map(b => b.label), 'Tanto faz / me mostra opções']
+}
 
 // Budget decision: ask whenever the user hasn't told us their budget.
 // The old "price dispersion" criterion was wrong — candidates can be similar to
@@ -190,7 +205,10 @@ async function executeTool(
   brandAskedRef: { value: boolean },
   currentRacketIds: Set<number>,
   confirmedProfile: Record<string, unknown>,
-  budgetAnsweredRef: { value: boolean }
+  budgetAnsweredRef: { value: boolean },
+  precoChipsRef: { value: string[] },
+  marcaChipsRef: { value: string[] },
+  showAllBrandsRef: { value: boolean }
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -465,20 +483,23 @@ async function executeTool(
     debugRef.value.decisionTrace.marcaDecision = marcaDecisionData
 
     if (priceDecision.status === 'disparo') {
-      const chips = ['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções']
+      const precoChips = computePrecoChips(ranked)
+      precoChipsRef.value = precoChips
+      const bucketMappings = PRECO_BUCKETS
+        .filter(b => precoChips.includes(b.label))
+        .map(b => `"${b.label}" → ${b.instrucao}`)
+        .concat(['"Tanto faz" → presupuesto_min=0 (sem filtro de preço)'])
+        .join('; ')
       payload.PRECO = {
         status: 'ORCAMENTO_DESCONHECIDO',
         candidatas: priceDecision.rangeMin != null ? `R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}` : undefined,
         instrucao_OBRIGATORIA:
           `Orçamento não informado. ` +
-          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase de pergunta sobre faixa de preço no texto — ex.: "Pra fechar a indicação certa, qual faixa de preço faz mais sentido pro seu bolso?" — sem essa frase os chips ficam órfãos e o usuário não entende o que os botões significam; ` +
-          `(2) chame sugerir_opcoes com chips ${JSON.stringify(chips)}. ` +
+          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase de pergunta sobre faixa de preço no texto — ex.: "${PRECO_QUESTION_TEXT}" — sem essa frase os chips ficam órfãos e o usuário não entende o que os botões significam; ` +
+          `(2) chame sugerir_opcoes com chips ${JSON.stringify(precoChips)}. ` +
           `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
-          `Após receber a faixa, chame buscar_raquetas novamente com os filtros abaixo ANTES de recomendar: ` +
-          `"Até R$1.500" → presupuesto_max=1500; ` +
-          `"R$1.500–2.500" → presupuesto_min=1500 + presupuesto_max=2500; ` +
-          `"Acima de R$2.500" → presupuesto_min=2500 (sem teto); ` +
-          `"Tanto faz" → presupuesto_min=0 (sem filtro de preço). ` +
+          `Após receber a faixa, chame buscar_raquetas novamente com os filtros ANTES de recomendar: ` +
+          `${bucketMappings}. ` +
           `Se a faixa escolhida retornar 0 raquetes: diga honestamente e mostre a opção mais próxima fora da faixa.`,
       }
     } else {
@@ -492,17 +513,32 @@ async function executeTool(
     }
 
     if (shouldAskMarca) {
+      // Compute brands from candidates, sorted by best match_score
+      type RankedWithBrand = { brands?: { name: string } | null; match_score: number }
+      const brandBest = new Map<string, number>()
+      for (const r of ranked) {
+        const brand = (r as unknown as RankedWithBrand).brands?.name
+        const score = (r as unknown as RankedWithBrand).match_score
+        if (brand != null && score != null) {
+          if (!brandBest.has(brand) || score > brandBest.get(brand)!) brandBest.set(brand, score)
+        }
+      }
+      const sortedBrands = [...brandBest.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n)
+      const topBrands = showAllBrandsRef.value ? sortedBrands : sortedBrands.slice(0, 4)
+      const hasMore = !showAllBrandsRef.value && sortedBrands.length > 4
+      const marcaChips = [...topBrands, 'Tanto faz', ...(hasMore ? ['Ver todas as marcas'] : [])]
+      marcaChipsRef.value = marcaChips
       payload.MARCA = {
         status: 'PREFERENCIA_NAO_PERGUNTADA',
-        marcas_disponiveis: MARCA_CHIPS.slice(0, -1),
+        marcas_disponiveis: topBrands,
         instrucao_OBRIGATORIA:
           `Preferência de marca não informada. ` +
-          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase curta perguntando sobre preferência de marca no texto — ex.: "${MARCA_QUESTION_TEXT}" — sem essa frase os chips ficam órfãos; ` +
-          `(2) chame sugerir_opcoes com chips ${JSON.stringify(MARCA_CHIPS)}. ` +
+          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase curta perguntando sobre preferência de marca — ex.: "${MARCA_QUESTION_TEXT}" — sem essa frase os chips ficam órfãos; ` +
+          `(2) chame sugerir_opcoes com chips ${JSON.stringify(marcaChips)}. ` +
           `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
-          `Após receber a resposta, chame buscar_raquetas novamente com o campo marca_preferida: ` +
-          `"AMA Sport" → marca_preferida="AMA Sport"; "Drop Shot" → marca_preferida="Drop Shot"; "Heroe's" → marca_preferida="Heroe's"; "Tanto faz" → marca_preferida=null. ` +
-          `Se a marca preferida não tiver raquetes aptas no perfil: diga honestamente e mostre as melhores disponíveis de outras marcas.`,
+          `Após receber a resposta, chame buscar_raquetas novamente com marca_preferida: ` +
+          `qualquer chip de marca → marca_preferida="[texto exato do chip]"; "Tanto faz" → marca_preferida=null; "Ver todas as marcas" → aguarde próxima mensagem. ` +
+          `Se a marca não tiver raquetes aptas: diga honestamente e mostre as melhores disponíveis.`,
       }
     }
 
@@ -522,9 +558,11 @@ async function executeTool(
     const field = pendingQuestionFieldRef.value
     let chips: string[]
     if (field === 'preco') {
-      chips = ['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções']
+      chips = precoChipsRef.value.length > 0
+        ? precoChipsRef.value
+        : ['Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Acima de R$3.000', 'Tanto faz / me mostra opções']
     } else if (field === 'marca') {
-      chips = MARCA_CHIPS
+      chips = marcaChipsRef.value.length > 0 ? marcaChipsRef.value : MARCA_CHIPS
     } else if (field?.startsWith('disambig:')) {
       chips = opcoes.slice(0, 4)
     } else if (field) {
@@ -611,13 +649,35 @@ export async function runAgentTurn(
   const marcaAskPendingRef: { value: boolean } = { value: false }
   // Derive brand/budget answered state from history — prevents re-asking when the model
   // omits marca_preferida or presupuesto_min in subsequent turns after the user answered.
-  const BRAND_ANSWERS = new Set([...MARCA_CHIPS])
-  const PRICE_ANSWERS = new Set(['Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500', 'Tanto faz / me mostra opções'])
+  const PRICE_ANSWERS = new Set([
+    // Current buckets
+    'Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Acima de R$3.000',
+    // Legacy buckets (backward compat)
+    'Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500',
+    'Tanto faz / me mostra opções',
+  ])
   const brandAskedRef: { value: boolean } = {
-    value: history.some(m => m.role === 'user' && BRAND_ANSWERS.has(m.content.trim()))
+    value: (() => {
+      // Backward compat: old hardcoded chips
+      if (history.some(m => m.role === 'user' && MARCA_CHIPS.includes(m.content.trim()))) return true
+      // New: brand question was shown AND user responded (not "Ver todas as marcas")
+      let lastBrandQuestionIdx = -1
+      history.forEach((m, i) => {
+        if (m.role === 'assistant' && m.content.includes(MARCA_QUESTION_TEXT)) lastBrandQuestionIdx = i
+      })
+      if (lastBrandQuestionIdx === -1) return false
+      return history.slice(lastBrandQuestionIdx + 1).some(
+        m => m.role === 'user' && m.content.trim() !== 'Ver todas as marcas'
+      )
+    })(),
   }
   const budgetAnsweredRef: { value: boolean } = {
     value: history.some(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
+  }
+  const precoChipsRef: { value: string[] } = { value: [] }
+  const marcaChipsRef: { value: string[] } = { value: [] }
+  const showAllBrandsRef: { value: boolean } = {
+    value: history.some(m => m.role === 'user' && m.content.trim() === 'Ver todas as marcas'),
   }
   const pendingQuestionFieldRef: { value: string | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
@@ -735,7 +795,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
