@@ -798,7 +798,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           {/* Coluna visual — foto hero */}
           <div className="relative w-full h-[200px] md:h-auto md:aspect-[3/4] rounded-2xl overflow-hidden shrink-0">
             <Image
-              src="/hero-beach-tennis2.png"
+              src="/hero-beach-tennis3.png"
               alt="Raquetes de beach tennis na areia"
               fill
               className="object-cover object-center"
