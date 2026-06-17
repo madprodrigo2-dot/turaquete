@@ -27,7 +27,7 @@ insert into rackets (
 
 -- 1. Total Fun  (carbono entry-level, EVA PRO, 320g, 28 furos)
 (_bid, 'Total Fun', 'total-fun',
-  320, 'neutro', 'Carbono', 'EVA PRO',
+  320, 'médio', 'Carbono', 'EVA PRO',
   500, 22,
   ARRAY[]::text[],
   '{"furos":28,"tratamento_superficial":"graos_de_quartzo"}'::jsonb,
@@ -38,7 +38,7 @@ insert into rackets (
 
 -- 2. Total Match 3K  (carbono 3K, EVA PRO, 320g, 48 furos, antivibração)
 (_bid, 'Total Match 3K', 'total-match-3k',
-  320, 'neutro', 'Carbono 3K', 'EVA PRO',
+  320, 'médio', 'Carbono 3K', 'EVA PRO',
   500, 22,
   ARRAY['Sistema Antivibração'],
   '{"furos":48,"trama_carbono":"3k","tratamento_superficial":"graos_de_quartzo"}'::jsonb,
@@ -50,7 +50,7 @@ insert into rackets (
 -- 3. Total Pro 12K  (carbono 12K, EVA PRO, 325g, 28 furos)
 --    NOTA: peso 325g (vs 320g das demais) — verificar na ficha
 (_bid, 'Total Pro 12K', 'total-pro-12k',
-  325, 'neutro', 'Carbono 12K', 'EVA PRO',
+  325, 'médio', 'Carbono 12K', 'EVA PRO',
   500, 22,
   ARRAY[]::text[],
   '{"furos":28,"trama_carbono":"12k","tratamento_superficial":"graos_de_quartzo"}'::jsonb,
@@ -63,7 +63,7 @@ insert into rackets (
 --    NOTA: produto distinto da Pro 12K (furos e peso diferentes) — NÃO é variante de cor
 --    IMAGEM: verificar visualmente (arquivo menor, 60KB vs 89-131KB das outras)
 (_bid, 'Total Pro Sunset 12K', 'total-pro-sunset-12k',
-  320, 'neutro', 'Carbono 12K', 'EVA PRO Alta Densidade',
+  320, 'médio', 'Carbono 12K', 'EVA PRO Alta Densidade',
   500, 22,
   ARRAY['Sistema Antivibração','EVA Soft Double'],
   '{"furos":48,"trama_carbono":"12k","tratamento_superficial":"graos_de_quartzo"}'::jsonb,
@@ -74,7 +74,7 @@ insert into rackets (
 
 -- 5. Total Titanium 3K  (carbono 3K + reforço de titânio, EVA PRO, 320g, 48 furos)
 (_bid, 'Total Titanium 3K', 'total-titanium-3k',
-  320, 'neutro', 'Carbono 3K com Reforco de Titanio', 'EVA PRO',
+  320, 'médio', 'Carbono 3K com Reforco de Titanio', 'EVA PRO',
   500, 22,
   ARRAY['Sistema Antivibração Avançado'],
   '{"furos":48,"trama_carbono":"3k","reforco_titanio":true,"tratamento_superficial":"graos_de_quartzo"}'::jsonb,
@@ -85,7 +85,7 @@ insert into rackets (
 
 -- 6. Total Evolution 18K Violeta  (atleta: Miryan Stochiero)
 (_bid, 'Total Evolution 18K Violeta', 'total-evolution-18k-violeta',
-  320, 'neutro', 'Carbono 18K', 'EVA PRO',
+  320, 'médio', 'Carbono 18K', 'EVA PRO',
   500, 22,
   ARRAY[]::text[],
   '{"furos":48,"trama_carbono":"18k","tratamento_superficial":"graos_de_quartzo","atleta":"Miryan Stochiero"}'::jsonb,
@@ -97,7 +97,7 @@ insert into rackets (
 -- 7. Total Evolution 18K Golden
 --    NOTA: site indica 28 furos (vs 48 da Violeta) — confirmar se é erro do site
 (_bid, 'Total Evolution 18K Golden', 'total-evolution-18k-golden',
-  320, 'neutro', 'Carbono 18K', 'EVA PRO',
+  320, 'médio', 'Carbono 18K', 'EVA PRO',
   500, 22,
   ARRAY[]::text[],
   '{"furos":28,"trama_carbono":"18k","tratamento_superficial":"graos_de_quartzo"}'::jsonb,
