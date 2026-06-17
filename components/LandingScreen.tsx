@@ -709,7 +709,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8 pb-2 md:pb-3">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_300px] md:gap-6 md:items-start gap-5">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_300px] md:gap-6 md:items-stretch gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-5 md:gap-5">
@@ -799,8 +799,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div className="relative w-full rounded-2xl overflow-hidden shrink-0">
-            {/* Mobile: horizontal */}
+          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:h-full">
+            {/* Mobile: horizontal completa, sem recorte */}
             <Image
               src="/hero-beach-tennis-horizontal-caricatura.png"
               alt="Raquetes de beach tennis na areia"
@@ -810,13 +810,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               priority
               sizes="100vw"
             />
-            {/* Desktop: vertical completa, sem recorte */}
+            {/* Desktop: fill igualando altura do texto, recorta só o céu */}
             <Image
               src="/hero-beach-tennis-vertical-caricatura.png"
               alt="Raquetes de beach tennis na areia"
-              width={768}
-              height={1376}
-              className="hidden md:block w-full h-auto"
+              fill
+              className="hidden md:block object-cover object-[center_80%]"
               priority
               sizes="300px"
             />
