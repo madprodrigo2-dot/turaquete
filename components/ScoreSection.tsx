@@ -1,6 +1,7 @@
 'use client'
 
 import TermoGlossario from './TermoGlossario'
+import ScoreBar from './ScoreBar'
 import { GLOSSARIO } from '@/lib/glossario'
 import type { GlossarioEntry } from '@/lib/glossario'
 
@@ -33,10 +34,9 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel }: {
   spinLisa?: boolean
   sublabel?: string
 }) {
-  if (value === null) return null
   return (
-    <div className="flex items-center gap-3">
-      <div className="w-28 shrink-0">
+    <ScoreBar
+      label={
         <div className="flex items-center gap-1.5">
           <TermoGlossario entry={entry}>
             <span className="text-tinta/70 text-sm">{label}</span>
@@ -50,15 +50,10 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel }: {
             </TermoGlossario>
           )}
         </div>
-        {sublabel && (
-          <span className="text-[10px] text-tinta/40 leading-tight">{sublabel}</span>
-        )}
-      </div>
-      <div className="flex-1 bg-aqua/15 rounded-full h-2.5">
-        <div className="bg-aqua h-2.5 rounded-full" style={{ width: `${(value / 10) * 100}%` }} />
-      </div>
-      <span className="text-tinta font-semibold text-sm w-5 text-right">{value}</span>
-    </div>
+      }
+      sublabel={sublabel}
+      value={value}
+    />
   )
 }
 

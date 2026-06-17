@@ -21,6 +21,7 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
   const [slotB, setSlotB] = useState<RacketWithInsights | null>(initialSlotB ?? null)
   const [focusedSlot, setFocusedSlot] = useState<'A' | 'B'>(initialSlotA && !initialSlotB ? 'B' : 'A')
   const [query, setQuery] = useState('')
+  const [comparing, setComparing] = useState(false)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -122,10 +123,24 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
       {/* Compare CTA */}
       {canCompare ? (
         <button
-          onClick={() => router.push(`/comparar/${slotA.slug}-vs-${slotB.slug}`)}
-          className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md"
+          onClick={() => {
+            if (comparing) return
+            setComparing(true)
+            router.push(`/comparar/${slotA.slug}-vs-${slotB.slug}`)
+          }}
+          disabled={comparing}
+          className={`w-full font-semibold text-base py-4 rounded-2xl transition-all shadow-md ${
+            comparing
+              ? 'bg-coral/80 text-white cursor-wait'
+              : 'bg-coral text-white hover:opacity-90 active:scale-[0.98]'
+          }`}
         >
-          Comparar
+          {comparing ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin shrink-0" />
+              Comparando…
+            </span>
+          ) : 'Comparar'}
         </button>
       ) : (
         <div className="w-full bg-gray-100 text-tinta/30 font-semibold text-base py-4 rounded-2xl text-center select-none">

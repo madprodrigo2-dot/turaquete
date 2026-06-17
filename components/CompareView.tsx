@@ -3,6 +3,7 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import { buildSpecRows, NIVEL_LABEL } from './SpecsGrid'
 import RacketImageTile from './RacketImageTile'
 import CompareHexagon from './CompareHexagon'
+import ScoreBar from './ScoreBar'
 import { derivarNivel } from '@/lib/nivel'
 
 const SCORES = [
@@ -187,86 +188,43 @@ export default function CompareView({ rackets }: Props) {
 
       {/* Scores */}
       <section>
-        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-2">Pontuações</h2>
-        {/* Column headers aligned with data rows */}
+        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-3">Pontuações</h2>
         {hasTwoRackets && (
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-2 mb-3">
-            <span className="text-[11px] font-bold text-right truncate" style={{ color: COLORS[0] }}>
-              {rackets[0].name}
-            </span>
-            {/* invisible spacer matching the auto label column width */}
-            <span className="text-[11px] px-1.5 whitespace-nowrap invisible select-none" aria-hidden="true">
-              Estabilidade
-            </span>
-            <span className="text-[11px] font-bold text-left truncate" style={{ color: COLORS[1] }}>
-              {rackets[1].name}
-            </span>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ backgroundColor: COLORS[0] }} />
+              <span className="text-[11px] font-semibold truncate max-w-[130px]" style={{ color: COLORS[0] }}>{rackets[0].name}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ backgroundColor: COLORS[1] }} />
+              <span className="text-[11px] font-semibold truncate max-w-[130px]" style={{ color: COLORS[1] }}>{rackets[1].name}</span>
+            </div>
           </div>
         )}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {SCORES.map(({ key, label }) => {
             const ins0 = rackets[0]?.racket_insights
             const ins1 = rackets[1]?.racket_insights
             const valA = ins0 ? (ins0[key] as number | null) : null
             const valB = ins1 ? (ins1[key] as number | null) : null
+            if (valA === null && valB === null) return null
             const diff = valA != null && valB != null ? valA - valB : null
             return (
-              <div key={key} className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-2">
-                {/* A side — bar fills right toward label */}
-                <div className="flex items-center justify-end gap-1">
-                  {valA != null ? (
-                    <>
-                      {diff != null && diff > 0 && (
-                        <span
-                          className="text-[9px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0"
-                          style={{ backgroundColor: `${COLORS[0]}22`, color: COLORS[0] }}
-                        >
-                          +{diff}
-                        </span>
-                      )}
-                      <span className="text-[11px] font-bold tabular-nums w-4 text-right shrink-0" style={{ color: COLORS[0] }}>
-                        {valA}
-                      </span>
-                      <div className="w-12 h-2 bg-gray-100 rounded-full overflow-hidden relative shrink-0">
-                        <div
-                          className="absolute right-0 top-0 h-full rounded-full"
-                          style={{ width: `${valA * 10}%`, backgroundColor: COLORS[0] }}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <span className="text-tinta/25 text-[11px]">—</span>
-                  )}
+              <div key={key} className="flex items-start gap-3">
+                <div className="w-28 shrink-0 pt-0.5">
+                  <span className="text-tinta/70 text-sm">{label}</span>
                 </div>
-                {/* Label */}
-                <span className="text-[11px] text-tinta/55 text-center whitespace-nowrap px-1.5 shrink-0">
-                  {label}
-                </span>
-                {/* B side — bar fills left from label */}
-                <div className="flex items-center justify-start gap-1">
-                  {valB != null ? (
-                    <>
-                      <div className="w-12 h-2 bg-gray-100 rounded-full overflow-hidden shrink-0">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${valB * 10}%`, backgroundColor: COLORS[1] }}
-                        />
-                      </div>
-                      <span className="text-[11px] font-bold tabular-nums w-4 shrink-0" style={{ color: COLORS[1] }}>
-                        {valB}
-                      </span>
-                      {diff != null && diff < 0 && (
-                        <span
-                          className="text-[9px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0"
-                          style={{ backgroundColor: `${COLORS[1]}22`, color: COLORS[1] }}
-                        >
-                          +{-diff}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-tinta/25 text-[11px]">—</span>
-                  )}
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <ScoreBar
+                    value={valA}
+                    color={COLORS[0]}
+                    badge={diff != null && diff > 0 ? `+${diff}` : undefined}
+                  />
+                  <ScoreBar
+                    value={valB}
+                    color={COLORS[1]}
+                    badge={diff != null && diff < 0 ? `+${-diff}` : undefined}
+                  />
                 </div>
               </div>
             )
