@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Wallet } from 'lucide-react'
@@ -604,6 +604,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
   const arenaRef = useRef<HTMLDivElement>(null)
   const [ballSettled, setBallSettled] = useState(false)
 
+  const shuffledAthleteRackets = useMemo(() => {
+    const arr = [...athleteRackets]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     const el = heroCtaRef.current
     if (!el) return
@@ -953,13 +963,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         )}
 
         {/* Raquetes dos atletas */}
-        {athleteRackets.length > 0 && (
+        {shuffledAthleteRackets.length > 0 && (
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
               <p className="font-heading font-bold text-tinta text-base md:text-lg">As raquetes dos atletas que jogam de verdade</p>
               <p className="text-tinta/50 text-xs">modelos assinados por atletas do circuito</p>
             </div>
-            <AthleteCarousel rackets={athleteRackets} />
+            <AthleteCarousel rackets={shuffledAthleteRackets} />
           </div>
         )}
 
