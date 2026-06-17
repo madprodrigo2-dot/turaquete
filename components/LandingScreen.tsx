@@ -798,18 +798,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           {/* Coluna visual — foto hero */}
           <div className="relative w-full h-[200px] md:h-auto md:aspect-[3/4] rounded-2xl overflow-hidden shrink-0">
             <Image
-              src="/hero-beach-tennis.jpg"
+              src="/hero-beach-tennis2.png"
               alt="Raquetes de beach tennis na areia"
               fill
               className="object-cover object-center"
               priority
               sizes="(max-width: 768px) 100vw, 260px"
-            />
-            {/* Gradiente que funde a borda esquerda da foto com o fundo do hero (apenas desktop) */}
-            <div
-              className="absolute inset-0 hidden md:block pointer-events-none"
-              aria-hidden="true"
-              style={{ background: 'linear-gradient(to right, #EAF7F6 0%, rgba(234,247,246,0.45) 22%, transparent 52%)' }}
             />
           </div>
 
