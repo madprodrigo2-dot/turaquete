@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: BASE, lastModified: new Date(), changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${BASE}/comparar`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     ...rackets.map(r => ({
       url: `${BASE}/raquetes/${r.slug}`,
       lastModified: new Date(),
