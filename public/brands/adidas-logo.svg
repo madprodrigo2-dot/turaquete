@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" fill="none">
+  <!-- Adidas Performance logo: three diagonal stripes + wordmark -->
+  <polygon points="0,40 13.3,40 26.7,16 13.3,16" fill="#000"/>
+  <polygon points="13.3,40 26.7,40 40,16 26.7,16" fill="#000" opacity="0.6"/>
+  <polygon points="26.7,40 40,40 53.3,16 40,16" fill="#000" opacity="0.35"/>
+  <text x="60" y="36" font-family="'Arial Black', Arial, sans-serif" font-weight="900" font-size="22" letter-spacing="1" fill="#000">ADIDAS</text>
+</svg>
