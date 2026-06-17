@@ -207,10 +207,10 @@ export default function CompareView({ rackets }: Props) {
               </div>
               <p className="text-[11px] text-tinta/45 text-center mt-3 leading-snug">
                 {placar.winsA > placar.winsB
-                  ? <><span className="font-semibold" style={{ color: COLORS[0] }}>{rackets[0]?.name}</span>{` vence em ${placar.winsA} de ${total} quesitos`}</>
+                  ? <><span className="font-semibold" style={{ color: COLORS[0] }}>{rackets[0]?.name}</span>{` vence em ${placar.winsA} de ${total} atributos`}</>
                   : placar.winsB > placar.winsA
-                  ? <><span className="font-semibold" style={{ color: COLORS[1] }}>{rackets[1]?.name}</span>{` vence em ${placar.winsB} de ${total} quesitos`}</>
-                  : `Empate técnico em ${total} quesitos`
+                  ? <><span className="font-semibold" style={{ color: COLORS[1] }}>{rackets[1]?.name}</span>{` vence em ${placar.winsB} de ${total} atributos`}</>
+                  : `Empate técnico em ${total} atributos`
                 }
               </p>
             </div>
