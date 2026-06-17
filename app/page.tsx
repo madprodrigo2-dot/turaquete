@@ -1,4 +1,4 @@
-import { listarMarcas, getTopRaquetas, getRaquetasComAtleta } from '@/lib/recommend'
+import { listarMarcas, getTopRaquetas, getRaquetasComAtleta, getRaquetaPorSlug } from '@/lib/recommend'
 import { getRecsCount } from '@/lib/stats'
 import HomeClient from '@/components/HomeClient'
 
@@ -33,11 +33,12 @@ const jsonLd = {
 }
 
 export default async function Page() {
-  const [brands, featured, athleteRackets, recsCount] = await Promise.all([
+  const [brands, featured, athleteRackets, recsCount, exampleRacket] = await Promise.all([
     listarMarcas().catch(() => []),
     getTopRaquetas().catch(() => ({ rackets: [], source: 'curated' as const })),
     getRaquetasComAtleta().catch(() => []),
     getRecsCount().catch(() => 0),
+    getRaquetaPorSlug('beast-2023').catch(() => null),
   ])
   return (
     <>
@@ -51,6 +52,7 @@ export default async function Page() {
         featuredSource={featured.source}
         athleteRackets={athleteRackets}
         recsCount={recsCount}
+        exampleRacket={exampleRacket ?? undefined}
       />
     </>
   )

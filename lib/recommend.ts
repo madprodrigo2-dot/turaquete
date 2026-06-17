@@ -379,6 +379,8 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
     .map(id => byId.get(id))
     .filter((r): r is RacketWithInsights => r !== undefined)
 
+  let finalRackets: RacketWithInsights[]
+
   // Fill remaining slots from fallback, skipping already included slugs
   if (realRackets.length < TOP_N) {
     const realSlugSet = new Set(realRackets.map(r => r.slug))
@@ -386,10 +388,21 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
       .filter(s => !realSlugSet.has(s))
       .slice(0, TOP_N - realRackets.length)
     const gapRackets = await getRaquetasPorSlug(gapSlugs)
-    return { rackets: [...realRackets, ...gapRackets], source: 'real' }
+    finalRackets = [...realRackets, ...gapRackets]
+  } else {
+    finalRackets = realRackets.slice(0, TOP_N)
   }
 
-  return { rackets: realRackets.slice(0, TOP_N), source: 'real' }
+  // Ensure at least one entry-level racket in the carousel
+  const hasEntry = finalRackets.some(r => r.racket_insights?.nivel_sugerido === 'iniciante')
+  if (!hasEntry) {
+    const [entry] = await getRaquetasPorSlug(['beast-2023'])
+    if (entry && !finalRackets.some(r => r.slug === 'beast-2023')) {
+      finalRackets[finalRackets.length - 1] = entry
+    }
+  }
+
+  return { rackets: finalRackets, source: 'real' }
 }
 
 export async function listarMarcas(): Promise<Brand[]> {

@@ -17,6 +17,7 @@ interface Props {
   featuredSource: 'real' | 'curated'
   athleteRackets: RacketWithInsights[]
   recsCount: number
+  exampleRacket?: RacketWithInsights
 }
 
 // Threshold definido por Rodrigo — abaixo disso usa texto alternativo sem número
@@ -596,9 +597,11 @@ const ARENA_EXTRA_BALLS: Array<{ size: number; rotation: number; opacity: number
 const SKY_OP = 0.10
 const SKY_RGB = '140, 192, 215'  // desaturated sky blue — doesn't compete with aqua or coral
 
-export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount, exampleRacket }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
+  const [mainCtaVisible, setMainCtaVisible] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
+  const mainCtaRef = useRef<HTMLButtonElement>(null)
   const arenaRef = useRef<HTMLDivElement>(null)
   const [ballSettled, setBallSettled] = useState(false)
 
@@ -624,6 +627,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
   }, [])
 
   useEffect(() => {
+    const el = mainCtaRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setMainCtaVisible(entry.isIntersecting),
+      { threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
     const el = arenaRef.current
     if (!el) return
     const obs = new IntersectionObserver(
@@ -633,6 +647,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
+
+  const showBottomCta = showHeaderCta && !mainCtaVisible
 
   const handleHeaderCta = () => {
     sendGAEvent({ event: 'chat_iniciado', source: 'header_sticky' })
@@ -863,6 +879,47 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
           </div>
 
+          {/* Quem é a Tury? — transparência */}
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
+            <div className="flex items-start gap-3 mb-4">
+              <Image
+                src="/tury-explicando.png"
+                alt="Tury"
+                width={80}
+                height={100}
+                className="h-12 w-auto object-contain shrink-0"
+                style={{ width: 'auto' }}
+              />
+              <div>
+                <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Quem é a Tury?</p>
+                <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual — não uma pessoa</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2.5 mb-4">
+              {[
+                'Analisa dados reais de cada raquete: peso, balance, material e pontuações técnicas',
+                'Sem patrocínio: nenhuma marca paga para aparecer primeiro',
+                'Explica o porquê de cada recomendação, não só o resultado',
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 w-4 h-4 rounded-full bg-aqua/15 flex items-center justify-center shrink-0">
+                    <svg width="8" height="8" viewBox="0 0 9 9" fill="none" aria-hidden="true">
+                      <path d="M1.5 4.5l2 2 4-4" stroke="#0CC0BE" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                  <p className="text-tinta/70 text-sm leading-snug">{item}</p>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-xl bg-aqua/8 px-4 py-3">
+              <p className="text-tinta/60 text-xs leading-relaxed">
+                Recebemos comissão pelos links de compra — mas isso{' '}
+                <strong className="text-tinta/80">não muda a recomendação</strong>.
+                As pontuações são calculadas antes de qualquer link ser adicionado.
+              </p>
+            </div>
+          </div>
+
           {/* Analisamos seu jogo — card escuro, diferenciador */}
           <div className="bg-tinta rounded-2xl p-5 md:p-6 shadow-md">
             <p className="font-heading font-bold text-white text-base md:text-lg mb-4">Analisamos seu jogo</p>
@@ -901,6 +958,49 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               Contar minha situação →
             </button>
           </div>
+
+          {/* Veja como funciona na prática — preview com raquete real */}
+          {exampleRacket && (
+            <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
+              <p className="font-heading font-bold text-tinta text-base md:text-lg mb-1">
+                Veja como funciona na prática
+              </p>
+              <p className="text-tinta/50 text-xs mb-4">
+                exemplo real do catálogo — assim chega a sua recomendação
+              </p>
+              <div className="flex gap-4 items-start">
+                <div className="w-20 shrink-0 rounded-xl overflow-hidden border border-aqua/20">
+                  <RacketImageTile src={exampleRacket.image_url} alt={exampleRacket.name} />
+                </div>
+                <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                  {exampleRacket.racket_insights?.nivel_sugerido && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-aqua/12 text-aqua leading-none w-fit">
+                      {exampleRacket.racket_insights.nivel_sugerido === 'iniciante' ? 'De iniciante a avançado' :
+                       exampleRacket.racket_insights.nivel_sugerido === 'intermediario' ? 'A partir de intermediário' :
+                       'Jogadores experientes'}
+                    </span>
+                  )}
+                  <p className="text-tinta font-semibold text-sm leading-snug">{exampleRacket.name}</p>
+                  {exampleRacket.price != null && (
+                    <p className="text-coral font-bold text-sm">
+                      R${exampleRacket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                    </p>
+                  )}
+                  {exampleRacket.racket_insights?.perfil_resumo && (
+                    <p className="text-tinta/60 text-xs leading-relaxed italic">
+                      &ldquo;{exampleRacket.racket_insights.perfil_resumo}&rdquo;
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={onStart}
+                className="mt-5 w-full font-heading font-semibold bg-coral text-white text-sm py-3 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                Receber minha recomendação
+              </button>
+            </div>
+          )}
 
           {/* Raquetes em destaque / mais recomendadas */}
           {featuredRackets.length > 0 && (
@@ -1071,6 +1171,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
         {/* CTA principal */}
         <button
+          ref={mainCtaRef}
           onClick={onStart}
           className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] transition-all shadow-md"
         >
@@ -1081,6 +1182,26 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <p className="text-center text-tinta/50 text-xs md:text-sm leading-relaxed">
           Recomendações baseadas nas especificações reais de cada raquete. Sem achismo.
         </p>
+
+        {/* Footer nav grid */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-2 pb-1 border-t border-tinta/10">
+          <div>
+            <p className="text-tinta/50 text-[10px] font-semibold uppercase tracking-wider mb-2">Explorar</p>
+            <div className="flex flex-col gap-2">
+              <Link href="/raquetes/iniciante" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Iniciantes</Link>
+              <Link href="/raquetes/intermediario" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Intermediários</Link>
+              <Link href="/raquetes/avancado" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Avançados</Link>
+              <Link href="/raquetes/conforto" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Articulação protegida</Link>
+            </div>
+          </div>
+          <div>
+            <p className="text-tinta/50 text-[10px] font-semibold uppercase tracking-wider mb-2">Ferramentas</p>
+            <div className="flex flex-col gap-2">
+              <Link href="/comparar" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Comparar raquetes</Link>
+              <Link href="/marcas" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Ver marcas</Link>
+            </div>
+          </div>
+        </div>
 
         {/* Footer */}
         <footer className="pt-3 pb-2 flex flex-col items-center gap-3 border-t border-tinta/10">
@@ -1127,6 +1248,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         </footer>
 
       </div>{/* end seção 3 */}
+
+      {/* Mobile sticky bottom CTA — visible between hero CTA and main CTA */}
+      {showBottomCta && (
+        <div
+          className="md:hidden fixed bottom-0 inset-x-0 z-40 px-5 pb-5 pt-14 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, #F7EDDC 55%, rgba(247,237,220,0.75) 80%, transparent 100%)' }}
+        >
+          <button
+            onClick={onStart}
+            className="pointer-events-auto w-full font-heading font-bold bg-coral text-white text-lg py-4 rounded-2xl active:scale-[0.98] transition-all shadow-lg"
+          >
+            Começar agora
+          </button>
+        </div>
+      )}
 
     </div>
   )
