@@ -157,19 +157,21 @@ function BrandCard({ brand }: { brand: Brand }) {
   const inner = (
     <>
       {brand.logo_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={brand.logo_url}
-          alt={brand.name}
-          className={`h-8 w-auto max-w-[140px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
-          style={
-            brand.slug === 'mormaii'    ? { marginLeft: '-14px' } :
-            brand.slug === 'minimalist' ? { marginLeft: '-10px', height: '42px' } :
-            brand.slug === 'adidas'     ? { height: '20px' } :
-            brand.slug === 'kona'       ? { height: '26px' } :
-            undefined
-          }
-        />
+        <div className="h-11 flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={brand.logo_url}
+            alt={brand.name}
+            className={`max-h-full w-auto max-w-[120px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+            style={
+              brand.slug === 'mormaii'    ? { marginLeft: '-14px' } :
+              brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
+              brand.slug === 'adidas'     ? { height: '20px' } :
+              brand.slug === 'kona'       ? { height: '26px' } :
+              undefined
+            }
+          />
+        </div>
       ) : (
         <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
           {brand.name}
@@ -797,12 +799,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div className="relative w-full h-[200px] md:h-auto md:aspect-[3/4] rounded-2xl overflow-hidden shrink-0">
+          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:aspect-[3/4]">
             <Image
               src="/hero-beach-tennis3.png"
               alt="Raquetes de beach tennis na areia"
-              fill
-              className="object-cover object-center"
+              width={768}
+              height={1376}
+              className="w-full h-auto md:absolute md:inset-0 md:h-full md:w-full md:object-cover md:object-center"
               priority
               sizes="(max-width: 768px) 100vw, 260px"
             />
