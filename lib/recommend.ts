@@ -414,3 +414,42 @@ export async function getRaquetasComAtleta(): Promise<RacketWithInsights[]> {
   if (error) throw new Error(`Supabase: ${error.message}`)
   return ((data as unknown[]) ?? []).map(normalizeRacket)
 }
+
+export async function getRaquetasPorNivel(
+  nivel: 'iniciante' | 'intermediario' | 'avancado'
+): Promise<RacketWithInsights[]> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('publicada', true)
+    .order('name')
+  if (error) throw new Error(`Supabase: ${error.message}`)
+  const all = ((data as unknown[]) ?? []).map(normalizeRacket)
+  return all.filter(r => r.racket_insights?.nivel_sugerido === nivel)
+}
+
+export async function getRaquetasPorOrcamento(max: number): Promise<RacketWithInsights[]> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('publicada', true)
+    .lte('price', max)
+    .not('price', 'is', null)
+    .order('price')
+  if (error) throw new Error(`Supabase: ${error.message}`)
+  return ((data as unknown[]) ?? []).map(normalizeRacket)
+}
+
+export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('publicada', true)
+    .order('name')
+  if (error) throw new Error(`Supabase: ${error.message}`)
+  const all = ((data as unknown[]) ?? []).map(normalizeRacket)
+  return all.filter(r =>
+    r.racket_insights?.elbow_friendly === true ||
+    r.racket_insights?.shoulder_friendly === true
+  )
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState, useMemo } from 'react'
+import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Wallet } from 'lucide-react'
@@ -21,6 +21,8 @@ interface Props {
 
 // Threshold definido por Rodrigo — abaixo disso usa texto alternativo sem número
 const RECS_THRESHOLD = 50
+
+const SHOW_ATHLETE_SECTION = false
 
 // Perguntas reais anonimizadas curadas manualmente — atualizar conforme o painel cresce
 // Fonte: primeiras mensagens reais de usuários (starters e mensagens livres do painel)
@@ -99,6 +101,24 @@ const ANALYSIS_ITEMS = [
 ]
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
+
+function DiscoveryTile({ href, label, sub, icon }: { href: string; label: string; sub: string; icon: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 active:scale-[0.98] transition-all"
+    >
+      <div className="shrink-0">{icon}</div>
+      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+        <p className="text-tinta text-sm font-semibold leading-snug">{label}</p>
+        <p className="text-tinta/50 text-xs leading-snug">{sub}</p>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-aqua shrink-0" aria-hidden="true">
+        <path d="M5 2.5l4.5 4.5L5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </Link>
+  )
+}
 
 function StatusIndicator({ status }: { status: Brand['status'] }) {
   if (status === 'disponivel') {
@@ -962,8 +982,24 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
         )}
 
+        {/* Explorar por perfil */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-0.5">
+            <p className="font-heading font-bold text-tinta text-base md:text-lg">Explorar por perfil</p>
+            <p className="text-tinta/50 text-xs">encontre pelo que você precisa</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <DiscoveryTile href="/raquetes/iniciante" label="Para iniciantes" sub="Fáceis de controlar, alto perdão de erro" icon={<IconNivel />} />
+            <DiscoveryTile href="/raquetes/intermediario" label="Intermediários" sub="Equilíbrio entre controle e potência" icon={<IconEstilo />} />
+            <DiscoveryTile href="/raquetes/avancado" label="Avançados" sub="Alta performance, potência máxima" icon={<IconNivel />} />
+            <DiscoveryTile href="/raquetes/ate-1000" label="Até R$1.000" sub="As melhores dentro do orçamento" icon={<IconOrcamento />} />
+            <DiscoveryTile href="/raquetes/custo-beneficio" label="Custo-benefício" sub="Bom desempenho sem gastar muito" icon={<IconOrcamento />} />
+            <DiscoveryTile href="/raquetes/conforto" label="Articulação protegida" sub="Cotovelo e ombro em dia" icon={<IconBraco />} />
+          </div>
+        </div>
+
         {/* Raquetes dos atletas */}
-        {shuffledAthleteRackets.length > 0 && (
+        {SHOW_ATHLETE_SECTION && shuffledAthleteRackets.length > 0 && (
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-0.5">
               <p className="font-heading font-bold text-tinta text-base md:text-lg">As raquetes dos atletas que jogam de verdade</p>
