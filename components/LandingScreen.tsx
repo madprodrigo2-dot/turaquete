@@ -102,18 +102,28 @@ const ANALYSIS_ITEMS = [
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function DiscoveryTile({ href, label, sub, icon }: { href: string; label: string; sub: string; icon: ReactNode }) {
+function DiscoveryTile({
+  href, label, sub, icon, chipClass, hoverBorderClass,
+}: {
+  href: string; label: string; sub: string; icon: ReactNode; chipClass: string; hoverBorderClass: string
+}) {
   return (
     <Link
       href={href}
-      className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 active:scale-[0.98] transition-all"
+      className={`group bg-white rounded-xl p-4 flex items-center gap-3.5 border border-tinta/10 shadow-sm ${hoverBorderClass} hover:shadow-md active:scale-[0.98] transition-all`}
     >
-      <div className="shrink-0">{icon}</div>
-      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-        <p className="text-tinta text-sm font-semibold leading-snug">{label}</p>
+      <div className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center ${chipClass}`}>
+        {icon}
+      </div>
+      <div className="flex flex-col gap-1 flex-1 min-w-0">
+        <p className="font-heading font-bold text-tinta text-sm leading-snug">{label}</p>
         <p className="text-tinta/50 text-xs leading-snug">{sub}</p>
       </div>
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-aqua shrink-0" aria-hidden="true">
+      <svg
+        width="14" height="14" viewBox="0 0 14 14" fill="none"
+        className="text-tinta/25 shrink-0 transition-transform motion-safe:group-hover:translate-x-0.5"
+        aria-hidden="true"
+      >
         <path d="M5 2.5l4.5 4.5L5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </Link>
@@ -988,13 +998,61 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <p className="font-heading font-bold text-tinta text-base md:text-lg">Explorar por perfil</p>
             <p className="text-tinta/50 text-xs">encontre pelo que você precisa</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <DiscoveryTile href="/raquetes/iniciante" label="Para iniciantes" sub="Fáceis de controlar, alto perdão de erro" icon={<IconNivel />} />
-            <DiscoveryTile href="/raquetes/intermediario" label="Intermediários" sub="Equilíbrio entre controle e potência" icon={<IconEstilo />} />
-            <DiscoveryTile href="/raquetes/avancado" label="Avançados" sub="Alta performance, potência máxima" icon={<IconNivel />} />
-            <DiscoveryTile href="/raquetes/ate-1000" label="Até R$1.000" sub="As melhores dentro do orçamento" icon={<IconOrcamento />} />
-            <DiscoveryTile href="/raquetes/custo-beneficio" label="Custo-benefício" sub="Bom desempenho sem gastar muito" icon={<IconOrcamento />} />
-            <DiscoveryTile href="/raquetes/conforto" label="Articulação protegida" sub="Cotovelo e ombro em dia" icon={<IconBraco />} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <DiscoveryTile
+              href="/raquetes/iniciante"
+              label="Para iniciantes"
+              sub="Fáceis de controlar, alto perdão de erro"
+              chipClass="bg-aqua/12"
+              hoverBorderClass="hover:border-aqua"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="#0CC0BE" aria-hidden="true">
+                  <path d="M2 21h6v-7h6v-7h6v14H2z"/>
+                </svg>
+              }
+            />
+            <DiscoveryTile
+              href="/raquetes/intermediario"
+              label="Intermediários"
+              sub="Equilíbrio entre controle e potência"
+              chipClass="bg-yellow/12"
+              hoverBorderClass="hover:border-yellow"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                  <rect x="10.25" y="3" width="1.5" height="17" rx="0.75" fill="#FFC42E"/>
+                  <rect x="2.5" y="7" width="17" height="1.5" rx="0.75" fill="#FFC42E"/>
+                  <line x1="4.5" y1="8.5" x2="4.5" y2="14" stroke="#FFC42E" strokeWidth="1.2" strokeLinecap="round"/>
+                  <line x1="17.5" y1="8.5" x2="17.5" y2="14" stroke="#FFC42E" strokeWidth="1.2" strokeLinecap="round"/>
+                  <ellipse cx="4.5" cy="15.2" rx="2.5" ry="1.2" fill="#FFC42E"/>
+                  <ellipse cx="17.5" cy="15.2" rx="2.5" ry="1.2" fill="#FFC42E"/>
+                </svg>
+              }
+            />
+            <DiscoveryTile
+              href="/raquetes/avancado"
+              label="Avançados"
+              sub="Alta performance, potência máxima"
+              chipClass="bg-coral/12"
+              hoverBorderClass="hover:border-coral"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="#FF5E3A" aria-hidden="true">
+                  <path d="M13 2L4 13h7l-2 7 9-11h-7L13 2z"/>
+                </svg>
+              }
+            />
+            <DiscoveryTile
+              href="/raquetes/conforto"
+              label="Articulação protegida"
+              sub="Cotovelo e ombro em dia"
+              chipClass="bg-tinta/10"
+              hoverBorderClass="hover:border-tinta"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                  <path d="M11 2L3 5.5V11c0 4.5 3.5 8.5 8 10 4.5-1.5 8-5.5 8-10V5.5L11 2z" fill="#0E3A40" fillOpacity="0.15" stroke="#0E3A40" strokeWidth="1.4"/>
+                  <path d="M7.5 11l2.5 2.5 4.5-4.5" stroke="#0E3A40" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              }
+            />
           </div>
         </div>
 
