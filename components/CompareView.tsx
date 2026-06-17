@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import type { RacketWithInsights } from '@/lib/recommend'
-import { buildSpecRows } from './SpecsGrid'
+import { buildSpecRows, NIVEL_LABEL } from './SpecsGrid'
 import RacketImageTile from './RacketImageTile'
+import CompareHexagon from './CompareHexagon'
+import { derivarNivel } from '@/lib/nivel'
 
 const SCORES = [
-  { key: 'power',           label: 'Potencia'     },
+  { key: 'power',           label: 'Potência'     },
   { key: 'control',         label: 'Controle'     },
   { key: 'comfort',         label: 'Conforto'     },
   { key: 'maneuverability', label: 'Manuseio'     },
@@ -13,23 +15,6 @@ const SCORES = [
 ] as const
 
 const COLORS = ['#FF5E3A', '#0CC0BE'] as const
-
-function ScoreBar({ value, color }: { value: number | null; color: string }) {
-  if (value == null) return <span className="text-tinta/30 text-xs">—</span>
-  return (
-    <div className="flex items-center gap-2 min-w-0">
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden min-w-[32px]">
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${value * 10}%`, backgroundColor: color }}
-        />
-      </div>
-      <span className="text-xs font-bold tabular-nums w-4 text-right shrink-0" style={{ color }}>
-        {value}
-      </span>
-    </div>
-  )
-}
 
 function alignedSpecs(rackets: RacketWithInsights[]) {
   const allRows = rackets.map(r => buildSpecRows(r))
@@ -63,6 +48,8 @@ export default function CompareView({ rackets }: Props) {
           const price = r.price != null
             ? `R$${r.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
             : null
+          const nivel = derivarNivel(r)
+          const ins = r.racket_insights
           return (
             <div key={r.id} className="flex flex-col gap-1.5">
               <div className="rounded-xl overflow-hidden border-2" style={{ borderColor: `${color}35` }}>
@@ -91,28 +78,87 @@ export default function CompareView({ rackets }: Props) {
                     Ver na loja →
                   </a>
                 )}
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {nivel && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-aqua/12 text-aqua leading-none">
+                      {NIVEL_LABEL[nivel] ?? nivel}
+                    </span>
+                  )}
+                  {ins?.elbow_friendly && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 leading-none">
+                      Cotovelo ✓
+                    </span>
+                  )}
+                  {ins?.shoulder_friendly && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 leading-none">
+                      Ombro ✓
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* Scores */}
+      {/* Hexagon radar */}
+      {rackets.length === 2 && (
+        <section className="bg-white/60 rounded-2xl p-4">
+          <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-3">Perfil</h2>
+          <CompareHexagon rackets={rackets as [RacketWithInsights, RacketWithInsights]} />
+        </section>
+      )}
+
+      {/* Scores — symmetric 3-col layout */}
       <section>
-        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-4">Pontuacoes</h2>
-        <div className="flex flex-col gap-4">
+        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-4">Pontuações</h2>
+        <div className="flex flex-col gap-3">
           {SCORES.map(({ key, label }) => {
-            const vals = rackets.map(r => {
-              const ins = r.racket_insights as Record<string, number | null> | null
-              return ins ? (ins[key] ?? null) : null
-            })
+            const ins0 = rackets[0]?.racket_insights as Record<string, number | null> | null
+            const ins1 = rackets[1]?.racket_insights as Record<string, number | null> | null
+            const valA = ins0 ? (ins0[key] ?? null) : null
+            const valB = ins1 ? (ins1[key] ?? null) : null
             return (
-              <div key={key}>
-                <span className="text-xs text-tinta/60 block mb-1.5">{label}</span>
-                <div className="grid grid-cols-2 gap-3">
-                  {vals.map((v, i) => (
-                    <ScoreBar key={i} value={v} color={COLORS[i]} />
-                  ))}
+              <div key={key} className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-2">
+                {/* A side — bar fills right toward label */}
+                <div className="flex items-center justify-end gap-1.5">
+                  {valA != null ? (
+                    <>
+                      <span className="text-[11px] font-bold tabular-nums w-4 text-right shrink-0" style={{ color: COLORS[0] }}>
+                        {valA}
+                      </span>
+                      <div className="w-12 h-2 bg-gray-100 rounded-full overflow-hidden relative shrink-0">
+                        <div
+                          className="absolute right-0 top-0 h-full rounded-full"
+                          style={{ width: `${valA * 10}%`, backgroundColor: COLORS[0] }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-tinta/25 text-[11px]">—</span>
+                  )}
+                </div>
+                {/* Label */}
+                <span className="text-[11px] text-tinta/55 text-center whitespace-nowrap px-1.5 shrink-0">
+                  {label}
+                </span>
+                {/* B side — bar fills left from label */}
+                <div className="flex items-center justify-start gap-1.5">
+                  {valB != null ? (
+                    <>
+                      <div className="w-12 h-2 bg-gray-100 rounded-full overflow-hidden shrink-0">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${valB * 10}%`, backgroundColor: COLORS[1] }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold tabular-nums w-4 shrink-0" style={{ color: COLORS[1] }}>
+                        {valB}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-tinta/25 text-[11px]">—</span>
+                  )}
                 </div>
               </div>
             )
@@ -122,7 +168,7 @@ export default function CompareView({ rackets }: Props) {
 
       {/* Specs */}
       <section>
-        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-4">Especificacoes</h2>
+        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-4">Especificações</h2>
         <div className="rounded-xl border border-aqua/20 overflow-hidden">
           {specs.map(({ label, values }, idx) => (
             <div
@@ -147,7 +193,7 @@ export default function CompareView({ rackets }: Props) {
       {/* Tury CTA */}
       <div className="rounded-2xl bg-tinta text-white px-5 py-5 flex flex-col gap-3">
         <p className="text-sm font-medium leading-snug">
-          Ainda com duvida? Tury analisa o seu perfil e ajuda a decidir qual e a certa pra voce.
+          Ainda com dúvida? Tury analisa o seu perfil e ajuda a decidir qual é a certa pra você.
         </p>
         <Link
           href="/"
@@ -162,7 +208,7 @@ export default function CompareView({ rackets }: Props) {
         href="/comparar"
         className="text-sm text-tinta/50 hover:text-aqua transition-colors text-center block pb-2"
       >
-        ← Nova comparacao
+        ← Nova comparação
       </Link>
 
     </div>

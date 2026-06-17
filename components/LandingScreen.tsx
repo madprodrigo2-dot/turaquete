@@ -861,18 +861,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 </div>
               ))}
             </div>
-            {/* C — Comparador como diferenciador */}
-            <button
-              onClick={onStart}
-              className="mt-5 pt-4 border-t border-aqua/15 w-full flex items-center justify-between group hover:bg-aqua/5 rounded-xl px-1 py-1 -mx-1 -mb-1 transition-colors"
-            >
-              <span className="text-tinta/65 text-sm leading-snug text-left">
-                Compare qualquer raquete do catálogo lado a lado, na hora
-              </span>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 ml-3 text-aqua/50 group-hover:text-aqua transition-colors" aria-hidden="true">
-                <path d="M3.5 8h9M9 4.5L12.5 8 9 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
           </div>
 
           {/* Analisamos seu jogo — card escuro, diferenciador */}
@@ -1000,6 +988,50 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               icon={<ShieldCheck weight="duotone" size={24} color="#0E3A40" />}
             />
           </div>
+        </div>
+
+        {/* Compare lado a lado */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-0.5">
+            <p className="font-heading font-bold text-tinta text-base md:text-lg">Compare lado a lado</p>
+            <p className="text-tinta/50 text-xs">veja qual raquete ganha em cada quesito</p>
+          </div>
+          <Link
+            href={featuredRackets[0] ? `/comparar?a=${featuredRackets[0].slug}` : '/comparar'}
+            className="bg-white rounded-2xl border border-aqua/20 shadow-sm overflow-hidden hover:shadow-md transition-shadow active:scale-[0.99]"
+          >
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3">
+              <div className="flex flex-col gap-2">
+                {featuredRackets[0] ? (
+                  <>
+                    <div className="rounded-xl overflow-hidden border border-coral/20">
+                      <RacketImageTile src={featuredRackets[0].image_url} alt={featuredRackets[0].name} />
+                    </div>
+                    <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{featuredRackets[0].name}</p>
+                  </>
+                ) : (
+                  <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/30 flex items-center justify-center">
+                    <span className="text-2xl text-aqua/25 font-light">?</span>
+                  </div>
+                )}
+              </div>
+              <div className="px-1 flex items-center justify-center">
+                <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/30 flex items-center justify-center bg-aqua/5">
+                  <span className="text-3xl text-aqua/20 font-light leading-none">?</span>
+                </div>
+                <p className="text-[10px] text-tinta/30 text-center leading-snug">Escolher raquete</p>
+              </div>
+            </div>
+            <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between">
+              <span className="text-sm font-semibold text-aqua">Comparar raquetes</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3.5 8h9M9 4.5L12.5 8 9 11.5" stroke="#0CC0BE" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </Link>
         </div>
 
         {/* Raquetes dos atletas */}
