@@ -40,7 +40,7 @@ export default function DiscoveryPageLayout({ icon, title, subtitle, rackets, em
     <div className="min-h-screen sand-texture">
       {/* Nav */}
       <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20">
-        <div className="max-w-2xl mx-auto px-5 py-3">
+        <div className="max-w-4xl mx-auto px-5 md:px-8 py-3">
           <Link
             href="/"
             className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"
@@ -53,7 +53,7 @@ export default function DiscoveryPageLayout({ icon, title, subtitle, rackets, em
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-5 py-8 flex flex-col gap-6">
+      <div className="max-w-4xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
 
         {/* Header */}
         <div className="flex flex-col gap-1">

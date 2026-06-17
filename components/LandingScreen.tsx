@@ -681,7 +681,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
       {/* Sticky header — full viewport width */}
       <div className={`sticky top-0 z-30 w-full flex justify-center bg-aqua-light/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
-        <div className="w-full max-w-sm md:max-w-2xl flex items-center justify-between px-5 py-3 md:py-4">
+        <div className="w-full max-w-sm md:max-w-4xl flex items-center justify-between px-5 md:px-8 py-3 md:py-4">
           <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
             <Image
               src="/logo-header.png"
@@ -709,7 +709,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       </div>
 
       {/* ── Seção menta: hero ── */}
-      <div className="w-full max-w-sm md:max-w-2xl px-5 pb-2 md:pb-3">
+      <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8 pb-2 md:pb-3">
         <div className="flex flex-col md:grid md:grid-cols-[1fr_260px] md:gap-6 md:items-center gap-5">
 
           {/* Coluna texto */}
@@ -857,7 +857,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         {/* 4: gutter direito topo — desktop only */}
         <SandMound width={82} height={17} className="hidden md:block top-[18%] right-[1.5%]" />
 
-        <div className="max-w-sm md:max-w-2xl mx-auto px-5 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
+        <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 
           {/* Como funciona */}
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
@@ -1008,7 +1008,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       </div>
 
       {/* ── Seção menta: marcas + FAQ + CTA + footer ── */}
-      <div className="w-full max-w-sm md:max-w-2xl flex flex-col gap-5 md:gap-7 px-5 pt-3 md:pt-4">
+      <div className="w-full max-w-sm md:max-w-4xl flex flex-col gap-5 md:gap-7 px-5 md:px-8 pt-3 md:pt-4">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
