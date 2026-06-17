@@ -22,18 +22,18 @@ export default function ScoreBar({ label, sublabel, value, color = '#0CC0BE', ba
         </div>
       )}
       <div
-        className="flex-1 rounded-full h-2.5 overflow-hidden"
+        className="flex-1 rounded-full h-3 overflow-hidden"
         style={{ backgroundColor: `${color}26` }}
       >
         <div
-          className="h-2.5 rounded-full"
+          className="h-3 rounded-full"
           style={{ width: `${value * 10}%`, backgroundColor: color }}
         />
       </div>
       <span className="text-tinta font-semibold text-sm w-5 text-right tabular-nums">{value}</span>
       {badge && (
         <span
-          className="text-[9px] font-bold px-1 py-0.5 rounded-full leading-none shrink-0"
+          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none shrink-0"
           style={{ backgroundColor: `${color}22`, color }}
         >
           {badge}

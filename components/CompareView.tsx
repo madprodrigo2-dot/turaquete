@@ -77,6 +77,10 @@ function alignedSpecs(rackets: RacketWithInsights[]) {
   }))
 }
 
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="text-[10px] font-bold text-tinta/40 uppercase tracking-widest mb-4">{children}</h2>
+)
+
 interface Props {
   rackets: RacketWithInsights[]
 }
@@ -90,7 +94,7 @@ export default function CompareView({ rackets }: Props) {
     : [[], []]
 
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-8">
 
       {/* Racket headers */}
       <div className="grid grid-cols-2 gap-3">
@@ -102,11 +106,15 @@ export default function CompareView({ rackets }: Props) {
           const nivel = derivarNivel(r)
           const ins = r.racket_insights
           return (
-            <div key={r.id} className="flex flex-col gap-1.5">
-              <div className="rounded-xl overflow-hidden border-2" style={{ borderColor: `${color}35` }}>
+            <div key={r.id} className="flex flex-col gap-2">
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ boxShadow: `0 0 0 2px ${color}30`, outline: `3px solid transparent` }}
+              >
+                <div className="h-1 w-full" style={{ backgroundColor: color }} />
                 <RacketImageTile src={r.image_url} alt={r.name} />
               </div>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1 px-0.5">
                 <Link
                   href={`/raquetes/${r.slug}`}
                   className="text-[12px] font-semibold text-tinta leading-snug hover:underline"
@@ -117,14 +125,15 @@ export default function CompareView({ rackets }: Props) {
                   <span className="text-[11px] text-tinta/40">{r.brands.name}</span>
                 )}
                 {price && (
-                  <span className="text-sm font-bold" style={{ color }}>{price}</span>
+                  <span className="text-sm font-bold mt-0.5" style={{ color }}>{price}</span>
                 )}
                 {r.affiliate_url && (
                   <a
                     href={r.affiliate_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] text-aqua hover:underline mt-0.5"
+                    className="mt-1 text-[11px] font-medium px-2.5 py-1 rounded-lg w-fit transition-colors"
+                    style={{ backgroundColor: `${color}15`, color }}
                   >
                     Ver na loja →
                   </a>
@@ -149,64 +158,90 @@ export default function CompareView({ rackets }: Props) {
 
       {/* Hexagon radar */}
       {hasTwoRackets && (
-        <section className="bg-white/60 rounded-2xl p-4">
-          <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-3">Perfil</h2>
+        <section className="bg-white rounded-2xl border border-aqua/15 shadow-sm p-5">
+          <SectionLabel>Perfil</SectionLabel>
           <CompareHexagon rackets={rackets as [RacketWithInsights, RacketWithInsights]} />
         </section>
       )}
 
-      {/* Placar */}
-      {placar && (placar.winsA + placar.winsB + placar.ties) > 0 && (
-        <section className="bg-white/60 rounded-2xl p-4">
-          <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-3">Placar</h2>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold tabular-nums leading-none" style={{ color: COLORS[0] }}>
-              {placar.winsA}
-            </span>
-            <span className="text-tinta/30 text-base font-medium">×</span>
-            <span className="text-3xl font-bold tabular-nums leading-none" style={{ color: COLORS[1] }}>
-              {placar.winsB}
-            </span>
-            {placar.ties > 0 && (
-              <span className="text-[11px] text-tinta/40 ml-1">
-                ({placar.ties} empate{placar.ties > 1 ? 's' : ''})
-              </span>
-            )}
-          </div>
-          <p className="text-[12px] text-tinta/60 mt-1.5">
-            {placar.winsA > placar.winsB ? (
-              <>
-                <span className="font-semibold" style={{ color: COLORS[0] }}>{rackets[0]?.name}</span>
-                {` vence em ${placar.winsA} de ${placar.winsA + placar.winsB + placar.ties} quesitos`}
-              </>
-            ) : placar.winsB > placar.winsA ? (
-              <>
-                <span className="font-semibold" style={{ color: COLORS[1] }}>{rackets[1]?.name}</span>
-                {` vence em ${placar.winsB} de ${placar.winsA + placar.winsB + placar.ties} quesitos`}
-              </>
-            ) : (
-              `Empate técnico em ${placar.winsA + placar.winsB + placar.ties} quesitos`
-            )}
-          </p>
-        </section>
-      )}
+      {/* Placar — scoreboard */}
+      {placar && (placar.winsA + placar.winsB + placar.ties) > 0 && (() => {
+        const total = placar.winsA + placar.winsB + placar.ties
+        const scored = placar.winsA + placar.winsB
+        const pctA = scored > 0 ? (placar.winsA / scored) * 100 : 50
+        return (
+          <section className="bg-white rounded-2xl border border-aqua/15 shadow-sm overflow-hidden">
+            <div className="px-5 pt-5 pb-5">
+              <SectionLabel>Placar</SectionLabel>
+              <div className="flex items-center">
+                <div className="flex-1 flex flex-col items-center gap-1.5">
+                  <span
+                    className="text-5xl font-heading font-black tabular-nums leading-none"
+                    style={{ color: COLORS[0] }}
+                  >
+                    {placar.winsA}
+                  </span>
+                  <span className="text-[11px] text-tinta/50 font-medium text-center leading-tight px-2 truncate max-w-full">
+                    {rackets[0]?.name}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center gap-1 px-4">
+                  <span className="text-2xl text-tinta/20 font-light leading-none">×</span>
+                  {placar.ties > 0 && (
+                    <span className="text-[9px] text-tinta/30 font-medium leading-none">
+                      {placar.ties} empt.
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 flex flex-col items-center gap-1.5">
+                  <span
+                    className="text-5xl font-heading font-black tabular-nums leading-none"
+                    style={{ color: COLORS[1] }}
+                  >
+                    {placar.winsB}
+                  </span>
+                  <span className="text-[11px] text-tinta/50 font-medium text-center leading-tight px-2 truncate max-w-full">
+                    {rackets[1]?.name}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[11px] text-tinta/45 text-center mt-3 leading-snug">
+                {placar.winsA > placar.winsB
+                  ? <><span className="font-semibold" style={{ color: COLORS[0] }}>{rackets[0]?.name}</span>{` vence em ${placar.winsA} de ${total} quesitos`}</>
+                  : placar.winsB > placar.winsA
+                  ? <><span className="font-semibold" style={{ color: COLORS[1] }}>{rackets[1]?.name}</span>{` vence em ${placar.winsB} de ${total} quesitos`}</>
+                  : `Empate técnico em ${total} quesitos`
+                }
+              </p>
+            </div>
+            {/* Proportional bar */}
+            <div className="flex h-1">
+              <div style={{ width: `${pctA}%`, backgroundColor: COLORS[0] }} />
+              <div style={{ flex: 1, backgroundColor: COLORS[1] }} />
+            </div>
+          </section>
+        )
+      })()}
 
       {/* Scores */}
-      <section>
-        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-3">Pontuações</h2>
+      <section className="bg-white rounded-2xl border border-aqua/15 shadow-sm p-5">
+        <SectionLabel>Pontuações</SectionLabel>
         {hasTwoRackets && (
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ backgroundColor: COLORS[0] }} />
-              <span className="text-[11px] font-semibold truncate max-w-[130px]" style={{ color: COLORS[0] }}>{rackets[0].name}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-[3px] shrink-0" style={{ backgroundColor: COLORS[1] }} />
-              <span className="text-[11px] font-semibold truncate max-w-[130px]" style={{ color: COLORS[1] }}>{rackets[1].name}</span>
-            </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-5">
+            {rackets.slice(0, 2).map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: COLORS[i] }}
+                />
+                <span className="text-[11px] font-semibold truncate max-w-[140px]" style={{ color: COLORS[i] }}>
+                  {r.name}
+                </span>
+              </div>
+            ))}
           </div>
         )}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {SCORES.map(({ key, label }) => {
             const ins0 = rackets[0]?.racket_insights
             const ins1 = rackets[1]?.racket_insights
@@ -216,8 +251,8 @@ export default function CompareView({ rackets }: Props) {
             const diff = valA != null && valB != null ? valA - valB : null
             return (
               <div key={key} className="flex items-start gap-3">
-                <div className="w-28 shrink-0 pt-0.5">
-                  <span className="text-tinta/70 text-sm">{label}</span>
+                <div className="w-24 shrink-0 pt-0.5">
+                  <span className="text-tinta/60 text-sm">{label}</span>
                 </div>
                 <div className="flex-1 flex flex-col gap-1.5">
                   <ScoreBar
@@ -240,20 +275,35 @@ export default function CompareView({ rackets }: Props) {
       {/* Melhor para */}
       {hasTwoRackets && (melA.length > 0 || melB.length > 0) && (
         <section>
-          <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-3">Melhor para</h2>
+          <SectionLabel>Melhor para</SectionLabel>
           <div className="grid grid-cols-2 gap-3">
             {rackets.slice(0, 2).map((r, i) => {
               const mel = i === 0 ? melA : melB
               const color = COLORS[i]
               return (
-                <div key={r.id} className="rounded-xl border border-aqua/15 bg-white/50 p-3 flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold truncate" style={{ color }}>{r.name}</span>
+                <div
+                  key={r.id}
+                  className="rounded-xl border bg-white p-3.5 flex flex-col gap-2.5"
+                  style={{ borderColor: `${color}25` }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    <span className="text-[11px] font-bold truncate" style={{ color }}>{r.name}</span>
+                  </div>
                   {mel.length > 0 ? (
-                    mel.map((m, j) => (
-                      <span key={j} className="text-[11px] text-tinta/65 leading-snug">{m}</span>
-                    ))
+                    <div className="flex flex-col gap-1.5">
+                      {mel.map((m, j) => (
+                        <span
+                          key={j}
+                          className="text-[10px] font-medium px-2 py-1 rounded-lg leading-snug w-fit"
+                          style={{ backgroundColor: `${color}12`, color }}
+                        >
+                          {m}
+                        </span>
+                      ))}
+                    </div>
                   ) : (
-                    <span className="text-[11px] text-tinta/35 italic leading-snug">equilibrada</span>
+                    <span className="text-[11px] text-tinta/30 italic">equilibrada</span>
                   )}
                 </div>
               )
@@ -264,21 +314,32 @@ export default function CompareView({ rackets }: Props) {
 
       {/* Specs */}
       <section>
-        <h2 className="text-xs font-bold text-tinta/40 uppercase tracking-wider mb-4">Especificações</h2>
+        <SectionLabel>Especificações</SectionLabel>
         <div className="rounded-xl border border-aqua/20 overflow-hidden">
+          {/* Column headers */}
+          <div className="grid grid-cols-[auto_1fr_1fr] bg-gray-50 border-b border-aqua/15">
+            <div className="px-3 py-2.5 min-w-[88px]" />
+            {rackets.slice(0, 2).map((r, i) => (
+              <div key={i} className="px-3 py-2.5 border-l border-aqua/10">
+                <span className="text-[10px] font-bold block truncate" style={{ color: COLORS[i] }}>
+                  {r.name}
+                </span>
+              </div>
+            ))}
+          </div>
           {specs.map(({ label, values }, idx) => (
             <div
               key={label}
               className={`grid grid-cols-[auto_1fr_1fr] border-b border-aqua/10 last:border-0 ${
-                idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'
               }`}
             >
-              <div className="px-3 py-2.5 text-tinta/50 text-[11px] font-medium whitespace-nowrap min-w-[88px]">
+              <div className="px-3 py-3 text-tinta/45 text-[11px] font-medium whitespace-nowrap min-w-[88px]">
                 {label}
               </div>
               {values.map((v, i) => (
-                <div key={i} className="px-2.5 py-2.5 text-[12px] text-tinta font-medium border-l border-aqua/10 leading-snug">
-                  {v ?? <span className="text-tinta/25">—</span>}
+                <div key={i} className="px-3 py-3 text-[12px] text-tinta font-medium border-l border-aqua/10 leading-snug">
+                  {v ?? <span className="text-tinta/20">—</span>}
                 </div>
               ))}
             </div>

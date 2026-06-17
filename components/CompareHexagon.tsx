@@ -42,7 +42,7 @@ export default function CompareHexagon({ rackets }: Props) {
     <div className="flex flex-col items-center gap-3 py-1">
       <svg
         viewBox="0 0 240 240"
-        className="w-full max-w-[200px]"
+        className="w-full max-w-[220px]"
         overflow="visible"
         aria-hidden="true"
       >
@@ -81,7 +81,7 @@ export default function CompareHexagon({ rackets }: Props) {
           <polygon
             points={polyPoints(bScores)}
             fill={COLORS.B}
-            fillOpacity={0.18}
+            fillOpacity={0.22}
             stroke={COLORS.B}
             strokeWidth={1.75}
             strokeLinejoin="round"
@@ -93,7 +93,7 @@ export default function CompareHexagon({ rackets }: Props) {
           <polygon
             points={polyPoints(aScores)}
             fill={COLORS.A}
-            fillOpacity={0.18}
+            fillOpacity={0.22}
             stroke={COLORS.A}
             strokeWidth={1.75}
             strokeLinejoin="round"
@@ -111,7 +111,7 @@ export default function CompareHexagon({ rackets }: Props) {
               y={y}
               textAnchor={anchor}
               dominantBaseline="middle"
-              fontSize={9}
+              fontSize={10}
               fill="#0E3A40"
               fillOpacity={0.45}
             >
@@ -125,13 +125,13 @@ export default function CompareHexagon({ rackets }: Props) {
       <div className="flex items-center gap-4">
         {aValid >= 4 && (
           <div className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-2 rounded-[2px]" style={{ backgroundColor: COLORS.A }} />
+            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.A }} />
             <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.A }}>{rackets[0].name}</span>
           </div>
         )}
         {bValid >= 4 && (
           <div className="flex items-center gap-1.5">
-            <span className="inline-block w-3 h-2 rounded-[2px]" style={{ backgroundColor: COLORS.B }} />
+            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.B }} />
             <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.B }}>{rackets[1].name}</span>
           </div>
         )}

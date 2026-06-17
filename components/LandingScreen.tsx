@@ -165,6 +165,8 @@ function BrandCard({ brand }: { brand: Brand }) {
           style={
             brand.slug === 'mormaii'    ? { marginLeft: '-14px' } :
             brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
+            brand.slug === 'adidas'     ? { height: '20px' } :
+            brand.slug === 'kona'       ? { height: '26px' } :
             undefined
           }
         />
