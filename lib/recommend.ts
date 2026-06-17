@@ -157,12 +157,16 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     })
   }
 
-  // Injury filter: cotovelo — highest-priority rule, relax only if truly 0 results.
-  // Criterion: elbow_friendly=true (explicit tag), OR elbow_friendly not set AND comfort≥8
-  // AND saida_de_bola not 'exigente'. elbow_friendly=false is a hard exclusion.
+  // Minimum pool size before injury filter relaxes to avoid collapsing to 1 candidate.
+  // Root cause: unscored rackets (comfort=null) fail the strict ≥8 threshold even though
+  // they are not confirmed bad — NULL means unknown, not harmful.
+  const INJURY_MIN_POOL = 3
+
+  // Injury filter: cotovelo — two-tier: strict (≥8 + fácil) → relaxed (≥7 or null, not exigente).
+  // elbow_friendly=false is always a hard exclusion.
   if (filtros.cotovelo_sensivel && results.length > 0) {
     const before = results.length
-    const filtered = results.filter(r => {
+    const strict = results.filter(r => {
       const ins = r.racket_insights
       if (!ins) return false
       if (ins.elbow_friendly === true) return true
@@ -170,19 +174,37 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
       const saida = r.specs_extra?.saida_de_bola as string | undefined
       return (ins.comfort ?? 0) >= 8 && saida === 'fácil'
     })
-    if (filtered.length >= 1) {
-      results = filtered
+    if (strict.length >= INJURY_MIN_POOL) {
+      results = strict
       filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: false })
     } else {
-      criteriosRelaxados.push('cotovelo sensível: nenhuma raquete com flag ou conforto≥8 — avalie manualmente')
-      filterTrace.push({ filtro: 'cotovelo sensível (elbow_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      // Relaxed tier: exclude explicit bad, include unknown scores and comfort≥7
+      const relaxed = results.filter(r => {
+        const ins = r.racket_insights
+        if (!ins) return false
+        if (ins.elbow_friendly === false) return false
+        if (ins.elbow_friendly === true) return true
+        const saida = r.specs_extra?.saida_de_bola as string | undefined
+        return ins.comfort == null || (ins.comfort >= 7 && saida !== 'exigente')
+      })
+      if (relaxed.length >= 1) {
+        results = relaxed
+        const note = strict.length > 0
+          ? `conforto≥7 (relaxado — apenas ${strict.length} com conforto≥8)`
+          : 'conforto≥7 (relaxado — catálogo sem scores suficientes)'
+        criteriosRelaxados.push(`cotovelo sensível: ${note}`)
+        filterTrace.push({ filtro: 'cotovelo sensível (conforto≥7 ou flag, relaxado)', antes: before, depois: results.length, relaxado: true, note })
+      } else {
+        criteriosRelaxados.push('cotovelo sensível: nenhuma raquete apta — avalie manualmente')
+        filterTrace.push({ filtro: 'cotovelo sensível', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      }
     }
   }
 
-  // Injury filter: ombro — same logic as cotovelo
+  // Injury filter: ombro — same two-tier logic as cotovelo
   if (filtros.ombro_sensivel && results.length > 0) {
     const before = results.length
-    const filtered = results.filter(r => {
+    const strict = results.filter(r => {
       const ins = r.racket_insights
       if (!ins) return false
       if (ins.shoulder_friendly === true) return true
@@ -190,30 +212,62 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
       const saida = r.specs_extra?.saida_de_bola as string | undefined
       return (ins.comfort ?? 0) >= 8 && saida === 'fácil'
     })
-    if (filtered.length >= 1) {
-      results = filtered
+    if (strict.length >= INJURY_MIN_POOL) {
+      results = strict
       filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: false })
     } else {
-      criteriosRelaxados.push('ombro sensível: nenhuma raquete com flag ou conforto≥8 — avalie manualmente')
-      filterTrace.push({ filtro: 'ombro sensível (shoulder_friendly ou conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      const relaxed = results.filter(r => {
+        const ins = r.racket_insights
+        if (!ins) return false
+        if (ins.shoulder_friendly === false) return false
+        if (ins.shoulder_friendly === true) return true
+        const saida = r.specs_extra?.saida_de_bola as string | undefined
+        return ins.comfort == null || (ins.comfort >= 7 && saida !== 'exigente')
+      })
+      if (relaxed.length >= 1) {
+        results = relaxed
+        const note = strict.length > 0
+          ? `conforto≥7 (relaxado — apenas ${strict.length} com conforto≥8)`
+          : 'conforto≥7 (relaxado — catálogo sem scores suficientes)'
+        criteriosRelaxados.push(`ombro sensível: ${note}`)
+        filterTrace.push({ filtro: 'ombro sensível (conforto≥7 ou flag, relaxado)', antes: before, depois: results.length, relaxado: true, note })
+      } else {
+        criteriosRelaxados.push('ombro sensível: nenhuma raquete apta — avalie manualmente')
+        filterTrace.push({ filtro: 'ombro sensível', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      }
     }
   }
 
-  // Injury filter: punho / outro — same DUPLO logic as cotovelo/ombro
+  // Injury filter: punho / outro — two-tier (no explicit flag, relies on comfort + saida)
   if (filtros.punho_sensivel && results.length > 0) {
     const before = results.length
-    const filtered = results.filter(r => {
+    const strict = results.filter(r => {
       const ins = r.racket_insights
       if (!ins) return false
       const saida = r.specs_extra?.saida_de_bola as string | undefined
       return (ins.comfort ?? 0) >= 8 && saida === 'fácil'
     })
-    if (filtered.length >= 1) {
-      results = filtered
+    if (strict.length >= INJURY_MIN_POOL) {
+      results = strict
       filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: false })
     } else {
-      criteriosRelaxados.push('punho/outro sensível: nenhuma raquete com conforto≥8 e saída fácil — avalie manualmente')
-      filterTrace.push({ filtro: 'punho/outro sensível (conforto≥8 + saída fácil)', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      const relaxed = results.filter(r => {
+        const ins = r.racket_insights
+        if (!ins) return false
+        const saida = r.specs_extra?.saida_de_bola as string | undefined
+        return ins.comfort == null || (ins.comfort >= 7 && saida !== 'exigente')
+      })
+      if (relaxed.length >= 1) {
+        results = relaxed
+        const note = strict.length > 0
+          ? `conforto≥7 (relaxado — apenas ${strict.length} com conforto≥8)`
+          : 'conforto≥7 (relaxado — catálogo sem scores suficientes)'
+        criteriosRelaxados.push(`punho sensível: ${note}`)
+        filterTrace.push({ filtro: 'punho/outro sensível (conforto≥7, relaxado)', antes: before, depois: results.length, relaxado: true, note })
+      } else {
+        criteriosRelaxados.push('punho sensível: nenhuma raquete apta — avalie manualmente')
+        filterTrace.push({ filtro: 'punho/outro sensível', antes: before, depois: results.length, relaxado: true, note: 'nenhuma raquete passou o critério' })
+      }
     }
   }
 

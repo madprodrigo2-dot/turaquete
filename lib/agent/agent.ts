@@ -208,7 +208,9 @@ async function executeTool(
   budgetAnsweredRef: { value: boolean },
   precoChipsRef: { value: string[] },
   marcaChipsRef: { value: string[] },
-  showAllBrandsRef: { value: boolean }
+  showAllBrandsRef: { value: boolean },
+  confirmedMarca: string | null | undefined,
+  chatHistory: readonly ChatMessage[]
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -318,7 +320,14 @@ async function executeTool(
     if (marcaAskPendingRef.value && (input as RacketFilters).marca_preferida !== undefined) {
       marcaAskPendingRef.value = false
     }
-    const { raquetes, criteriosRelaxados, filterTrace } = await buscarRaquetas(input as RacketFilters)
+    // Inject confirmed brand preference when the model forgot to include it in the call.
+    // confirmedMarca is derived from history (user's response after brand question text) so
+    // the brand boost is applied even if the model omits marca_preferida on subsequent turns.
+    const effectiveFilters: RacketFilters =
+      confirmedMarca !== undefined && (input as RacketFilters).marca_preferida === undefined
+        ? { ...(input as RacketFilters), marca_preferida: confirmedMarca }
+        : (input as RacketFilters)
+    const { raquetes, criteriosRelaxados, filterTrace } = await buscarRaquetas(effectiveFilters)
     const ranked = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
     debugRef.value.scorerResults = ranked.slice(0, 10).map(r => ({
       id: r.id,
@@ -454,10 +463,30 @@ async function executeTool(
     }
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
 
+    // ── Pool reduzida — previne loop com 1 candidata ────────────────────────────
+    const POOL_MIN_SIZE = 3
+    const isPoolTight = !isLookupCall && !isNameSearch && ranked.length > 0 && ranked.length < POOL_MIN_SIZE && !priceAskPendingRef.value
+    if (isPoolTight) {
+      const alreadySeen = ranked.some(r =>
+        chatHistory.some(m => m.role === 'assistant' && m.content.includes(r.name))
+      )
+      payload.POOL_REDUZIDA = {
+        status: alreadySeen ? 'JA_RECOMENDADA' : 'PRIMEIRA_VEZ',
+        candidatas: ranked.length,
+        instrucao: alreadySeen
+          ? `Essa raquete ja foi recomendada nessa conversa. NAO refaca a apresentacao completa. ` +
+            `Reconheca brevemente a limitacao ("pro teu perfil, so tenho essa no momento") ` +
+            `e ofereça UMA acao concreta: relaxar nivel, peso, marca ou orcamento. ` +
+            `Se o usuario pediu algo especifico (ex: outra marca, preco diferente), execute esse pedido.`
+          : `Pool reduzida (${ranked.length} candidata${ranked.length > 1 ? 's' : ''} para esse perfil). ` +
+            `Apresente de forma direta e curta. No final, ofereça relaxar um criterio concreto para ampliar as opcoes.`,
+      }
+    }
+
     // ── Marca decision ─────────────────────────────────────────────────────────
     // Ask brand preference once, after budget is known, for profile-based searches.
     // marca_preferida === undefined means "not yet provided" (distinct from null = "tanto faz").
-    const marcaJaFornecida = (input as RacketFilters).marca_preferida !== undefined
+    const marcaJaFornecida = effectiveFilters.marca_preferida !== undefined
     const shouldAskMarca = budgetKnown && !isNameSearch && !marcaJaFornecida && !brandAskedRef.value && !priceAskPendingRef.value
     if (shouldAskMarca) {
       brandAskedRef.value = true
@@ -466,7 +495,7 @@ async function executeTool(
     }
 
     // Capture MarcaDecision for debug
-    const marcaPreferida = (input as RacketFilters).marca_preferida ?? null
+    const marcaPreferida = effectiveFilters.marca_preferida ?? null
     const racketsDaMarca = marcaPreferida
       ? ranked.filter(r => (r as { brands?: { name: string } | null }).brands?.name?.toLowerCase() === marcaPreferida.toLowerCase()).length
       : 0
@@ -481,6 +510,19 @@ async function executeTool(
     }
     if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
     debugRef.value.decisionTrace.marcaDecision = marcaDecisionData
+
+    // Brand no-match: model must not label another brand's racket as the preferred brand
+    if (marcaPreferida && racketsDaMarca === 0 && ranked.length > 0) {
+      payload.AVISO_MARCA_SEM_MATCH = {
+        status: 'MARCA_SEM_CANDIDATA',
+        marca_pedida: marcaPreferida,
+        instrucao_OBRIGATORIA:
+          `Nenhuma raquete de "${marcaPreferida}" encaixa nesse perfil. ` +
+          `OBRIGATORIO: (1) diga "nao tenho ${marcaPreferida} que bata nesse perfil"; ` +
+          `(2) ofereça a melhor disponivel etiquetada com a marca REAL (ex: "a melhor que tenho e a [nome] da [marca real]"); ` +
+          `(3) NUNCA chame uma raquete de outra marca de "${marcaPreferida}" nem implique que e da marca pedida.`,
+      }
+    }
 
     if (priceDecision.status === 'disparo') {
       const precoChips = computePrecoChips(ranked)
@@ -679,6 +721,21 @@ export async function runAgentTurn(
   const showAllBrandsRef: { value: boolean } = {
     value: history.some(m => m.role === 'user' && m.content.trim() === 'Ver todas as marcas'),
   }
+  // Derive brand preference from history — guarantees it's included in buscar_raquetas
+  // even when the model omits marca_preferida from its tool call on subsequent turns.
+  const confirmedMarca: string | null | undefined = (() => {
+    let lastBrandQIdx = -1
+    history.forEach((m, i) => {
+      if (m.role === 'assistant' && m.content.includes(MARCA_QUESTION_TEXT)) lastBrandQIdx = i
+    })
+    if (lastBrandQIdx === -1) return undefined
+    const userResp = history.slice(lastBrandQIdx + 1).find(
+      m => m.role === 'user' && m.content.trim() !== 'Ver todas as marcas'
+    )
+    if (!userResp) return undefined
+    const text = userResp.content.trim()
+    return text === 'Tanto faz' ? null : text
+  })()
   const pendingQuestionFieldRef: { value: string | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
   // Count only the Akinator questions actually presented in history, not total user messages.
@@ -795,7 +852,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
