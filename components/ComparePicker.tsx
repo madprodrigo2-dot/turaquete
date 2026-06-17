@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, Fragment } from 'react'
+import { useState, useMemo, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { RacketWithInsights } from '@/lib/recommend'
@@ -22,6 +22,7 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
   const [focusedSlot, setFocusedSlot] = useState<'A' | 'B'>(initialSlotA && !initialSlotB ? 'B' : 'A')
   const [query, setQuery] = useState('')
   const [comparing, setComparing] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -71,7 +72,10 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                 </div>
               )}
               <button
-                onClick={() => setFocusedSlot(slot)}
+                onClick={() => {
+                  setFocusedSlot(slot)
+                  searchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
                 className="relative flex-1 rounded-xl border-2 overflow-hidden text-left transition-all"
                 style={{
                   borderColor: isFocused ? color : `${color}35`,
@@ -149,7 +153,7 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
       )}
 
       {/* Search */}
-      <div className="flex flex-col gap-3">
+      <div ref={searchRef} className="flex flex-col gap-3">
         <p className="text-sm text-tinta/50">
           Selecionando para:{' '}
           <span className="font-semibold" style={{ color: COLORS[focusedSlot] }}>
