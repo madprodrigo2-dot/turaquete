@@ -1082,7 +1082,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <DiscoveryTile
               href="/raquetes/conforto"
               label="Articulação protegida"
-              sub="Cotovelo e ombro em dia"
+              sub="Cotovelo, ombro e punho em dia"
               chipClass="bg-tinta/10"
               hoverBorderClass="hover:border-tinta"
               icon={<ShieldCheck weight="duotone" size={24} color="#0E3A40" />}

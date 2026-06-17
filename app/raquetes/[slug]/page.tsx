@@ -156,14 +156,9 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                   </span>
                 ) : null
               })()}
-              {ins?.elbow_friendly && (
+              {(ins?.elbow_friendly || ins?.shoulder_friendly) && (
                 <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
-                  Cotovelo amigável
-                </span>
-              )}
-              {ins?.shoulder_friendly && (
-                <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
-                  Ombro amigável
+                  Articulação em dia
                 </span>
               )}
             </div>

@@ -1,18 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Sora, Inter } from "next/font/google";
+import { Archivo, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
-const sora = Sora({
-  variable: "--font-sora",
+const display = Archivo({
+  variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "600", "700", "800"],
+  display: "swap",
 })
 
-const inter = Inter({
-  variable: "--font-inter",
+const sans = Plus_Jakarta_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
 })
 
 const TITLE       = 'Turaquete | Especialista em raquetes de beach tennis'
@@ -60,7 +63,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className={`${sora.variable} ${inter.variable} antialiased`}>
+      <body className={`${display.variable} ${sans.variable} antialiased`}>
         {children}
         <Analytics />
       </body>
