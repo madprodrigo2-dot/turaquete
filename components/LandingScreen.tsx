@@ -1014,7 +1014,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <DiscoveryTile
               href="/raquetes/intermediario"
               label="Intermediários"
-              sub="Equilíbrio entre controle e potência"
+              sub="Versáteis, para evoluir o seu jogo"
               chipClass="bg-yellow/12"
               hoverBorderClass="hover:border-yellow"
               icon={
@@ -1031,7 +1031,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <DiscoveryTile
               href="/raquetes/avancado"
               label="Avançados"
-              sub="Alta performance, potência máxima"
+              sub="Potência máxima, exige mais técnica"
               chipClass="bg-coral/12"
               hoverBorderClass="hover:border-coral"
               icon={
