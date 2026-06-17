@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Gauge, TennisBall, ShieldCheck, Wallet, ChartBar, Target, Lightning } from '@phosphor-icons/react' // MIT license
+import { ShieldCheck, ChartBar, Target, Lightning } from '@phosphor-icons/react' // MIT license
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
@@ -62,12 +62,6 @@ const FAQS = [
 
 // ── SVG icons ─────────────────────────────────────────────────────────────────
 
-const ANALYSIS_ITEMS = [
-  { icon: <Gauge      weight="duotone" size={26} color="#0CC0BE" />, label: 'Seu nível',          chipBg: 'bg-aqua/15'   },
-  { icon: <TennisBall weight="duotone" size={26} color="#FFC42E" />, label: 'Seu estilo de jogo',  chipBg: 'bg-yellow/15' },
-  { icon: <ShieldCheck weight="duotone" size={26} color="#FF5E3A" />, label: 'Dores no braço',    chipBg: 'bg-coral/15'  },
-  { icon: <Wallet     weight="duotone" size={26} color="white"  />, label: 'Orçamento',           chipBg: 'bg-white/12'  },
-]
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
@@ -913,21 +907,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                     </svg>
                   </span>
                   <p className="text-tinta/70 text-sm leading-snug">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Analisamos seu jogo — card escuro, diferenciador */}
-          <div className="bg-tinta rounded-2xl p-5 md:p-6 shadow-md">
-            <p className="font-heading font-bold text-white text-base md:text-lg mb-4">Analisamos seu jogo</p>
-            <div className="grid grid-cols-2 gap-2.5">
-              {ANALYSIS_ITEMS.map(({ icon, label, chipBg }) => (
-                <div key={label} className="flex items-center gap-2.5 bg-white/10 rounded-xl px-3 py-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${chipBg}`}>
-                    {icon}
-                  </div>
-                  <span className="text-white/90 text-sm font-medium leading-snug">{label}</span>
                 </div>
               ))}
             </div>
