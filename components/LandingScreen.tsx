@@ -3,7 +3,6 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Wallet } from 'lucide-react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
@@ -63,41 +62,58 @@ const FAQS = [
 
 function IconNivel() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="2"   y="15" width="5" height="7" rx="1" fill="#0CC0BE" />
-      <rect x="9.5" y="10" width="5" height="12" rx="1" fill="#0CC0BE" />
-      <rect x="17"  y="4"  width="5" height="18" rx="1" fill="#0CC0BE" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="2"   y="4"  width="5" height="18" rx="1.5" fill="#0CC0BE" opacity="0.22"/>
+      <rect x="9.5" y="4"  width="5" height="18" rx="1.5" fill="#0CC0BE" opacity="0.22"/>
+      <rect x="17"  y="4"  width="5" height="18" rx="1.5" fill="#0CC0BE" opacity="0.22"/>
+      <rect x="2"   y="15" width="5" height="7"  rx="1.5" fill="#0CC0BE"/>
+      <rect x="9.5" y="10" width="5" height="12" rx="1.5" fill="#0CC0BE"/>
+      <rect x="17"  y="4"  width="5" height="18" rx="1.5" fill="#0CC0BE"/>
     </svg>
   )
 }
 
 function IconEstilo() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" />
-      <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <ellipse cx="11" cy="9" rx="6.5" ry="7.5" fill="#FFC42E" opacity="0.22"/>
+      <ellipse cx="11" cy="9" rx="6.5" ry="7.5" fill="none" stroke="#FFC42E" strokeWidth="1.6"/>
+      <line x1="11"  y1="1.5"  x2="11"  y2="16.5" stroke="#FFC42E" strokeWidth="1.1"/>
+      <line x1="4.5" y1="9"    x2="17.5" y2="9"   stroke="#FFC42E" strokeWidth="1.1"/>
+      <line x1="7"   y1="3"    x2="7"   y2="15"   stroke="#FFC42E" strokeWidth="0.8" opacity="0.55"/>
+      <line x1="15"  y1="3"    x2="15"  y2="15"   stroke="#FFC42E" strokeWidth="0.8" opacity="0.55"/>
+      <path d="M9.5 16.2h3v5.5a1.5 1.5 0 0 1-3 0v-5.5z" fill="#FFC42E"/>
     </svg>
   )
 }
 
 function IconBraco() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 2L4 5.5v5.5C4 16 7.5 20.5 12 22c4.5-1.5 8-6 8-11V5.5L12 2z" fill="#0CC0BE" />
-      <path d="M8.5 12l2.5 2.5 4.5-4.5" stroke="#0E3A40" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2L4 5.5V11C4 16 7.5 20.5 12 22c4.5-1.5 8-6 8-11V5.5L12 2z" fill="#FF5E3A" opacity="0.22"/>
+      <path d="M12 2L4 5.5V11C4 16 7.5 20.5 12 22c4.5-1.5 8-6 8-11V5.5L12 2z" fill="none" stroke="#FF5E3A" strokeWidth="1.5"/>
+      <path d="M7 12h2l1.5-3 2 5.5 1.5-2.5H17" stroke="#FF5E3A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
 
 function IconOrcamento() {
-  return <Wallet size={24} color="#0CC0BE" aria-hidden="true" />
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="6.5" width="18" height="13" rx="2.5" fill="white" opacity="0.22"/>
+      <rect x="3" y="6.5" width="18" height="13" rx="2.5" fill="none" stroke="white" strokeWidth="1.5"/>
+      <path d="M14 10.5h7v5.5h-7a2 2 0 0 1-2-2v-1.5a2 2 0 0 1 2-2z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.3"/>
+      <circle cx="17" cy="13.25" r="1.3" fill="white"/>
+      <path d="M3 10.5h8" stroke="white" strokeWidth="1.3" strokeLinecap="round" opacity="0.55"/>
+    </svg>
+  )
 }
 
 const ANALYSIS_ITEMS = [
-  { Icon: IconNivel,     label: 'Seu nível' },
-  { Icon: IconEstilo,    label: 'Seu estilo de jogo' },
-  { Icon: IconBraco,     label: 'Dores no braço' },
-  { Icon: IconOrcamento, label: 'Orçamento' },
+  { Icon: IconNivel,     label: 'Seu nível',          chipBg: 'bg-aqua/15'   },
+  { Icon: IconEstilo,    label: 'Seu estilo de jogo',  chipBg: 'bg-yellow/15' },
+  { Icon: IconBraco,     label: 'Dores no braço',     chipBg: 'bg-coral/15'  },
+  { Icon: IconOrcamento, label: 'Orçamento',          chipBg: 'bg-white/12'  },
 ]
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -911,9 +927,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           <div className="bg-tinta rounded-2xl p-5 md:p-6 shadow-md">
             <p className="font-heading font-bold text-white text-base md:text-lg mb-4">Analisamos seu jogo</p>
             <div className="grid grid-cols-2 gap-2.5">
-              {ANALYSIS_ITEMS.map(({ Icon, label }) => (
+              {ANALYSIS_ITEMS.map(({ Icon, label, chipBg }) => (
                 <div key={label} className="flex items-center gap-2.5 bg-white/10 rounded-xl px-3 py-3">
-                  <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${chipBg}`}>
                     <Icon />
                   </div>
                   <span className="text-white/90 text-sm font-medium leading-snug">{label}</span>
@@ -1006,8 +1022,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               chipClass="bg-aqua/12"
               hoverBorderClass="hover:border-aqua"
               icon={
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="#0CC0BE" aria-hidden="true">
-                  <path d="M2 21h6v-7h6v-7h6v14H2z"/>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                  <rect x="2"   y="4"  width="5" height="16" rx="1.2" fill="#0CC0BE" opacity="0.22"/>
+                  <rect x="8.5" y="4"  width="5" height="16" rx="1.2" fill="#0CC0BE" opacity="0.22"/>
+                  <rect x="15"  y="4"  width="5" height="16" rx="1.2" fill="#0CC0BE" opacity="0.22"/>
+                  <rect x="2"   y="13" width="5" height="7"  rx="1.2" fill="#0CC0BE"/>
+                  <rect x="8.5" y="9"  width="5" height="11" rx="1.2" fill="#0CC0BE"/>
+                  <rect x="15"  y="4"  width="5" height="16" rx="1.2" fill="#0CC0BE"/>
                 </svg>
               }
             />
@@ -1019,12 +1040,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               hoverBorderClass="hover:border-yellow"
               icon={
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                  <rect x="10.25" y="3" width="1.5" height="17" rx="0.75" fill="#FFC42E"/>
-                  <rect x="2.5" y="7" width="17" height="1.5" rx="0.75" fill="#FFC42E"/>
-                  <line x1="4.5" y1="8.5" x2="4.5" y2="14" stroke="#FFC42E" strokeWidth="1.2" strokeLinecap="round"/>
-                  <line x1="17.5" y1="8.5" x2="17.5" y2="14" stroke="#FFC42E" strokeWidth="1.2" strokeLinecap="round"/>
-                  <ellipse cx="4.5" cy="15.2" rx="2.5" ry="1.2" fill="#FFC42E"/>
-                  <ellipse cx="17.5" cy="15.2" rx="2.5" ry="1.2" fill="#FFC42E"/>
+                  <ellipse cx="11" cy="8.5" rx="6" ry="7" fill="#FFC42E" opacity="0.22"/>
+                  <ellipse cx="11" cy="8.5" rx="6" ry="7" fill="none" stroke="#FFC42E" strokeWidth="1.6"/>
+                  <line x1="11" y1="1.5"  x2="11" y2="15.5" stroke="#FFC42E" strokeWidth="1.1"/>
+                  <line x1="5"  y1="8.5"  x2="17" y2="8.5"  stroke="#FFC42E" strokeWidth="1.1"/>
+                  <line x1="7"  y1="2.5"  x2="7"  y2="14.5" stroke="#FFC42E" strokeWidth="0.8" opacity="0.55"/>
+                  <line x1="15" y1="2.5"  x2="15" y2="14.5" stroke="#FFC42E" strokeWidth="0.8" opacity="0.55"/>
+                  <path d="M9.5 15.5h3v5a1.5 1.5 0 0 1-3 0v-5z" fill="#FFC42E"/>
                 </svg>
               }
             />
@@ -1035,8 +1057,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               chipClass="bg-coral/12"
               hoverBorderClass="hover:border-coral"
               icon={
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="#FF5E3A" aria-hidden="true">
-                  <path d="M13 2L4 13h7l-2 7 9-11h-7L13 2z"/>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+                  <path d="M13 2L4 13h7l-2 7 9-11h-7L13 2z" fill="none" stroke="#FF5E3A" strokeWidth="3.5" strokeLinejoin="round" opacity="0.2"/>
+                  <path d="M13 2L4 13h7l-2 7 9-11h-7L13 2z" fill="#FF5E3A"/>
                 </svg>
               }
             />
@@ -1048,8 +1071,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               hoverBorderClass="hover:border-tinta"
               icon={
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-                  <path d="M11 2L3 5.5V11c0 4.5 3.5 8.5 8 10 4.5-1.5 8-5.5 8-10V5.5L11 2z" fill="#0E3A40" fillOpacity="0.15" stroke="#0E3A40" strokeWidth="1.4"/>
-                  <path d="M7.5 11l2.5 2.5 4.5-4.5" stroke="#0E3A40" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M11 2L3 5.5V11c0 4.5 3.5 8.5 8 10 4.5-1.5 8-5.5 8-10V5.5L11 2z" fill="#0E3A40" fillOpacity="0.18"/>
+                  <path d="M11 2L3 5.5V11c0 4.5 3.5 8.5 8 10 4.5-1.5 8-5.5 8-10V5.5L11 2z" fill="none" stroke="#0E3A40" strokeWidth="1.5"/>
+                  <path d="M6 11h2l1.4-2.5 1.8 5 1.4-2.5H16" stroke="#0E3A40" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               }
             />
