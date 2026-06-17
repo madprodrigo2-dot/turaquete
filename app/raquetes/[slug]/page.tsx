@@ -7,6 +7,7 @@ import AthleteBadge from '@/components/AthleteBadge'
 import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
 import ScoreSection from '@/components/ScoreSection'
 import RacketKeyStats from '@/components/RacketKeyStats'
+import RacketHexagon from '@/components/RacketHexagon'
 import { derivarNivel } from '@/lib/nivel'
 
 export async function generateStaticParams() {
@@ -175,6 +176,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           {ins && (ins.power !== null || ins.control !== null) && (
             <div className="bg-white rounded-2xl p-5 border border-aqua/20 shadow-sm flex flex-col gap-4">
               <p className="text-tinta font-semibold text-sm md:text-base">Avaliação</p>
+              <RacketHexagon racket={racket} />
               <ScoreSection
                 power={ins.power}
                 control={ins.control}
