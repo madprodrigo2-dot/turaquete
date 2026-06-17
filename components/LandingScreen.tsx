@@ -800,14 +800,24 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           {/* Coluna visual — foto hero */}
           <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:aspect-[3/4]">
+            {/* Mobile: imagem horizontal (ocupa menos espaço vertical) */}
+            <Image
+              src="/hero-beach-tenniss3horizontal.png"
+              alt="Raquetes de beach tennis na areia"
+              width={1200}
+              height={800}
+              className="w-full h-auto block md:hidden"
+              priority
+              sizes="100vw"
+            />
+            {/* Desktop: imagem retrato com fill */}
             <Image
               src="/hero-beach-tennis3.png"
               alt="Raquetes de beach tennis na areia"
-              width={768}
-              height={1376}
-              className="w-full h-auto md:absolute md:inset-0 md:h-full md:w-full md:object-cover md:object-center"
+              fill
+              className="hidden md:block object-cover object-center"
               priority
-              sizes="(max-width: 768px) 100vw, 260px"
+              sizes="260px"
             />
           </div>
 
