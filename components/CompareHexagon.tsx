@@ -126,13 +126,13 @@ export default function CompareHexagon({ rackets }: Props) {
         {aValid >= 4 && (
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-2 rounded-[2px]" style={{ backgroundColor: COLORS.A }} />
-            <span className="text-[11px] text-tinta/50 font-medium">A</span>
+            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.A }}>{rackets[0].name}</span>
           </div>
         )}
         {bValid >= 4 && (
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-3 h-2 rounded-[2px]" style={{ backgroundColor: COLORS.B }} />
-            <span className="text-[11px] text-tinta/50 font-medium">B</span>
+            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.B }}>{rackets[1].name}</span>
           </div>
         )}
       </div>
