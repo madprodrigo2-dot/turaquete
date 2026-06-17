@@ -167,10 +167,12 @@ function BrandCard({ brand }: { brand: Brand }) {
         <img
           src={brand.logo_url}
           alt={brand.name}
-          className={`w-auto object-contain ${
-            brand.slug === 'minimalist' ? 'h-10 max-w-[180px]' : 'h-8 max-w-[140px]'
-          } ${isAvailable ? '' : 'opacity-40 grayscale'}`}
-          style={brand.slug === 'mormaii' ? { marginLeft: '-14px' } : undefined}
+          className={`h-8 w-auto max-w-[140px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+          style={
+            brand.slug === 'mormaii'    ? { marginLeft: '-14px' } :
+            brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
+            undefined
+          }
         />
       ) : (
         <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
