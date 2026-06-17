@@ -1157,29 +1157,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           Recomendações baseadas nas especificações reais de cada raquete. Sem achismo.
         </p>
 
-        {/* Footer nav grid */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-2 pb-1 border-t border-tinta/10">
-          <div>
-            <p className="text-tinta/50 text-[10px] font-semibold uppercase tracking-wider mb-2">Explorar</p>
-            <div className="flex flex-col gap-2">
-              <Link href="/raquetes/iniciante" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Iniciantes</Link>
-              <Link href="/raquetes/intermediario" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Intermediários</Link>
-              <Link href="/raquetes/avancado" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Avançados</Link>
-              <Link href="/raquetes/conforto" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Articulação protegida</Link>
-            </div>
-          </div>
-          <div>
-            <p className="text-tinta/50 text-[10px] font-semibold uppercase tracking-wider mb-2">Ferramentas</p>
-            <div className="flex flex-col gap-2">
-              <Link href="/comparar" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Comparar raquetes</Link>
-              <Link href="/marcas" className="text-tinta/60 text-xs hover:text-aqua transition-colors">Ver marcas</Link>
-            </div>
-          </div>
-        </div>
-
         {/* Footer */}
         <footer className="pt-3 pb-2 flex flex-col items-center gap-3 border-t border-tinta/10">
-          <p className="text-[10px] font-mono text-tinta/40 select-none">
+          <p className="text-[10px] text-tinta/40 select-none">
             {process.env.NEXT_PUBLIC_BUILD_LABEL ?? 'v0.3.dev'}
           </p>
           <p className="text-center text-tinta/40 text-xs leading-relaxed max-w-xs">

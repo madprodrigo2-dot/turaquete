@@ -24,7 +24,7 @@ export default function TermosPage() {
           <section className="flex flex-col gap-2">
             <h2 className="font-heading font-bold text-tinta text-base md:text-lg">1. Aceitação dos termos</h2>
             <p>
-              Ao acessar e usar o site Turaquete (<span className="font-mono text-sm">turaquete.com.br</span>), você concorda com estes Termos de Uso. Se não concordar com algum ponto, pedimos que não utilize o serviço.
+              Ao acessar e usar o site Turaquete (<span className="font-medium">turaquete.com.br</span>), você concorda com estes Termos de Uso. Se não concordar com algum ponto, pedimos que não utilize o serviço.
             </p>
           </section>
 
