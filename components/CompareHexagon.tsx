@@ -4,7 +4,7 @@ const SCORE_KEYS = ['power', 'control', 'comfort', 'maneuverability', 'spin', 's
 const LABELS     = ['Potência', 'Controle', 'Conforto', 'Manuseio', 'Spin', 'Estab.']
 const COLORS     = { A: '#FF5E3A', B: '#0CC0BE' } as const
 
-const CX = 120, CY = 120, R = 75, LABEL_R = 91
+const CX = 120, CY = 120, R = 78, LABEL_R = 96, DOT_R = 5
 const ANGLES = [-90, -30, 30, 90, 150, 210].map(d => (d * Math.PI) / 180)
 const RINGS  = [0.25, 0.5, 0.75, 1]
 
@@ -39,10 +39,23 @@ export default function CompareHexagon({ rackets }: Props) {
   if (aValid < 4 && bValid < 4) return null
 
   return (
-    <div className="flex flex-col items-center gap-3 py-1">
+    <div
+      className="flex flex-col items-center gap-3 py-1"
+      style={{ animation: 'chexPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}
+    >
+      <style>{`
+        @keyframes chexPop {
+          from { opacity: 0; transform: scale(0.86); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          @keyframes chexPop { from { opacity: 0; } to { opacity: 1; } }
+        }
+      `}</style>
+
       <svg
         viewBox="0 0 240 240"
-        className="w-full max-w-[220px]"
+        className="w-full max-w-[240px]"
         overflow="visible"
         aria-hidden="true"
       >
@@ -56,7 +69,7 @@ export default function CompareHexagon({ rackets }: Props) {
             }).join(' ')}
             fill="none"
             stroke="#0E3A40"
-            strokeOpacity={frac === 1 ? 0.18 : 0.08}
+            strokeOpacity={frac === 1 ? 0.15 : 0.07}
             strokeWidth={frac === 1 ? 1 : 0.75}
           />
         ))}
@@ -65,14 +78,8 @@ export default function CompareHexagon({ rackets }: Props) {
         {ANGLES.map((angle, i) => {
           const [x, y] = pt(angle, R)
           return (
-            <line
-              key={i}
-              x1={CX} y1={CY}
-              x2={x} y2={y}
-              stroke="#0E3A40"
-              strokeOpacity={0.1}
-              strokeWidth={0.75}
-            />
+            <line key={i} x1={CX} y1={CY} x2={x} y2={y}
+              stroke="#0E3A40" strokeOpacity={0.08} strokeWidth={0.75} />
           )
         })}
 
@@ -81,9 +88,9 @@ export default function CompareHexagon({ rackets }: Props) {
           <polygon
             points={polyPoints(bScores)}
             fill={COLORS.B}
-            fillOpacity={0.22}
+            fillOpacity={0.18}
             stroke={COLORS.B}
-            strokeWidth={1.75}
+            strokeWidth={2}
             strokeLinejoin="round"
           />
         )}
@@ -93,27 +100,44 @@ export default function CompareHexagon({ rackets }: Props) {
           <polygon
             points={polyPoints(aScores)}
             fill={COLORS.A}
-            fillOpacity={0.22}
+            fillOpacity={0.18}
             stroke={COLORS.A}
-            strokeWidth={1.75}
+            strokeWidth={2}
             strokeLinejoin="round"
           />
         )}
 
-        {/* Labels */}
+        {/* B vertex dots */}
+        {bValid >= 4 && bScores.map((v, i) => {
+          if (v == null || v === 0) return null
+          const [x, y] = pt(ANGLES[i], (v / 10) * R)
+          return (
+            <circle key={i} cx={x} cy={y} r={DOT_R}
+              fill="white" stroke={COLORS.B} strokeWidth={1.5} />
+          )
+        })}
+
+        {/* A vertex dots (rendered on top) */}
+        {aValid >= 4 && aScores.map((v, i) => {
+          if (v == null || v === 0) return null
+          const [x, y] = pt(ANGLES[i], (v / 10) * R)
+          return (
+            <circle key={i} cx={x} cy={y} r={DOT_R}
+              fill="white" stroke={COLORS.A} strokeWidth={1.5} />
+          )
+        })}
+
+        {/* Axis labels */}
         {ANGLES.map((angle, i) => {
           const [x, y] = pt(angle, LABEL_R)
           const anchor = x < CX - 8 ? 'end' : x > CX + 8 ? 'start' : 'middle'
           return (
-            <text
-              key={i}
-              x={x}
-              y={y}
+            <text key={i} x={x} y={y}
               textAnchor={anchor}
               dominantBaseline="middle"
               fontSize={10}
               fill="#0E3A40"
-              fillOpacity={0.45}
+              fillOpacity={0.6}
             >
               {LABELS[i]}
             </text>
@@ -126,13 +150,17 @@ export default function CompareHexagon({ rackets }: Props) {
         {aValid >= 4 && (
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.A }} />
-            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.A }}>{rackets[0].name}</span>
+            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.A }}>
+              {rackets[0].name}
+            </span>
           </div>
         )}
         {bValid >= 4 && (
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.B }} />
-            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.B }}>{rackets[1].name}</span>
+            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.B }}>
+              {rackets[1].name}
+            </span>
           </div>
         )}
       </div>
