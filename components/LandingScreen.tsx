@@ -245,7 +245,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
               onClick={() => sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })}
               className="mt-auto w-full text-center border border-aqua text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:bg-aqua/20 active:scale-[0.98] transition-all leading-tight"
             >
-              Quero esta raquete
+              Ver na loja
             </a>
           ) : (
             <span className="mt-auto w-full text-center rounded-xl bg-gray-100 text-gray-400 text-xs font-semibold py-2 cursor-not-allowed select-none block">
@@ -739,7 +739,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 </span>
               </h1>
               <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
-                Raquete errada custa caro. Conte como você joga e nosso especialista te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
+                Raquete errada custa caro. Conte como você joga e nossa especialista virtual te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
               </p>
             </div>
 
@@ -807,7 +807,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               fill
               className="object-cover object-center"
               priority
-              sizes="(max-width: 768px) 100vw, 320px"
+              sizes="(max-width: 768px) 100vw, 260px"
             />
             {/* Gradiente que funde a borda esquerda da foto com o fundo do hero (apenas desktop) */}
             <div

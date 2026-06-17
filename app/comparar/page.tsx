@@ -39,11 +39,12 @@ export const metadata: Metadata = {
 export default async function CompararPage({
   searchParams,
 }: {
-  searchParams: Promise<{ a?: string }>
+  searchParams: Promise<{ a?: string; b?: string }>
 }) {
-  const { a } = await searchParams
+  const { a, b } = await searchParams
   const rackets = await listarRaquetas().catch(() => [])
   const initialSlotA = a ? rackets.find(r => r.slug === a) : undefined
+  const initialSlotB = b ? rackets.find(r => r.slug === b) : undefined
   const popularPairs = computePopularPairs(rackets)
 
   return (
@@ -56,7 +57,7 @@ export default async function CompararPage({
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Inicio
+          Início
         </Link>
       </div>
 
@@ -66,10 +67,10 @@ export default async function CompararPage({
           <p className="text-tinta/60 text-sm">
             {initialSlotA
               ? `${initialSlotA.name} já está no slot A — escolha a segunda raquete.`
-              : 'Escolha duas raquetes para comparar pontuacoes e especificacoes lado a lado.'}
+              : 'Escolha duas raquetes para comparar pontuações e especificações lado a lado.'}
           </p>
         </div>
-        <ComparePicker rackets={rackets} initialSlotA={initialSlotA} popularPairs={popularPairs} />
+        <ComparePicker rackets={rackets} initialSlotA={initialSlotA} initialSlotB={initialSlotB} popularPairs={popularPairs} />
       </div>
     </div>
   )

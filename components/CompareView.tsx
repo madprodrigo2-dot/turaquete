@@ -46,7 +46,7 @@ export default function CompareView({ rackets }: Props) {
         {rackets.map((r, i) => {
           const color = COLORS[i]
           const price = r.price != null
-            ? `R$${r.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
+            ? `R$ ${r.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
             : null
           const nivel = derivarNivel(r)
           const ins = r.racket_insights

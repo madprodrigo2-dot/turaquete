@@ -5,6 +5,7 @@ interface Props {
   alt: string
   athlete?: string
   hoverScale?: boolean
+  loading?: 'lazy' | 'eager'
 }
 
 function Placeholder() {
@@ -19,7 +20,7 @@ function Placeholder() {
 // Single source of truth for the racket image tile + athlete badge overlay.
 // Always uses relative + overflow-hidden so the badge is clipped to the tile
 // and can never escape card bounds or bleed over a sticky header (z-10 < z-30).
-export default function RacketImageTile({ src, alt, athlete, hoverScale }: Props) {
+export default function RacketImageTile({ src, alt, athlete, hoverScale, loading = 'lazy' }: Props) {
   return (
     <div className="relative aspect-[800/1020] bg-white overflow-hidden shrink-0">
       {src ? (
@@ -27,6 +28,7 @@ export default function RacketImageTile({ src, alt, athlete, hoverScale }: Props
         <img
           src={src}
           alt={alt}
+          loading={loading}
           className={`object-contain w-full h-full${hoverScale ? ' group-hover:scale-105 transition-transform duration-300' : ''}`}
         />
       ) : (

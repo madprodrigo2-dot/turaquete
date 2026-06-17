@@ -9,9 +9,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     listarMarcas().catch(() => []),
   ])
 
+  const CATEGORY_SLUGS = ['iniciante', 'intermediario', 'avancado', 'conforto']
+
   return [
     { url: BASE, lastModified: new Date(), changeFrequency: 'weekly', priority: 1.0 },
     { url: `${BASE}/comparar`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    ...CATEGORY_SLUGS.map(slug => ({
+      url: `${BASE}/raquetes/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    })),
     ...rackets.map(r => ({
       url: `${BASE}/raquetes/${r.slug}`,
       lastModified: new Date(),

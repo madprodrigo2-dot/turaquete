@@ -11,14 +11,15 @@ const COLORS: Record<'A' | 'B', string> = { A: '#FF5E3A', B: '#0CC0BE' }
 interface Props {
   rackets: RacketWithInsights[]
   initialSlotA?: RacketWithInsights
+  initialSlotB?: RacketWithInsights
   popularPairs?: { name: string; slug: string }[][]
 }
 
-export default function ComparePicker({ rackets, initialSlotA, popularPairs }: Props) {
+export default function ComparePicker({ rackets, initialSlotA, initialSlotB, popularPairs }: Props) {
   const router = useRouter()
   const [slotA, setSlotA] = useState<RacketWithInsights | null>(initialSlotA ?? null)
-  const [slotB, setSlotB] = useState<RacketWithInsights | null>(null)
-  const [focusedSlot, setFocusedSlot] = useState<'A' | 'B'>(initialSlotA ? 'B' : 'A')
+  const [slotB, setSlotB] = useState<RacketWithInsights | null>(initialSlotB ?? null)
+  const [focusedSlot, setFocusedSlot] = useState<'A' | 'B'>(initialSlotA && !initialSlotB ? 'B' : 'A')
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
