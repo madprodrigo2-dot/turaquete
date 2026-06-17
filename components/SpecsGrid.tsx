@@ -5,15 +5,15 @@ import type { GlossarioEntry } from '@/lib/glossario'
 
 const ADJUSTABLE: Record<string, GlossarioEntry> = {
   'Peso': {
-    termo: 'Peso — ajustável',
+    termo: 'Peso ajustável',
     definicao: 'Valor de fábrica (varia ±10g entre unidades). Dá pra aumentar adicionando fitas de peso no cabo (mais controle e agilidade) ou na cabeça (mais potência).',
   },
   'Balance': {
-    termo: 'Balance — ajustável',
+    termo: 'Balance ajustável',
     definicao: 'Valor de referência (pode variar entre unidades de fábrica). Dá pra ajustar adicionando peso: no cabo deixa mais ágil e com mais controle; na cabeça dá mais potência.',
   },
   'Superfície': {
-    termo: 'Superfície — ajustável',
+    termo: 'Superfície ajustável',
     definicao: 'Estado de fábrica. Dá pra aumentar o spin com tratamento areado numa loja especializada (custo baixo, não altera estrutura).',
   },
 }
@@ -38,10 +38,10 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
   const espessuraStr = (() => {
     if (espessuraMm != null) {
       const perfil = espessuraMm <= 20
-        ? 'fino — mais controle'
+        ? 'fino, mais controle'
         : espessuraMm <= 22
         ? 'médio'
-        : 'grosso — mais potência'
+        : 'grosso, mais potência'
       return `${espessuraMm}mm · perfil ${perfil}`
     }
     if (espessuraLegacy != null) {

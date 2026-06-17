@@ -5,7 +5,7 @@ import { GLOSSARIO } from '@/lib/glossario'
 import type { GlossarioEntry } from '@/lib/glossario'
 
 const SPIN_LISA_ENTRY: GlossarioEntry = {
-  termo: 'Spin — dá pra subir',
+  termo: 'Spin: dá pra subir',
   definicao: 'Superfície lisa de fábrica. Dá pra aumentar o efeito com areado aplicado depois da compra, sem alterar a estrutura da raquete.',
 }
 

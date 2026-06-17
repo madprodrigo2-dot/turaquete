@@ -167,7 +167,10 @@ function BrandCard({ brand }: { brand: Brand }) {
         <img
           src={brand.logo_url}
           alt={brand.name}
-          className={`h-8 w-auto max-w-[140px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+          className={`w-auto object-contain ${
+            brand.slug === 'minimalist' ? 'h-10 max-w-[180px]' : 'h-8 max-w-[140px]'
+          } ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+          style={brand.slug === 'mormaii' ? { marginLeft: '-14px' } : undefined}
         />
       ) : (
         <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
@@ -892,7 +895,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               />
               <div>
                 <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Quem é a Tury?</p>
-                <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual — não uma pessoa</p>
+                <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual, não uma pessoa</p>
               </div>
             </div>
             <div className="flex flex-col gap-2.5 mb-4">
@@ -911,13 +914,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 </div>
               ))}
             </div>
-            <div className="rounded-xl bg-aqua/8 px-4 py-3">
-              <p className="text-tinta/60 text-xs leading-relaxed">
-                Recebemos comissão pelos links de compra — mas isso{' '}
-                <strong className="text-tinta/80">não muda a recomendação</strong>.
-                As pontuações são calculadas antes de qualquer link ser adicionado.
-              </p>
-            </div>
           </div>
 
           {/* Analisamos seu jogo — card escuro, diferenciador */}
@@ -935,30 +931,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
           </div>
 
-          {/* B — Perguntas reais anonimizadas */}
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
-            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-1">Dúvidas que o especialista já respondeu</p>
-            <p className="text-tinta/50 text-xs mb-4">perguntas reais de jogadores, sem edição</p>
-            <div className="flex flex-col gap-2">
-              {CURATED_QUESTIONS.map((q, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-full bg-aqua/15 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                      <path d="M6 1C3.24 1 1 3.02 1 5.5c0 .98.32 1.89.86 2.63L1.5 11l2.93-1.5C4.9 9.82 5.44 10 6 10c2.76 0 5-2.02 5-4.5S8.76 1 6 1z" fill="#0CC0BE" opacity=".7"/>
-                    </svg>
-                  </div>
-                  <p className="text-tinta/75 text-sm leading-relaxed italic">&ldquo;{q}&rdquo;</p>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={onStart}
-              className="mt-5 w-full text-center text-sm font-semibold text-aqua hover:text-tinta/70 transition-colors"
-            >
-              Contar minha situação →
-            </button>
-          </div>
-
           {/* Veja como funciona na prática — preview com raquete real */}
           {exampleRacket && (
             <div className="bg-white rounded-2xl p-5 md:p-6 shadow-arena border border-aqua/20">
@@ -966,7 +938,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 Veja como funciona na prática
               </p>
               <p className="text-tinta/50 text-xs mb-4">
-                exemplo real do catálogo — assim chega a sua recomendação
+                exemplo real do catálogo, assim chega a sua recomendação
               </p>
               <div className="flex gap-4 items-start">
                 <div className="w-20 shrink-0 rounded-xl overflow-hidden border border-aqua/20">

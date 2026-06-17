@@ -560,7 +560,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
               {/* Aviso de aproximação do limite */}
               {nearLimit && !loading && !isStreaming && (
                 <div className="mx-4 mb-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
-                  Estamos chegando ao fim desta conversa — ainda dá pra trocar mais {MESSAGE_LIMIT - messages.length} mensagens. Se quiser continuar de outro ângulo, você pode{' '}
+                  Estamos chegando ao fim desta conversa, ainda dá pra trocar mais {MESSAGE_LIMIT - messages.length} mensagens. Se quiser continuar de outro ângulo, você pode{' '}
                   <button onClick={resetConversation} className="underline font-semibold hover:text-amber-900 transition-colors">recomeçar a qualquer hora</button>.
                 </div>
               )}
