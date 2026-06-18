@@ -10,6 +10,7 @@ const TABS = [
   { label: 'Qualidade',  href: '/admin/qualidade'  },
   { label: 'Afiliados',  href: '/admin/afiliados'  },
   { label: 'Raquetas',   href: '/admin/rackets'    },
+  { label: 'Motor',      href: '/admin/motor'      },
 ]
 
 export default function AdminNav() {
