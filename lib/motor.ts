@@ -183,6 +183,8 @@ export function calcularMotor(input: MotorInput): MotorResult {
   forg += 1  // formato sempre redonda
   if (esp != null && esp >= 22) forg += 1
   if (esp != null && esp <= 20) forg -= 1
+  // Faces muito rígidas (18K/24K) não são muito forgiving mesmo com core soft
+  if (faceGrade === 'CARBON_18K' || faceGrade === 'CARBON_24K') forg = Math.min(7, forg)
   const forgiveness = Math.min(10, Math.max(1, forg))
 
   // Comfort — antivib é ancora; bônus por fibra/kevlar e core supersoft
