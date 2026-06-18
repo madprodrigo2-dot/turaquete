@@ -82,23 +82,6 @@ function texturaScore(superficie: string | null | undefined, hasSpinTech: boolea
   return 5
 }
 
-function furosScore(furos: number | null | undefined): number {
-  if (furos == null) return 5
-  if (furos <= 20) return 2
-  if (furos <= 28) return 4
-  if (furos <= 32) return 5
-  if (furos <= 36) return 6
-  if (furos <= 40) return 7
-  return 8
-}
-
-function espessuraSpinScore(mm: number | null | undefined): number {
-  if (mm == null) return 5
-  if (mm <= 20) return 4
-  if (mm <= 22) return 5
-  return 6
-}
-
 function espessuraStabilityMod(mm: number | null | undefined): number {
   if (mm == null) return 0
   if (mm <= 20) return -1
@@ -114,11 +97,8 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const antivibCount = techs.filter(t => t.tipo === 'antivibração' || t.tipo === 'antivibracao').length
   const estruturalCount = techs.filter(t => t.tipo === 'estrutural').length
 
-  // Spin
-  const ts = texturaScore(input.superficie, hasSpinTech)
-  const fs = furosScore(input.furos)
-  const es = espessuraSpinScore(input.espessura_mm)
-  const spin = Math.round(0.7 * ts + 0.15 * fs + 0.15 * es)
+  // Spin — driver único: textura da superfície
+  const spin = texturaScore(input.superficie, hasSpinTech)
 
   // Stability
   const stabilityBase = estruturalCount === 0 ? 5 : estruturalCount === 1 ? 7 : 9
