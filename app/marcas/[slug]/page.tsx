@@ -77,8 +77,16 @@ function FlagSpain() {
   )
 }
 
+function countryName(raw: string): string {
+  const c = raw.toLowerCase().trim()
+  if (c === 'br' || c === 'brazil') return 'Brasil'
+  if (c === 'it' || c === 'italy') return 'Itália'
+  if (c === 'es' || c === 'spain') return 'Espanha'
+  return raw
+}
+
 function CountryFlag({ country }: { country: string }) {
-  const c = country.toLowerCase()
+  const c = country.toLowerCase().trim()
   if (c === 'itália' || c === 'italia' || c === 'italy' || c === 'it') return <FlagItaly />
   if (c === 'brasil' || c === 'brazil' || c === 'br') return <FlagBrazil />
   if (c === 'espanha' || c === 'spain' || c === 'es') return <FlagSpain />
@@ -148,7 +156,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
           {brand.country && (
             <p className="text-tinta/50 text-sm flex items-center gap-1.5">
               <CountryFlag country={brand.country} />
-              <span>{brand.country}</span>
+              <span>{countryName(brand.country)}</span>
             </p>
           )}
           <p className="text-tinta/60 text-sm">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</p>
