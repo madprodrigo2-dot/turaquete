@@ -69,8 +69,6 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     }
   }
 
-  const formatoCabeca = racket.format ?? (extra.formato_cabeca as string | undefined)
-
   const athlete = extra.atleta as string | undefined
   const athleteLabel = athlete
     ? (athlete.includes('(') ? athlete.split('(')[0].trim() : athlete.trim())
@@ -109,7 +107,6 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     praQuem              ? { label: 'Pra quem',          value: praQuem }                         : null,
     racket.weight_g      ? { label: 'Peso',              value: `${racket.weight_g}g` }          : null,
     racket.balance       ? { label: 'Balance',           value: cap(racket.balance) }             : null,
-    formatoCabeca        ? { label: 'Formato da cabeça', value: cap(formatoCabeca) }              : null,
     racket.face_material ? { label: 'Material da face',  value: cap(racket.face_material) }       : null,
     racket.core          ? { label: 'Núcleo (EVA)',      value: cap(racket.core) }                : null,
     espessuraStr         ? { label: 'Espessura',         value: espessuraStr }                    : null,
