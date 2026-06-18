@@ -181,7 +181,7 @@ export default function CompareView({ rackets }: Props) {
                   >
                     {placar.winsA}
                   </span>
-                  <span className="text-[11px] text-tinta/50 font-medium text-center leading-tight px-2 truncate max-w-full">
+                  <span className="text-[11px] text-tinta/50 font-medium text-center leading-tight px-2 break-words max-w-full">
                     {rackets[0]?.name}
                   </span>
                 </div>
@@ -200,7 +200,7 @@ export default function CompareView({ rackets }: Props) {
                   >
                     {placar.winsB}
                   </span>
-                  <span className="text-[11px] text-tinta/50 font-medium text-center leading-tight px-2 truncate max-w-full">
+                  <span className="text-[11px] text-tinta/50 font-medium text-center leading-tight px-2 break-words max-w-full">
                     {rackets[1]?.name}
                   </span>
                 </div>
@@ -234,7 +234,7 @@ export default function CompareView({ rackets }: Props) {
                   className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: COLORS[i] }}
                 />
-                <span className="text-[11px] font-semibold truncate max-w-[140px]" style={{ color: COLORS[i] }}>
+                <span className="text-[11px] font-semibold leading-snug" style={{ color: COLORS[i] }}>
                   {r.name}
                 </span>
               </div>
@@ -288,7 +288,7 @@ export default function CompareView({ rackets }: Props) {
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                    <span className="text-[11px] font-bold truncate" style={{ color }}>{r.name}</span>
+                    <span className="text-[11px] font-bold leading-snug" style={{ color }}>{r.name}</span>
                   </div>
                   {mel.length > 0 ? (
                     <div className="flex flex-col gap-1.5">
@@ -321,7 +321,7 @@ export default function CompareView({ rackets }: Props) {
             <div className="px-3 py-2.5 min-w-[88px]" />
             {rackets.slice(0, 2).map((r, i) => (
               <div key={i} className="px-3 py-2.5 border-l border-aqua/10">
-                <span className="text-[10px] font-bold block truncate" style={{ color: COLORS[i] }}>
+                <span className="text-[10px] font-bold block leading-snug break-words" style={{ color: COLORS[i] }}>
                   {r.name}
                 </span>
               </div>
@@ -330,7 +330,7 @@ export default function CompareView({ rackets }: Props) {
           {specs.map(({ label, values }, idx) => (
             <div
               key={label}
-              className={`grid grid-cols-[auto_1fr_1fr] border-b border-aqua/10 last:border-0 ${
+              className={`grid grid-cols-[auto_1fr_1fr] items-start border-b border-aqua/10 last:border-0 ${
                 idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'
               }`}
             >

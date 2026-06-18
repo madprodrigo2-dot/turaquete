@@ -134,7 +134,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="min-h-screen sand-texture">
       {/* Nav */}
-      <div className="sticky top-0 z-30 bg-aqua-light/90 backdrop-blur-sm border-b border-aqua/20">
+      <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
         <div className="max-w-4xl mx-auto px-5 md:px-8 py-3">
           <Link
             href="/"
