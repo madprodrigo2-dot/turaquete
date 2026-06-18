@@ -192,14 +192,16 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
           <div className="flex flex-col gap-2 min-w-0">
             {logoSrc ? (
               <>
-                <Image
-                  src={logoSrc}
-                  alt={brand.name}
-                  width={180}
-                  height={56}
-                  className="h-10 md:h-12 w-auto max-w-[180px] object-contain object-left"
-                  unoptimized
-                />
+                <div className="inline-flex items-center justify-center bg-white rounded-2xl border border-aqua/20 shadow-sm px-5 py-3">
+                  <Image
+                    src={logoSrc}
+                    alt={brand.name}
+                    width={180}
+                    height={56}
+                    className="h-10 md:h-12 w-auto max-w-[180px] object-contain"
+                    unoptimized
+                  />
+                </div>
                 <h1 className="sr-only">{brand.name}</h1>
               </>
             ) : (
