@@ -83,35 +83,54 @@ export async function salvarFisicos(slug: string, data: FisicosData) {
     specs_extra: newExtra,
   }).eq('slug', slug)
 
-  // Run motor calculation
+  // Run motor calculation (all 7 dims)
   const motorResult = calcularMotor({
     superficie: data.superficie,
     furos: data.furos,
     espessura_mm: data.espessura_mm,
     tecnologias: data.tecnologias,
+    face_material: data.face_material,
+    core: data.core,
+    weight_g: data.weight_g,
+    balance: data.balance,
   })
 
-  // Fetch current insights to respect existing overrides
+  // Fetch current insights to respect existing editorial overrides
   const { data: ins } = await sb
     .from('racket_insights')
     .select('overrides, motor_cache')
     .eq('racket_id', racket.id)
     .single()
 
-  const overrides = (ins?.overrides as Record<string, unknown> | null) ?? {}
-  const prevCache = (ins?.motor_cache as Record<string, number | null> | null) ?? {}
+  const overrides = (ins?.overrides as Record<string, { motivo?: string } | unknown> | null) ?? {}
 
-  const newCache = {
-    ...prevCache,
-    spin: motorResult.spin,
-    comfort: motorResult.comfort,
-    stability: motorResult.stability,
+  // Motor é agora fonte de verdade para todas as 7 dims.
+  // Overrides editoriais (sem "bulk-heurístico" no motivo) são preservados.
+  // Overrides heurísticos são removidos — motor os substitui.
+  const cleanedOverrides: Record<string, unknown> = {}
+  for (const [dim, entry] of Object.entries(overrides)) {
+    const motivo = (entry as { motivo?: string })?.motivo ?? ''
+    if (!motivo.includes('bulk-heurístico')) {
+      cleanedOverrides[dim] = entry
+    }
   }
 
-  const effectiveUpdates: Record<string, unknown> = { motor_cache: newCache }
-  if (!overrides.spin) effectiveUpdates.spin = motorResult.spin
-  if (!overrides.comfort) effectiveUpdates.comfort = motorResult.comfort
-  if (!overrides.stability) effectiveUpdates.stability = motorResult.stability
+  const newCache: Record<string, number> = {
+    spin:            motorResult.spin,
+    comfort:         motorResult.comfort,
+    stability:       motorResult.stability,
+    power:           motorResult.power,
+    control:         motorResult.control,
+    maneuverability: motorResult.maneuverability,
+    forgiveness:     motorResult.forgiveness,
+  }
+
+  const DIMS = ['spin', 'comfort', 'stability', 'power', 'control', 'maneuverability', 'forgiveness'] as const
+  const effectiveUpdates: Record<string, unknown> = { motor_cache: newCache, overrides: cleanedOverrides }
+  for (const dim of DIMS) {
+    const hasEditorial = dim in cleanedOverrides
+    if (!hasEditorial) effectiveUpdates[dim] = motorResult[dim]
+  }
 
   await sb.from('racket_insights').update(effectiveUpdates).eq('racket_id', racket.id)
 

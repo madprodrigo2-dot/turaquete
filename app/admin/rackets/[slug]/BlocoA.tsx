@@ -15,7 +15,10 @@ const TIPO_OPTIONS = [
 
 const BALANCE_OPTIONS = ['cabo', 'médio/cabo', 'médio', 'médio/cabeça', 'cabeça']
 
-type MotorFeedback = { spin: number; comfort: number; stability: number }
+type MotorFeedback = {
+  spin: number; comfort: number; stability: number
+  power: number; control: number; maneuverability: number; forgiveness: number
+}
 
 export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRacket }) {
   const se = (racket.specs_extra ?? {}) as Record<string, unknown>
@@ -232,11 +235,21 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
 
         {/* Feedback do motor */}
         {motorResult && (
-          <div className="bg-teal-50 border border-teal-100 rounded-lg px-4 py-2.5 text-xs text-teal-700 flex gap-4">
-            <span className="font-medium">Motor recalculado:</span>
-            <span>Spin → <strong>{motorResult.spin}</strong></span>
-            <span>Conforto → <strong>{motorResult.comfort}</strong></span>
-            <span>Estabilidade → <strong>{motorResult.stability}</strong></span>
+          <div className="bg-teal-50 border border-teal-100 rounded-lg px-4 py-2.5 text-xs text-teal-700">
+            <span className="font-medium block mb-1">Motor recalculado (7 dims):</span>
+            <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+              {([
+                ['Potência',       motorResult.power],
+                ['Controle',       motorResult.control],
+                ['Manobrabilidade',motorResult.maneuverability],
+                ['Perdão',         motorResult.forgiveness],
+                ['Spin',           motorResult.spin],
+                ['Conforto',       motorResult.comfort],
+                ['Estabilidade',   motorResult.stability],
+              ] as [string, number][]).map(([label, val]) => (
+                <span key={label}>{label} → <strong>{val}</strong></span>
+              ))}
+            </div>
           </div>
         )}
 

@@ -5,17 +5,71 @@ export interface MotorInput {
   furos?: number | null
   espessura_mm?: number | null
   tecnologias?: Tecnologia[]
+  face_material?: string | null
+  core?: string | null
+  weight_g?: number | null
+  balance?: string | null
 }
 
 export interface MotorResult {
   spin: number
   comfort: number
   stability: number
+  power: number
+  control: number
+  maneuverability: number
+  forgiveness: number
 }
 
-// Dimensions covered by a formula — others preserve current value
-export const MOTOR_DIMS = ['spin', 'comfort', 'stability'] as const
+export const MOTOR_DIMS = [
+  'spin', 'comfort', 'stability',
+  'power', 'control', 'maneuverability', 'forgiveness',
+] as const
 export type MotorDim = (typeof MOTOR_DIMS)[number]
+
+// ── Classificação de materiais ────────────────────────────────────────────────
+
+type FaceGrade =
+  | 'VIDRO' | 'HYBRID_VIDRO' | 'KEVLAR_PURE' | 'KEVLAR_CARBON'
+  | 'CARBON_3K' | 'CARBON_3K_METAL' | 'CARBON_6K_15K' | 'CARBON_24K' | 'CARBON_18K'
+
+export function classifyFace(face: string | null | undefined): FaceGrade {
+  const f = (face || '').toLowerCase()
+  // HYBRID_VIDRO antes de VIDRO — "Carbono + Fibra de Vidro" contém "fibra de vidro"
+  if (f.includes('carbono + fibra') || f.includes('3k + fibra') || f.includes('bio-based')) return 'HYBRID_VIDRO'
+  if (f.includes('fibra de vidro') || f.includes('fiberglass')) return 'VIDRO'
+  if (f.includes('kevlar') && !f.includes('carbon') && !f.includes('carbono')) return 'KEVLAR_PURE'
+  if (f.includes('kevlar') && (f.includes('carbon') || f.includes('carbono'))) return 'KEVLAR_CARBON'
+  if (f.includes('18k')) return 'CARBON_18K'
+  if (f.includes('24k') || f.includes('triaxial')) return 'CARBON_24K'
+  if (f.includes('12k') || f.includes('15k') || f.includes('16k') || f.includes('aluminizado')) return 'CARBON_6K_15K'
+  if (f.includes('6k')) return 'CARBON_6K_15K'
+  if (
+    f.includes('titanio') || f.includes('titanium') || f.includes('titânio') ||
+    f.includes('metal fusion') || f.includes('silver') || f.includes('mft')
+  ) return 'CARBON_3K_METAL'
+  return 'CARBON_3K'
+}
+
+type CoreClass = 'SUPERSOFT' | 'SOFT' | 'MEDIUM' | 'HARD'
+
+export function classifyCore(core: string | null | undefined): CoreClass {
+  const c = (core || '').toLowerCase()
+  if (!core) return 'MEDIUM'
+  if (
+    c.includes('supersoft') || c.includes('extra soft') || c.includes('extrasoft') ||
+    c.includes('special extrasoft')
+  ) return 'SUPERSOFT'
+  if (c.includes('branco') || c.includes('white')) return 'SUPERSOFT'
+  if (c === 'eva 10' || c === 'eva 13') return 'SUPERSOFT'
+  if (c.includes('hard') || c.includes('duro') || c.includes('high density') || c.includes('alta densidade')) return 'HARD'
+  if (c.includes('black pro') || c.startsWith('black pro')) return 'HARD'
+  if (c.includes('soft')) return 'SOFT'   // pega "EVA Black Soft" antes do check de black
+  if (c.includes('black')) return 'HARD'  // "EVA Black" puro
+  return 'MEDIUM'
+}
+
+// ── Helpers spin (inalterados) ────────────────────────────────────────────────
 
 function texturaScore(superficie: string | null | undefined, hasSpinTech: boolean): number {
   if (!superficie) return 5
@@ -38,15 +92,13 @@ function furosScore(furos: number | null | undefined): number {
   return 8
 }
 
-// spin contribution: fino(≤20)→4, médio(≤22)→5, grosso(≥23)→6, null→5 (neutral)
-function espessuraScore(mm: number | null | undefined): number {
+function espessuraSpinScore(mm: number | null | undefined): number {
   if (mm == null) return 5
   if (mm <= 20) return 4
   if (mm <= 22) return 5
   return 6
 }
 
-// stability modifier: fino reduces rigidity (-1), grosso increases it (+1)
 function espessuraStabilityMod(mm: number | null | undefined): number {
   if (mm == null) return 0
   if (mm <= 20) return -1
@@ -54,25 +106,92 @@ function espessuraStabilityMod(mm: number | null | undefined): number {
   return 1
 }
 
+// ── Motor principal ───────────────────────────────────────────────────────────
+
 export function calcularMotor(input: MotorInput): MotorResult {
   const techs = input.tecnologias ?? []
   const hasSpinTech = techs.some(t => t.tipo === 'superficie')
-  const antivibCount = techs.filter(
-    t => t.tipo === 'antivibração' || t.tipo === 'antivibracao'
-  ).length
+  const antivibCount = techs.filter(t => t.tipo === 'antivibração' || t.tipo === 'antivibracao').length
   const estruturalCount = techs.filter(t => t.tipo === 'estrutural').length
 
+  // Spin
   const ts = texturaScore(input.superficie, hasSpinTech)
   const fs = furosScore(input.furos)
-  const es = espessuraScore(input.espessura_mm)
+  const es = espessuraSpinScore(input.espessura_mm)
   const spin = Math.round(0.7 * ts + 0.15 * fs + 0.15 * es)
 
-  // Comfort: antivib anchor — 0 systems→5, 1→8, 2+→9
-  const comfort = antivibCount === 0 ? 5 : antivibCount === 1 ? 8 : 9
-
-  // Stability: estrutural anchor + espessura modifier (fino→-1, grosso→+1)
+  // Stability
   const stabilityBase = estruturalCount === 0 ? 5 : estruturalCount === 1 ? 7 : 9
   const stability = Math.min(10, Math.max(1, stabilityBase + espessuraStabilityMod(input.espessura_mm)))
 
-  return { spin, comfort, stability }
+  // Classificações
+  const faceGrade = classifyFace(input.face_material)
+  const coreClass = classifyCore(input.core)
+  const furos = input.furos ?? null
+  const esp   = input.espessura_mm ?? null
+  const wg    = input.weight_g ?? null
+  const bal   = (input.balance || '').toLowerCase()
+
+  // Power — determinado pelo grade da face
+  const FACE_POWER: Record<FaceGrade, number> = {
+    VIDRO: 4, HYBRID_VIDRO: 5,
+    KEVLAR_PURE: 6, CARBON_3K: 6,
+    KEVLAR_CARBON: 7, CARBON_3K_METAL: 7,
+    CARBON_6K_15K: 8,
+    CARBON_24K: 9, CARBON_18K: 9,
+  }
+  let power = FACE_POWER[faceGrade]
+  if (bal.includes('pesada para a cabeça')) power += 1
+  power = Math.min(10, Math.max(1, power))
+
+  // Control — softness do core, com penalidade para faces rígidas top
+  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
+  const FACE_CTRL: Partial<Record<FaceGrade, number>> = { CARBON_18K: -1, CARBON_24K: -1 }
+  let control = 7
+  control += CORE_CTRL[coreClass]
+  control += FACE_CTRL[faceGrade] ?? 0
+  if (furos != null && furos >= 40) control -= 1
+  if (furos != null && furos <= 20) control += 1
+  if (wg != null && wg > 340) control -= 1
+  control = Math.min(10, Math.max(1, control))
+
+  // Maneuverability — espessura + peso recalibrado (sem bônus de face)
+  let man = 7
+  if (esp != null && esp <= 20) man += 1
+  if (esp != null && esp >= 23) man -= 1
+  if (wg != null) {
+    if      (wg <= 310) man += 2
+    else if (wg <= 320) man += 1
+    else if (wg <= 330) man += 0
+    else if (wg <= 340) man -= 1
+    else                man -= 2
+  }
+  if (furos != null && furos >= 40) man += 1
+  if (furos != null && furos <= 20) man -= 1
+  const maneuverability = Math.min(10, Math.max(1, man))
+
+  // Forgiveness — face grade + core softness + redonda(+1) + espessura
+  const FACE_FORG: Record<FaceGrade, number> = {
+    VIDRO: +3, HYBRID_VIDRO: +2, KEVLAR_PURE: +1, KEVLAR_CARBON: 0,
+    CARBON_3K: 0, CARBON_3K_METAL: 0, CARBON_6K_15K: 0,
+    CARBON_24K: -1, CARBON_18K: -1,
+  }
+  const CORE_FORG: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
+  let forg = 6
+  forg += FACE_FORG[faceGrade]
+  forg += CORE_FORG[coreClass]
+  forg += 1  // formato sempre redonda
+  if (esp != null && esp >= 22) forg += 1
+  if (esp != null && esp <= 20) forg -= 1
+  const forgiveness = Math.min(10, Math.max(1, forg))
+
+  // Comfort — antivib é ancora; bônus por fibra/kevlar e core supersoft
+  let comfort = antivibCount === 0 ? 5 : antivibCount === 1 ? 8 : 9
+  if (faceGrade === 'VIDRO' || faceGrade === 'HYBRID_VIDRO') comfort += 1
+  if (faceGrade === 'KEVLAR_PURE' || faceGrade === 'KEVLAR_CARBON') comfort += 1
+  if (coreClass === 'SUPERSOFT') comfort += 1
+  if (coreClass === 'HARD')      comfort -= 1
+  comfort = Math.min(10, Math.max(1, comfort))
+
+  return { spin, comfort, stability, power, control, maneuverability, forgiveness }
 }
