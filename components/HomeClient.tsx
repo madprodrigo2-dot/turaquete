@@ -88,6 +88,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const [debugMode, setDebugMode] = useState(false)
   const pendingDebugRef = useRef<DebugData | null>(null)
   const [feedbackDone, setFeedbackDone] = useState(false)
+  const [showBrandPicker, setShowBrandPicker] = useState(false)
   const firstRecShownRef = useRef(false)
   const intencaoConvRef = useRef<string | undefined>(undefined)
   const turnosAteRecRef = useRef(0)
@@ -509,7 +510,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                       sessionId={sessionId}
                       onSuggestion={
                         isLast && !loading && !isStreaming && !isAnimating && !atLimit
-                          ? (s) => sendMessage(m._retryText && s === '↻ Tentar de novo' ? m._retryText : s)
+                          ? (s) => {
+                              if (s === 'Ver todas as marcas') { setShowBrandPicker(true); return }
+                              sendMessage(m._retryText && s === '↻ Tentar de novo' ? m._retryText : s)
+                            }
                           : undefined
                       }
                       disableGlossary={(isStreaming || isAnimating) && isLast}
@@ -622,6 +626,53 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
       )}
 
 
+      {/* Brand picker overlay — opened by "Ver todas as marcas" chip */}
+      {showBrandPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:items-center"
+          onClick={() => setShowBrandPicker(false)}
+        >
+          <div
+            className="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl max-h-[72vh] flex flex-col shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+              <span className="font-semibold text-tinta text-base">Qual marca?</span>
+              <button
+                onClick={() => setShowBrandPicker(false)}
+                className="p-1.5 rounded-lg text-tinta/40 hover:text-tinta/70 hover:bg-gray-100 transition-colors"
+                aria-label="Fechar"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 px-2 py-2">
+              {brands
+                .filter(b => b.status === 'disponivel')
+                .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+                .map(brand => (
+                  <button
+                    key={brand.id}
+                    onClick={() => { sendMessage(brand.name); setShowBrandPicker(false) }}
+                    className="w-full text-left px-4 py-3 rounded-xl text-tinta font-medium text-sm hover:bg-aqua/10 active:bg-aqua/20 transition-colors"
+                  >
+                    {brand.name}
+                  </button>
+                ))}
+            </div>
+            <div className="px-4 py-3 border-t border-gray-100 shrink-0">
+              <button
+                onClick={() => setShowBrandPicker(false)}
+                className="w-full py-2.5 rounded-xl text-sm text-tinta/50 hover:text-tinta/70 hover:bg-gray-50 transition-colors font-medium"
+              >
+                Voltar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
