@@ -4,7 +4,7 @@ const SCORE_KEYS = ['power', 'control', 'comfort', 'maneuverability', 'spin', 's
 const LABELS     = ['Potência', 'Controle', 'Conforto', 'Manuseio', 'Spin', 'Estab.']
 const COLORS     = { A: '#FF5E3A', B: '#0CC0BE' } as const
 
-const CX = 120, CY = 120, R = 78, LABEL_R = 96, DOT_R = 5
+const CX = 130, CY = 130, R = 82, LABEL_R = 110, DOT_R = 6
 const ANGLES = [-90, -30, 30, 90, 150, 210].map(d => (d * Math.PI) / 180)
 const RINGS  = [0.25, 0.5, 0.75, 1]
 
@@ -38,6 +38,9 @@ export default function CompareHexagon({ rackets }: Props) {
 
   if (aValid < 4 && bValid < 4) return null
 
+  const aPts = aValid >= 4 ? polyPoints(aScores) : ''
+  const bPts = bValid >= 4 ? polyPoints(bScores) : ''
+
   return (
     <div
       className="flex flex-col items-center gap-3 py-1"
@@ -54,11 +57,39 @@ export default function CompareHexagon({ rackets }: Props) {
       `}</style>
 
       <svg
-        viewBox="0 0 240 240"
-        className="w-full max-w-[240px]"
+        viewBox="0 0 260 260"
+        className="w-full max-w-[260px]"
         overflow="visible"
         aria-hidden="true"
       >
+        <defs>
+          <radialGradient id="ch-fill-a" cx="50%" cy="50%" r="65%" fx="50%" fy="30%">
+            <stop offset="0%"   stopColor={COLORS.A} stopOpacity="0.50" />
+            <stop offset="100%" stopColor={COLORS.A} stopOpacity="0.08" />
+          </radialGradient>
+          <radialGradient id="ch-fill-b" cx="50%" cy="50%" r="65%" fx="50%" fy="30%">
+            <stop offset="0%"   stopColor={COLORS.B} stopOpacity="0.50" />
+            <stop offset="100%" stopColor={COLORS.B} stopOpacity="0.08" />
+          </radialGradient>
+          <radialGradient id="ch-bg-a" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor={COLORS.A} stopOpacity="0.07" />
+            <stop offset="100%" stopColor={COLORS.A} stopOpacity="0"    />
+          </radialGradient>
+          <radialGradient id="ch-bg-b" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor={COLORS.B} stopOpacity="0.07" />
+            <stop offset="100%" stopColor={COLORS.B} stopOpacity="0"    />
+          </radialGradient>
+          <filter id="ch-glow-a" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+          </filter>
+          <filter id="ch-glow-b" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+          </filter>
+        </defs>
+
+        {bValid >= 4 && <circle cx={CX} cy={CY} r={R * 1.22} fill="url(#ch-bg-b)" />}
+        {aValid >= 4 && <circle cx={CX} cy={CY} r={R * 1.22} fill="url(#ch-bg-a)" />}
+
         {/* Grid rings */}
         {RINGS.map(frac => (
           <polygon
@@ -69,7 +100,7 @@ export default function CompareHexagon({ rackets }: Props) {
             }).join(' ')}
             fill="none"
             stroke="#0E3A40"
-            strokeOpacity={frac === 1 ? 0.15 : 0.07}
+            strokeOpacity={frac === 1 ? 0.14 : 0.07}
             strokeWidth={frac === 1 ? 1 : 0.75}
           />
         ))}
@@ -83,28 +114,30 @@ export default function CompareHexagon({ rackets }: Props) {
           )
         })}
 
-        {/* B polygon (behind) */}
+        {/* B glow layer */}
         {bValid >= 4 && (
-          <polygon
-            points={polyPoints(bScores)}
-            fill={COLORS.B}
-            fillOpacity={0.18}
-            stroke={COLORS.B}
-            strokeWidth={2}
-            strokeLinejoin="round"
-          />
+          <polygon points={bPts} fill={COLORS.B} fillOpacity={0.20}
+            stroke={COLORS.B} strokeWidth={4} strokeLinejoin="round"
+            filter="url(#ch-glow-b)" />
         )}
 
-        {/* A polygon (front) */}
+        {/* A glow layer */}
         {aValid >= 4 && (
-          <polygon
-            points={polyPoints(aScores)}
-            fill={COLORS.A}
-            fillOpacity={0.18}
-            stroke={COLORS.A}
-            strokeWidth={2}
-            strokeLinejoin="round"
-          />
+          <polygon points={aPts} fill={COLORS.A} fillOpacity={0.20}
+            stroke={COLORS.A} strokeWidth={4} strokeLinejoin="round"
+            filter="url(#ch-glow-a)" />
+        )}
+
+        {/* B polygon */}
+        {bValid >= 4 && (
+          <polygon points={bPts} fill="url(#ch-fill-b)"
+            stroke={COLORS.B} strokeWidth={2} strokeLinejoin="round" />
+        )}
+
+        {/* A polygon */}
+        {aValid >= 4 && (
+          <polygon points={aPts} fill="url(#ch-fill-a)"
+            stroke={COLORS.A} strokeWidth={2} strokeLinejoin="round" />
         )}
 
         {/* B vertex dots */}
@@ -112,18 +145,28 @@ export default function CompareHexagon({ rackets }: Props) {
           if (v == null || v === 0) return null
           const [x, y] = pt(ANGLES[i], (v / 10) * R)
           return (
-            <circle key={i} cx={x} cy={y} r={DOT_R}
-              fill="white" stroke={COLORS.B} strokeWidth={1.5} />
+            <g key={i}>
+              <circle cx={x} cy={y} r={DOT_R} fill="white" stroke={COLORS.B} strokeWidth={1.5} />
+              <text x={x} y={y} textAnchor="middle" dominantBaseline="middle"
+                fontSize={v === 10 ? 6 : 7} fontWeight="800" fill={COLORS.B}>
+                {v}
+              </text>
+            </g>
           )
         })}
 
-        {/* A vertex dots (rendered on top) */}
+        {/* A vertex dots (on top) */}
         {aValid >= 4 && aScores.map((v, i) => {
           if (v == null || v === 0) return null
           const [x, y] = pt(ANGLES[i], (v / 10) * R)
           return (
-            <circle key={i} cx={x} cy={y} r={DOT_R}
-              fill="white" stroke={COLORS.A} strokeWidth={1.5} />
+            <g key={i}>
+              <circle cx={x} cy={y} r={DOT_R} fill="white" stroke={COLORS.A} strokeWidth={1.5} />
+              <text x={x} y={y} textAnchor="middle" dominantBaseline="middle"
+                fontSize={v === 10 ? 6 : 7} fontWeight="800" fill={COLORS.A}>
+                {v}
+              </text>
+            </g>
           )
         })}
 
@@ -133,12 +176,8 @@ export default function CompareHexagon({ rackets }: Props) {
           const anchor = x < CX - 8 ? 'end' : x > CX + 8 ? 'start' : 'middle'
           return (
             <text key={i} x={x} y={y}
-              textAnchor={anchor}
-              dominantBaseline="middle"
-              fontSize={10}
-              fill="#0E3A40"
-              fillOpacity={0.6}
-            >
+              textAnchor={anchor} dominantBaseline="middle"
+              fontSize={10} fill="#0E3A40" fillOpacity={0.6}>
               {LABELS[i]}
             </text>
           )
@@ -146,19 +185,19 @@ export default function CompareHexagon({ rackets }: Props) {
       </svg>
 
       {/* Legend */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
         {aValid >= 4 && (
           <div className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.A }} />
-            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.A }}>
+            <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS.A }} />
+            <span className="text-[11px] font-semibold leading-snug" style={{ color: COLORS.A }}>
               {rackets[0].name}
             </span>
           </div>
         )}
         {bValid >= 4 && (
           <div className="flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.B }} />
-            <span className="text-[11px] font-semibold truncate max-w-[110px]" style={{ color: COLORS.B }}>
+            <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS.B }} />
+            <span className="text-[11px] font-semibold leading-snug" style={{ color: COLORS.B }}>
               {rackets[1].name}
             </span>
           </div>
