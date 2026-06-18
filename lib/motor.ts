@@ -189,12 +189,13 @@ export function calcularMotor(input: MotorInput): MotorResult {
   if (faceGrade === 'CARBON_18K' || faceGrade === 'CARBON_24K') forg = Math.min(7, forg)
   const forgiveness = Math.min(10, Math.max(1, forg))
 
-  // Comfort — antivib é ancora; bônus por fibra/kevlar e core supersoft
-  let comfort = antivibCount === 0 ? 5 : antivibCount === 1 ? 8 : 9
+  // Comfort — núcleo é o driver principal; antivib é bônus encima
+  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -2 }
+  let comfort = 6
+  comfort += CORE_COMFORT[coreClass]
+  comfort += Math.min(antivibCount, 2)
   if (faceGrade === 'VIDRO' || faceGrade === 'HYBRID_VIDRO') comfort += 1
   if (faceGrade === 'KEVLAR_PURE' || faceGrade === 'KEVLAR_CARBON') comfort += 1
-  if (coreClass === 'SUPERSOFT') comfort += 1
-  if (coreClass === 'HARD')      comfort -= 1
   comfort = Math.min(10, Math.max(1, comfort))
 
   return { spin, comfort, stability, power, control, maneuverability, forgiveness }
