@@ -3,15 +3,13 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { sendGAEvent } from '@next/third-parties/google'
-import {
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-} from 'recharts'
 import { RacketWithInsights } from '@/lib/recommend'
 import { gerarExplicacoes } from '@/lib/explicador'
 import AthleteBadge from './AthleteBadge'
 import SpecsGrid, { buildSpecRows } from './SpecsGrid'
 import ScoreSection from './ScoreSection'
 import RacketKeyStats from './RacketKeyStats'
+import RacketHexagon from './RacketHexagon'
 
 interface Props {
   racket: RacketWithInsights
@@ -38,29 +36,6 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
   }, [open, onClose])
 
   if (!open || !ins || !mounted) return null
-
-  const radarData = [
-    { subject: 'Potência',     value: ins.power           ?? 0 },
-    { subject: 'Controle',     value: ins.control         ?? 0 },
-    { subject: 'Conforto',     value: ins.comfort         ?? 0 },
-    { subject: 'Manuseio',     value: ins.maneuverability ?? 0 },
-    { subject: 'Spin',         value: ins.spin            ?? 0 },
-    { subject: 'Estabilidade', value: ins.stability       ?? 0 },
-  ]
-
-  const RadarTick = (props: {
-    x?: number; y?: number; payload?: { value: string }
-    textAnchor?: 'start' | 'middle' | 'end' | 'inherit'
-  }) => {
-    const { x = 0, y = 0, payload, textAnchor = 'middle' } = props
-    const score = radarData.find(d => d.subject === payload?.value)?.value ?? 0
-    return (
-      <text x={x} y={y} textAnchor={textAnchor} dy="0.355em">
-        <tspan fill="#0E3A40" fontSize={11} fontWeight={500}>{payload?.value} </tspan>
-        <tspan fill="#0CC0BE" fontSize={11} fontWeight={700}>{score}</tspan>
-      </text>
-    )
-  }
 
   const explicacoes = gerarExplicacoes(racket)
   const specRows = buildSpecRows(racket)
@@ -109,24 +84,8 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
             Analisamos cada raquete em 6 dimensões (0–10) com base nas suas especificações reais.
           </p>
 
-          {/* Radar chart */}
-          <ResponsiveContainer width="100%" height={230}>
-            <RadarChart data={radarData} margin={{ top: 8, right: 28, bottom: 8, left: 28 }}>
-              <PolarGrid stroke="#C9EEEC" />
-              <PolarAngleAxis
-                dataKey="subject"
-                tick={<RadarTick />}
-              />
-              <PolarRadiusAxis domain={[0, 10]} tick={false} axisLine={false} />
-              <Radar
-                dataKey="value"
-                stroke="#0CC0BE"
-                fill="#0CC0BE"
-                fillOpacity={0.2}
-                strokeWidth={2}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
+          {/* Hexagrama premium */}
+          <RacketHexagon racket={racket} />
 
           {/* Saída de bola + Sweet spot */}
           <RacketKeyStats racket={racket} />
