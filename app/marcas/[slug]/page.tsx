@@ -1,10 +1,27 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from '@/components/RacketImageTile'
 import { NIVEL_LABEL } from '@/components/SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
+
+const BRAND_LOGOS: Record<string, string> = {
+  'adidas':     '/brands/adidas-logo.svg',
+  'fobel':      '/brands/fobel-logo.png',
+  'kona':       '/brands/kona-logo.png',
+  'minimalist': '/brands/minimalist-logo.png',
+  'mormaii':    '/brands/mormaii-logo.png',
+  'nox':        '/brands/nox-logo.png',
+  'ocean-air':  '/brands/ocean-air-logo.png',
+  'quicksand':  '/brands/quicksand-logo.png',
+  'shark':      '/brands/shark-logo.png',
+  'total':      '/brands/total-logo.png',
+  'vision':     '/brands/vision-logo.png',
+  'zeiq':       '/brands/zeiq-logo.png',
+  'zand':       '/brands/zand-logo.svg',
+}
 
 export async function generateStaticParams() {
   const brands = await listarMarcas().catch(() => [])
@@ -30,7 +47,7 @@ export async function generateMetadata(
 function FlagItaly() {
   return (
     <svg
-      width="20" height="14" viewBox="0 0 3 2"
+      width="24" height="17" viewBox="0 0 3 2"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Itália"
       role="img"
@@ -47,7 +64,7 @@ function FlagItaly() {
 function FlagBrazil() {
   return (
     <svg
-      width="20" height="14" viewBox="0 0 20 14"
+      width="24" height="17" viewBox="0 0 20 14"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Brasil"
       role="img"
@@ -64,7 +81,7 @@ function FlagBrazil() {
 function FlagSpain() {
   return (
     <svg
-      width="20" height="14" viewBox="0 0 3 2"
+      width="24" height="17" viewBox="0 0 3 2"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Espanha"
       role="img"
@@ -80,7 +97,7 @@ function FlagSpain() {
 function FlagGermany() {
   return (
     <svg
-      width="20" height="14" viewBox="0 0 3 2"
+      width="24" height="17" viewBox="0 0 3 2"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Alemanha"
       role="img"
@@ -149,6 +166,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
   if (!result) notFound()
 
   const { brand, rackets } = result
+  const logoSrc = brand.logo_url || BRAND_LOGOS[brand.slug] || null
 
   return (
     <div className="min-h-screen sand-texture">
@@ -170,15 +188,32 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
       <div className="max-w-4xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
 
         {/* Header da marca */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl md:text-3xl font-bold text-tinta">{brand.name}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2 min-w-0">
+            {logoSrc ? (
+              <>
+                <Image
+                  src={logoSrc}
+                  alt={brand.name}
+                  width={180}
+                  height={56}
+                  className="h-10 md:h-12 w-auto max-w-[180px] object-contain object-left"
+                  unoptimized
+                />
+                <h1 className="sr-only">{brand.name}</h1>
+              </>
+            ) : (
+              <h1 className="text-2xl md:text-3xl font-bold text-tinta">{brand.name}</h1>
+            )}
+            <p className="text-tinta/60 text-sm">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</p>
+          </div>
+
           {brand.country && (
-            <p className="text-tinta/50 text-sm flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0 mt-1">
               <CountryFlag country={brand.country} />
-              <span>{countryName(brand.country)}</span>
-            </p>
+              <span className="text-tinta/50 text-sm font-medium">{countryName(brand.country)}</span>
+            </div>
           )}
-          <p className="text-tinta/60 text-sm">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</p>
         </div>
 
         {/* Grid de raquetes */}
