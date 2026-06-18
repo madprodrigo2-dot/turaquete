@@ -81,7 +81,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
             </svg>
           )}
           {athlete && (
-            <div className="absolute top-2 left-2 z-10">
+            <div className="absolute top-2 left-2 z-10 max-w-[calc(100%-1rem)]">
               <AthleteBadge athlete={athlete} />
             </div>
           )}

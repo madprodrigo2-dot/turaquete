@@ -9,21 +9,15 @@ function parse(raw: string): { label: string; isSenna: boolean } {
   return { label, isSenna: raw.toLowerCase().includes('senna') }
 }
 
-export default function AthleteBadge({ athlete, variant = 'overlay' }: Props) {
-  const { label, isSenna } = parse(athlete)
+function splitAthletes(raw: string): string[] {
+  return raw.split('&').map(s => s.trim()).filter(Boolean)
+}
 
-  if (variant === 'modal') {
-    return (
-      <span className="flex items-center gap-1 text-tinta/50 text-xs mt-0.5">
-        <span aria-hidden="true" style={{ fontSize: '9px' }}>★</span>
-        Raquete assinada por {label}
-      </span>
-    )
-  }
-
+function Pill({ name, compact = false }: { name: string; compact?: boolean }) {
+  const { label, isSenna } = parse(name)
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold leading-tight"
+      className={`inline-flex items-center gap-1 ${compact ? 'px-1.5' : 'px-2'} py-0.5 rounded-full text-[11px] font-semibold leading-tight`}
       style={isSenna
         ? { background: '#FFC42E', color: '#0E3A40' }
         : { background: '#0E3A40', color: '#ffffff' }
@@ -32,5 +26,31 @@ export default function AthleteBadge({ athlete, variant = 'overlay' }: Props) {
       <span aria-hidden="true" style={{ fontSize: '8px' }}>{isSenna ? '✦' : '★'}</span>
       {label}
     </span>
+  )
+}
+
+export default function AthleteBadge({ athlete, variant = 'overlay' }: Props) {
+  if (variant === 'modal') {
+    const { label } = parse(athlete)
+    return (
+      <span className="flex items-center gap-1 text-tinta/50 text-xs mt-0.5">
+        <span aria-hidden="true" style={{ fontSize: '9px' }}>★</span>
+        Raquete assinada por {label}
+      </span>
+    )
+  }
+
+  const names = splitAthletes(athlete)
+
+  if (names.length === 1) {
+    return <Pill name={names[0]} />
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {names.map((name, i) => (
+        <Pill key={i} name={name} compact />
+      ))}
+    </div>
   )
 }
