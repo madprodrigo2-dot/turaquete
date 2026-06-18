@@ -210,7 +210,11 @@ export default function CompareView({ rackets }: Props) {
                   ? <><span className="font-semibold" style={{ color: COLORS[0] }}>{rackets[0]?.name}</span>{` vence em ${placar.winsA} de ${total} atributos`}</>
                   : placar.winsB > placar.winsA
                   ? <><span className="font-semibold" style={{ color: COLORS[1] }}>{rackets[1]?.name}</span>{` vence em ${placar.winsB} de ${total} atributos`}</>
-                  : `Empate técnico em ${total} atributos`
+                  : placar.winsA === 0 && placar.winsB === 0
+                  ? `Empate técnico em todos os ${total} atributos`
+                  : placar.ties > 0
+                  ? `Empate técnico — cada uma vence em ${placar.winsA}, empatam em ${placar.ties} de ${total} atributos`
+                  : `Empate técnico — cada uma vence em ${placar.winsA} de ${total} atributos`
                 }
               </p>
             </div>
