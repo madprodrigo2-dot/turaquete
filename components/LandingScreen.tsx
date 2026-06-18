@@ -1073,19 +1073,24 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                     <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{featuredRackets[0].name}</p>
                   </>
                 ) : (
-                  <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/30 flex items-center justify-center">
-                    <span className="text-2xl text-aqua/25 font-light">?</span>
+                  <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/40 bg-[#FBF6EF] flex flex-col items-center justify-center gap-2">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-aqua/55">
+                      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.75"/>
+                      <path d="M17 17L21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+                    </svg>
+                    <span className="text-[10px] font-semibold text-tinta/50 text-center px-2 leading-snug">Escolher raquete</span>
                   </div>
                 )}
               </div>
               <div className="px-1 flex items-center justify-center">
                 <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/30 flex items-center justify-center bg-aqua/5">
-                  <span className="text-3xl text-aqua/20 font-light leading-none">?</span>
-                </div>
-                <p className="text-[10px] text-tinta/30 text-center leading-snug">Escolher raquete</p>
+              <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/40 bg-[#FBF6EF] flex flex-col items-center justify-center gap-2">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-aqua/55">
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.75"/>
+                  <path d="M17 17L21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+                </svg>
+                <span className="text-[10px] font-semibold text-tinta/50 text-center px-2 leading-snug">Escolher raquete</span>
               </div>
             </div>
             <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between">

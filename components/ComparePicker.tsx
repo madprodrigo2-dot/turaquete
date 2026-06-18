@@ -106,13 +106,17 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                   </>
                 ) : (
                   <div
-                    className="aspect-[800/1020] flex flex-col items-center justify-center gap-1.5"
-                    style={{ backgroundColor: `${color}08` }}
+                    className="aspect-[800/1020] flex flex-col items-center justify-center gap-3"
+                    style={{ backgroundColor: `${color}07` }}
                   >
-                    <span className="text-3xl font-light leading-none" style={{ color, opacity: 0.35 }}>+</span>
-                    <span className="text-xs text-tinta/40 text-center px-2 leading-snug">
-                      Raquete {slot}
-                    </span>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="11" cy="11" r="7" stroke={color} strokeWidth="1.75" strokeOpacity="0.6"/>
+                      <path d="M17 17L21 21" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeOpacity="0.6"/>
+                    </svg>
+                    <div className="flex flex-col items-center gap-0.5 px-3">
+                      <span className="text-xs font-semibold text-tinta/65 text-center leading-snug">Escolher raquete</span>
+                      <span className="text-[10px] text-tinta/35 text-center leading-snug">toque para comparar</span>
+                    </div>
                   </div>
                 )}
                 {isFocused && (
