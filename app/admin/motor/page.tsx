@@ -78,7 +78,7 @@ export default async function AdminMotorPage() {
 
   if (error) console.error('[admin/motor] query error:', error.message)
 
-  const rows: MotorRow[] = ((data ?? []) as RawRacket[]).map(r => {
+  const rows: MotorRow[] = ((data ?? []) as unknown as RawRacket[]).map(r => {
     const ins = Array.isArray(r.racket_insights)
       ? (r.racket_insights[0] ?? null)
       : r.racket_insights
