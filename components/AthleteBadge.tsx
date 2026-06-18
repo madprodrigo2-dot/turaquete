@@ -10,7 +10,7 @@ function parse(raw: string): { label: string; isSenna: boolean } {
 }
 
 function splitAthletes(raw: string): string[] {
-  return raw.split('&').map(s => s.trim()).filter(Boolean)
+  return raw.split(/[&/]/).map(s => s.trim()).filter(Boolean)
 }
 
 function Pill({ name, compact = false }: { name: string; compact?: boolean }) {

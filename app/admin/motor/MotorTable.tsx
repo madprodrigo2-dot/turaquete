@@ -179,12 +179,26 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                 className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${i % 2 === 0 ? '' : 'bg-gray-50/40'}`}
               >
                 <td className="px-2 py-1 max-w-[180px]">
-                  <Link
-                    href={`/admin/rackets/${r.slug}`}
-                    className="text-teal-700 hover:underline font-medium truncate block"
-                  >
-                    {r.name}
-                  </Link>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Link
+                      href={`/admin/rackets/${r.slug}`}
+                      className="text-teal-700 hover:underline font-medium truncate"
+                    >
+                      {r.name}
+                    </Link>
+                    <Link
+                      href={`/raquetes/${r.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-gray-300 hover:text-teal-500 transition-colors"
+                      title="Ver na web"
+                    >
+                      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4.5 1.5H2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V6"/>
+                        <path d="M7 1.5h2.5m0 0V4m0-2.5L5 6"/>
+                      </svg>
+                    </Link>
+                  </div>
                 </td>
                 <td className="px-2 py-1 text-gray-500 whitespace-nowrap">{r.brand}</td>
                 <td className="px-2 py-1">
