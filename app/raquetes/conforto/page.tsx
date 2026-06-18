@@ -6,7 +6,7 @@ export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Raquetes de Beach Tennis para Cotovelo e Ombro | Turaquete',
-  description: 'Raquetes de beach tennis com proteção das articulações. Modelos elbow-friendly e shoulder-friendly, ideais para quem tem dores ou quer prevenir lesões.',
+  description: 'Raquetes de beach tennis leves nas articulações. Modelos com absorção de vibração e saída de bola suave, indicados para quem tem sensibilidade no cotovelo ou ombro.',
 }
 
 function IconConforto() {
@@ -23,8 +23,8 @@ export default async function ConfortoPage() {
   return (
     <DiscoveryPageLayout
       icon={<IconConforto />}
-      title="Articulação protegida"
-      subtitle="Raquetes indicadas para quem tem sensibilidade no cotovelo ou ombro, ou quer prevenir lesões. Modelos com absorção de vibração e saída de bola suave."
+      title="Leve nas articulações"
+      subtitle="Raquetes indicadas para quem tem sensibilidade no cotovelo ou ombro. Modelos com absorção de vibração e saída de bola suave."
       rackets={rackets}
       emptyMessage="Nenhuma raquete com esse perfil catalogada ainda."
     />

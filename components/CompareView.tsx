@@ -146,7 +146,7 @@ export default function CompareView({ rackets }: Props) {
                   )}
                   {(ins?.elbow_friendly || ins?.shoulder_friendly) && (
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 leading-none">
-                      Articulação em dia
+                      Leve nas articulações
                     </span>
                   )}
                 </div>
