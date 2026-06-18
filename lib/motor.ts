@@ -132,7 +132,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const wg    = input.weight_g ?? null
   const bal   = (input.balance || '').toLowerCase()
 
-  // Power — determinado pelo grade da face
+  // Power — face é o driver dominante; core duro acrescenta, supersoft absorve
   const FACE_POWER: Record<FaceGrade, number> = {
     VIDRO: 4, HYBRID_VIDRO: 5,
     KEVLAR_PURE: 6, CARBON_3K: 6,
@@ -140,12 +140,14 @@ export function calcularMotor(input: MotorInput): MotorResult {
     CARBON_6K_15K: 8,
     CARBON_24K: 9, CARBON_18K: 9,
   }
+  const CORE_POWER: Record<CoreClass, number> = { SUPERSOFT: -1, SOFT: 0, MEDIUM: 0, HARD: +1 }
   let power = FACE_POWER[faceGrade]
   if (bal.includes('pesada para a cabeça')) power += 1
+  power += CORE_POWER[coreClass]
   power = Math.min(10, Math.max(1, power))
 
-  // Control — softness do core, com penalidade para faces rígidas top
-  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
+  // Control — firme = preciso, suave = disperso (invertido em relação a forgiveness)
+  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
   const FACE_CTRL: Partial<Record<FaceGrade, number>> = { CARBON_18K: -1, CARBON_24K: -1 }
   let control = 7
   control += CORE_CTRL[coreClass]
