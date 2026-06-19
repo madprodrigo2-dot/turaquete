@@ -4,7 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from '@/components/RacketImageTile'
-import { NIVEL_LABEL } from '@/components/SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 
 // ── Derived brand intro (deterministic, no LLM) ───────────────────────────────
@@ -220,6 +219,14 @@ function CountryFlag({ country }: { country: string }) {
   return null
 }
 
+// ── Nivel labels for brand-page cards (shorter than SpecsGrid's NIVEL_LABEL) ──
+
+const NIVEL_CARD: Record<string, { label: string; cls: string }> = {
+  iniciante:    { label: 'Iniciante',    cls: 'text-emerald-600 bg-emerald-50' },
+  intermediario:{ label: 'Intermediário',cls: 'text-amber-600  bg-amber-50'   },
+  avancado:     { label: 'Avançado',     cls: 'text-coral      bg-coral/10'   },
+}
+
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
@@ -245,8 +252,10 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
             {scoreTag}
           </span>
         )}
-        {nivel && (
-          <p className="text-tinta/50 text-xs">{NIVEL_LABEL[nivel] ?? nivel}</p>
+        {nivel && NIVEL_CARD[nivel] && (
+          <span className={`text-[10px] font-medium rounded-full px-2 py-0.5 w-fit leading-tight ${NIVEL_CARD[nivel].cls}`}>
+            {NIVEL_CARD[nivel].label}
+          </span>
         )}
       </div>
     </Link>
@@ -307,9 +316,9 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
           </div>
 
           {brand.country && (
-            <div className="flex items-center gap-1.5 shrink-0 mt-1">
+            <div className="inline-flex items-center gap-1.5 bg-white rounded-xl border border-aqua/20 shadow-sm px-3 py-2 shrink-0 mt-1">
               <CountryFlag country={brand.country} />
-              <span className="text-tinta/50 text-sm font-medium">{countryName(brand.country)}</span>
+              <span className="text-tinta/60 text-xs font-medium">{countryName(brand.country)}</span>
             </div>
           )}
         </div>
