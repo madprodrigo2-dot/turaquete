@@ -110,7 +110,7 @@ export default function CompareTable({ recommendations }: Props) {
           {recommendations.map(rec => (
             <div key={rec.racket.id} className="py-[5px] flex items-center justify-center">
               <span className="text-tinta/60 text-[11px] font-medium tabular-nums">
-                {rec.racket.weight_g ? `${rec.racket.weight_g}g` : '—'}
+                {rec.racket.weight_g ? `~${rec.racket.weight_g}g` : ''}
               </span>
             </div>
           ))}

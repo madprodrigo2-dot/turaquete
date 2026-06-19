@@ -187,12 +187,17 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
 
               {(racket.weight_g || racket.face_material || racket.model_year) && (
                 <div className="hidden md:flex flex-col gap-2 border-t border-aqua/10 pt-3 mt-1">
-                  {racket.weight_g && (
+                  <div className="flex flex-col gap-0.5">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-tinta/60">Peso</span>
-                      <span className="text-tinta font-medium">{racket.weight_g}g</span>
+                      <span className="text-tinta font-medium">
+                        {racket.weight_g ? `~${racket.weight_g}g` : 'não informado'}
+                      </span>
                     </div>
-                  )}
+                    <p className="text-[10px] text-tinta/35 leading-snug text-right">
+                      Informado pelo fabricante, pode variar conforme tolerância e grip.
+                    </p>
+                  </div>
                   {racket.face_material && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-tinta/60">Material da face</span>

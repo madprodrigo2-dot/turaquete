@@ -115,7 +115,7 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
 
   return ([
     praQuem              ? { label: 'Pra quem',          value: praQuem }                         : null,
-    racket.weight_g      ? { label: 'Peso',              value: `${racket.weight_g}g` }          : null,
+    { label: 'Peso', value: racket.weight_g ? `~${racket.weight_g}g` : 'não informado' },
     racket.balance       ? { label: 'Balance',           value: cap(racket.balance) }             : null,
     racket.face_material ? { label: 'Material da face',  value: cap(racket.face_material) }       : null,
     racket.core          ? { label: 'Núcleo (EVA)',      value: cap(racket.core) }                : null,
