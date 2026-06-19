@@ -253,6 +253,9 @@ export default function CompareView({ rackets }: Props) {
             const valB = ins1 ? (ins1[key] as number | null) : null
             if (valA === null && valB === null) return null
             const diff = valA != null && valB != null ? valA - valB : null
+            const aWins  = diff != null && diff > 0
+            const bWins  = diff != null && diff < 0
+            const absDiff = diff != null ? Math.abs(diff) : 0
             return (
               <div key={key} className="flex items-start gap-3">
                 <div className="w-24 shrink-0 pt-0.5">
@@ -262,12 +265,14 @@ export default function CompareView({ rackets }: Props) {
                   <ScoreBar
                     value={valA}
                     color={COLORS[0]}
-                    badge={diff != null && diff > 0 ? `+${diff}` : undefined}
+                    muted={bWins}
+                    badge={aWins && absDiff >= 2 ? `+${diff}` : undefined}
                   />
                   <ScoreBar
                     value={valB}
                     color={COLORS[1]}
-                    badge={diff != null && diff < 0 ? `+${-diff}` : undefined}
+                    muted={aWins}
+                    badge={bWins && absDiff >= 2 ? `+${-diff!}` : undefined}
                   />
                 </div>
               </div>
