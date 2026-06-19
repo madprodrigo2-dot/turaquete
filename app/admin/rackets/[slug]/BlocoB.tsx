@@ -77,6 +77,12 @@ export default function BlocoB({ slug, racket }: { slug: string; racket: AdminRa
     })
   }
 
+  const scoreGeral = (() => {
+    const vals = DIMS.map(({ key }) => (ins?.[key] as number | null) ?? null).filter((v): v is number => v != null)
+    if (vals.length === 0) return null
+    return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)
+  })()
+
   return (
     <section className="rounded-xl border border-gray-100 bg-white overflow-hidden">
       <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
@@ -86,6 +92,11 @@ export default function BlocoB({ slug, racket }: { slug: string; racket: AdminRa
         <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
           motor é sempre a referência · override = exceção justificada
         </span>
+        {scoreGeral != null && (
+          <span className="ml-auto text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full tabular-nums">
+            Score geral: {scoreGeral}
+          </span>
+        )}
       </div>
 
       <div className="p-5">
