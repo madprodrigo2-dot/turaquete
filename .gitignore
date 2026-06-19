@@ -51,6 +51,9 @@ backups/
 scripts/
 tmp/
 
+# relatórios gerados localmente
+QA_REPORT.md
+
 # backups de normalização de imagens e artefatos intermediários
 public/raquetes/_original/
 public/raquetes/_normalized/
