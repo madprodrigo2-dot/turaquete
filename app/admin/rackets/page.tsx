@@ -4,7 +4,7 @@ import { getSupabase } from '@/lib/supabase'
 import RaquetasTable from './RaquetasTable'
 
 const SCORE_FIELDS = ['power', 'control', 'comfort', 'forgiveness', 'maneuverability', 'stability'] as const
-type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { nivel_sugerido: string | null }
+type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { spin: number | null; nivel_sugerido: string | null }
 
 type RacketRow = {
   id: number
