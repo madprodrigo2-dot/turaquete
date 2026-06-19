@@ -13,6 +13,8 @@ type RacketRow = {
   publicada: boolean
   price: number | null
   affiliate_url: string | null
+  source_url: string | null
+  core: string | null
   brand_id: number | null
   model_year: number | null
   racket_insights: InsRow | InsRow[] | null
@@ -27,7 +29,7 @@ export default async function AdminRaquetasPage() {
   const [{ data, error }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, slug, publicada, price, affiliate_url, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_sugerido)')
+      .select('id, name, slug, publicada, price, affiliate_url, source_url, core, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_sugerido)')
       .order('name'),
     sb.from('brands').select('id, name').order('name'),
   ])
@@ -49,6 +51,8 @@ export default async function AdminRaquetasPage() {
       publicada: r.publicada,
       price: r.price,
       affiliate_url: r.affiliate_url,
+      source_url: r.source_url,
+      core: r.core,
       model_year: r.model_year,
       brandName: r.brand_id ? (brandMap.get(r.brand_id) ?? '—') : '—',
       ins: ins ? { ...ins, scoreGeral } : null,

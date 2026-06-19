@@ -12,6 +12,8 @@ export type RacketData = {
   publicada: boolean
   price: number | null
   affiliate_url: string | null
+  source_url: string | null
+  core: string | null
   model_year: number | null
   brandName: string
   ins: {
@@ -27,7 +29,7 @@ export type RacketData = {
   } | null
 }
 
-type SortCol = 'name' | 'brand' | 'year' | 'nivel' | 'power' | 'comfort' | 'control' | 'spin' | 'forgiveness' | 'scoreGeral' | 'price'
+type SortCol = 'name' | 'brand' | 'year' | 'nivel' | 'scoreGeral' | 'price'
 type SortDir = 'asc' | 'desc'
 
 function nivLabel(n: string | null) {
@@ -47,6 +49,30 @@ function nivOrder(n: string | null) {
 function SortIcon({ col, active, dir }: { col: SortCol; active: SortCol; dir: SortDir }) {
   if (active !== col) return <span className="ml-0.5 text-gray-300">↕</span>
   return <span className="ml-0.5 text-teal-500">{dir === 'asc' ? '↑' : '↓'}</span>
+}
+
+function HealthBadge({ price, source_url, affiliate_url, core }: {
+  price: number | null
+  source_url: string | null
+  affiliate_url: string | null
+  core: string | null
+}) {
+  const missing: string[] = []
+  if (price == null) missing.push('preço')
+  if (affiliate_url == null && source_url == null) missing.push('link')
+  if (core == null) missing.push('core')
+
+  if (missing.length === 0) {
+    return <span className="inline-block w-2 h-2 rounded-full bg-teal-400" title="Dados completos" />
+  }
+  return (
+    <span
+      className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-50 text-orange-600 border border-orange-200 cursor-help"
+      title={`Falta: ${missing.join(', ')}`}
+    >
+      {missing.length}
+    </span>
+  )
 }
 
 function PublicadaToggle({ racket }: { racket: RacketData & { publicadaLocal: boolean } }) {
@@ -94,6 +120,7 @@ export default function RaquetasTable({
   const [filterNivel, setFilterNivel] = useState('')
   const [filterAfiliado, setFilterAfiliado] = useState('')
   const [filterPublicada, setFilterPublicada] = useState('')
+  const [filterIncompleta, setFilterIncompleta] = useState('')
   const [pubOverrides] = useState<Record<number, boolean>>({})
 
   const uniqueYears = useMemo(() => {
@@ -101,7 +128,7 @@ export default function RaquetasTable({
     return [...new Set(years)].sort((a, b) => b - a)
   }, [rackets])
 
-  const hasFilters = !!(search || filterMarca || filterAno || filterNivel || filterAfiliado || filterPublicada)
+  const hasFilters = !!(search || filterMarca || filterAno || filterNivel || filterAfiliado || filterPublicada || filterIncompleta)
 
   function handleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
@@ -111,6 +138,7 @@ export default function RaquetasTable({
   function clearFilters() {
     setSearch(''); setFilterMarca(''); setFilterAno('')
     setFilterNivel(''); setFilterAfiliado(''); setFilterPublicada('')
+    setFilterIncompleta('')
   }
 
   const racketRows = useMemo(() =>
@@ -131,27 +159,25 @@ export default function RaquetasTable({
     if (filterAfiliado === 'sem') result = result.filter(r => r.affiliate_url == null)
     if (filterPublicada === 'publicada') result = result.filter(r => r.publicadaLocal)
     if (filterPublicada === 'nao')       result = result.filter(r => !r.publicadaLocal)
+    if (filterIncompleta === 'incompleta') result = result.filter(r =>
+      r.price == null || (r.affiliate_url == null && r.source_url == null) || r.core == null
+    )
 
     return [...result].sort((a, b) => {
       let av: string | number = 0, bv: string | number = 0
       switch (sortCol) {
-        case 'name':        av = a.name;                                     bv = b.name; break
-        case 'brand':       av = a.brandName;                                bv = b.brandName; break
-        case 'year':        av = a.model_year ?? 0;                          bv = b.model_year ?? 0; break
-        case 'nivel':       av = nivOrder(a.ins?.nivel_sugerido ?? null);    bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
-        case 'power':       av = a.ins?.power         ?? -1;                 bv = b.ins?.power         ?? -1; break
-        case 'comfort':     av = a.ins?.comfort        ?? -1;                bv = b.ins?.comfort        ?? -1; break
-        case 'control':     av = a.ins?.control        ?? -1;                bv = b.ins?.control        ?? -1; break
-        case 'spin':        av = a.ins?.spin           ?? -1;                bv = b.ins?.spin           ?? -1; break
-        case 'forgiveness': av = a.ins?.forgiveness    ?? -1;                bv = b.ins?.forgiveness    ?? -1; break
-        case 'scoreGeral':  av = a.ins?.scoreGeral     ?? -1;                bv = b.ins?.scoreGeral     ?? -1; break
-        case 'price':       av = a.price               ?? -1;                bv = b.price               ?? -1; break
+        case 'name':       av = a.name;                                  bv = b.name; break
+        case 'brand':      av = a.brandName;                             bv = b.brandName; break
+        case 'year':       av = a.model_year ?? 0;                       bv = b.model_year ?? 0; break
+        case 'nivel':      av = nivOrder(a.ins?.nivel_sugerido ?? null); bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
+        case 'scoreGeral': av = a.ins?.scoreGeral ?? -1;                 bv = b.ins?.scoreGeral ?? -1; break
+        case 'price':      av = a.price ?? -1;                           bv = b.price ?? -1; break
       }
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
       return 0
     })
-  }, [racketRows, search, sortCol, sortDir, filterMarca, filterAno, filterNivel, filterAfiliado, filterPublicada])
+  }, [racketRows, search, sortCol, sortDir, filterMarca, filterAno, filterNivel, filterAfiliado, filterPublicada, filterIncompleta])
 
   const selectCls = 'text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 text-gray-600'
 
@@ -162,7 +188,7 @@ export default function RaquetasTable({
     return `${base} ${pad} ${active}`
   }
 
-  const colCount = 13
+  const colCount = 9
 
   return (
     <div>
@@ -213,6 +239,11 @@ export default function RaquetasTable({
           <option value="nao">Não publicadas</option>
         </select>
 
+        <select value={filterIncompleta} onChange={e => setFilterIncompleta(e.target.value)} className={selectCls}>
+          <option value="">Dados: todos</option>
+          <option value="incompleta">Só incompletas</option>
+        </select>
+
         {hasFilters && (
           <button onClick={clearFilters} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 transition-colors">
             Limpar ✕
@@ -222,7 +253,7 @@ export default function RaquetasTable({
 
       {/* Table */}
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden overflow-x-auto">
-        <table className="w-full text-xs min-w-[900px]">
+        <table className="w-full text-xs min-w-[700px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 font-medium">
               <th className={thCls('name')} onClick={() => handleSort('name')}>
@@ -240,21 +271,7 @@ export default function RaquetasTable({
               <th className={thCls('scoreGeral', 'center')} onClick={() => handleSort('scoreGeral')}>
                 Geral <SortIcon col="scoreGeral" active={sortCol} dir={sortDir} />
               </th>
-              <th className={thCls('power', 'center')} onClick={() => handleSort('power')}>
-                Pot <SortIcon col="power" active={sortCol} dir={sortDir} />
-              </th>
-              <th className={thCls('comfort', 'center')} onClick={() => handleSort('comfort')}>
-                Conf <SortIcon col="comfort" active={sortCol} dir={sortDir} />
-              </th>
-              <th className={thCls('control', 'center')} onClick={() => handleSort('control')}>
-                Ctrl <SortIcon col="control" active={sortCol} dir={sortDir} />
-              </th>
-              <th className={thCls('spin', 'center')} onClick={() => handleSort('spin')}>
-                Spin <SortIcon col="spin" active={sortCol} dir={sortDir} />
-              </th>
-              <th className={thCls('forgiveness', 'center')} onClick={() => handleSort('forgiveness')}>
-                Forg <SortIcon col="forgiveness" active={sortCol} dir={sortDir} />
-              </th>
+              <th className="px-2 py-2.5 text-gray-400 font-medium text-center whitespace-nowrap">Dados</th>
               <th className={thCls('price', 'right')} onClick={() => handleSort('price')}>
                 Preço <SortIcon col="price" active={sortCol} dir={sortDir} />
               </th>
@@ -282,11 +299,14 @@ export default function RaquetasTable({
                       : <span className="text-gray-300">—</span>
                     }
                   </td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.power      ?? '—'}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.comfort    ?? '—'}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.control    ?? '—'}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.spin       ?? '—'}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.forgiveness ?? '—'}</td>
+                  <td className="px-2 py-2 text-center">
+                    <HealthBadge
+                      price={r.price}
+                      source_url={r.source_url}
+                      affiliate_url={r.affiliate_url}
+                      core={r.core}
+                    />
+                  </td>
                   <td className="px-4 py-2 text-right text-gray-400">
                     {r.price ? `R$ ${r.price.toLocaleString('pt-BR')}` : '—'}
                   </td>
@@ -306,8 +326,8 @@ export default function RaquetasTable({
       </div>
 
       <p className="mt-3 text-xs text-gray-400 flex items-center gap-3">
-        <span>Pot=potência · Conf=conforto · Ctrl=controle · Forg=forgiveness</span>
-        <span>· Geral=media 6 scores (sem spin)</span>
+        <span>Geral = média de 6 scores (sem spin)</span>
+        <span>· Dados: dot verde = completa · badge laranja = campos faltando (hover para ver)</span>
         <span>· Clique em <strong>pub/nao</strong> para publicar ou despublicar</span>
       </p>
     </div>
