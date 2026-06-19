@@ -66,7 +66,7 @@ export interface RacketWithInsights {
   specs_extra: Record<string, unknown> | null
   publicada: boolean
   racket_insights: Insights | null
-  brands?: { name: string } | null
+  brands?: { name: string; slug?: string } | null
 }
 
 export interface RecommendedRacket {
@@ -90,7 +90,7 @@ const SELECT_FIELDS = `
   id, name, slug, model_year, weight_g, balance, format,
   face_material, core, price, currency, affiliate_url, source_url, image_url, technologies,
   specs_extra, publicada,
-  brands ( name ),
+  brands ( name, slug ),
   racket_insights (
     power, control, comfort, maneuverability, stability, spin, forgiveness,
     good_for_beginners, good_for_intermediate, good_for_advanced,

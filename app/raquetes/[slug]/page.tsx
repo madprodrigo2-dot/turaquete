@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
 import BuyButton from '@/components/BuyButton'
+import BackButton from '@/components/BackButton'
 import AthleteBadge from '@/components/AthleteBadge'
 import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
 import ScoreSection from '@/components/ScoreSection'
@@ -113,15 +114,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
         {/* Nav */}
         <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
           <div className="max-w-4xl mx-auto px-5 md:px-8 py-3">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Voltar
-            </Link>
+            <BackButton fallbackHref={racket.brands?.slug ? `/marcas/${racket.brands.slug}` : '/'} />
           </div>
         </div>
 
