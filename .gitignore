@@ -49,6 +49,7 @@ brand-raw/
 # scripts e backups one-shot locais
 backups/
 scripts/
+tmp/
 
 # backups de normalização de imagens e artefatos intermediários
 public/raquetes/_original/
