@@ -6,9 +6,10 @@ interface Props {
   value: number | null
   color?: string
   badge?: string
+  highlight?: boolean
 }
 
-export default function ScoreBar({ label, sublabel, value, color = '#0CC0BE', badge }: Props) {
+export default function ScoreBar({ label, sublabel, value, color = '#0CC0BE', badge, highlight }: Props) {
   if (value === null) return null
   const hasLabel = label !== undefined || sublabel !== undefined
   return (
@@ -30,7 +31,10 @@ export default function ScoreBar({ label, sublabel, value, color = '#0CC0BE', ba
           style={{ width: `${value * 10}%`, backgroundColor: color }}
         />
       </div>
-      <span className="text-tinta font-semibold text-sm w-5 text-right tabular-nums">{value}</span>
+      <span
+        className={`text-sm w-5 text-right tabular-nums ${highlight ? 'font-bold' : 'font-semibold text-tinta'}`}
+        style={highlight ? { color } : undefined}
+      >{value}</span>
       {badge && (
         <span
           className="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none shrink-0"
