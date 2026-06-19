@@ -39,7 +39,7 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
   if (n === 0) return null
   const domMaterial = dominant(rackets.map(r => r.face_material?.toLowerCase() ?? null))
 
-  const levels = rackets.map(r => derivarNivel(r)).filter((l): l is string => l != null)
+  const levels = rackets.map(r => derivarNivel(r)).filter((l): l is 'iniciante' | 'intermediario' | 'avancado' => l != null)
   const uniqueLevels = [...new Set(levels)]
   const sortedLevels = uniqueLevels.sort((a, b) => NIVEL_ORDER.indexOf(a as typeof NIVEL_ORDER[number]) - NIVEL_ORDER.indexOf(b as typeof NIVEL_ORDER[number]))
 
