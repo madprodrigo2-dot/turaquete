@@ -384,6 +384,17 @@ export interface TopRaquetasResult {
   source: 'real' | 'curated'
 }
 
+export async function getRandomExpensiveRacket(minPrice = 2000): Promise<RacketWithInsights | null> {
+  const { data } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('publicada', true)
+    .gte('price', minPrice)
+  if (!data || data.length === 0) return null
+  const idx = Math.floor(Math.random() * data.length)
+  return normalizeRacket((data as unknown[])[idx])
+}
+
 export async function getRaquetasPorSlug(slugs: readonly string[]): Promise<RacketWithInsights[]> {
   const { data, error } = await getSupabase()
     .from('rackets')

@@ -18,6 +18,7 @@ interface Props {
   athleteRackets: RacketWithInsights[]
   recsCount: number
   exampleRacket?: RacketWithInsights
+  compareRacket?: RacketWithInsights
 }
 
 // Threshold definido por Rodrigo — abaixo disso usa texto alternativo sem número
@@ -600,7 +601,7 @@ const ARENA_EXTRA_BALLS: Array<{ size: number; rotation: number; opacity: number
 const SKY_OP = 0.10
 const SKY_RGB = '140, 192, 215'  // desaturated sky blue — doesn't compete with aqua or coral
 
-export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount, exampleRacket }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount, exampleRacket, compareRacket }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const [mainCtaVisible, setMainCtaVisible] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
@@ -1060,17 +1061,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             <p className="text-tinta/50 text-xs">veja qual raquete ganha em cada quesito</p>
           </div>
           <Link
-            href={featuredRackets[0] ? `/comparar?a=${featuredRackets[0].slug}` : '/comparar'}
+            href={compareRacket ? `/comparar?a=${compareRacket.slug}` : '/comparar'}
             className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99]"
           >
             <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3">
               <div className="flex flex-col gap-2">
-                {featuredRackets[0] ? (
+                {compareRacket ? (
                   <>
                     <div className="rounded-xl overflow-hidden border border-coral/20">
-                      <RacketImageTile src={featuredRackets[0].image_url} alt={featuredRackets[0].name} />
+                      <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} />
                     </div>
-                    <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{featuredRackets[0].name}</p>
+                    <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
                   </>
                 ) : (
                   <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/40 bg-[#FBF6EF] flex flex-col items-center justify-center gap-2">
