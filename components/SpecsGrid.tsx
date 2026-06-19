@@ -79,21 +79,31 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
 
   let techFisicasRow: SpecRow | null = null
   let techErgonomiaRow: SpecRow | null = null
+  let techFuracaoRow: SpecRow | null = null
   let techDeclarativasRow: SpecRow | null = null
 
   if (Array.isArray(tecnosEstruturadas)) {
     const fisicas = tecnosEstruturadas.filter(t => t.tipo === 'antivibracao' || t.tipo === 'estrutural')
     const ergonomia = tecnosEstruturadas.filter(t => t.tipo === 'ergonomia')
+    const furacao = tecnosEstruturadas.filter(t => t.tipo === 'furação')
     const declarativas = tecnosEstruturadas.filter(t => t.tipo === 'declarativa')
     if (fisicas.length > 0) techFisicasRow = { label: 'Tecnologias', value: fisicas.map(t => t.nome).join(', ') }
-    if (ergonomia.length > 0) techErgonomiaRow = { label: 'Agarre', value: ergonomia.map(t => t.nome).join(', '), tipo: 'ergonomia' }
+    if (ergonomia.length > 0) techErgonomiaRow = { label: 'Ergonomia', value: ergonomia.map(t => t.nome).join(', '), tipo: 'ergonomia' }
+    if (furacao.length > 0) techFuracaoRow = { label: 'Furação', value: furacao.map(t => t.nome).join(', ') }
     if (declarativas.length > 0) techDeclarativasRow = { label: 'Acabamentos', value: declarativas.map(t => t.nome).join(', ') }
   } else {
-    // Fallback: flat technologies column, filtering material names already in face_material
     const faceNorm = racket.face_material?.toLowerCase().trim() ?? ''
+    const coreNorm = racket.core?.toLowerCase().trim() ?? ''
+    const EXACT_SKIP = new Set(['pro level', 'pro series'])
+    const PREFIX_SKIP = ['superfície', 'superficie', 'edição', 'edicao', 'espessura']
     const techFiltered = (racket.technologies ?? []).filter(t => {
       const tn = t.toLowerCase().trim()
-      return !faceNorm.includes(tn) && !tn.includes(faceNorm)
+      if (faceNorm && (faceNorm.includes(tn) || tn.includes(faceNorm))) return false
+      if (coreNorm && (coreNorm.includes(tn) || tn.includes(coreNorm))) return false
+      if (tn.startsWith('eva') || tn.endsWith(' eva')) return false
+      if (EXACT_SKIP.has(tn)) return false
+      if (PREFIX_SKIP.some(p => tn.startsWith(p))) return false
+      return true
     })
     if (techFiltered.length > 0) techFisicasRow = { label: 'Tecnologias', value: techFiltered.join(', ') }
   }
@@ -116,6 +126,7 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     athleteLabel         ? { label: 'Atleta',            value: athleteLabel }                    : null,
     techFisicasRow,
     techErgonomiaRow,
+    techFuracaoRow,
     techDeclarativasRow,
   ] as (SpecRow | null)[]).filter((r): r is SpecRow => r !== null)
 }
@@ -158,7 +169,7 @@ export default function SpecsGrid({ racket, variant = 'page' }: Props) {
                 <span className="text-xs text-tinta font-medium leading-snug">{value}</span>
                 {isErgonomia && (
                   <span className="text-[9px] font-semibold bg-aqua/10 text-aqua px-1 py-0.5 rounded-full leading-none border border-aqua/25">
-                    agarre real
+                    ergonomia
                   </span>
                 )}
               </div>
