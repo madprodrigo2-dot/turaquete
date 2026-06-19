@@ -1,42 +1,26 @@
 import { RacketWithInsights } from './recommend'
 
-/**
- * Derives the suggested level from measurable signals.
- * Single source of truth — used by all display components and SQL sync script.
- *
- * Logic (in priority order):
- *   AVANCADO  : nivel_sugerido='avancado' (admin override — algorithm can miss high-perf rackets)
- *               OR saida exigente  OR  forgiveness ≤ 5
- *   INICIANTE : forgiveness ≥ 9
- *               forgiveness = 8 + saida fácil
- *               forgiveness = 7 + maneuverability ≥ 8 + saida ≠ exigente  (Beast condition)
- *   INTERMEDIARIO: everything else
- *   NULL      : no forgiveness data → fall back to stored nivel_sugerido
- */
+// V2 formula — fórmula derivada dos 4 scores principais.
+// avancado : (f ≤ 6 e potente/preciso) OU (f = 7 e p = 9+)
+// iniciante: f ≥ 9 e confortável e não agressiva
+// intermediario: tudo o mais
+// NULL: scores insuficientes → usa nivel_sugerido armazenado
 export function derivarNivel(
   racket: RacketWithInsights
 ): 'iniciante' | 'intermediario' | 'avancado' | null {
   const ins = racket.racket_insights
   if (!ins) return null
 
-  const forgiveness = ins.forgiveness
-  if (forgiveness == null) return ins.nivel_sugerido ?? null
+  const f  = ins.forgiveness
+  const p  = ins.power
+  const c  = ins.control
+  const co = ins.comfort
 
-  const man = ins.maneuverability ?? 0
-  const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
-  const saida = (extra.saida_de_bola as string | undefined)?.toLowerCase() ?? null
+  if (f == null || p == null || c == null || co == null) {
+    return ins.nivel_sugerido ?? null
+  }
 
-  // AVANCADO — admin override wins: algorithm only detects a subset of avancado conditions
-  // (saida=exigente, low forgiveness), but high-performance rackets (e.g. 24K TeXtreme face)
-  // require human judgment. nivel_sugerido='avancado' is an explicit editorial decision.
-  if (ins.nivel_sugerido === 'avancado') return 'avancado'
-  if (saida === 'exigente') return 'avancado'
-  if (forgiveness <= 5) return 'avancado'
-
-  // INICIANTE
-  if (forgiveness >= 9) return 'iniciante'
-  if (forgiveness >= 8 && saida === 'fácil') return 'iniciante'
-  if (forgiveness === 7 && man >= 8 && saida !== 'exigente') return 'iniciante'
-
+  if ((f <= 6 && (p >= 8 || c >= 8)) || (f <= 7 && p >= 9)) return 'avancado'
+  if (f >= 9 && co >= 7 && p <= 6) return 'iniciante'
   return 'intermediario'
 }
