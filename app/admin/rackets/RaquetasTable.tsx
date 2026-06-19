@@ -19,11 +19,15 @@ export type RacketData = {
     control: number | null
     comfort: number | null
     spin: number | null
+    forgiveness: number | null
+    maneuverability: number | null
+    stability: number | null
     nivel_sugerido: string | null
+    scoreGeral: number | null
   } | null
 }
 
-type SortCol = 'name' | 'brand' | 'year' | 'nivel' | 'power' | 'comfort' | 'control' | 'spin' | 'price'
+type SortCol = 'name' | 'brand' | 'year' | 'nivel' | 'power' | 'comfort' | 'control' | 'spin' | 'forgiveness' | 'scoreGeral' | 'price'
 type SortDir = 'asc' | 'desc'
 
 function nivLabel(n: string | null) {
@@ -90,8 +94,7 @@ export default function RaquetasTable({
   const [filterNivel, setFilterNivel] = useState('')
   const [filterAfiliado, setFilterAfiliado] = useState('')
   const [filterPublicada, setFilterPublicada] = useState('')
-  // Optimistic publicada overrides
-  const [pubOverrides, setPubOverrides] = useState<Record<number, boolean>>({})
+  const [pubOverrides] = useState<Record<number, boolean>>({})
 
   const uniqueYears = useMemo(() => {
     const years = rackets.map(r => r.model_year).filter((y): y is number => y != null)
@@ -132,15 +135,17 @@ export default function RaquetasTable({
     return [...result].sort((a, b) => {
       let av: string | number = 0, bv: string | number = 0
       switch (sortCol) {
-        case 'name':    av = a.name;                                   bv = b.name; break
-        case 'brand':   av = a.brandName;                              bv = b.brandName; break
-        case 'year':    av = a.model_year ?? 0;                        bv = b.model_year ?? 0; break
-        case 'nivel':   av = nivOrder(a.ins?.nivel_sugerido ?? null);  bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
-        case 'power':   av = a.ins?.power   ?? -1;                    bv = b.ins?.power   ?? -1; break
-        case 'comfort': av = a.ins?.comfort ?? -1;                    bv = b.ins?.comfort ?? -1; break
-        case 'control': av = a.ins?.control ?? -1;                    bv = b.ins?.control ?? -1; break
-        case 'spin':    av = a.ins?.spin    ?? -1;                    bv = b.ins?.spin    ?? -1; break
-        case 'price':   av = a.price        ?? -1;                    bv = b.price        ?? -1; break
+        case 'name':        av = a.name;                                     bv = b.name; break
+        case 'brand':       av = a.brandName;                                bv = b.brandName; break
+        case 'year':        av = a.model_year ?? 0;                          bv = b.model_year ?? 0; break
+        case 'nivel':       av = nivOrder(a.ins?.nivel_sugerido ?? null);    bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
+        case 'power':       av = a.ins?.power         ?? -1;                 bv = b.ins?.power         ?? -1; break
+        case 'comfort':     av = a.ins?.comfort        ?? -1;                bv = b.ins?.comfort        ?? -1; break
+        case 'control':     av = a.ins?.control        ?? -1;                bv = b.ins?.control        ?? -1; break
+        case 'spin':        av = a.ins?.spin           ?? -1;                bv = b.ins?.spin           ?? -1; break
+        case 'forgiveness': av = a.ins?.forgiveness    ?? -1;                bv = b.ins?.forgiveness    ?? -1; break
+        case 'scoreGeral':  av = a.ins?.scoreGeral     ?? -1;                bv = b.ins?.scoreGeral     ?? -1; break
+        case 'price':       av = a.price               ?? -1;                bv = b.price               ?? -1; break
       }
       if (av < bv) return sortDir === 'asc' ? -1 : 1
       if (av > bv) return sortDir === 'asc' ? 1 : -1
@@ -156,6 +161,8 @@ export default function RaquetasTable({
     const active = sortCol === col ? 'text-teal-600' : 'text-gray-400'
     return `${base} ${pad} ${active}`
   }
+
+  const colCount = 13
 
   return (
     <div>
@@ -215,7 +222,7 @@ export default function RaquetasTable({
 
       {/* Table */}
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden overflow-x-auto">
-        <table className="w-full text-xs min-w-[740px]">
+        <table className="w-full text-xs min-w-[900px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 font-medium">
               <th className={thCls('name')} onClick={() => handleSort('name')}>
@@ -230,6 +237,9 @@ export default function RaquetasTable({
               <th className={thCls('nivel')} onClick={() => handleSort('nivel')}>
                 Nível <SortIcon col="nivel" active={sortCol} dir={sortDir} />
               </th>
+              <th className={thCls('scoreGeral', 'center')} onClick={() => handleSort('scoreGeral')}>
+                Geral <SortIcon col="scoreGeral" active={sortCol} dir={sortDir} />
+              </th>
               <th className={thCls('power', 'center')} onClick={() => handleSort('power')}>
                 Pot <SortIcon col="power" active={sortCol} dir={sortDir} />
               </th>
@@ -242,6 +252,9 @@ export default function RaquetasTable({
               <th className={thCls('spin', 'center')} onClick={() => handleSort('spin')}>
                 Spin <SortIcon col="spin" active={sortCol} dir={sortDir} />
               </th>
+              <th className={thCls('forgiveness', 'center')} onClick={() => handleSort('forgiveness')}>
+                Forg <SortIcon col="forgiveness" active={sortCol} dir={sortDir} />
+              </th>
               <th className={thCls('price', 'right')} onClick={() => handleSort('price')}>
                 Preço <SortIcon col="price" active={sortCol} dir={sortDir} />
               </th>
@@ -252,7 +265,7 @@ export default function RaquetasTable({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={colCount} className="px-4 py-8 text-center text-gray-400">
                   Nenhuma raqueta encontrada
                 </td>
               </tr>
@@ -263,10 +276,17 @@ export default function RaquetasTable({
                   <td className="px-3 py-2 text-gray-400">{r.brandName}</td>
                   <td className="px-2 py-2 text-center text-gray-400">{r.model_year ?? '—'}</td>
                   <td className="px-3 py-2 text-gray-400">{nivLabel(r.ins?.nivel_sugerido ?? null)}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.power   ?? '—'}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.comfort ?? '—'}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.control ?? '—'}</td>
-                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.spin    ?? '—'}</td>
+                  <td className="px-2 py-2 text-center">
+                    {r.ins?.scoreGeral != null
+                      ? <span className="font-mono font-bold text-teal-700">{r.ins.scoreGeral}</span>
+                      : <span className="text-gray-300">—</span>
+                    }
+                  </td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.power      ?? '—'}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.comfort    ?? '—'}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.control    ?? '—'}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.spin       ?? '—'}</td>
+                  <td className="px-2 py-2 text-center text-gray-500">{r.ins?.forgiveness ?? '—'}</td>
                   <td className="px-4 py-2 text-right text-gray-400">
                     {r.price ? `R$ ${r.price.toLocaleString('pt-BR')}` : '—'}
                   </td>
@@ -286,8 +306,9 @@ export default function RaquetasTable({
       </div>
 
       <p className="mt-3 text-xs text-gray-400 flex items-center gap-3">
-        <span>Pot=potência · Conf=conforto · Ctrl=controle</span>
-        <span>· Clique em <strong>pub/não</strong> para publicar ou despublicar</span>
+        <span>Pot=potência · Conf=conforto · Ctrl=controle · Forg=forgiveness</span>
+        <span>· Geral=media 6 scores (sem spin)</span>
+        <span>· Clique em <strong>pub/nao</strong> para publicar ou despublicar</span>
       </p>
     </div>
   )

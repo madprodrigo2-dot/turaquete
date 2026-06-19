@@ -57,6 +57,7 @@ export type MotorRow = {
   stability: number | null
   spin: number | null
   forgiveness: number | null
+  scoreGeral: number | null
   overrides: string[]
 }
 
@@ -115,6 +116,10 @@ export default async function AdminMotorPage() {
       stability: ins?.stability ?? null,
       spin: ins?.spin ?? null,
       forgiveness: ins?.forgiveness ?? null,
+      scoreGeral: (() => {
+        const vals = [ins?.power, ins?.control, ins?.comfort, ins?.maneuverability, ins?.stability, ins?.forgiveness].filter((v): v is number => v != null)
+        return vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null
+      })(),
       overrides,
     }
   })

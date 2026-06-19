@@ -7,7 +7,7 @@ import type { MotorRow } from './page'
 const DIMS = ['spin', 'comfort', 'stability', 'power', 'control', 'maneuverability', 'forgiveness'] as const
 type Dim = (typeof DIMS)[number]
 
-type SortCol = 'name' | 'brand' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | Dim
+type SortCol = 'name' | 'brand' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'scoreGeral' | Dim
 type SortDir = 'asc' | 'desc'
 
 function ScoreCell({ value, dim, overrides }: { value: number | null; dim: Dim; overrides: string[] }) {
@@ -98,6 +98,7 @@ function sortVal(row: MotorRow, col: SortCol): string | number {
   if (col === 'weight_g') return row.weight_g ?? -1
   if (col === 'furos') return row.furos ?? -1
   if (col === 'espessura_mm') return row.espessura_mm ?? -1
+  if (col === 'scoreGeral') return row.scoreGeral ?? -1
   return row[col] ?? -1
 }
 
@@ -170,6 +171,7 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
               <Th col="control" active={sortCol} dir={sortDir} onSort={handleSort}>Ctrl</Th>
               <Th col="maneuverability" active={sortCol} dir={sortDir} onSort={handleSort}>Man</Th>
               <Th col="forgiveness" active={sortCol} dir={sortDir} onSort={handleSort}>Forg</Th>
+              <Th col="scoreGeral" active={sortCol} dir={sortDir} onSort={handleSort}>Geral</Th>
             </tr>
           </thead>
           <tbody>
@@ -227,6 +229,12 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                 <ScoreCell value={r.control} dim="control" overrides={r.overrides} />
                 <ScoreCell value={r.maneuverability} dim="maneuverability" overrides={r.overrides} />
                 <ScoreCell value={r.forgiveness} dim="forgiveness" overrides={r.overrides} />
+                <td className="px-2 py-1 text-center">
+                  {r.scoreGeral != null
+                    ? <span className="font-mono text-xs font-bold text-teal-700">{r.scoreGeral}</span>
+                    : <span className="text-gray-300">—</span>
+                  }
+                </td>
               </tr>
             ))}
           </tbody>
