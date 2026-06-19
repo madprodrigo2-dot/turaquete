@@ -245,7 +245,7 @@ export default function CompareView({ rackets }: Props) {
             ))}
           </div>
         )}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-5">
           {SCORES.map(({ key, label }) => {
             const ins0 = rackets[0]?.racket_insights
             const ins1 = rackets[1]?.racket_insights
@@ -261,7 +261,7 @@ export default function CompareView({ rackets }: Props) {
                 <div className="w-24 shrink-0 pt-0.5">
                   <span className="text-tinta/60 text-sm">{label}</span>
                 </div>
-                <div className="flex-1 flex flex-col gap-1.5">
+                <div className="flex-1 flex flex-col gap-1">
                   <ScoreBar
                     value={valA}
                     color={COLORS[0]}
