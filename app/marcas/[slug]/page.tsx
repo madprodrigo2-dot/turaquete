@@ -22,7 +22,13 @@ function dominant<T>(arr: (T | null | undefined)[]): T | null {
   return best != null && bestCount / arr.length > 0.5 ? best : null
 }
 
-const NIVEL_PT: Record<string, string> = {
+const NIVEL_ORDER = ['iniciante', 'intermediario', 'avancado'] as const
+const NIVEL_PT_SINGULAR: Record<string, string> = {
+  iniciante: 'iniciante',
+  intermediario: 'intermediário',
+  avancado: 'avançado',
+}
+const NIVEL_PT_PLURAL: Record<string, string> = {
   iniciante: 'iniciantes',
   intermediario: 'intermediários',
   avancado: 'jogadores avançados',
@@ -32,7 +38,20 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
   const n = rackets.length
   if (n === 0) return null
   const domMaterial = dominant(rackets.map(r => r.face_material?.toLowerCase() ?? null))
-  const domLevel = dominant(rackets.map(r => derivarNivel(r)))
+
+  const levels = rackets.map(r => derivarNivel(r)).filter((l): l is string => l != null)
+  const uniqueLevels = [...new Set(levels)]
+  const sortedLevels = uniqueLevels.sort((a, b) => NIVEL_ORDER.indexOf(a as typeof NIVEL_ORDER[number]) - NIVEL_ORDER.indexOf(b as typeof NIVEL_ORDER[number]))
+
+  let levelClause: string | null = null
+  if (sortedLevels.length === 1) {
+    levelClause = `voltadas para ${NIVEL_PT_PLURAL[sortedLevels[0]] ?? sortedLevels[0]}`
+  } else if (sortedLevels.length >= 2) {
+    const min = NIVEL_PT_SINGULAR[sortedLevels[0]] ?? sortedLevels[0]
+    const max = NIVEL_PT_SINGULAR[sortedLevels[sortedLevels.length - 1]] ?? sortedLevels[sortedLevels.length - 1]
+    levelClause = `do nível ${min} ao ${max}`
+  }
+
   const athletes = [...new Set(
     rackets
       .map(r => (r.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined)
@@ -41,7 +60,7 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
   let intro = `A ${brandName} tem ${n} ${n === 1 ? 'raquete' : 'raquetes'} no Turaquete`
   const clauses: string[] = []
   if (domMaterial) clauses.push(`a maioria em ${domMaterial}`)
-  if (domLevel) clauses.push(`voltadas para ${NIVEL_PT[domLevel] ?? domLevel}`)
+  if (levelClause) clauses.push(levelClause)
   if (clauses.length > 0) intro += `, ${clauses.join(', ')}`
   if (athletes.length > 0) {
     const names = athletes.slice(0, 3)
