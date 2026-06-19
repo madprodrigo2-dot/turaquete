@@ -127,46 +127,94 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
 
         <div className="max-w-4xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
 
-          {/* Imagem */}
-          <div className="bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[180px]">
-            {racket.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={racket.image_url}
-                alt={racket.name}
-                className="object-contain max-h-64 w-auto"
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-3 text-aqua/30">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="currentColor" />
-                  <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="currentColor" />
-                </svg>
-                <span className="text-xs text-tinta/30">{racket.name}</span>
-              </div>
-            )}
-          </div>
+          {/* Desktop: duas colunas. Mobile: empilhado como antes. */}
+          <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:gap-6 md:items-start">
 
-          {/* Título + preço + badges */}
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-bold text-tinta leading-tight">{racket.name}</h1>
-            {price && <p className="text-coral text-xl font-bold">{price}</p>}
-            <div className="flex gap-2 flex-wrap">
-              {athlete && <AthleteBadge athlete={athlete} />}
-              {(() => {
-                const nivel = derivarNivel(racket)
-                return nivel ? (
-                  <span className="bg-aqua/[0.08] text-aqua text-xs font-semibold px-3 py-1 rounded-full border border-aqua/20">
-                    {NIVEL_LABEL[nivel] ?? nivel}
-                  </span>
-                ) : null
-              })()}
-              {(ins?.elbow_friendly || ins?.shoulder_friendly) && (
-                <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
-                  Leve nas articulações
-                </span>
+            {/* Imagem */}
+            <div className="bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[180px]">
+              {racket.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={racket.image_url}
+                  alt={racket.name}
+                  className="object-contain max-h-64 md:max-h-[500px] w-auto"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-3 text-aqua/30">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="currentColor" />
+                    <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="currentColor" />
+                  </svg>
+                  <span className="text-xs text-tinta/30">{racket.name}</span>
+                </div>
               )}
             </div>
+
+            {/* Título + preço + badges + CTA e specs resumidas (só desktop) */}
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-bold text-tinta leading-tight">{racket.name}</h1>
+              {price && <p className="text-coral text-xl font-bold">{price}</p>}
+              <div className="flex gap-2 flex-wrap">
+                {athlete && <AthleteBadge athlete={athlete} />}
+                {(() => {
+                  const nivel = derivarNivel(racket)
+                  return nivel ? (
+                    <span className="bg-aqua/[0.08] text-aqua text-xs font-semibold px-3 py-1 rounded-full border border-aqua/20">
+                      {NIVEL_LABEL[nivel] ?? nivel}
+                    </span>
+                  ) : null
+                })()}
+                {(ins?.elbow_friendly || ins?.shoulder_friendly) && (
+                  <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
+                    Leve nas articulações
+                  </span>
+                )}
+              </div>
+
+              {irUrl && (
+                <div className="hidden md:block mt-2">
+                  <BuyButton
+                    href={irUrl}
+                    racketName={racket.name}
+                    racketSlug={racket.slug}
+                    linkTipo={linkTipo}
+                    className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md text-center block"
+                  >
+                    {price ? `Comprar por ${price}` : 'Ver onde comprar'}
+                  </BuyButton>
+                </div>
+              )}
+
+              {(racket.weight_g || racket.face_material || racket.model_year) && (
+                <div className="hidden md:flex flex-col gap-2 border-t border-aqua/10 pt-3 mt-1">
+                  {racket.weight_g && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-tinta/60">Peso</span>
+                      <span className="text-tinta font-medium">{racket.weight_g}g</span>
+                    </div>
+                  )}
+                  {racket.face_material && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-tinta/60">Material da face</span>
+                      <span className="text-tinta font-medium capitalize">{racket.face_material}</span>
+                    </div>
+                  )}
+                  {racket.balance && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-tinta/60">Balance</span>
+                      <span className="text-tinta font-medium capitalize">{racket.balance}</span>
+                    </div>
+                  )}
+                  {racket.model_year && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-tinta/60">Ano</span>
+                      <span className="text-tinta font-medium">{racket.model_year}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
           </div>
 
           {/* Perfil resumo */}
