@@ -15,8 +15,8 @@ const _hhmm = `${String(_brt.getUTCHours()).padStart(2, '0')}:${String(_brt.getU
 const _buildLabel = `v${_pkg.version} · ${_dd}/${_mm} ${_hhmm} BRT`
 
 const nextConfig: NextConfig = {
-  // No remotePatterns — all racket images are self-hosted under /public/raquetes/.
-  // If next/image is used for external URLs in the future, add an explicit allowlist here.
+  // RacketImageTile uses <img> (not next/image), so no remotePatterns needed.
+  // Images uploaded via admin go to Supabase Storage and are served via their public URL.
   env: {
     BUILD_DATE:              _brt.toISOString().slice(0, 10),
     BUILD_SHA:               _sha,

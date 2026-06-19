@@ -6,6 +6,7 @@ import Link from 'next/link'
 import BlocoA from './BlocoA'
 import BlocoB from './BlocoB'
 import BlocoC from './BlocoC'
+import BlocoFoto from './BlocoFoto'
 
 export type OverrideEntry = {
   value: number
@@ -128,6 +129,7 @@ export default async function EditRaquetaPage({
       <BlocoA slug={slug} racket={racket} />
       <BlocoB slug={slug} racket={racket} />
       <BlocoC slug={slug} racket={racket} />
+      <BlocoFoto slug={slug} currentUrl={racket.image_url} />
     </div>
   )
 }
