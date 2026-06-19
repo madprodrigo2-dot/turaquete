@@ -159,6 +159,7 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
             <tr>
               <Th col="name" active={sortCol} dir={sortDir} onSort={handleSort}>Nome</Th>
               <Th col="brand" active={sortCol} dir={sortDir} onSort={handleSort}>Marca</Th>
+              <Th col="scoreGeral" active={sortCol} dir={sortDir} onSort={handleSort}>Geral</Th>
               <Th col="faceGrade" active={sortCol} dir={sortDir} onSort={handleSort}>Face</Th>
               <Th col="coreClass" active={sortCol} dir={sortDir} onSort={handleSort}>Core</Th>
               <Th col="weight_g" active={sortCol} dir={sortDir} onSort={handleSort}>Peso</Th>
@@ -171,7 +172,6 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
               <Th col="control" active={sortCol} dir={sortDir} onSort={handleSort}>Ctrl</Th>
               <Th col="maneuverability" active={sortCol} dir={sortDir} onSort={handleSort}>Man</Th>
               <Th col="forgiveness" active={sortCol} dir={sortDir} onSort={handleSort}>Forg</Th>
-              <Th col="scoreGeral" active={sortCol} dir={sortDir} onSort={handleSort}>Geral</Th>
             </tr>
           </thead>
           <tbody>
@@ -203,6 +203,12 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                   </div>
                 </td>
                 <td className="px-2 py-1 text-gray-500 whitespace-nowrap">{r.brand}</td>
+                <td className="px-2 py-1 text-center">
+                  {r.scoreGeral != null
+                    ? <span className="font-mono text-xs font-bold text-teal-700">{r.scoreGeral}</span>
+                    : <span className="text-gray-300">—</span>
+                  }
+                </td>
                 <td className="px-2 py-1">
                   <span
                     className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${GRADE_COLOR[r.faceGrade] ?? 'bg-gray-100 text-gray-500'}`}
@@ -229,12 +235,6 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                 <ScoreCell value={r.control} dim="control" overrides={r.overrides} />
                 <ScoreCell value={r.maneuverability} dim="maneuverability" overrides={r.overrides} />
                 <ScoreCell value={r.forgiveness} dim="forgiveness" overrides={r.overrides} />
-                <td className="px-2 py-1 text-center">
-                  {r.scoreGeral != null
-                    ? <span className="font-mono text-xs font-bold text-teal-700">{r.scoreGeral}</span>
-                    : <span className="text-gray-300">—</span>
-                  }
-                </td>
               </tr>
             ))}
           </tbody>
