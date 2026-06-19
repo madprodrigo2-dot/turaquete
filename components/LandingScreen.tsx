@@ -1002,7 +1002,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
-          <div className="flex flex-col gap-3">
+          <div id="marcas" className="flex flex-col gap-3">
             <p className="font-heading font-bold text-tinta text-base md:text-lg">Marcas disponíveis</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {brands.map(brand => (

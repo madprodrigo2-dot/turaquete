@@ -315,12 +315,23 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
             <p className="text-tinta/60 text-sm">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</p>
           </div>
 
-          {brand.country && (
-            <div className="inline-flex items-center gap-1.5 bg-white rounded-xl border border-aqua/20 shadow-sm px-3 py-2 shrink-0 mt-1">
-              <CountryFlag country={brand.country} />
-              <span className="text-tinta/60 text-xs font-medium">{countryName(brand.country)}</span>
-            </div>
-          )}
+          <div className="flex flex-col items-end gap-2 shrink-0 mt-1">
+            {brand.country && (
+              <div className="inline-flex items-center gap-1.5 bg-white rounded-xl border border-aqua/20 shadow-sm px-3 py-2">
+                <CountryFlag country={brand.country} />
+                <span className="text-tinta/60 text-xs font-medium">{countryName(brand.country)}</span>
+              </div>
+            )}
+            <Link
+              href="/#marcas"
+              className="inline-flex items-center gap-1 text-xs font-medium text-tinta/45 hover:text-aqua transition-colors"
+            >
+              Ver outras marcas
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                <path d="M2 5.5h7M6 2.5l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
+          </div>
         </div>
 
         {/* Intro de marca */}
