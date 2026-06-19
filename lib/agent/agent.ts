@@ -14,6 +14,7 @@ const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recomm
 const MAX_TOOL_ROUNDS = 5  // nominal flow needs 3-4 rounds; 5 covers stall+chips edge cases
 
 const MARCA_QUESTION_TEXT = 'Tem alguma marca que você curte ou tanto faz?'
+const MARCA_FILTRO_QUESTION_TEXT = 'Quer ver só de uma marca específica?'
 const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']  // kept for backward compat
 const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
 
@@ -140,7 +141,11 @@ function applyFaixaFilter(
     return { ...r, fora_da_faixa: fora }
   })
   return marked.sort((a, b) => {
-    if (a.fora_da_faixa !== b.fora_da_faixa) return a.fora_da_faixa ? 1 : -1
+    // Three tiers: weight known+in-range (0) → weight unknown (1) → out of range (2)
+    // Null weight stays fora_da_faixa=false but sorts after all rackets with confirmed fit.
+    const aTier = a.fora_da_faixa ? 2 : a.weight_g == null ? 1 : 0
+    const bTier = b.fora_da_faixa ? 2 : b.weight_g == null ? 1 : 0
+    if (aTier !== bTier) return aTier - bTier
     return b.match_score - a.match_score
   })
 }
@@ -483,16 +488,8 @@ async function executeTool(
       }
     }
 
-    // ── Marca decision ─────────────────────────────────────────────────────────
-    // Ask brand preference once, after budget is known, for profile-based searches.
-    // marca_preferida === undefined means "not yet provided" (distinct from null = "tanto faz").
+    // ── Marca debug data ────────────────────────────────────────────────────────
     const marcaJaFornecida = effectiveFilters.marca_preferida !== undefined
-    const shouldAskMarca = budgetKnown && !isNameSearch && !marcaJaFornecida && !brandAskedRef.value && !priceAskPendingRef.value
-    if (shouldAskMarca) {
-      brandAskedRef.value = true
-      marcaAskPendingRef.value = true
-      pendingQuestionFieldRef.value = 'marca'
-    }
 
     // Capture MarcaDecision for debug
     const marcaPreferida = effectiveFilters.marca_preferida ?? null
@@ -551,36 +548,6 @@ async function executeTool(
         ...(isBudgetOpen ? {
           instrucao_custo_beneficio: 'Orçamento aberto ("tanto faz"). Na recomendação, mencione brevemente qual opção oferece melhor custo-benefício — ex.: "a [modelo] rende quase igual às outras e é a mais em conta".',
         } : {}),
-      }
-    }
-
-    if (shouldAskMarca) {
-      // Compute brands from candidates, sorted by best match_score
-      type RankedWithBrand = { brands?: { name: string } | null; match_score: number }
-      const brandBest = new Map<string, number>()
-      for (const r of ranked) {
-        const brand = (r as unknown as RankedWithBrand).brands?.name
-        const score = (r as unknown as RankedWithBrand).match_score
-        if (brand != null && score != null) {
-          if (!brandBest.has(brand) || score > brandBest.get(brand)!) brandBest.set(brand, score)
-        }
-      }
-      const sortedBrands = [...brandBest.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n)
-      const topBrands = showAllBrandsRef.value ? sortedBrands : sortedBrands.slice(0, 4)
-      const hasMore = !showAllBrandsRef.value && sortedBrands.length > 4
-      const marcaChips = [...topBrands, 'Tanto faz', ...(hasMore ? ['Ver todas as marcas'] : [])]
-      marcaChipsRef.value = marcaChips
-      payload.MARCA = {
-        status: 'PREFERENCIA_NAO_PERGUNTADA',
-        marcas_disponiveis: topBrands,
-        instrucao_OBRIGATORIA:
-          `Preferência de marca não informada. ` +
-          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase curta perguntando sobre preferência de marca — ex.: "${MARCA_QUESTION_TEXT}" — sem essa frase os chips ficam órfãos; ` +
-          `(2) chame sugerir_opcoes com chips ${JSON.stringify(marcaChips)}. ` +
-          `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
-          `Após receber a resposta, chame buscar_raquetas novamente com marca_preferida: ` +
-          `qualquer chip de marca → marca_preferida="[texto exato do chip]"; "Tanto faz" → marca_preferida=null; "Ver todas as marcas" → aguarde próxima mensagem. ` +
-          `Se a marca não tiver raquetes aptas: diga honestamente e mostre as melhores disponíveis.`,
       }
     }
 
@@ -666,6 +633,36 @@ async function executeTool(
     // Mutate the array passed in — caller reads it after the loop
     pendingRecommendations.push(...built)
 
+    // Offer brand filter AFTER recommendations, only once, not for direct purchases.
+    const builtMarcaJaFornecida = confirmedMarca !== undefined
+    const shouldOfferBrandFilter = !brandAskedRef.value && !builtMarcaJaFornecida && built.length > 0 && tipoDaRec !== 'compra_direta'
+    if (shouldOfferBrandFilter) {
+      brandAskedRef.value = true
+      marcaAskPendingRef.value = true
+      pendingQuestionFieldRef.value = 'marca'
+      const recBrands = [...new Set(
+        built
+          .map(r => (r.racket as unknown as { brands?: { name: string } | null }).brands?.name)
+          .filter((n): n is string => n != null)
+      )]
+      const brandChips = [...recBrands, 'Tanto faz']
+      marcaChipsRef.value = brandChips
+      return JSON.stringify({
+        confirmado: true,
+        registradas: built.length,
+        MARCA_FILTRO: {
+          status: 'OFERECER_FILTRO_POS_REC',
+          marcas_disponiveis: recBrands,
+          instrucao_OBRIGATORIA:
+            `Recomendação concluída. Após narrar as raquetes, ofereça o filtro de marca no FINAL da resposta. ` +
+            `AÇÃO OBRIGATÓRIA: (1) escreva UMA frase curta — ex.: "${MARCA_FILTRO_QUESTION_TEXT}"; ` +
+            `(2) chame sugerir_opcoes com chips ${JSON.stringify(brandChips)}. ` +
+            `Se o usuário escolher uma marca: chame buscar_raquetas com essa marca_preferida e recomende novamente. ` +
+            `Se responder "Tanto faz": encerre sem nova busca.`,
+        },
+      })
+    }
+
     return JSON.stringify({ confirmado: true, registradas: built.length })
   }
 
@@ -702,10 +699,10 @@ export async function runAgentTurn(
     value: (() => {
       // Backward compat: old hardcoded chips
       if (history.some(m => m.role === 'user' && MARCA_CHIPS.includes(m.content.trim()))) return true
-      // New: brand question was shown AND user responded (not "Ver todas as marcas")
+      // Brand question (pre-rec legacy) OR brand filter (post-rec new flow)
       let lastBrandQuestionIdx = -1
       history.forEach((m, i) => {
-        if (m.role === 'assistant' && m.content.includes(MARCA_QUESTION_TEXT)) lastBrandQuestionIdx = i
+        if (m.role === 'assistant' && (m.content.includes(MARCA_QUESTION_TEXT) || m.content.includes(MARCA_FILTRO_QUESTION_TEXT))) lastBrandQuestionIdx = i
       })
       if (lastBrandQuestionIdx === -1) return false
       return history.slice(lastBrandQuestionIdx + 1).some(
@@ -726,7 +723,7 @@ export async function runAgentTurn(
   const confirmedMarca: string | null | undefined = (() => {
     let lastBrandQIdx = -1
     history.forEach((m, i) => {
-      if (m.role === 'assistant' && m.content.includes(MARCA_QUESTION_TEXT)) lastBrandQIdx = i
+      if (m.role === 'assistant' && (m.content.includes(MARCA_QUESTION_TEXT) || m.content.includes(MARCA_FILTRO_QUESTION_TEXT))) lastBrandQIdx = i
     })
     if (lastBrandQIdx === -1) return undefined
     const userResp = history.slice(lastBrandQIdx + 1).find(
@@ -797,7 +794,7 @@ export async function runAgentTurn(
     //   2. Force diagnosticar_perfil for profile-building intents after intent registration
     //   3. Force any tool when the model stalled before completing the search flow
     //   4. Auto otherwise
-    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value && !marcaAskPendingRef.value && !confidenceInsufficient)
+    const toolChoice = (hasSearchResults && pendingRecommendations.length === 0 && !priceAskPendingRef.value && !confidenceInsufficient)
       ? { type: 'tool' as const, name: 'recomendar_raquetas' }
       : needsDiagnostic
       ? { type: 'tool' as const, name: 'diagnosticar_perfil' }
@@ -976,7 +973,7 @@ async function streamResponse(
     const field = pendingQuestionFieldRef.value
     const fixedText = field
       ? field === 'preco' ? PRECO_QUESTION_TEXT
-        : field === 'marca' ? MARCA_QUESTION_TEXT
+        : field === 'marca' ? (pendingRecommendations.length > 0 ? MARCA_FILTRO_QUESTION_TEXT : MARCA_QUESTION_TEXT)
         : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
         : getFixedQuestionText(field as FieldKey)
       : null
@@ -1015,11 +1012,11 @@ async function streamResponse(
   // Code-level fallback: if the model returned empty text but chips are pending,
   // emit the fixed question directly. This guarantees chips are never orphaned even
   // if the model ignores the system block instruction.
-  if (!text.trim() && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
+  if (!text.trim() && pendingSuggestions.length > 0) {
     const field = pendingQuestionFieldRef.value
     const fallback = field
       ? field === 'preco' ? PRECO_QUESTION_TEXT
-        : field === 'marca' ? MARCA_QUESTION_TEXT
+        : field === 'marca' ? (pendingRecommendations.length > 0 ? MARCA_FILTRO_QUESTION_TEXT : MARCA_QUESTION_TEXT)
         : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
         : getFixedQuestionText(field as FieldKey)
       : null

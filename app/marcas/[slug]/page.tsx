@@ -7,6 +7,78 @@ import RacketImageTile from '@/components/RacketImageTile'
 import { NIVEL_LABEL } from '@/components/SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 
+// ── Derived brand intro (deterministic, no LLM) ───────────────────────────────
+
+function dominant<T>(arr: (T | null | undefined)[]): T | null {
+  const freq = new Map<T, number>()
+  for (const v of arr) {
+    if (v != null) freq.set(v, (freq.get(v) ?? 0) + 1)
+  }
+  let best: T | null = null
+  let bestCount = 0
+  for (const [v, c] of freq) {
+    if (c > bestCount) { best = v; bestCount = c }
+  }
+  return best != null && bestCount / arr.length > 0.5 ? best : null
+}
+
+const NIVEL_PT: Record<string, string> = {
+  iniciante: 'iniciantes',
+  intermediario: 'intermediários',
+  avancado: 'jogadores avançados',
+}
+
+function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): string | null {
+  const n = rackets.length
+  if (n === 0) return null
+  const domMaterial = dominant(rackets.map(r => r.face_material?.toLowerCase() ?? null))
+  const domLevel = dominant(rackets.map(r => derivarNivel(r)))
+  const athletes = [...new Set(
+    rackets
+      .map(r => (r.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined)
+      .filter((a): a is string => typeof a === 'string' && a.trim().length > 0)
+  )]
+  let intro = `A ${brandName} tem ${n} ${n === 1 ? 'raquete' : 'raquetes'} no Turaquete`
+  const clauses: string[] = []
+  if (domMaterial) clauses.push(`a maioria em ${domMaterial}`)
+  if (domLevel) clauses.push(`voltadas para ${NIVEL_PT[domLevel] ?? domLevel}`)
+  if (clauses.length > 0) intro += `, ${clauses.join(', ')}`
+  if (athletes.length > 0) {
+    const names = athletes.slice(0, 3)
+    const listed = names.length === 1
+      ? names[0]
+      : names.slice(0, -1).join(', ') + ' e ' + names[names.length - 1]
+    intro += `, com modelos assinados por ${listed}`
+  }
+  return intro + '.'
+}
+
+// ── Score tag (derived from racket_insights scores) ───────────────────────────
+
+const SCORE_TAGS: Record<string, string> = {
+  control:         'Ótima pra controle',
+  power:           'Pra quem ataca',
+  spin:            'Pra quem busca efeito',
+  stability:       'Estável e firme',
+  maneuverability: 'Leve e ágil',
+  comfort:         'Confortável',
+  forgiveness:     'Fácil de jogar',
+}
+const SCORE_PRIORITY = ['control','power','spin','stability','maneuverability','comfort','forgiveness'] as const
+
+function deriveScoreTag(ins: RacketWithInsights['racket_insights']): string | null {
+  if (!ins) return null
+  type Dim = typeof SCORE_PRIORITY[number]
+  const dims = SCORE_PRIORITY.filter((k): k is Dim => ins[k] != null)
+  if (dims.length === 0) return null
+  const vals = dims.map(k => ins[k] as number)
+  const max = Math.max(...vals)
+  const min = Math.min(...vals)
+  if (max - min <= 1 && max <= 7) return 'Equilibrada'
+  const winner = SCORE_PRIORITY.find(k => ins[k] === max)
+  return winner ? (SCORE_TAGS[winner] ?? null) : null
+}
+
 const BRAND_LOGOS: Record<string, string> = {
   'adidas':     '/brands/adidas-logo.svg',
   'fobel':      '/brands/fobel-logo.png',
@@ -137,6 +209,8 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
     : null
   const ins = racket.racket_insights
   const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const scoreTag = deriveScoreTag(ins)
+  const nivel = derivarNivel(racket)
 
   return (
     <Link
@@ -147,12 +221,14 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
       <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{racket.name}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
-        {(() => {
-          const nivel = derivarNivel(racket)
-          return nivel ? (
-            <p className="text-tinta/50 text-xs">{NIVEL_LABEL[nivel] ?? nivel}</p>
-          ) : null
-        })()}
+        {scoreTag && (
+          <span className="text-[10px] font-medium text-aqua bg-aqua/10 rounded-full px-2 py-0.5 w-fit leading-tight">
+            {scoreTag}
+          </span>
+        )}
+        {nivel && (
+          <p className="text-tinta/50 text-xs">{NIVEL_LABEL[nivel] ?? nivel}</p>
+        )}
       </div>
     </Link>
   )
@@ -167,6 +243,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
 
   const { brand, rackets } = result
   const logoSrc = brand.logo_url || BRAND_LOGOS[brand.slug] || null
+  const brandIntro = buildBrandIntro(brand.name, rackets)
 
   return (
     <div className="min-h-screen sand-texture">
@@ -217,6 +294,11 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
             </div>
           )}
         </div>
+
+        {/* Intro de marca */}
+        {brandIntro && (
+          <p className="text-tinta/70 text-sm leading-relaxed -mt-2">{brandIntro}</p>
+        )}
 
         {/* Grid de raquetes */}
         {rackets.length > 0 ? (
