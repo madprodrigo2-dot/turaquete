@@ -33,32 +33,45 @@ function computePrecoChips(ranked: Array<{ price: number | null }>): string[] {
   return [...active.map(b => b.label), 'Tanto faz / me mostra opções']
 }
 
-// Budget decision: ask whenever the user hasn't told us their budget.
-// The old "price dispersion" criterion was wrong — candidates can be similar to
-// each other but still entirely out of the user's budget. Only skip when we
-// already know the budget (presupuesto_max set, OR presupuesto_min !== undefined
-// which covers "tanto faz" = min=0 and "acima de R$X" = min>0).
+// Price dispersion: ask budget only when spread among top candidates >= R$1000.
+// Narrow spreads (all candidates similarly priced) don't need a budget gate —
+// the budget question adds friction without changing the recommendation.
+const PRICE_DISPERSION_CONFIG = {
+  topN: 5,         // candidates to examine
+  minRangeBrl: 1000, // R$ spread that triggers the question
+} as const
+
 function computePrecoDecision(
-  ranked: Array<{ price: number | null }>,
+  ranked: Array<{ price: number | null; fora_da_faixa?: boolean }>,
   budgetKnown: boolean,
 ): PrecoDecision {
   if (budgetKnown) {
     return { status: 'budget_known', note: 'usuário informou faixa de preço — filtrado na busca' }
   }
+  // Prefer in-range candidates; fall back to all if fewer than 2 in-range have prices
+  const inRange = ranked.filter(r => !r.fora_da_faixa)
+  const pool    = (inRange.length >= 2 ? inRange : ranked).slice(0, PRICE_DISPERSION_CONFIG.topN)
+  const prices  = pool.map(r => r.price).filter((p): p is number => p != null && p > 0)
 
-  const prices = ranked.slice(0, 5).map(r => r.price).filter((p): p is number => p != null && p > 0)
-  const rangeMin = prices.length > 0 ? Math.min(...prices) : null
-  const rangeMax = prices.length > 0 ? Math.max(...prices) : null
-  const rangeNote = rangeMin != null && rangeMax != null
-    ? `candidatas R$${rangeMin}–R$${rangeMax}`
-    : 'sem dados de preço'
+  if (prices.length < 2) {
+    return { status: 'sem_preco', note: 'dados de preço insuficientes nas candidatas top' }
+  }
 
+  const rangeMin = Math.min(...prices)
+  const rangeMax = Math.max(...prices)
+  const rangeBrl = rangeMax - rangeMin
+
+  if (rangeBrl >= PRICE_DISPERSION_CONFIG.minRangeBrl) {
+    return {
+      status: 'disparo',
+      note: `orçamento desconhecido + candidatas R$${rangeMin}–R$${rangeMax} → perguntar faixa`,
+      rangeMin, rangeMax, rangeBrl,
+    }
+  }
   return {
-    status: 'disparo',
-    note: `orçamento desconhecido + ${rangeNote} → perguntar faixa`,
-    rangeMin:  rangeMin  ?? undefined,
-    rangeMax:  rangeMax  ?? undefined,
-    rangeBrl:  rangeMin != null && rangeMax != null ? rangeMax - rangeMin : undefined,
+    status: 'similar',
+    note: `preços similares (R$${rangeMin}–R$${rangeMax}, spread R$${rangeBrl}) — não precisa perguntar`,
+    rangeMin, rangeMax, rangeBrl,
   }
 }
 
@@ -543,7 +556,7 @@ async function executeTool(
       }
     } else {
       payload.PRECO = {
-        status: 'BUDGET_CONHECIDO',
+        status: priceDecision.status === 'similar' ? 'PRECO_SIMILAR' : 'BUDGET_CONHECIDO',
         note: priceDecision.note,
         ...(isBudgetOpen ? {
           instrucao_custo_beneficio: 'Orçamento aberto ("tanto faz"). Na recomendação, mencione brevemente qual opção oferece melhor custo-benefício — ex.: "a [modelo] rende quase igual às outras e é a mais em conta".',
@@ -599,10 +612,15 @@ async function executeTool(
   }
 
   if (name === 'recomendar_raquetas') {
-    // Hard gate: block recommendation if profile confidence is still insufficient.
-    // Prevents the model from recommending mid-questionnaire even if it tries.
-    // Exception: compra_direta skips the profile flow entirely — user already decided.
     const tipoDaRec = (input as Record<string, unknown>).tipo as string | undefined
+    // Hard gate: block if price question is pending (budget unknown + wide spread).
+    if (priceAskPendingRef.value && tipoDaRec !== 'compra_direta') {
+      return JSON.stringify({
+        erro: 'GATE_PRECO: orçamento não informado e spread de preço amplo.',
+        instrucao: 'NÃO chame recomendar_raquetas agora. Chame sugerir_opcoes com as faixas de preço e aguarde o usuário responder antes de recomendar.',
+      })
+    }
+    // Hard gate: block if profile confidence is still insufficient.
     if (debugRef.value.confidenceInfo?.willRecommend === false && tipoDaRec !== 'compra_direta') {
       return JSON.stringify({
         erro: 'GATE_CONFIANCA: perfil incompleto — lesão não respondida.',
