@@ -3,6 +3,7 @@ import type { RacketWithInsights } from '@/lib/recommend'
 const SCORE_KEYS = ['power', 'control', 'comfort', 'maneuverability', 'spin', 'stability'] as const
 const LABELS     = ['Potência', 'Controle', 'Conforto', 'Manuseio', 'Spin', 'Estab.']
 const COLOR      = '#0CC0BE'
+const CORAL      = '#FF5E3A'
 
 const CX = 130, CY = 130, R = 82, LABEL_R = 110, DOT_R = 8
 const ANGLES = [-90, -30, 30, 90, 150, 210].map(d => (d * Math.PI) / 180)
@@ -31,6 +32,11 @@ export default function RacketHexagon({ racket }: Props) {
   const validCount = scores.filter(v => v != null).length
 
   if (validCount < 4) return null
+
+  const vals = scores.filter((v): v is number => v !== null)
+  const anyNine = vals.some(v => v >= 9)
+  const threshold = anyNine ? 9 : (vals.length > 0 ? Math.max(...vals) : Infinity)
+  function isStrong(v: number | null): boolean { return v !== null && v >= threshold }
 
   const polyPts = polyPoints(scores)
 
@@ -131,19 +137,33 @@ export default function RacketHexagon({ racket }: Props) {
         {scores.map((v, i) => {
           if (v == null || v === 0) return null
           const [x, y] = pt(ANGLES[i], (v / 10) * R)
+          const strong = isStrong(v)
+          const accent = strong ? CORAL : COLOR
+          const starOffsetY = y <= CY ? -(DOT_R + 5) : DOT_R + 6
           return (
             <g key={i}>
-              <circle cx={x} cy={y} r={DOT_R} fill="white" stroke={COLOR} strokeWidth={1.75} />
+              <circle cx={x} cy={y} r={DOT_R} fill="white" stroke={accent} strokeWidth={1.75} />
               <text
                 x={x} y={y}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontSize={v === 10 ? 7 : 8}
                 fontWeight="800"
-                fill={COLOR}
+                fill={accent}
               >
                 {v}
               </text>
+              {v === 10 && (
+                <text
+                  x={x} y={y + starOffsetY}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={9}
+                  fill={CORAL}
+                >
+                  ★
+                </text>
+              )}
             </g>
           )
         })}
