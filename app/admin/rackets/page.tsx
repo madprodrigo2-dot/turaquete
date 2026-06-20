@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
 import RaquetasTable from './RaquetasTable'
 
-const SCORE_FIELDS = ['power', 'control', 'comfort', 'forgiveness', 'maneuverability', 'stability'] as const
-type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { spin: number | null; nivel_sugerido: string | null }
+const SCORE_FIELDS = ['power', 'control', 'forgiveness', 'maneuverability', 'stability'] as const
+type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { spin: number | null; comfort: number | null; nivel_sugerido: string | null }
 
 type RacketRow = {
   id: number
