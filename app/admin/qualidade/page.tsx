@@ -269,6 +269,10 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
           )}
         </section>
 
+      <div className="pt-2 border-t border-gray-100">
+        <a href="/admin/revisao" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver revisao de conversas →</a>
+      </div>
+
     </div>
   )
 }

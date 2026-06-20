@@ -5,13 +5,12 @@ import { usePathname } from 'next/navigation'
 import { useAdminTheme } from './AdminShell'
 
 const TABS = [
-  { label: 'Geral',      href: '/admin/intencoes' },
-  { label: 'Análise',    href: '/admin/analise'   },
-  { label: 'Qualidade',  href: '/admin/qualidade'  },
+  { label: 'Dados',      href: '/admin/analise'   },
+  { label: 'Ranking',    href: '/admin/ranking'    },
   { label: 'Afiliados',  href: '/admin/afiliados'  },
   { label: 'Raquetas',   href: '/admin/rackets'    },
   { label: 'Motor',      href: '/admin/motor'      },
-  { label: 'Revisao',    href: '/admin/revisao'    },
+  { label: 'Conteúdo',   href: '/admin/qualidade'  },
 ]
 
 export default function AdminNav() {
@@ -21,7 +20,10 @@ export default function AdminNav() {
   return (
     <nav className="flex items-center gap-0.5">
       {TABS.map(tab => {
-        const active = pathname === tab.href || pathname.startsWith(tab.href + '?') || pathname.startsWith(tab.href + '/')
+        const DADOS_ALIASES = ['/admin/analise', '/admin/intencoes']
+        const active =
+          (tab.href === '/admin/analise' && DADOS_ALIASES.some(a => pathname === a || pathname.startsWith(a + '?')))
+          || (tab.href !== '/admin/analise' && (pathname === tab.href || pathname.startsWith(tab.href + '?') || pathname.startsWith(tab.href + '/')))
         return (
           <Link
             key={tab.href}

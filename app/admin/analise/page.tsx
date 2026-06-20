@@ -574,6 +574,11 @@ export default async function AnaliseAdmin({
         )}
       </section>
 
+      <div className="flex gap-4 pt-2 border-t border-gray-100">
+        <a href="/admin/intencoes" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver intenções detalhadas →</a>
+        <a href="/admin/revisao" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver revisao de conversas →</a>
+      </div>
+
     </div>
   )
 }

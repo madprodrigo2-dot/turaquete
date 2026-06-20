@@ -271,9 +271,11 @@ export async function POST(req: NextRequest) {
           if (recommendations && recommendations.length > 0) {
             getSupabaseAdmin()
               .from('recommendation_events')
-              .insert(recommendations.map(r => ({
+              .insert(recommendations.map((r, idx) => ({
                 racket_id: r.racket.id,
                 conversation_id: sessionId,
+                confidence: r.match_score ?? null,
+                rank: idx + 1,
               })))
               .then(({ error }) => {
                 if (error) console.error('Recommendation events insert error:', error.message)

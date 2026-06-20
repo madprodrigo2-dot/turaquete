@@ -27,7 +27,9 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
   const [modalOpen, setModalOpen] = useState(false)
 
   const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
-  const ctaHref  = hasLink ? `/ir/${racket.slug}` : null
+  const ctaHref  = hasLink
+    ? `/ir/${racket.slug}${sessionId ? `?s=${sessionId}` : ''}`
+    : null
   const linkTipo = racket.affiliate_url ? 'afiliado' : 'oficial'
 
   const price = racket.price
