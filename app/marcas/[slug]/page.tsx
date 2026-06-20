@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
+import { listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from '@/components/RacketImageTile'
 import { derivarNivel } from '@/lib/nivel'
 
@@ -115,12 +115,7 @@ const BRAND_LOGOS: Record<string, string> = {
   'zand':       '/brands/zand-logo.svg',
 }
 
-export async function generateStaticParams() {
-  const brands = await listarMarcas().catch(() => [])
-  return brands
-    .filter(b => b.status === 'disponivel')
-    .map(b => ({ slug: b.slug }))
-}
+
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
