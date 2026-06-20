@@ -20,17 +20,15 @@ const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
 
 const PRECO_BUCKETS: Array<{ label: string; instrucao: string; min: number; max: number | null }> = [
   { label: 'Até R$1.000',       instrucao: 'presupuesto_max=1000',                        min: 0,    max: 1000 },
-  { label: 'R$1.000 a R$2.000', instrucao: 'presupuesto_min=1000 + presupuesto_max=2000', min: 1001, max: 2000 },
-  { label: 'R$2.000 a R$3.000', instrucao: 'presupuesto_min=2000 + presupuesto_max=3000', min: 2001, max: 3000 },
-  { label: 'Acima de R$3.000',  instrucao: 'presupuesto_min=3000 (sem teto)',              min: 3001, max: null },
+  { label: 'R$1.000 a R$2.000', instrucao: 'presupuesto_min=1001 + presupuesto_max=2000', min: 1001, max: 2000 },
+  { label: 'R$2.000 a R$3.000', instrucao: 'presupuesto_min=2001 + presupuesto_max=3000', min: 2001, max: 3000 },
+  { label: 'Mais de R$3.000',   instrucao: 'presupuesto_min=3001 (sem teto)',              min: 3001, max: null },
 ]
 
-function computePrecoChips(ranked: Array<{ price: number | null }>): string[] {
-  const prices = ranked.map(r => r.price).filter((p): p is number => p != null && p > 0)
-  const active = PRECO_BUCKETS.filter(b =>
-    prices.some(p => p >= b.min && (b.max == null || p <= b.max))
-  )
-  return [...active.map(b => b.label), 'Tanto faz / me mostra opções']
+// Always show all 4 buckets — do not filter by candidate prices, as candidates
+// reflect a mid-range query and would suppress the cheapest and most expensive options.
+function computePrecoChips(_ranked: Array<{ price: number | null }>): string[] {
+  return [...PRECO_BUCKETS.map(b => b.label), 'Tanto faz / me mostra opções']
 }
 
 // Price dispersion: ask budget only when spread among top candidates >= R$1000.
@@ -582,7 +580,7 @@ async function executeTool(
     if (field === 'preco') {
       chips = precoChipsRef.value.length > 0
         ? precoChipsRef.value
-        : ['Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Acima de R$3.000', 'Tanto faz / me mostra opções']
+        : ['Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000', 'Tanto faz / me mostra opções']
     } else if (field === 'marca') {
       chips = marcaChipsRef.value.length > 0 ? marcaChipsRef.value : MARCA_CHIPS
     } else if (field?.startsWith('disambig:')) {
