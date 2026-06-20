@@ -120,7 +120,7 @@ export default async function AdminMotorPage() {
       spin: ins?.spin ?? null,
       forgiveness: ins?.forgiveness ?? null,
       scoreGeral: (() => {
-        const vals = [ins?.power, ins?.control, ins?.maneuverability, ins?.stability, ins?.forgiveness].filter((v): v is number => v != null)
+        const vals = [ins?.power, ins?.control, ins?.maneuverability, ins?.stability].filter((v): v is number => v != null)
         return vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null
       })(),
       scoreIni: (() => {

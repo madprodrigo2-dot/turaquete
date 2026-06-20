@@ -42,7 +42,7 @@ type RawInsights = {
   reviewed_at: string | null
 }
 
-const SCORE_DIMS = ['power', 'control', 'maneuverability', 'stability', 'forgiveness'] as const
+const SCORE_DIMS = ['power', 'control', 'maneuverability', 'stability'] as const
 
 export default async function RevisaoPage() {
   const session = await auth()

@@ -78,7 +78,7 @@ export default function BlocoB({ slug, racket }: { slug: string; racket: AdminRa
   }
 
   const scoreGeral = (() => {
-    const vals = DIMS.filter(({ key }) => key !== 'spin' && key !== 'comfort').map(({ key }) => (ins?.[key] as number | null) ?? null).filter((v): v is number => v != null)
+    const vals = DIMS.filter(({ key }) => key !== 'spin' && key !== 'comfort' && key !== 'forgiveness').map(({ key }) => (ins?.[key] as number | null) ?? null).filter((v): v is number => v != null)
     if (vals.length === 0) return null
     return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)
   })()
