@@ -28,6 +28,7 @@ export type RevisaoCard = {
   superficie: string | null
   tecnologias: { nome: string; tipo: string }[]
   atleta: string | null
+  atletas: string[]
   perfil_resumo: string | null
   power: number | null
   control: number | null
@@ -198,7 +199,11 @@ function RacketCard({
             <p className="text-xs text-gray-500 mt-0.5">
               {card.brand}
               {card.model_year ? ` · ${card.model_year}` : ''}
-              {card.atleta ? <em> · {card.atleta}</em> : ''}
+              {card.atletas.map(a => (
+                <span key={a} className="inline-flex items-center gap-1 ml-1 text-[10px] bg-violet-50 text-violet-600 border border-violet-100 rounded px-1.5 py-0.5 font-medium not-italic">
+                  {a}
+                </span>
+              ))}
             </p>
           </div>
 

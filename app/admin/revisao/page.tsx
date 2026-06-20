@@ -76,8 +76,12 @@ export default async function RevisaoPage() {
     const tecnologias = Array.isArray(extra.tecnologias)
       ? (extra.tecnologias as { nome: string; tipo: string }[])
       : []
-    const atleta = r.destaque_atleta
-      ?? (typeof extra.atleta === 'string' ? extra.atleta : null)
+    const atletas: string[] = Array.isArray(extra.atleta)
+      ? (extra.atleta as string[]).filter(Boolean)
+      : typeof extra.atleta === 'string' && extra.atleta
+        ? [extra.atleta]
+        : []
+    const atleta = atletas[0] ?? null
 
     const scoreVals = SCORE_DIMS.map(k => ins?.[k]).filter((v): v is number => v != null)
     const scoreGeral = scoreVals.length > 0
@@ -108,6 +112,7 @@ export default async function RevisaoPage() {
       superficie: typeof extra.superficie === 'string' ? extra.superficie : null,
       tecnologias,
       atleta,
+      atletas,
       perfil_resumo: ins?.perfil_resumo ?? null,
       power: ins?.power ?? null,
       control: ins?.control ?? null,
