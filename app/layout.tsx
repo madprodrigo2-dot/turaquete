@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
+import VercelAnalytics from "@/components/VercelAnalytics";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
@@ -65,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR">
       <body className={`${display.variable} ${sans.variable} antialiased`}>
         {children}
-        <Analytics />
+        <VercelAnalytics />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
