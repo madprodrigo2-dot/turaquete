@@ -184,10 +184,17 @@ function baseWeights(profile: ScorerProfile): Weights {
     maneuverability: 15, spin: 5, stability: 20, forgiveness: 10,
   }
 
-  // equilibrio / default — slight favor to control + stability
+  // intermediario sem prioridade declarada: equilíbrio com foco em controle+estabilidade,
+  // menos forgiveness que iniciante, menos power que avançado
+  if (profile.nivel === 'intermediario') return {
+    power: 12, control: 22, comfort: 15,
+    maneuverability: 15, spin: 3, stability: 22, forgiveness: 11,
+  }
+
+  // avançado misto / default — mais power, menos conforto e perdão que intermediário
   return {
-    power: 12, control: 18, comfort: 15,
-    maneuverability: 15, spin: 7, stability: 18, forgiveness: 15,
+    power: 18, control: 20, comfort: 12,
+    maneuverability: 12, spin: 7, stability: 20, forgiveness: 11,
   }
 }
 
