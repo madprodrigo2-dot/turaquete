@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
+import { cookies } from 'next/headers'
 import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
-import AdminTestFilter from '@/components/AdminTestFilter'
 import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
@@ -48,13 +48,14 @@ function avg(arr: number[]): number | null {
 export default async function AnaliseAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; starter?: string; test?: string }>
+  searchParams: Promise<{ days?: string; starter?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30', starter: starterParam, test: testParam } = await searchParams
-  const includeTest = testParam === '1'
+  const { days: daysParam = '30', starter: starterParam } = await searchParams
+  const cookieStore = await cookies()
+  const includeTest = cookieStore.get('admin_test_view')?.value === '1'
   const daysBack      = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
   const cutoffDate    = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
   const daysLabel     = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
@@ -272,9 +273,6 @@ export default async function AnaliseAdmin({
           <p className="text-[11px] text-gray-400 mt-0.5">{daysLabel}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Suspense fallback={null}>
-            <AdminTestFilter includeTest={includeTest} />
-          </Suspense>
           <Suspense fallback={null}>
             <AdminPeriodFilter current={daysParam} />
           </Suspense>

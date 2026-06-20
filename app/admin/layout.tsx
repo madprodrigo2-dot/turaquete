@@ -1,6 +1,7 @@
 import { auth, signOut } from '@/auth'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
+import AdminTestToggle from '@/components/AdminTestToggle'
 
 const buildLabel = process.env.NEXT_PUBLIC_BUILD_LABEL ?? null
 
@@ -26,6 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </div>
             <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
           </div>
+          <AdminTestToggle />
           {buildLabel && (
             <span className="shrink-0 text-[10px] font-mono text-gray-400">
               {buildLabel}

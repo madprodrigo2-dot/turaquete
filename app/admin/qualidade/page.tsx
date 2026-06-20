@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
-import { Suspense } from 'react'
-import AdminTestFilter from '@/components/AdminTestFilter'
+import { cookies } from 'next/headers'
 import type { DecisionTrace } from '@/lib/debug-types'
 
 export const dynamic = 'force-dynamic'
@@ -33,18 +32,14 @@ function pct(num: number, den: number): string {
   return `${Math.round((num / den) * 100)}%`
 }
 
-export default async function QualidadeAdmin({
-  searchParams,
-}: {
-  searchParams: Promise<{ test?: string }>
-}) {
+export default async function QualidadeAdmin() {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
     redirect('/admin/login')
   }
 
-  const { test: testParam } = await searchParams
-  const includeTest = testParam === '1'
+  const cookieStore = await cookies()
+  const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 
   const sb = getAdmin()
 
@@ -108,9 +103,6 @@ export default async function QualidadeAdmin({
           <h1 className="text-2xl font-bold text-gray-900">Qualidade das respostas</h1>
           <p className="text-gray-400 text-xs mt-0.5">{session.user?.email}</p>
         </div>
-        <Suspense fallback={null}>
-          <AdminTestFilter includeTest={includeTest} />
-        </Suspense>
       </div>
 
         {!tableExists && (
