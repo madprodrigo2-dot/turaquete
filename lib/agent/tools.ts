@@ -15,7 +15,7 @@ export const agentTools: Anthropic.Tool[] = [
       properties: {
         nome: {
           type: 'string',
-          description: 'Termo parcial de busca por nome de modelo (case-insensitive). Use para resolver raquetes citadas pelo usuário (ex: "rebel" retorna Rebel 24 e Rebel 25). Nunca passe orçamento ou nível ao buscar por nome específico.',
+          description: 'Termo parcial de busca por nome de modelo (case-insensitive). Se o usuário mencionou um ano específico, inclua-o no termo (ex: "ison 2024" se disse "ison 2024", "rebel 25" se disse "rebel 25"). O código extrai o ano automaticamente e verifica a disponibilidade. Nunca passe orçamento ou nível ao buscar por nome específico.',
         },
         atleta: {
           type: 'string',

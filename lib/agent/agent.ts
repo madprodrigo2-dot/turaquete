@@ -343,7 +343,7 @@ async function executeTool(
       confirmedMarca !== undefined && (input as RacketFilters).marca_preferida === undefined
         ? { ...(input as RacketFilters), marca_preferida: confirmedMarca }
         : (input as RacketFilters)
-    const { raquetes, criteriosRelaxados, filterTrace } = await buscarRaquetas(effectiveFilters)
+    const { raquetes, criteriosRelaxados, filterTrace, yearMatchInfo } = await buscarRaquetas(effectiveFilters)
     const ranked = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
     debugRef.value.scorerResults = ranked.slice(0, 10).map(r => ({
       id: r.id,
@@ -559,6 +559,27 @@ async function executeTool(
         ...(isBudgetOpen ? {
           instrucao_custo_beneficio: 'Orçamento aberto ("tanto faz"). Na recomendação, mencione brevemente qual opção oferece melhor custo-benefício — ex.: "a [modelo] rende quase igual às outras e é a mais em conta".',
         } : {}),
+      }
+    }
+
+    // Year mismatch: user specified a year that doesn't exist in the catalog.
+    // The available model(s) are in the payload but the model MUST confirm before using them.
+    if (yearMatchInfo && yearMatchInfo.status === 'model_match_year_differs') {
+      const availableStr = yearMatchInfo.available
+        .map(r => `${r.name}${r.model_year ? ` (${r.model_year})` : ''}`)
+        .join(', ')
+      payload.AVISO_ANO = {
+        status: 'ANO_DIFERENTE',
+        ano_pedido: yearMatchInfo.requestedYear,
+        modelos_disponiveis: availableStr,
+        instrucao_OBRIGATORIA:
+          `O usuário mencionou o ano ${yearMatchInfo.requestedYear}, mas esse ano não consta no catálogo. ` +
+          `Os modelos disponíveis são: ${availableStr}. ` +
+          `AÇÃO OBRIGATÓRIA: (1) informe explicitamente que não tem o modelo de ${yearMatchInfo.requestedYear}; ` +
+          `(2) nomeie o(s) disponível(is) com o ano correto; ` +
+          `(3) pergunte se é esse que o usuário tem — ex.: "Não tenho a ${yearMatchInfo.available[0]?.name?.replace(/\s+\d{4}$/, '') ?? 'modelo'} de ${yearMatchInfo.requestedYear}. A versão que tenho é a ${availableStr}. É essa?" ` +
+          `NUNCA apresente o modelo disponível como se fosse o que o usuário pediu. ` +
+          `NUNCA confirme um match sem a confirmação explícita do usuário.`,
       }
     }
 

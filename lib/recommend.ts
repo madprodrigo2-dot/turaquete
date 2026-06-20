@@ -99,10 +99,39 @@ const SELECT_FIELDS = `
   )
 `.trim()
 
+export interface YearMatchInfo {
+  requestedYear: number
+  status: 'exact_match' | 'model_match_year_differs' | 'no_match'
+  available: Array<{ name: string; model_year: number | null; id: number }>
+}
+
 export interface BuscarResult {
   raquetes: (RacketWithInsights & { match_score: number })[]
   criteriosRelaxados: string[]
   filterTrace: FilterStep[]
+  yearMatchInfo?: YearMatchInfo
+}
+
+// Extracts an explicit year from a nome string and returns the base name without it.
+// Handles 4-digit years (2020–2039) and 2-digit suffixes (20–39 → 2020–2039).
+// Examples: "ison 2024" → {baseName:"ison", year:2024}
+//           "rebel 25"  → {baseName:"rebel", year:2025}
+//           "ison"      → {baseName:"ison", year:null}
+function parseYearFromNome(nome: string): { baseName: string; year: number | null } {
+  const m4 = nome.match(/\b(202\d|203\d)\b/)
+  if (m4) {
+    const year = parseInt(m4[1])
+    const baseName = nome.replace(m4[0], '').replace(/\s+/g, ' ').trim()
+    return { baseName: baseName || nome, year }
+  }
+  const m2 = nome.match(/\b(2[0-9]|3[0-9])\b/)
+  if (m2) {
+    const short = parseInt(m2[1])
+    const year = 2000 + short
+    const baseName = nome.replace(m2[0], '').replace(/\s+/g, ' ').trim()
+    return { baseName: baseName || nome, year }
+  }
+  return { baseName: nome, year: null }
 }
 
 export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResult> {
@@ -113,8 +142,14 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     .eq('publicada', true)
     .order('name')
 
+  // Parse year from nome (e.g., "ison 2024" → baseName="ison", requestedYear=2024)
+  const { baseName: nomeBase, year: requestedYear } = filtros.nome
+    ? parseYearFromNome(filtros.nome)
+    : { baseName: '', year: null }
+
   if (filtros.nome) {
-    query = query.ilike('name', `%${filtros.nome}%`)
+    // Broad SQL pre-filter on base name (without year); TypeScript word-boundary filter follows.
+    query = query.ilike('name', `%${nomeBase}%`)
   }
 
   if (filtros.atleta) {
@@ -139,11 +174,46 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
 
   // Record SQL step
   const sqlParts = ['publicada=true']
-  if (filtros.nome) sqlParts.push(`nome="${filtros.nome}"`)
+  if (filtros.nome) sqlParts.push(`nome ilike "%${nomeBase}%"`)
   if (filtros.atleta) sqlParts.push(`atleta ilike "%${filtros.atleta}%"`)
   if (filtros.presupuesto_min && filtros.presupuesto_min > 0) sqlParts.push(`preço≥${filtros.presupuesto_min}`)
   if (filtros.presupuesto_max) sqlParts.push(`preço≤${filtros.presupuesto_max}`)
   filterTrace.push({ filtro: `SQL [${sqlParts.join(', ')}]`, depois: allCandidates.length, relaxado: false })
+
+  // Word-boundary TypeScript filter — prevents substring matches (e.g., "ison" must not match "Poison Bee")
+  if (filtros.nome && nomeBase) {
+    const safe = nomeBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const wordRe = new RegExp(`\\b${safe}\\b`, 'i')
+    const before = results.length
+    results = results.filter(r => wordRe.test(r.name))
+    if (before !== results.length) {
+      filterTrace.push({ filtro: `word-boundary "${nomeBase}"`, antes: before, depois: results.length, relaxado: false })
+    }
+  }
+
+  // Year match analysis — populated when nome includes a year token
+  let yearMatchInfo: YearMatchInfo | undefined
+  if (filtros.nome && requestedYear !== null) {
+    const exactMatches = results.filter(r => r.model_year === requestedYear)
+    if (results.length === 0) {
+      yearMatchInfo = { requestedYear, status: 'no_match', available: [] }
+    } else if (exactMatches.length > 0) {
+      const beforeYear = results.length
+      results = exactMatches
+      yearMatchInfo = {
+        requestedYear,
+        status: 'exact_match',
+        available: exactMatches.slice(0, 4).map(r => ({ name: r.name, model_year: r.model_year, id: r.id })),
+      }
+      filterTrace.push({ filtro: `ano ${requestedYear} (exact)`, antes: beforeYear, depois: results.length, relaxado: false })
+    } else {
+      yearMatchInfo = {
+        requestedYear,
+        status: 'model_match_year_differs',
+        available: results.slice(0, 4).map(r => ({ name: r.name, model_year: r.model_year, id: r.id })),
+      }
+    }
+  }
 
   // Nivel: NOT a filter — the scorer already adjusts ranking via baseWeights().
   // Filtering by nivel_sugerido==='avancado' would exclude comfort-first rackets
@@ -294,7 +364,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     })
   }
 
-  return { raquetes: scored, criteriosRelaxados, filterTrace }
+  return { raquetes: scored, criteriosRelaxados, filterTrace, yearMatchInfo }
 }
 
 export async function detalleRaqueta(id: number): Promise<RacketWithInsights | null> {
