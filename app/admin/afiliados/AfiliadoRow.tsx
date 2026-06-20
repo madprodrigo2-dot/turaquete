@@ -9,12 +9,13 @@ interface Props {
   price: number | null
   publicada: boolean
   affiliateUrl: string | null
+  sourceUrl: string | null
 }
 
-export default function AfiliadoRow({ id, name, brandName, price, publicada, affiliateUrl }: Props) {
+export default function AfiliadoRow({ id, name, brandName, price, publicada, affiliateUrl, sourceUrl }: Props) {
   const [url, setUrl] = useState(affiliateUrl ?? '')
   const [status, setStatus] = useState<null | 'saving' | 'ok' | string>(null)
-  const [hasLink, setHasLink] = useState(!!affiliateUrl)
+  const [hasAffiliate, setHasAffiliate] = useState(!!affiliateUrl)
 
   const dirty = url.trim() !== (affiliateUrl ?? '')
 
@@ -35,7 +36,7 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
       if (!res.ok) {
         setStatus(data.error ?? 'Erro ao salvar')
       } else {
-        setHasLink(!!trimmed)
+        setHasAffiliate(!!trimmed)
         setStatus('ok')
         setTimeout(() => setStatus(null), 3000)
       }
@@ -44,6 +45,12 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
     }
   }
 
+  const badge = hasAffiliate
+    ? <span className="text-green-500 text-base" title="Afiliado ML">✓</span>
+    : sourceUrl
+      ? <span className="text-teal-500 text-xs font-semibold" title="Source only">src</span>
+      : <span className="text-amber-500 text-base" title="Sem link">⚠</span>
+
   return (
     <tr className="border-t border-gray-100 hover:bg-gray-50/60">
       <td className="px-4 py-2.5">
@@ -51,7 +58,7 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
         <div className="text-[11px] text-gray-400 mt-0.5">{brandName}</div>
       </td>
       <td className="px-4 py-2.5 text-sm text-gray-600 tabular-nums whitespace-nowrap">
-        {price != null ? `R$ ${price.toLocaleString('pt-BR')}` : '—'}
+        {price != null ? `R$ ${price.toLocaleString('pt-BR')}` : '—'}
       </td>
       <td className="px-4 py-2.5">
         <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
@@ -60,10 +67,8 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
           {publicada ? 'publicada' : 'rascunho'}
         </span>
       </td>
-      <td className="px-4 py-2.5 text-center text-base leading-none">
-        {hasLink
-          ? <span className="text-green-500" title="Com link">✓</span>
-          : <span className="text-amber-500" title="Sem link">⚠</span>}
+      <td className="px-4 py-2.5 text-center leading-none">
+        {badge}
       </td>
       <td className="px-4 py-2.5 w-full">
         <div className="flex items-center gap-2">
@@ -72,7 +77,7 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
             value={url}
             onChange={e => { setUrl(e.target.value); setStatus(null) }}
             onKeyDown={e => { if (e.key === 'Enter' && dirty) save() }}
-            placeholder="https://..."
+            placeholder="https://mercadolivre.com.br/..."
             className="flex-1 min-w-0 text-[11px] border border-gray-200 rounded-lg px-2.5 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
           />
           <button
@@ -89,6 +94,11 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
             {status === 'saving' ? '...' : 'Salvar'}
           </button>
         </div>
+        {sourceUrl && (
+          <p className="text-[10px] text-gray-400 mt-1 truncate font-mono" title={sourceUrl}>
+            source: <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 underline">{sourceUrl}</a>
+          </p>
+        )}
         {status === 'ok' && (
           <p className="text-[11px] text-green-600 mt-1">✓ Salvo</p>
         )}

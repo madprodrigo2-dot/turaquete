@@ -13,6 +13,7 @@ interface RacketRow {
   currency: string
   publicada: boolean
   affiliate_url: string | null
+  source_url: string | null
   brand_id: number | null
 }
 
@@ -38,7 +39,7 @@ export default async function AfiliadosPage({
   const [{ data: rackets }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, price, currency, publicada, affiliate_url, brand_id')
+      .select('id, name, price, currency, publicada, affiliate_url, source_url, brand_id')
       .order('name'),
     sb
       .from('brands')
@@ -65,9 +66,10 @@ export default async function AfiliadosPage({
   }
 
   const total = rows.length
-  const comLink = rows.filter(r => !!r.affiliate_url).length
-  const semLink = total - comLink
-  const pct = total > 0 ? Math.round((comLink / total) * 100) : 0
+  const comAfiliado = rows.filter(r => !!r.affiliate_url).length
+  const soSource = rows.filter(r => !r.affiliate_url && !!r.source_url).length
+  const semLink = rows.filter(r => !r.affiliate_url && !r.source_url).length
+  const pct = total > 0 ? Math.round((comAfiliado / total) * 100) : 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,10 +87,13 @@ export default async function AfiliadosPage({
         <div className="flex-1">
           <div className="flex justify-between items-baseline mb-1.5">
             <span className="text-sm font-semibold text-gray-800">
-              {comLink} <span className="text-gray-400 font-normal">de</span> {total} com link
+              {comAfiliado} <span className="text-gray-400 font-normal">de</span> {total} com afiliado ML
             </span>
-            <span className={`text-xs font-medium ${semLink > 0 ? 'text-amber-500' : 'text-green-600'}`}>
-              {semLink > 0 ? `${semLink} sem link` : 'Completo ✓'}
+            <span className="flex gap-3 text-xs font-medium">
+              <span className="text-teal-600">{soSource} só source</span>
+              <span className={semLink > 0 ? 'text-amber-500' : 'text-green-600'}>
+                {semLink > 0 ? `${semLink} sem link` : 'Sem link ✓'}
+              </span>
             </span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -130,6 +135,7 @@ export default async function AfiliadosPage({
                 price={r.price}
                 publicada={r.publicada}
                 affiliateUrl={r.affiliate_url}
+                sourceUrl={r.source_url}
               />
             ))}
             {filtered.length === 0 && (
