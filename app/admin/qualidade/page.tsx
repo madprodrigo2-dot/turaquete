@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
+import { Suspense } from 'react'
+import AdminTestFilter from '@/components/AdminTestFilter'
 import type { DecisionTrace } from '@/lib/debug-types'
 
 export const dynamic = 'force-dynamic'
@@ -31,21 +33,29 @@ function pct(num: number, den: number): string {
   return `${Math.round((num / den) * 100)}%`
 }
 
-export default async function QualidadeAdmin() {
+export default async function QualidadeAdmin({
+  searchParams,
+}: {
+  searchParams: Promise<{ test?: string }>
+}) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
     redirect('/admin/login')
   }
 
+  const { test: testParam } = await searchParams
+  const includeTest = testParam === '1'
+
   const sb = getAdmin()
 
   // Graceful fallback if table doesn't exist yet
-  const { data: rows, error } = await sb
+  const q = sb
     .from('feedback_events')
     .select('id, created_at, session_id, event_type, motivo, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id')
     .in('event_type', ['rating_positive', 'rating_negative', 'ver_na_loja', 'ver_analise', 'nova_conversa_pos_rec'])
     .order('created_at', { ascending: false })
     .limit(200)
+  const { data: rows, error } = await (includeTest ? q : q.eq('is_test', false))
 
   const tableExists = !error
   const events: FeedbackRow[] = tableExists ? ((rows ?? []) as FeedbackRow[]) : []
@@ -93,9 +103,14 @@ export default async function QualidadeAdmin() {
     <div className="flex flex-col gap-8">
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Qualidade das respostas</h1>
-        <p className="text-gray-400 text-xs mt-0.5">{session.user?.email}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Qualidade das respostas</h1>
+          <p className="text-gray-400 text-xs mt-0.5">{session.user?.email}</p>
+        </div>
+        <Suspense fallback={null}>
+          <AdminTestFilter includeTest={includeTest} />
+        </Suspense>
       </div>
 
         {!tableExists && (
