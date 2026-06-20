@@ -492,7 +492,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
               </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full bg-[#EAF7F6]">
               {messages.map((m, i) => {
                 const isLast = i === messages.length - 1
                 const isPacing = (isStreaming || streamRawText !== '') && isLast && m.role === 'assistant'
