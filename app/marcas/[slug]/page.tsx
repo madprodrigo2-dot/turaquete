@@ -6,6 +6,8 @@ import { listarMarcas, listarRaquetasPorMarca, RacketWithInsights } from '@/lib/
 import RacketImageTile from '@/components/RacketImageTile'
 import { derivarNivel } from '@/lib/nivel'
 
+export const dynamic = 'force-dynamic'
+
 // ── Derived brand intro (deterministic, no LLM) ───────────────────────────────
 
 function dominant<T>(arr: (T | null | undefined)[]): T | null {
