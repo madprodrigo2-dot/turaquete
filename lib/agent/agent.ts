@@ -5,13 +5,13 @@ import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
-import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, AKINATOR_QUESTION_TEXTS, type ConfidenceInfo, type FieldKey } from './confidence'
+import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const MODEL = PRICING.model
 const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
-const MAX_TOOL_ROUNDS = 5  // nominal flow needs 3-4 rounds; 5 covers stall+chips edge cases
+const MAX_TOOL_ROUNDS = 4  // normal flows need ≤4 rounds (troca+marca-filtro worst case)
 
 const MARCA_QUESTION_TEXT = 'Tem alguma marca que você curte ou tanto faz?'
 const MARCA_FILTRO_QUESTION_TEXT = 'Quer ver só de uma marca específica?'
@@ -266,13 +266,11 @@ async function executeTool(
 
     if (!confidence.willRecommend && confidence.nextQuestion) {
       const q = confidence.nextQuestion
-      // Record which field is being asked so streamResponse can inject the exact
-      // fixed question text — preventing chips from appearing without a question.
       pendingQuestionFieldRef.value = q.field
-      // Do NOT include baseResult here — the faixa numbers are stored in diagnosticoRef.value
-      // and will be injected via FAIXA VINCULANTE when the agent actually recommends.
-      // Exposing peso/balance/prioridades now would cause the agent to show the "SEU PERFIL IDEAL"
-      // block while still gathering info, which contradicts asking a follow-up question.
+      // Auto-populate chips here so streamResponse always injects the fixed question text,
+      // regardless of whether the model calls sugerir_opcoes. This eliminates an extra
+      // API round per question turn and prevents paraphrase-based orphaned chips.
+      pendingSuggestions.splice(0, pendingSuggestions.length, ...q.chips)
       return JSON.stringify({
         CONFIANCA_DO_PERFIL: {
           score_pct: confidence.score,
@@ -286,11 +284,11 @@ async function executeTool(
           },
           instrucao_OBRIGATORIA:
             `Confiança ${confidence.score}% < ${confidence.threshold}% mínima. ` +
-            `AÇÃO OBRIGATÓRIA: (1) chame sugerir_opcoes com os chips acima; ` +
-            `(2) a pergunta já será emitida automaticamente pelo sistema — NÃO a escreva você mesmo. ` +
-            `Você pode escrever uma frase CURTA de acolhimento do que o usuário disse (ex: "Entendido!", "Boa!") ANTES dos chips. ` +
+            `Os chips já foram configurados pelo sistema — NÃO chame sugerir_opcoes. ` +
+            `AÇÃO: escreva UMA frase curta de acolhimento (ex: "Entendido!", "Boa!"). ` +
+            `A pergunta será exibida automaticamente — NÃO a escreva você mesmo. ` +
             `PROIBIDO mostrar perfil ideal, peso ou balance agora. ` +
-            `PROIBIDO chamar buscar_raquetas ou recomendar_raquetas nesta resposta.`,
+            `PROIBIDO chamar buscar_raquetas, recomendar_raquetas ou sugerir_opcoes nesta resposta.`,
         },
       })
     }
@@ -706,12 +704,40 @@ async function executeTool(
   return JSON.stringify({ erro: `Ferramenta desconhecida: ${name}` })
 }
 
+// Compact tool_result content for rounds older than the most recent, reducing per-round
+// token cost. Old diagnosticar/buscar payloads (2k+ tokens) become '(ok)'.
+// The most recent tool result is always preserved intact so the model can process it.
+function compactOldToolResults(messages: Anthropic.MessageParam[]): void {
+  let kept = 0
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.role !== 'user' || !Array.isArray(m.content)) continue
+    if (!(m.content as Array<{ type: string }>).some(b => b.type === 'tool_result')) continue
+    kept++
+    if (kept > 1) {
+      m.content = (m.content as Array<Anthropic.ToolResultBlockParam>).map(b =>
+        b.type !== 'tool_result'
+          ? b
+          : { type: 'tool_result', tool_use_id: b.tool_use_id, content: '(ok)' }
+      )
+    }
+  }
+}
+
+const MAX_HISTORY_MESSAGES = 20  // keep last 10 turns; older turns rarely affect recommendations
+
 export async function runAgentTurn(
   history: ChatMessage[],
   onToken?: (token: string) => void,
   signal?: AbortSignal
 ): Promise<AgentResult> {
-  const messages: Anthropic.MessageParam[] = history.map(m => ({
+  // Truncate history for the model context while keeping full history for profile derivations.
+  // Profile state (confirmedProfile, brandAskedRef, etc.) is derived from the FULL history
+  // before this truncation, so profile continuity is preserved even in long conversations.
+  const historyForModel = history.length > MAX_HISTORY_MESSAGES
+    ? history.slice(-MAX_HISTORY_MESSAGES)
+    : history
+  const messages: Anthropic.MessageParam[] = historyForModel.map(m => ({
     role: m.role,
     content: m.content,
   }))
@@ -772,14 +798,11 @@ export async function runAgentTurn(
   })()
   const pendingQuestionFieldRef: { value: string | null } = { value: null }
   const usage: TokenUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }
-  // Count only the Akinator questions actually presented in history, not total user messages.
-  // Total user messages reach maxQuestions (4) fast in long "quero trocar" flows, firing
-  // recommendAnyway before lesão is asked. Akinator question texts are fixed/verbatim,
-  // so an includes() check on assistant messages gives the real question round count.
-  const profileQuestionsAsked = history
-    .filter(m => m.role === 'assistant')
-    .filter(m => AKINATOR_QUESTION_TEXTS.some(q => m.content.includes(q)))
-    .length
+  // Deterministic question counter: number of user turns beyond the initial message.
+  // Each user turn corresponds to one answered question (or "nao sei"). This is immune
+  // to model paraphrasing — the old includes()-based counter stayed at 0 when the model
+  // improvised wording, causing recommendAnyway to never fire (infinite "nao sei" loop).
+  const profileQuestionsAsked = Math.max(0, history.filter(m => m.role === 'user').length - 1)
   // Profile state derived from chip answers in history — immune to model omission between turns.
   // Lesão fields are also stripped from model input and re-injected from here (prevents inference).
   const confirmedProfile = extractConfirmedProfileFromHistory(history)
@@ -922,6 +945,15 @@ export async function runAgentTurn(
     }
 
     messages.push({ role: 'user', content: toolResults })
+    compactOldToolResults(messages)
+
+    // Short-circuit: chips are pre-populated by diagnosticar_perfil when INSUFICIENTE.
+    // Skip the next API round (which would be a wasted end_turn) and go straight to
+    // streamResponse, which will inject the fixed question text from pendingQuestionFieldRef.
+    if (debugRef.value.confidenceInfo?.willRecommend === false && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
+      confidenceInsufficient = true  // ensure post-loop guard reads correct state
+      break
+    }
   }
 
   // Post-loop safety: if search results exist but recomendar_raquetas was never
