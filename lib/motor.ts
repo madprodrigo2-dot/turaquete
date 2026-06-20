@@ -74,11 +74,10 @@ export function classifyCore(core: string | null | undefined): CoreClass {
 function texturaScore(superficie: string | null | undefined, hasSpinTech: boolean): number {
   if (!superficie) return 5
   const s = superficie.toLowerCase()
-  if (s.includes('lisa')) return hasSpinTech ? 6 : 4
+  // Teto de fábrica: 7 (medio). Alto (9) reservado para tratamento em loja, nunca automático.
+  if (s.includes('lisa')) return hasSpinTech ? 5 : 3
   if (s.includes('levemente')) return hasSpinTech ? 7 : 5
-  if (s.includes('áspera') || s.includes('aspera') || s.includes('quartzo')) {
-    return hasSpinTech ? 9 : 7
-  }
+  if (s.includes('áspera') || s.includes('aspera') || s.includes('quartzo')) return 7
   return 5
 }
 
@@ -93,7 +92,7 @@ function espessuraStabilityMod(mm: number | null | undefined): number {
 
 export function calcularMotor(input: MotorInput): MotorResult {
   const techs = input.tecnologias ?? []
-  const hasSpinTech = techs.some(t => t.tipo === 'superficie')
+  const hasSpinTech = techs.some(t => t.tipo === 'superficie' || t.tipo === 'spin')
   const antivibCount = techs.filter(t => t.tipo === 'antivibração' || t.tipo === 'antivibracao').length
   const estruturalCount = techs.filter(t => t.tipo === 'estrutural').length
 
