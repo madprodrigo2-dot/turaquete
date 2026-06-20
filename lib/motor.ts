@@ -81,17 +81,22 @@ function texturaScore(superficie: string | null | undefined, hasSpinTech: boolea
   return 5
 }
 
-// Stability — B2: espesor + peso (320/330/340) + rigidez de cara. Techs não pontuam.
+// Stability — B2+core: espesor + peso (320/330/340) + rigidez de cara + dureza do núcleo.
 function stabilityB(
   espessura_mm: number | null | undefined,
   weight_g: number | null | undefined,
   face_material: string | null | undefined,
+  core: string | null | undefined,
 ): number {
   const face    = (face_material || '').toLowerCase()
+  const c       = (core || '').toLowerCase()
   const modEsp  = espessura_mm == null ? 1 : espessura_mm <= 20 ? 0 : espessura_mm <= 22 ? 1 : 2
   const modPeso = weight_g == null ? 1 : weight_g < 320 ? 0 : weight_g < 330 ? 1 : weight_g < 340 ? 2 : 3
   const modRig  = /18k|21k|24k|forjado|forged|aluminizado/.test(face) ? 1 : 0
-  return Math.min(9, Math.max(5, 5 + modEsp + modPeso + modRig))
+  const isSupersoft = /supersoft|extra soft|extrasoft|branco|white/.test(c) || core === 'EVA 10' || core === 'EVA 13'
+  const isHard = !isSupersoft && (/hard|duro|high density|alta densidade/.test(c) || c.includes('black pro') || (!c.includes('soft') && c.includes('black')))
+  const modCore = isSupersoft ? -1 : isHard ? 1 : 0
+  return Math.min(9, Math.max(5, 5 + modEsp + modPeso + modRig + modCore))
 }
 
 // ── Motor principal ───────────────────────────────────────────────────────────
@@ -105,7 +110,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const spin = texturaScore(input.superficie, hasSpinTech)
 
   // Stability — física: espesor + peso + rigidez de cara
-  const stability = stabilityB(input.espessura_mm, input.weight_g, input.face_material)
+  const stability = stabilityB(input.espessura_mm, input.weight_g, input.face_material, input.core)
 
   // Classificações
   const faceGrade = classifyFace(input.face_material)
