@@ -136,7 +136,7 @@ export default async function AdminMotorPage() {
       scoreAva: (() => {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*18 + ct*20 + cf*12 + mn*12 + (sp ?? 5)*7 + st*20 + fg*11) / 10) / 10
+        return Math.round((pw*18 + ct*20 + cf*8 + mn*18 + (sp ?? 5)*8 + st*20 + fg*8) / 10) / 10
       })(),
       overrides,
     }
