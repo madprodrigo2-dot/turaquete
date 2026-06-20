@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
+import AdminTestFilter from '@/components/AdminTestFilter'
 import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
@@ -47,12 +48,13 @@ function avg(arr: number[]): number | null {
 export default async function AnaliseAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; starter?: string }>
+  searchParams: Promise<{ days?: string; starter?: string; test?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30', starter: starterParam } = await searchParams
+  const { days: daysParam = '30', starter: starterParam, test: testParam } = await searchParams
+  const includeTest = testParam === '1'
   const daysBack      = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
   const cutoffDate    = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
   const daysLabel     = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
@@ -79,65 +81,71 @@ export default async function AnaliseAdmin({
     recEventRows,
     starterDetailRows,
   ] = await Promise.all([
-    sb.rpc('admin_intencao_counts').then(r => (r.data ?? []) as IntencaoRow[]),
-    sb.rpc('admin_starter_counts').then(r => (r.data ?? []) as StarterRow[]),
+    sb.rpc('admin_intencao_counts', { p_include_test: includeTest }).then(r => (r.data ?? []) as IntencaoRow[]),
+    sb.rpc('admin_starter_counts', { p_include_test: includeTest }).then(r => (r.data ?? []) as StarterRow[]),
 
     primeiraMsgColumnMissing
       ? Promise.resolve([] as MensagemRow[])
-      : sb.from('conversations')
-          .select('created_at, starter_usado, intencao_detectada, primeira_mensagem')
-          .not('primeira_mensagem', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(50)
-          .then(r => (r.data ?? []) as MensagemRow[]),
+      : (() => {
+          const q = sb.from('conversations')
+            .select('created_at, starter_usado, intencao_detectada, primeira_mensagem')
+            .not('primeira_mensagem', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(50)
+          return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as MensagemRow[])
+        })(),
 
-    sb.rpc('admin_cost_by_session', { days_back: daysBack }).then(r => (r.data ?? []) as SessionCostRow[]),
+    sb.rpc('admin_cost_by_session', { days_back: daysBack, p_include_test: includeTest }).then(r => (r.data ?? []) as SessionCostRow[]),
 
-    sb.from('feedback_events')
-      .select('session_id, event_type')
-      .in('event_type', ['ver_na_loja', 'ver_analise'])
-      .gte('created_at', cutoffDate)
-      .then(r => (r.data ?? []) as ClickRow[]),
+    (() => {
+      const q = sb.from('feedback_events')
+        .select('session_id, event_type')
+        .in('event_type', ['ver_na_loja', 'ver_analise'])
+        .gte('created_at', cutoffDate)
+      return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as ClickRow[])
+    })(),
 
-    sb.from('recommendation_events')
-      .select('racket_id')
-      .gte('created_at', cutoffDate)
-      .then(r => (r.data ?? []) as RecEventRow[]),
+    (() => {
+      const q = sb.from('recommendation_events')
+        .select('racket_id')
+        .gte('created_at', cutoffDate)
+      return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as RecEventRow[])
+    })(),
 
     filterStarter === null || primeiraMsgColumnMissing
       ? Promise.resolve([] as MensagemRow[])
-      : filterStarter === 'livre'
-        ? sb.from('conversations')
+      : (() => {
+          const base = sb.from('conversations')
             .select('created_at, primeira_mensagem, intencao_detectada, starter_usado')
-            .is('starter_usado', null)
             .not('primeira_mensagem', 'is', null)
             .order('created_at', { ascending: false })
             .limit(100)
-            .then(r => (r.data ?? []) as MensagemRow[])
-        : sb.from('conversations')
-            .select('created_at, primeira_mensagem, intencao_detectada, starter_usado')
-            .eq('starter_usado', filterStarter)
-            .not('primeira_mensagem', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(100)
-            .then(r => (r.data ?? []) as MensagemRow[]),
+          const withIsTest = includeTest ? base : base.eq('is_test', false)
+          return (filterStarter === 'livre'
+            ? withIsTest.is('starter_usado', null)
+            : withIsTest.eq('starter_usado', filterStarter)
+          ).then(r => (r.data ?? []) as MensagemRow[])
+        })(),
   ])
 
   // ── Fallback RPCs ─────────────────────────────────────────────────────────
   const intencoes: IntencaoRow[] = intentRows.length
     ? intentRows
-    : await sb.from('conversations').select('intencao_detectada').not('intencao_detectada', 'is', null)
-        .then(r => {
+    : await (() => {
+        const q = sb.from('conversations').select('intencao_detectada').not('intencao_detectada', 'is', null)
+        return (includeTest ? q : q.eq('is_test', false)).then(r => {
           const c: Record<string, number> = {}
           for (const row of (r.data ?? []) as { intencao_detectada: string }[])
             c[row.intencao_detectada] = (c[row.intencao_detectada] ?? 0) + 1
           return Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total)
         })
+      })()
 
   const starters: StarterRow[] = starterRows.length
     ? starterRows
-    : await sb.from('conversations').select('starter_usado').not('primeira_mensagem', 'is', null)
-        .then(r => {
+    : await (() => {
+        const q = sb.from('conversations').select('starter_usado').not('primeira_mensagem', 'is', null)
+        return (includeTest ? q : q.eq('is_test', false)).then(r => {
           const c: Record<string, number> = {}
           for (const row of (r.data ?? []) as { starter_usado: string | null }[]) {
             const k = row.starter_usado ?? 'livre'
@@ -145,6 +153,7 @@ export default async function AnaliseAdmin({
           }
           return Object.entries(c).map(([k, v]) => ({ starter: k === 'livre' ? null : k, total: v })).sort((a, b) => b.total - a.total)
         })
+      })()
 
   // ── Cost stats ────────────────────────────────────────────────────────────
   const sessions          = sessionCostRows.filter(r => r.total_brl > 0)
@@ -262,9 +271,14 @@ export default async function AnaliseAdmin({
           <h1 className="text-sm font-semibold text-gray-800">Análise</h1>
           <p className="text-[11px] text-gray-400 mt-0.5">{daysLabel}</p>
         </div>
-        <Suspense fallback={null}>
-          <AdminPeriodFilter current={daysParam} />
-        </Suspense>
+        <div className="flex items-center gap-2">
+          <Suspense fallback={null}>
+            <AdminTestFilter includeTest={includeTest} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <AdminPeriodFilter current={daysParam} />
+          </Suspense>
+        </div>
       </div>
 
       {/* Migration notice */}

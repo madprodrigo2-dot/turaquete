@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
+import AdminTestFilter from '@/components/AdminTestFilter'
 import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
@@ -25,12 +26,13 @@ function pct(num: number, den: number): string {
 export default async function RankingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>
+  searchParams: Promise<{ days?: string; test?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30' } = await searchParams
+  const { days: daysParam = '30', test: testParam } = await searchParams
+  const includeTest = testParam === '1'
   const daysBack   = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
   const cutoff     = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
   const daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
@@ -38,15 +40,19 @@ export default async function RankingPage({
   const sb = getAdmin()
 
   const [recRows, clickRows, racketRows] = await Promise.all([
-    sb.from('recommendation_events')
-      .select('racket_id, confidence, rank')
-      .gte('created_at', cutoff)
-      .then(r => (r.data ?? []) as RecRow[]),
+    (() => {
+      const q = sb.from('recommendation_events')
+        .select('racket_id, confidence, rank')
+        .gte('created_at', cutoff)
+      return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as RecRow[])
+    })(),
 
-    sb.from('link_clicks')
-      .select('racket_id, destination_type')
-      .gte('created_at', cutoff)
-      .then(r => (r.data ?? []) as ClickRow[]),
+    (() => {
+      const q = sb.from('link_clicks')
+        .select('racket_id, destination_type')
+        .gte('created_at', cutoff)
+      return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as ClickRow[])
+    })(),
 
     sb.from('rackets')
       .select('id, name, slug, affiliate_url')
@@ -112,9 +118,14 @@ export default async function RankingPage({
             {totalRecs} recomendações · {totalClicks} cliques — {daysLabel}
           </p>
         </div>
-        <Suspense fallback={null}>
-          <AdminPeriodFilter current={daysParam} />
-        </Suspense>
+        <div className="flex items-center gap-2">
+          <Suspense fallback={null}>
+            <AdminTestFilter includeTest={includeTest} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <AdminPeriodFilter current={daysParam} />
+          </Suspense>
+        </div>
       </div>
 
       {/* Resumo */}

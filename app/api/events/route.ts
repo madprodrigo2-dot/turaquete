@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { checkEventsRateLimit } from '@/lib/rate-limit'
+import { auth } from '@/auth'
 
 const VALID_TYPES = new Set([
   'rating_positive',
@@ -20,7 +22,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json() as Record<string, unknown>
+    const [body, session, cookieStore] = await Promise.all([
+      req.json() as Promise<Record<string, unknown>>,
+      auth(),
+      cookies(),
+    ])
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
+    const isTest  = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
+
     const { event_type, session_id, motivo, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body
 
     if (typeof event_type !== 'string' || !VALID_TYPES.has(event_type)) {
@@ -36,6 +45,7 @@ export async function POST(req: NextRequest) {
       .insert({
         session_id,
         event_type,
+        is_test:                  isTest,
         motivo:                   typeof motivo === 'string'                   ? motivo : null,
         comentario:               typeof comentario === 'string'               ? comentario.slice(0, 1000) : null,
         decision_trace:           decision_trace != null                        ? decision_trace : null,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FaixaIdeal } from '@/lib/scorer'
 import type { DecisionTrace, PrecoDecision, LimitesState, MarcaDecision } from '@/lib/debug-types'
 import type { ConfidenceInfo } from '@/lib/agent/confidence'
@@ -289,12 +289,45 @@ function LimitesSection({ limites }: { limites: LimitesState }) {
   )
 }
 
+function TestModeToggle() {
+  const [active, setActive] = useState(false)
+
+  useEffect(() => {
+    setActive(document.cookie.split(';').some(c => c.trim() === 'turaquete_test_mode=1'))
+  }, [])
+
+  const toggle = () => {
+    if (active) {
+      document.cookie = 'turaquete_test_mode=; path=/; max-age=0'
+      setActive(false)
+    } else {
+      document.cookie = 'turaquete_test_mode=1; path=/; max-age=86400'
+      setActive(true)
+    }
+  }
+
+  return (
+    <button
+      onClick={toggle}
+      title={active ? 'Modo teste ON — seus eventos são marcados is_test=true. Clique para desativar.' : 'Ativar modo teste — marca seus eventos como is_test=true (útil em incógnito sem login admin)'}
+      className={`ml-auto px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+        active
+          ? 'bg-amber-400 text-amber-900 hover:bg-amber-300'
+          : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+      }`}
+    >
+      {active ? '🧪 TESTE ON' : '🧪 teste off'}
+    </button>
+  )
+}
+
 export default function DebugPanel({ data }: { data: DebugData }) {
   return (
     <div className="mt-2 font-mono text-xs bg-gray-800 text-gray-200 rounded-lg overflow-hidden border border-gray-600 select-text">
       <div className="bg-gray-700 px-3 py-1.5 flex items-center gap-2">
         <span className="text-yellow-400 font-bold text-[11px]">⚙ DEBUG</span>
         <span className="text-gray-400 text-[10px]">admin only</span>
+        <TestModeToggle />
       </div>
 
       {data.thinking && (

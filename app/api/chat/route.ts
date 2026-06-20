@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { runAgentTurn, ChatMessage } from '@/lib/agent/agent'
 import { calcCost, PRICING } from '@/lib/agent/pricing'
 import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
@@ -198,6 +199,8 @@ export async function POST(req: NextRequest) {
     // Admin check — server-side only. Thinking data is NEVER sent to non-admin clients.
     const session = await auth()
     const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
+    const cookieStore = await cookies()
+    const isTest = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
 
     const encoder = new TextEncoder()
     const writeEvent = (controller: ReadableStreamDefaultController, data: object) => {
@@ -258,6 +261,7 @@ export async function POST(req: NextRequest) {
               modelo_usado:       PRICING.model,
               custo_usd:          usd,
               custo_brl:          brl,
+              is_test:            isTest,
               ...(primeiraMensagem !== undefined && {
                 primeira_mensagem: primeiraMensagem,
                 starter_usado: starterUsado ?? null,
@@ -276,6 +280,7 @@ export async function POST(req: NextRequest) {
                 conversation_id: sessionId,
                 confidence: r.match_score ?? null,
                 rank: idx + 1,
+                is_test: isTest,
               })))
               .then(({ error }) => {
                 if (error) console.error('Recommendation events insert error:', error.message)
