@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import AdminPeriodFilter from './AdminPeriodFilter'
+import AdminTestFilter from '@/components/AdminTestFilter'
 import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
@@ -40,12 +41,13 @@ function avg(arr: number[]): number | null {
 export default async function GeralAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>
+  searchParams: Promise<{ days?: string; test?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30' } = await searchParams
+  const { days: daysParam = '30', test: testParam } = await searchParams
+  const includeTest = testParam === '1'
   const daysBack   = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
   const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
   const daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
@@ -56,13 +58,15 @@ export default async function GeralAdmin({
   const supabaseDomain = supabaseUrl.replace('https://', '').replace(/\/$/, '')
 
   const [sessionCostRows, clickRows, intentRows, semAfiliadoRows, columnCheck] = await Promise.all([
-    sb.rpc('admin_cost_by_session', { days_back: daysBack }).then(r => (r.data ?? []) as SessionCostRow[]),
-    sb.from('feedback_events')
-      .select('session_id, event_type')
-      .in('event_type', ['ver_na_loja', 'ver_analise'])
-      .gte('created_at', cutoffDate)
-      .then(r => (r.data ?? []) as ClickRow[]),
-    sb.rpc('admin_intencao_counts').then(r => (r.data ?? []) as IntencaoRow[]),
+    sb.rpc('admin_cost_by_session', { days_back: daysBack, p_include_test: includeTest }).then(r => (r.data ?? []) as SessionCostRow[]),
+    (() => {
+      const q = sb.from('feedback_events')
+        .select('session_id, event_type')
+        .in('event_type', ['ver_na_loja', 'ver_analise'])
+        .gte('created_at', cutoffDate)
+      return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as ClickRow[])
+    })(),
+    sb.rpc('admin_intencao_counts', { p_include_test: includeTest }).then(r => (r.data ?? []) as IntencaoRow[]),
     sb.from('rackets').select('id, name').eq('publicada', true).is('affiliate_url', null).order('name')
       .then(r => (r.data ?? []) as RacketRow[]),
     sb.from('conversations').select('primeira_mensagem').limit(1)
@@ -91,9 +95,14 @@ export default async function GeralAdmin({
           <h1 className="text-sm font-semibold text-gray-800">Geral</h1>
           <p className="text-[11px] text-gray-400 mt-0.5">{daysLabel}</p>
         </div>
-        <Suspense fallback={null}>
-          <AdminPeriodFilter current={daysParam} />
-        </Suspense>
+        <div className="flex items-center gap-2">
+          <Suspense fallback={null}>
+            <AdminTestFilter includeTest={includeTest} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <AdminPeriodFilter current={daysParam} />
+          </Suspense>
+        </div>
       </div>
 
       {/* Migration notice */}
