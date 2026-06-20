@@ -21,7 +21,7 @@ const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
 const MESSAGE_LIMIT = 25
 const WARN_AT       = 20
 
-const BUDGET_CHIPS = ['Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500']
+const BUDGET_CHIPS = ['Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000', 'Tanto faz / me mostra opções']
 const LEVEL_CHIPS  = ['Iniciante', 'Intermediário', 'Avançado']
 
 function detectContextChips(text: string): string[] | null {

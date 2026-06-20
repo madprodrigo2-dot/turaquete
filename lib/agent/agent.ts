@@ -727,9 +727,9 @@ export async function runAgentTurn(
   // omits marca_preferida or presupuesto_min in subsequent turns after the user answered.
   const PRICE_ANSWERS = new Set([
     // Current buckets
-    'Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Acima de R$3.000',
-    // Legacy buckets (backward compat)
-    'Até R$1.500', 'R$1.500–2.500', 'Acima de R$2.500',
+    'Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000',
+    // Legacy buckets (backward compat — old BUDGET_CHIPS labels from before 0.3.439)
+    'Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500', 'Acima de R$2.500', 'Acima de R$3.000',
     'Tanto faz / me mostra opções',
   ])
   const brandAskedRef: { value: boolean } = {
