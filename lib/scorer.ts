@@ -175,26 +175,25 @@ function baseWeights(profile: ScorerProfile): Weights {
   }
 
   if (profile.prioridade === 'potencia') return {
-    power: 30, control: 15, comfort: 10,
-    maneuverability: 15, spin: 5, stability: 20, forgiveness: 5,
+    power: 32, control: 15, comfort: 10,
+    maneuverability: 15, spin: 0, stability: 23, forgiveness: 5,
   }
 
   if (profile.prioridade === 'controle' || profile.prioridade === 'defesa') return {
-    power: 5, control: 30, comfort: 15,
-    maneuverability: 15, spin: 5, stability: 20, forgiveness: 10,
+    power: 5, control: 32, comfort: 15,
+    maneuverability: 15, spin: 0, stability: 23, forgiveness: 10,
   }
 
-  // intermediario sem prioridade declarada: equilíbrio com foco em controle+estabilidade,
-  // menos forgiveness que iniciante, menos power que avançado
+  // intermediario sem prioridade declarada
   if (profile.nivel === 'intermediario') return {
-    power: 12, control: 22, comfort: 15,
-    maneuverability: 15, spin: 3, stability: 22, forgiveness: 11,
+    power: 12, control: 23, comfort: 15,
+    maneuverability: 15, spin: 0, stability: 24, forgiveness: 11,
   }
 
-  // avançado misto / default — mais power, menos conforto e perdão que intermediário
+  // avançado misto / default
   return {
-    power: 18, control: 20, comfort: 12,
-    maneuverability: 12, spin: 7, stability: 20, forgiveness: 11,
+    power: 20, control: 22, comfort: 12,
+    maneuverability: 12, spin: 0, stability: 23, forgiveness: 11,
   }
 }
 
@@ -202,19 +201,19 @@ function applyModifiers(w: Weights, profile: ScorerProfile): Weights {
   const m = { ...w }
 
   if (profile.frequencia_alta) {
-    // Comfort +5, deduct from spin then power (lowest-priority dimensions)
+    // Comfort +5, deduct from forgiveness then power
     m.comfort += 5
-    const fromSpin = Math.min(m.spin, 5)
-    m.spin -= fromSpin
-    m.power = Math.max(0, m.power - (5 - fromSpin))
+    const fromForg = Math.min(m.forgiveness, 5)
+    m.forgiveness -= fromForg
+    m.power = Math.max(0, m.power - (5 - fromForg))
   }
 
   if (profile.contexto_vento) {
-    // Stability +8 for wind resistance, deduct from spin then power
+    // Stability +8, deduct from forgiveness then power
     m.stability += 8
-    const fromSpin = Math.min(m.spin, 8)
-    m.spin -= fromSpin
-    m.power = Math.max(0, m.power - Math.max(0, 8 - fromSpin))
+    const fromForg = Math.min(m.forgiveness, 8)
+    m.forgiveness -= fromForg
+    m.power = Math.max(0, m.power - Math.max(0, 8 - fromForg))
   }
 
   return m
