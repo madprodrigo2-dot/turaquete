@@ -100,7 +100,10 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   }
 
   const extra = (racket.specs_extra as Record<string, unknown> | null) ?? {}
-  const athlete = extra.atleta as string | undefined
+  const athleteRaw = extra.atleta
+  const athlete: string | undefined = Array.isArray(athleteRaw)
+    ? (athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof athleteRaw === 'string' ? athleteRaw : undefined
   const tratamentoFabrica = extra.tratamento_fabrica as boolean | undefined
 
   return (

@@ -17,7 +17,10 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
-  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const _athleteRaw = (racket.specs_extra as Record<string, unknown> | null)?.atleta
+  const athlete: string | undefined = Array.isArray(_athleteRaw)
+    ? (_athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
   const nivel = derivarNivel(racket)
 
   return (

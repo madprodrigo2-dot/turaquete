@@ -41,7 +41,10 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
   const specRows = buildSpecRows(racket)
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
   const tratamentoFabrica = extra.tratamento_fabrica
-  const athlete = extra.atleta as string | undefined
+  const athleteRaw = extra.atleta
+  const athlete: string | undefined = Array.isArray(athleteRaw)
+    ? (athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof athleteRaw === 'string' ? athleteRaw : undefined
 
   return createPortal(
     <div

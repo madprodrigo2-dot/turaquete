@@ -55,8 +55,12 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
 
   const athletes = [...new Set(
     rackets
-      .map(r => (r.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined)
-      .filter((a): a is string => typeof a === 'string' && a.trim().length > 0)
+      .flatMap(r => {
+        const raw = (r.specs_extra as Record<string, unknown> | null)?.atleta
+        if (Array.isArray(raw)) return (raw as string[]).filter(Boolean)
+        if (typeof raw === 'string' && raw.trim()) return [raw.trim()]
+        return []
+      })
   )]
   let intro = `A ${brandName} tem ${n} ${n === 1 ? 'raquete' : 'raquetes'} no Turaquete`
   const clauses: string[] = []
@@ -231,7 +235,10 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
   const ins = racket.racket_insights
-  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const _athleteRaw = (racket.specs_extra as Record<string, unknown> | null)?.atleta
+  const athlete: string | undefined = Array.isArray(_athleteRaw)
+    ? (_athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
   const scoreTag = deriveScoreTag(ins)
   const nivel = derivarNivel(racket)
 

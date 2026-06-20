@@ -115,7 +115,10 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
 }
 
 function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
-  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const _athleteRaw1 = (racket.specs_extra as Record<string, unknown> | null)?.atleta
+  const athlete: string | undefined = Array.isArray(_athleteRaw1)
+    ? (_athleteRaw1 as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof _athleteRaw1 === 'string' ? _athleteRaw1 : undefined
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
@@ -215,7 +218,10 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
   const perfil   = racket.racket_insights?.perfil_resumo ?? null
-  const athlete  = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const _athleteRaw2 = (racket.specs_extra as Record<string, unknown> | null)?.atleta
+  const athlete: string | undefined = Array.isArray(_athleteRaw2)
+    ? (_athleteRaw2 as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof _athleteRaw2 === 'string' ? _athleteRaw2 : undefined
   const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
   const ctaHref  = hasLink ? `/ir/${racket.slug}` : null
   const linkTipo = racket.affiliate_url ? 'afiliado' : 'oficial'

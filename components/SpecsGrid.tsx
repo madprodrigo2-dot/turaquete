@@ -69,7 +69,10 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     }
   }
 
-  const athlete = extra.atleta as string | undefined
+  const athleteRaw = extra.atleta
+  const athlete: string | undefined = Array.isArray(athleteRaw)
+    ? (athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof athleteRaw === 'string' ? athleteRaw : undefined
   const athleteLabel = athlete
     ? (athlete.includes('(') ? athlete.split('(')[0].trim() : athlete.trim())
     : undefined

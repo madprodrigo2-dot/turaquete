@@ -38,7 +38,10 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
     ? `${racket.name} ${racket.model_year}`
     : racket.name
 
-  const athlete = (racket.specs_extra as Record<string, unknown> | null)?.atleta as string | undefined
+  const _athleteRaw = (racket.specs_extra as Record<string, unknown> | null)?.atleta
+  const athlete: string | undefined = Array.isArray(_athleteRaw)
+    ? (_athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
+    : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
 
   const ins = racket.racket_insights
   const topDims = ins
