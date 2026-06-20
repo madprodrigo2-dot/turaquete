@@ -26,10 +26,13 @@ export type RacketData = {
     stability: number | null
     nivel_sugerido: string | null
     scoreGeral: number | null
+    scoreIni: number | null
+    scoreInt: number | null
+    scoreAva: number | null
   } | null
 }
 
-type SortCol = 'name' | 'brand' | 'year' | 'nivel' | 'scoreGeral' | 'price'
+type SortCol = 'name' | 'brand' | 'year' | 'nivel' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | 'price'
 type SortDir = 'asc' | 'desc'
 
 function nivLabel(n: string | null) {
@@ -171,6 +174,9 @@ export default function RaquetasTable({
         case 'year':       av = a.model_year ?? 0;                       bv = b.model_year ?? 0; break
         case 'nivel':      av = nivOrder(a.ins?.nivel_sugerido ?? null); bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
         case 'scoreGeral': av = a.ins?.scoreGeral ?? -1;                 bv = b.ins?.scoreGeral ?? -1; break
+        case 'scoreIni':   av = a.ins?.scoreIni ?? -1;                   bv = b.ins?.scoreIni ?? -1; break
+        case 'scoreInt':   av = a.ins?.scoreInt ?? -1;                   bv = b.ins?.scoreInt ?? -1; break
+        case 'scoreAva':   av = a.ins?.scoreAva ?? -1;                   bv = b.ins?.scoreAva ?? -1; break
         case 'price':      av = a.price ?? -1;                           bv = b.price ?? -1; break
       }
       if (av < bv) return sortDir === 'asc' ? -1 : 1
@@ -188,7 +194,7 @@ export default function RaquetasTable({
     return `${base} ${pad} ${active}`
   }
 
-  const colCount = 9
+  const colCount = 11
 
   return (
     <div>
@@ -268,8 +274,14 @@ export default function RaquetasTable({
               <th className={thCls('nivel')} onClick={() => handleSort('nivel')}>
                 Nível <SortIcon col="nivel" active={sortCol} dir={sortDir} />
               </th>
-              <th className={thCls('scoreGeral', 'center')} onClick={() => handleSort('scoreGeral')}>
-                Geral <SortIcon col="scoreGeral" active={sortCol} dir={sortDir} />
+              <th className={thCls('scoreIni', 'center')} onClick={() => handleSort('scoreIni')}>
+                I <SortIcon col="scoreIni" active={sortCol} dir={sortDir} />
+              </th>
+              <th className={thCls('scoreInt', 'center')} onClick={() => handleSort('scoreInt')}>
+                M <SortIcon col="scoreInt" active={sortCol} dir={sortDir} />
+              </th>
+              <th className={thCls('scoreAva', 'center')} onClick={() => handleSort('scoreAva')}>
+                A <SortIcon col="scoreAva" active={sortCol} dir={sortDir} />
               </th>
               <th className="px-2 py-2.5 text-gray-400 font-medium text-center whitespace-nowrap">Dados</th>
               <th className={thCls('price', 'right')} onClick={() => handleSort('price')}>
@@ -294,8 +306,20 @@ export default function RaquetasTable({
                   <td className="px-2 py-2 text-center text-gray-400">{r.model_year ?? '—'}</td>
                   <td className="px-3 py-2 text-gray-400">{nivLabel(r.ins?.nivel_sugerido ?? null)}</td>
                   <td className="px-2 py-2 text-center">
-                    {r.ins?.scoreGeral != null
-                      ? <span className="font-mono font-bold text-teal-700">{r.ins.scoreGeral}</span>
+                    {r.ins?.scoreIni != null
+                      ? <span className={`font-mono font-semibold ${r.ins.scoreIni >= 7.5 ? 'text-orange-500' : r.ins.scoreIni >= 6.5 ? 'text-teal-600' : 'text-gray-400'}`}>{r.ins.scoreIni}</span>
+                      : <span className="text-gray-300">—</span>
+                    }
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    {r.ins?.scoreInt != null
+                      ? <span className={`font-mono font-semibold ${r.ins.scoreInt >= 7.5 ? 'text-orange-500' : r.ins.scoreInt >= 6.5 ? 'text-teal-600' : 'text-gray-400'}`}>{r.ins.scoreInt}</span>
+                      : <span className="text-gray-300">—</span>
+                    }
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    {r.ins?.scoreAva != null
+                      ? <span className={`font-mono font-semibold ${r.ins.scoreAva >= 7.5 ? 'text-orange-500' : r.ins.scoreAva >= 6.5 ? 'text-teal-600' : 'text-gray-400'}`}>{r.ins.scoreAva}</span>
                       : <span className="text-gray-300">—</span>
                     }
                   </td>
@@ -326,7 +350,7 @@ export default function RaquetasTable({
       </div>
 
       <p className="mt-3 text-xs text-gray-400 flex items-center gap-3">
-        <span>Geral = média de 6 scores (sem spin)</span>
+        <span>I = Iniciante · M = Intermediario · A = Avancado (match score por perfil)</span>
         <span>· Dados: dot verde = completa · badge laranja = campos faltando (hover para ver)</span>
         <span>· Clique em <strong>pub/nao</strong> para publicar ou despublicar</span>
       </p>

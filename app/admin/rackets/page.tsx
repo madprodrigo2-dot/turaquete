@@ -44,6 +44,15 @@ export default async function AdminRaquetasPage() {
     const scoreGeral = scoreVals.length > 0
       ? Math.round((scoreVals.reduce((a, b) => a + b, 0) / scoreVals.length) * 10) / 10
       : null
+    const scoreIni = ins && ins.power != null && ins.control != null && ins.comfort != null && ins.maneuverability != null && ins.stability != null && ins.forgiveness != null
+      ? Math.round((ins.power*5 + ins.control*15 + ins.comfort*25 + ins.maneuverability*20 + ins.stability*10 + ins.forgiveness*25) / 10) / 10
+      : null
+    const scoreInt = ins && ins.power != null && ins.control != null && ins.comfort != null && ins.maneuverability != null && ins.stability != null && ins.forgiveness != null
+      ? Math.round((ins.power*12 + ins.control*22 + ins.comfort*15 + ins.maneuverability*15 + (ins.spin ?? 5)*3 + ins.stability*22 + ins.forgiveness*11) / 10) / 10
+      : null
+    const scoreAva = ins && ins.power != null && ins.control != null && ins.comfort != null && ins.maneuverability != null && ins.stability != null && ins.forgiveness != null
+      ? Math.round((ins.power*18 + ins.control*20 + ins.comfort*12 + ins.maneuverability*12 + (ins.spin ?? 5)*7 + ins.stability*20 + ins.forgiveness*11) / 10) / 10
+      : null
     return {
       id: r.id,
       name: r.name,
@@ -55,7 +64,7 @@ export default async function AdminRaquetasPage() {
       core: r.core,
       model_year: r.model_year,
       brandName: r.brand_id ? (brandMap.get(r.brand_id) ?? '—') : '—',
-      ins: ins ? { ...ins, scoreGeral } : null,
+      ins: ins ? { ...ins, scoreGeral, scoreIni, scoreInt, scoreAva } : null,
     }
   })
 

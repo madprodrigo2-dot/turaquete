@@ -58,6 +58,9 @@ export type MotorRow = {
   spin: number | null
   forgiveness: number | null
   scoreGeral: number | null
+  scoreIni: number | null
+  scoreInt: number | null
+  scoreAva: number | null
   overrides: string[]
 }
 
@@ -119,6 +122,21 @@ export default async function AdminMotorPage() {
       scoreGeral: (() => {
         const vals = [ins?.power, ins?.control, ins?.comfort, ins?.maneuverability, ins?.stability, ins?.forgiveness].filter((v): v is number => v != null)
         return vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null
+      })(),
+      scoreIni: (() => {
+        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
+        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
+        return Math.round((pw*5 + ct*15 + cf*25 + mn*20 + st*10 + fg*25) / 10) / 10
+      })(),
+      scoreInt: (() => {
+        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
+        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
+        return Math.round((pw*12 + ct*22 + cf*15 + mn*15 + (sp ?? 5)*3 + st*22 + fg*11) / 10) / 10
+      })(),
+      scoreAva: (() => {
+        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
+        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
+        return Math.round((pw*18 + ct*20 + cf*12 + mn*12 + (sp ?? 5)*7 + st*20 + fg*11) / 10) / 10
       })(),
       overrides,
     }
