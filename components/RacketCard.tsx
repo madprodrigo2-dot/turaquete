@@ -71,7 +71,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
     <>
       <div className="rounded-2xl bg-white overflow-hidden w-full shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200">
         {/* Imagem + badge de atleta */}
-        <div className="relative h-40 bg-[#FBF6EF] flex items-center justify-center overflow-hidden shrink-0">
+        <div className="relative h-40 bg-white flex items-center justify-center overflow-hidden shrink-0">
           {racket.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
