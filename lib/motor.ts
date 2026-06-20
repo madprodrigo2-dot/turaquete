@@ -81,7 +81,7 @@ function texturaScore(superficie: string | null | undefined, hasSpinTech: boolea
   return 5
 }
 
-// Stability — Variante B: espesor + peso + rigidez de cara. Techs estruturais não pontuam.
+// Stability — B2: espesor + peso (320/330/340) + rigidez de cara. Techs não pontuam.
 function stabilityB(
   espessura_mm: number | null | undefined,
   weight_g: number | null | undefined,
@@ -89,7 +89,7 @@ function stabilityB(
 ): number {
   const face    = (face_material || '').toLowerCase()
   const modEsp  = espessura_mm == null ? 1 : espessura_mm <= 20 ? 0 : espessura_mm <= 22 ? 1 : 2
-  const modPeso = weight_g     == null ? 1 : weight_g < 325     ? 0 : weight_g <= 340     ? 1 : 2
+  const modPeso = weight_g == null ? 1 : weight_g < 320 ? 0 : weight_g < 330 ? 1 : weight_g < 340 ? 2 : 3
   const modRig  = /18k|21k|24k|forjado|forged|aluminizado/.test(face) ? 1 : 0
   return Math.min(9, Math.max(5, 5 + modEsp + modPeso + modRig))
 }
