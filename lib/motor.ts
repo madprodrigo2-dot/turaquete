@@ -175,7 +175,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
 
   // Comfort — núcleo é o driver principal; antivib é bônus encima
   const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -2 }
-  let comfort = 6
+  let comfort = 5
   comfort += CORE_COMFORT[coreClass]
   comfort += Math.min(antivibCount, 2)
   if (faceGrade === 'VIDRO' || faceGrade === 'HYBRID_VIDRO') comfort += 1
