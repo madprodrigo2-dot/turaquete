@@ -29,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </div>
           <AdminTestToggle />
           {buildLabel && (
-            <span className="shrink-0 text-[10px] font-mono text-gray-400">
+            <span className="hidden md:inline shrink-0 text-[10px] font-mono text-gray-400">
               {buildLabel}
             </span>
           )}
