@@ -91,7 +91,7 @@ function stabilityB(
   const face    = (face_material || '').toLowerCase()
   const c       = (core || '').toLowerCase()
   const modEsp  = espessura_mm == null ? 1 : espessura_mm <= 20 ? 0 : espessura_mm <= 22 ? 1 : 2
-  const modPeso = weight_g == null ? 1 : weight_g < 320 ? 0 : weight_g < 330 ? 1 : weight_g < 340 ? 2 : 3
+  const modPeso = weight_g != null && weight_g >= 340 ? 1 : 0  // só raquetes deliberadamente pesadas
   const modRig  = /18k|21k|24k|forjado|forged|aluminizado/.test(face) ? 1 : 0
   const isSupersoft = /supersoft|extra soft|extrasoft|branco|white/.test(c) || core === 'EVA 10' || core === 'EVA 13'
   const isHard = !isSupersoft && (/hard|duro|high density|alta densidade/.test(c) || c.includes('black pro') || (!c.includes('soft') && c.includes('black')))
