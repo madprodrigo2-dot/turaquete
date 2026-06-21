@@ -186,8 +186,8 @@ function baseWeights(profile: ScorerProfile): Weights {
 
   // intermediario sem prioridade declarada
   if (profile.nivel === 'intermediario') return {
-    power: 12, control: 22, comfort: 12,
-    maneuverability: 17, spin: 0, stability: 22, forgiveness: 15,
+    power: 12, control: 18, comfort: 12,
+    maneuverability: 17, spin: 0, stability: 22, forgiveness: 19,
   }
 
   // avançado misto / default — maneuserability sobe (net play) e forgiveness cai (hit limpo)

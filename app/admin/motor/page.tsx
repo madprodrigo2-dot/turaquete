@@ -133,7 +133,7 @@ export default async function AdminMotorPage() {
       scoreInt: (() => {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*12 + ct*22 + cf*12 + mn*17 + st*22 + fg*15) / 10) / 10
+        return Math.round((pw*12 + ct*18 + cf*12 + mn*17 + st*22 + fg*19) / 10) / 10
       })(),
       scoreAva: (() => {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
