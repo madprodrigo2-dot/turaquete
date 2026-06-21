@@ -143,8 +143,8 @@ export function calcularMotor(input: MotorInput): MotorResult {
   if (furos != null && furos >= 40) control -= 1
   if (furos != null && furos <= 20) control += 1
   if (wg != null && wg > 340) control -= 1
-  if (esp != null && esp <= 20) control += 1   // frame fino = mais feel/controle do atleta
-  if (esp != null && esp >= 23) control -= 1   // frame grosso = mais potência, menos precisão
+  if (esp != null && esp <= 20) control += 2   // frame fino = muito mais feel/controle do atleta
+  if (esp != null && esp >= 23) control -= 2   // frame grosso = potência, sacrifica precisão
   control = Math.min(10, Math.max(1, control))
 
   // Maneuverability — espessura + peso recalibrado (sem bônus de face)
