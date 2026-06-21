@@ -379,6 +379,18 @@ export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaId
   return { faixa: { peso_min, peso_max, balance_preferido, prioridades }, trace: { steps, conflitos } }
 }
 
+// Classifica o nível predominante de uma raquete pela zona de gap entre scores.
+// gap > +4 → avançado, gap < -4 → iniciante, entre → intermediário.
+export function clasificarNivel(
+  scoreAva: number,
+  scoreIni: number,
+): 'iniciante' | 'intermediario' | 'avancado' {
+  const gap = scoreAva - scoreIni
+  if (gap > 4) return 'avancado'
+  if (gap < -4) return 'iniciante'
+  return 'intermediario'
+}
+
 export function computeScorerWeights(profile: ScorerProfile): Record<string, number> {
   const w = applyModifiers(baseWeights(profile), profile)
   const all: Record<string, number> = {

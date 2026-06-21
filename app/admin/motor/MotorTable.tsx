@@ -7,7 +7,7 @@ import type { MotorRow } from './page'
 const DIMS = ['spin', 'comfort', 'stability', 'power', 'control', 'maneuverability', 'forgiveness'] as const
 type Dim = (typeof DIMS)[number]
 
-type SortCol = 'name' | 'brand' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | Dim
+type SortCol = 'name' | 'brand' | 'nivel' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | Dim
 type SortDir = 'asc' | 'desc'
 
 function ScoreCell({ value, dim, overrides }: { value: number | null; dim: Dim; overrides: string[] }) {
@@ -102,6 +102,7 @@ function sortVal(row: MotorRow, col: SortCol): string | number {
   if (col === 'weight_g') return row.weight_g ?? -1
   if (col === 'furos') return row.furos ?? -1
   if (col === 'espessura_mm') return row.espessura_mm ?? -1
+  if (col === 'nivel') return row.nivel ?? ''
   if (col === 'scoreGeral') return row.scoreGeral ?? -1
   if (col === 'scoreIni') return row.scoreIni ?? -1
   if (col === 'scoreInt') return row.scoreInt ?? -1
@@ -130,7 +131,8 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
           r.name.toLowerCase().includes(q) ||
           r.brand.toLowerCase().includes(q) ||
           r.faceGrade.toLowerCase().includes(q) ||
-          r.coreClass.toLowerCase().includes(q)
+          r.coreClass.toLowerCase().includes(q) ||
+          (r.nivel ?? '').includes(q)
         )
       : rows
     return [...base].sort((a, b) => {
@@ -166,6 +168,7 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
             <tr>
               <Th col="name" active={sortCol} dir={sortDir} onSort={handleSort}>Nome</Th>
               <Th col="brand" active={sortCol} dir={sortDir} onSort={handleSort}>Marca</Th>
+              <Th col="nivel" active={sortCol} dir={sortDir} onSort={handleSort}>Nv</Th>
               <Th col="scoreIni" active={sortCol} dir={sortDir} onSort={handleSort}>I</Th>
               <Th col="scoreInt" active={sortCol} dir={sortDir} onSort={handleSort}>M</Th>
               <Th col="scoreAva" active={sortCol} dir={sortDir} onSort={handleSort}>A</Th>
@@ -212,6 +215,12 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                   </div>
                 </td>
                 <td className="px-2 py-1 text-gray-500 whitespace-nowrap">{r.brand}</td>
+                <td className="px-2 py-1 text-center">
+                  {r.nivel === 'avancado'      && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">AVA</span>}
+                  {r.nivel === 'intermediario' && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700">INT</span>}
+                  {r.nivel === 'iniciante'     && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-700">INI</span>}
+                  {r.nivel == null             && <span className="text-gray-300">—</span>}
+                </td>
                 <td className="px-2 py-1 text-center">
                   {r.scoreIni != null
                     ? <span className={`font-mono text-xs font-semibold ${profileScoreColor(r.scoreIni)}`}>{r.scoreIni}</span>

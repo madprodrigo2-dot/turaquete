@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
 import { classifyFace, classifyCore } from '@/lib/motor'
+import { clasificarNivel } from '@/lib/scorer'
 import MotorTable from './MotorTable'
 
 type RawRacket = {
@@ -61,6 +62,7 @@ export type MotorRow = {
   scoreIni: number | null
   scoreInt: number | null
   scoreAva: number | null
+  nivel: 'iniciante' | 'intermediario' | 'avancado' | null
   overrides: string[]
 }
 
@@ -137,6 +139,13 @@ export default async function AdminMotorPage() {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
         return Math.round((pw*18 + ct*20 + cf*8 + mn*18 + (sp ?? 5)*8 + st*20 + fg*8) / 10) / 10
+      })(),
+      nivel: (() => {
+        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
+        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
+        const sAva = (pw*18 + ct*20 + cf*8 + mn*18 + (sp ?? 5)*8 + st*20 + fg*8) / 10
+        const sIni = (pw*5  + ct*15 + cf*25 + mn*20 + st*10 + fg*25) / 10
+        return clasificarNivel(sAva, sIni)
       })(),
       overrides,
     }
