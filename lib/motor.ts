@@ -40,7 +40,7 @@ export function classifyFace(face: string | null | undefined): FaceGrade {
   if (f.includes('fibra de vidro') || f.includes('fiberglass')) return 'VIDRO'
   if (f.includes('kevlar') && !f.includes('carbon') && !f.includes('carbono')) return 'KEVLAR_PURE'
   if (f.includes('kevlar') && (f.includes('carbon') || f.includes('carbono'))) return 'KEVLAR_CARBON'
-  if (f.includes('18k')) return 'CARBON_18K'
+  if (f.includes('18k') || f.includes('21k')) return 'CARBON_18K'
   if (f.includes('24k') || f.includes('triaxial')) return 'CARBON_24K'
   if (f.includes('12k') || f.includes('15k') || f.includes('16k') || f.includes('aluminizado')) return 'CARBON_6K_15K'
   if (f.includes('6k')) return 'CARBON_6K_15K'
