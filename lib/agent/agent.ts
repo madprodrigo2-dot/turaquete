@@ -640,8 +640,18 @@ async function executeTool(
     // Hard gate: block if profile confidence is still insufficient.
     if (debugRef.value.confidenceInfo?.willRecommend === false && tipoDaRec !== 'compra_direta') {
       return JSON.stringify({
-        erro: 'GATE_CONFIANCA: perfil incompleto — lesão não respondida.',
+        erro: 'GATE_CONFIANCA: perfil incompleto — lesão e/ou nível não respondidos.',
         instrucao: 'NÃO repita recomendar_raquetas agora. Faça a pergunta indicada por diagnosticar_perfil antes de recomendar.',
+      })
+    }
+    // Hard gate: nivel must be known before recommending — same obligation as lesão.
+    // Fires only when recommendAnyway lifted the confidence gate but nivel was never answered.
+    // (score≥80% already requires nivel, so this only catches the recommendAnyway edge case.)
+    const confirmedNivel = confirmedProfile.nivel ?? (input as RacketFilters).nivel
+    if (!confirmedNivel && tipoDaRec !== 'compra_direta') {
+      return JSON.stringify({
+        erro: 'GATE_NIVEL: nível não respondido.',
+        instrucao: 'NÃO recomende. Feche com mensagem amável: diga que sem saber o nível fica difícil indicar a raquete certa e convide a voltar quando souber. Não insista mais.',
       })
     }
     const { raquetes } = input as RecommendInput

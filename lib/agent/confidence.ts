@@ -154,7 +154,7 @@ export function computeProfileConfidence(
   const score = Math.round((rawScore / TOTAL_WEIGHT) * 100)
 
   const { threshold, maxQuestions } = CONFIDENCE_CONFIG
-  const thresholdReason = `lesão obrigatória → ${threshold}% (estilo+nível=60% < limiar; estilo+nível+lesão=82% ≥ limiar)`
+  const thresholdReason = `lesão e nível obrigatórios → ${threshold}% (sem nível: max 72% < limiar; sem lesão: max 78% < limiar; estilo+nível+lesão=82% ≥ limiar)`
 
   const recommendAnyway = conversationTurns >= maxQuestions
   const willRecommend   = score >= threshold || recommendAnyway
