@@ -220,6 +220,7 @@ async function executeTool(
   marcaAskPendingRef: { value: boolean },
   brandAskedRef: { value: boolean },
   currentRacketIds: Set<number>,
+  currentRacketNotFoundRef: { value: boolean },
   confirmedProfile: Record<string, unknown>,
   budgetAnsweredRef: { value: boolean },
   precoChipsRef: { value: string[] },
@@ -314,6 +315,14 @@ async function executeTool(
     // Prevents the model from calling buscar_raquetas with presupuesto_min=0 before
     // the user has actually answered the price question.
     const isLookupCall = !!(input as RacketFilters).nome || !!(input as RacketFilters).atleta
+    // Block re-lookup when current racket was already confirmed absent — prevents LLM from
+    // burning tokens on a second name search for the same unknown racket.
+    if (isLookupCall && currentRacketNotFoundRef.value) {
+      return JSON.stringify({
+        erro: 'RAQUETE_JA_FORA_DO_CATALOGO',
+        instrucao: 'A raquete atual já foi marcada como fora do catálogo. NÃO busque pelo nome novamente. Continue o fluxo de perfil normalmente.',
+      })
+    }
     // Block profile search when diagnosticar_perfil already signalled INSUFICIENTE this turn.
     // Without this guard: diagnosticar returns lesão-pending → model calls buscar_raquetas →
     // pendingQuestionFieldRef is overwritten with 'preco' → two questions bundled, chips for only one.
@@ -390,6 +399,25 @@ async function executeTool(
     const MAX_CANDIDATES = 8
 
     if (ranked.length === 0) {
+      // Lookup (nome/atleta) returned nothing — current racket not in catalog.
+      // Mark it and return a fixed instruction so the model emits the exact canned text
+      // and pivots to profile without inventing specs or re-searching.
+      if (isLookupCall) {
+        currentRacketNotFoundRef.value = true
+        return JSON.stringify({
+          encontradas: 0,
+          RAQUETE_FORA_DO_CATALOGO: {
+            status: 'NAO_ENCONTRADA',
+            instrucao_OBRIGATORIA:
+              'A raquete atual do usuário NÃO está no catálogo. ' +
+              'AÇÃO OBRIGATÓRIA — siga à risca, sem desvios: ' +
+              '(1) escreva EXATAMENTE este texto (sem alterar nem parafrasear): "Essa eu não tenho no catálogo, mas fica tranquilo, te indico pela forma como você joga."; ' +
+              '(2) em seguida, chame diagnosticar_perfil com o que já sabe e continue o fluxo de perfil normal (nível, lesão, estilo); ' +
+              '(3) NUNCA invente specs, peso, balance, stiffness nem generalizações de marca sobre essa raquete — você não tem dados dela; ' +
+              '(4) NUNCA chame buscar_raquetas com nome ou atleta novamente para tentar identificá-la.',
+          },
+        })
+      }
       const filters = input as RacketFilters
       if (filters.presupuesto_max) {
         // Budget filter yielded zero — degrade: re-run without budget ceiling and mark results.
@@ -818,6 +846,8 @@ export async function runAgentTurn(
   const confirmedProfile = extractConfirmedProfileFromHistory(history)
   // Current racket IDs from lookup searches (TROCA flow) — excluded from recomendar_raquetas
   const currentRacketIds = new Set<number>()
+  // True once a lookup returned 0 results (current racket not in catalog) — blocks re-lookup
+  const currentRacketNotFoundRef: { value: boolean } = { value: false }
   let isComparison = false
   let rounds = 0
   let hasSearchResults = false  // true only when in-budget results exist (fora_do_orcamento excluded)
@@ -919,7 +949,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history)
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -987,7 +1017,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history)
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }
