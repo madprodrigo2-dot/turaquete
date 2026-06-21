@@ -128,23 +128,23 @@ export default async function AdminMotorPage() {
       scoreIni: (() => {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*5 + ct*15 + cf*25 + mn*20 + st*10 + fg*25) / 10) / 10
+        return Math.round((pw*5 + ct*15 + cf*20 + mn*20 + st*15 + fg*25) / 10) / 10
       })(),
       scoreInt: (() => {
-        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
+        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*12 + ct*22 + cf*15 + mn*15 + (sp ?? 5)*3 + st*22 + fg*11) / 10) / 10
+        return Math.round((pw*12 + ct*25 + cf*12 + mn*15 + st*25 + fg*11) / 10) / 10
       })(),
       scoreAva: (() => {
-        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
+        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*18 + ct*20 + cf*8 + mn*18 + (sp ?? 5)*8 + st*20 + fg*8) / 10) / 10
+        return Math.round((pw*20 + ct*23 + cf*6 + mn*20 + st*23 + fg*8) / 10) / 10
       })(),
       nivel: (() => {
-        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, sp = ins?.spin, fg = ins?.forgiveness
+        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        const sAva = (pw*18 + ct*20 + cf*8 + mn*18 + (sp ?? 5)*8 + st*20 + fg*8) / 10
-        const sIni = (pw*5  + ct*15 + cf*25 + mn*20 + st*10 + fg*25) / 10
+        const sAva = (pw*20 + ct*23 + cf*6 + mn*20 + st*23 + fg*8) / 10
+        const sIni = (pw*5  + ct*15 + cf*20 + mn*20 + st*15 + fg*25) / 10
         return clasificarNivel(sAva, sIni)
       })(),
       overrides,
