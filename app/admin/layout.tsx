@@ -1,4 +1,5 @@
 import { auth, signOut } from '@/auth'
+import { redirect } from 'next/navigation'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
 import AdminTestToggle from '@/components/AdminTestToggle'
@@ -9,7 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth()
   const isAdmin = !!session?.user?.email && session.user.email === process.env.ADMIN_EMAIL
 
-  if (!isAdmin) return <>{children}</>
+  if (!isAdmin) redirect('/admin/login')
 
   return (
     <AdminShell>
