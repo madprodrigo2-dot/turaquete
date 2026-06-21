@@ -128,7 +128,7 @@ export default async function AdminMotorPage() {
       scoreIni: (() => {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*5 + ct*15 + cf*20 + mn*15 + st*18 + fg*27) / 10) / 10
+        return Math.round((pw*8 + ct*13 + cf*18 + mn*15 + st*16 + fg*30) / 10) / 10
       })(),
       scoreInt: (() => {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
@@ -144,7 +144,7 @@ export default async function AdminMotorPage() {
         const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
         if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
         const sAva = (pw*20 + ct*25 + cf*6 + mn*20 + st*24 + fg*5) / 10
-        const sIni = (pw*5  + ct*15 + cf*20 + mn*15 + st*18 + fg*27) / 10
+        const sIni = (pw*8  + ct*13 + cf*18 + mn*15 + st*16 + fg*30) / 10
         return clasificarNivel(sAva, sIni)
       })(),
       overrides,

@@ -170,8 +170,8 @@ function baseWeights(profile: ScorerProfile): Weights {
   }
 
   if (profile.nivel === 'iniciante') return {
-    power: 5, control: 15, comfort: 20,
-    maneuverability: 15, spin: 0, stability: 18, forgiveness: 27,
+    power: 8, control: 13, comfort: 18,
+    maneuverability: 15, spin: 0, stability: 16, forgiveness: 30,
   }
 
   if (profile.prioridade === 'potencia') return {
