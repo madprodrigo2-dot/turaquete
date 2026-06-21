@@ -137,7 +137,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   // Control — firme = preciso, suave = disperso (invertido em relação a forgiveness)
   const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
   const FACE_CTRL: Partial<Record<FaceGrade, number>> = { CARBON_18K: +1, CARBON_24K: +1 }
-  let control = 7
+  let control = 5
   control += CORE_CTRL[coreClass]
   control += FACE_CTRL[faceGrade] ?? 0
   if (furos != null && furos >= 40) control -= 1
