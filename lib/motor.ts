@@ -65,6 +65,7 @@ export function classifyCore(core: string | null | undefined): CoreClass {
   if (c.includes('hard') || c.includes('duro') || c.includes('high density') || c.includes('alta densidade')) return 'HARD'
   if (c.includes('black pro') || c.startsWith('black pro')) return 'HARD'
   if (c.includes('soft')) return 'SOFT'   // pega "EVA Black Soft" antes do check de black
+  if (c.includes('medium')) return 'MEDIUM' // "EVA Medium Black" → medium explícito prevalece
   if (c.includes('black')) return 'HARD'  // "EVA Black" puro
   return 'MEDIUM'
 }
