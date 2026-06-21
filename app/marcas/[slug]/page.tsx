@@ -117,6 +117,8 @@ const BRAND_LOGOS: Record<string, string> = {
   'vision':     '/brands/vision-logo.png',
   'zeiq':       '/brands/zeiq-logo.png',
   'zand':       '/brands/zand-logo.svg',
+  'head':       '/brands/head-logo.svg',
+  'turquoise':  '/brands/turquoise-logo.png',
 }
 
 
