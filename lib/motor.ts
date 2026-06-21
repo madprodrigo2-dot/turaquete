@@ -151,13 +151,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   let man = 7
   if (esp != null && esp <= 20) man += 1
   if (esp != null && esp >= 23) man -= 1
-  if (wg != null) {
-    if      (wg <= 310) man += 2
-    else if (wg <= 320) man += 1
-    else if (wg <= 330) man += 0
-    else if (wg <= 340) man -= 1
-    else                man -= 2
-  }
+  if (wg != null && wg >= 340) man -= 1   // só raquetes deliberadamente pesadas penalizam
   if (furos != null && furos >= 40) man += 1
   if (furos != null && furos <= 20) man -= 1
   const maneuverability = Math.min(10, Math.max(1, man))
