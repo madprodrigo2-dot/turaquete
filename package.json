@@ -1,6 +1,6 @@
 {
   "name": "turaquete",
-  "version": "0.3.458",
+  "version": "0.3.459",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

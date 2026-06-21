@@ -163,7 +163,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
     CARBON_24K: -1, CARBON_18K: -1,
   }
   const CORE_FORG: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
-  let forg = 3
+  let forg = 4
   forg += FACE_FORG[faceGrade]
   forg += CORE_FORG[coreClass]
   forg += 1  // formato sempre redonda
