@@ -770,35 +770,7 @@ async function executeTool(
     // Mutate the array passed in — caller reads it after the loop
     pendingRecommendations.push(...built)
 
-    // Offer brand filter AFTER recommendations, only once, not for direct purchases.
-    const builtMarcaJaFornecida = confirmedMarca !== undefined
-    const shouldOfferBrandFilter = !brandAskedRef.value && !builtMarcaJaFornecida && built.length > 0 && tipoDaRec !== 'compra_direta'
-    if (shouldOfferBrandFilter) {
-      brandAskedRef.value = true
-      marcaAskPendingRef.value = true
-      pendingQuestionFieldRef.value = 'marca'
-      const recBrands = [...new Set(
-        built
-          .map(r => (r.racket as unknown as { brands?: { name: string } | null }).brands?.name)
-          .filter((n): n is string => n != null)
-      )]
-      const brandChips = [...recBrands, 'Tanto faz']
-      marcaChipsRef.value = brandChips
-      return JSON.stringify({
-        confirmado: true,
-        registradas: built.length,
-        MARCA_FILTRO: {
-          status: 'OFERECER_FILTRO_POS_REC',
-          marcas_disponiveis: recBrands,
-          instrucao_OBRIGATORIA:
-            `Recomendação concluída. Após narrar as raquetes, ofereça o filtro de marca no FINAL da resposta. ` +
-            `AÇÃO OBRIGATÓRIA: (1) escreva UMA frase curta — ex.: "${MARCA_FILTRO_QUESTION_TEXT}"; ` +
-            `(2) chame sugerir_opcoes com chips ${JSON.stringify(brandChips)}. ` +
-            `Se o usuário escolher uma marca: chame buscar_raquetas com essa marca_preferida e recomende novamente. ` +
-            `Se responder "Tanto faz": encerre sem nova busca.`,
-        },
-      })
-    }
+
 
     return JSON.stringify({ confirmado: true, registradas: built.length })
   }
