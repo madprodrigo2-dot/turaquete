@@ -5,7 +5,7 @@ import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights, Insights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
-import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
+import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, LESAO_LOCAL_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -301,6 +301,11 @@ async function executeTool(
   }
 
   if (name === 'diagnosticar_perfil') {
+    // Detect pain signal BEFORE stripping — model may have inferred cotovelo/ombro from vague text
+    // like "braço". We strip the specific location (unreliable model inference) but preserve the
+    // pain-present signal so the code can skip the yes/no lesão question and go straight to location.
+    const modelDetectedPain = !!(input.cotovelo_sensivel || input.ombro_sensivel || input.punho_sensivel)
+
     // Strip lesão fields — prevent model from inferring cotovelo/ombro from free text like "braço".
     // Then inject all chip-confirmed fields (estilo, nível, força, jogo aéreo, lesão).
     // Chip answers override model values, guaranteeing no dimension reappears as missing once answered.
@@ -310,6 +315,13 @@ async function executeTool(
     delete safeInput.punho_sensivel
     delete safeInput.sem_lesao
     Object.assign(safeInput, confirmedProfile)
+
+    // If model detected pain but chip hasn't confirmed location yet → set dor_mencionada.
+    // This tells confidence to: (a) prioritize lesão question, (b) use location-only chips.
+    const locationResolvedByChip = !!(confirmedProfile.cotovelo_sensivel || confirmedProfile.ombro_sensivel || confirmedProfile.punho_sensivel || confirmedProfile.sem_lesao)
+    if (modelDetectedPain && !locationResolvedByChip) {
+      safeInput.dor_mencionada = true
+    }
 
     const { faixa, trace } = calcular_faixa_ideal_traced(safeInput as FittingProfile)
     diagnosticoRef.value = faixa
@@ -333,7 +345,9 @@ async function executeTool(
 
     if (!confidence.willRecommend && confidence.nextQuestion) {
       const q = confidence.nextQuestion
-      pendingQuestionFieldRef.value = q.field
+      // 'lesao_local' signals streamResponse to use the location-only question text instead of
+      // the full yes/no lesão question. The JSON campo stays 'lesao' so the model understands context.
+      pendingQuestionFieldRef.value = confidence.dorMencionada ? 'lesao_local' : q.field
       // Auto-populate chips here so streamResponse always injects the fixed question text,
       // regardless of whether the model calls sugerir_opcoes. This eliminates an extra
       // API round per question turn and prevents paraphrase-based orphaned chips.
@@ -1391,6 +1405,7 @@ async function streamResponse(
     const field = pendingQuestionFieldRef.value
     const fixedText = field
       ? field === 'preco' ? PRECO_QUESTION_TEXT
+        : field === 'lesao_local' ? LESAO_LOCAL_QUESTION_TEXT
         : field === 'marca' ? (pendingRecommendations.length > 0 ? MARCA_FILTRO_QUESTION_TEXT : MARCA_QUESTION_TEXT)
         : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
         : getFixedQuestionText(field as FieldKey)
@@ -1441,7 +1456,7 @@ async function streamResponse(
     const field = pendingQuestionFieldRef.value
     const isAkinator = field && !field.startsWith('disambig:') && field !== 'marca'
     if (isAkinator) {
-      const fixedQ = field === 'preco' ? PRECO_QUESTION_TEXT : getFixedQuestionText(field as FieldKey)
+      const fixedQ = field === 'preco' ? PRECO_QUESTION_TEXT : field === 'lesao_local' ? LESAO_LOCAL_QUESTION_TEXT : getFixedQuestionText(field as FieldKey)
       if (fixedQ && !text.includes(fixedQ)) {
         const addition = (text.trim() ? '\n\n' : '') + fixedQ
         text += addition

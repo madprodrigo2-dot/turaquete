@@ -32,6 +32,7 @@ export type ConfidenceInfo = {
   questionRound: number
   maxQuestions: number
   recommendAnyway: boolean
+  dorMencionada: boolean  // true when pain was mentioned in apertura but location not yet confirmed
 }
 
 // ── Parametrizable config ─────────────────────────────────────────────────────
@@ -99,6 +100,10 @@ const FIELD_DEFS: FieldDef[] = [
 // Fixed question text for price — emitted verbatim, never model-generated
 export const PRECO_QUESTION_TEXT = 'Pra fechar a indicação certa, qual faixa de preço faz mais sentido pro seu bolso?'
 
+// Location-only follow-up when pain was mentioned in apertura but location not given
+export const LESAO_LOCAL_QUESTION_TEXT = 'Onde você sente essa dor?'
+export const LESAO_LOCAL_CHIPS = ['Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar']
+
 export function getFixedQuestionText(field: FieldKey): string {
   return FIELD_DEFS.find(d => d.key === field)?.question ?? ''
 }
@@ -159,20 +164,35 @@ export function computeProfileConfidence(
   const recommendAnyway = conversationTurns >= maxQuestions
   const willRecommend   = score >= threshold || recommendAnyway
 
+  // dor_mencionada: model extracted a pain signal in apertura but location not confirmed by chip.
+  // When true, skip the yes/no lesão question and go straight to location (cotovelo/ombro/punho).
+  const dorMencionada = input.dor_mencionada === true && missingFields.some(f => f.key === 'lesao')
+
   let nextQuestion: ConfidenceQuestion | null = null
   if (!willRecommend && missingFields.length > 0) {
     let top: ConfidenceFieldInfo
-    if (intencao === 'lesao_dor') {
+    if (intencao === 'lesao_dor' || dorMencionada) {
+      // Pain context: ask lesão location before style/level
       top = missingFields.find(f => f.key === 'lesao') ?? [...missingFields].sort((a, b) => b.weight - a.weight)[0]
     } else {
       top = [...missingFields].sort((a, b) => b.weight - a.weight)[0]
     }
     const def = FIELD_DEFS.find(d => d.key === top.key)!
-    nextQuestion = {
-      field:         def.key,
-      label:         def.label,
-      chips:         def.chips,
-      justification: def.justification,
+    // When dorMencionada and the question is lesão: use location-only chips (no "Não tenho dor")
+    if (dorMencionada && def.key === 'lesao') {
+      nextQuestion = {
+        field:         'lesao',
+        label:         'Lugar da dor',
+        chips:         LESAO_LOCAL_CHIPS,
+        justification: 'dor mencionada na abertura — precisar o local antes de continuar',
+      }
+    } else {
+      nextQuestion = {
+        field:         def.key,
+        label:         def.label,
+        chips:         def.chips,
+        justification: def.justification,
+      }
     }
   }
 
@@ -188,5 +208,6 @@ export function computeProfileConfidence(
     questionRound:  conversationTurns,
     maxQuestions,
     recommendAnyway,
+    dorMencionada,
   }
 }
