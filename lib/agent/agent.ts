@@ -286,8 +286,8 @@ async function executeTool(
           instrucao_OBRIGATORIA:
             `Confiança ${confidence.score}% < ${confidence.threshold}% mínima. ` +
             `Os chips já foram configurados pelo sistema — NÃO chame sugerir_opcoes. ` +
-            `AÇÃO: escreva UMA frase curta de acolhimento (ex: "Entendido!", "Boa!"). ` +
-            `A pergunta será exibida automaticamente — NÃO a escreva você mesmo. ` +
+            `AÇÃO: escreva SOMENTE uma frase curta de acolhimento do que a pessoa disse (ex: "Entendido!", "Boa!", "Tá certo!"). ` +
+            `NÃO escreva a pergunta — o código a injetará automaticamente após o acolhimento. ` +
             `PROIBIDO mostrar perfil ideal, peso ou balance agora. ` +
             `PROIBIDO chamar buscar_raquetas, recomendar_raquetas ou sugerir_opcoes nesta resposta.`,
         },
@@ -1075,9 +1075,10 @@ async function streamResponse(
       text: `\n\n[FAIXA VINCULANTE CALCULADA PELO CÓDIGO]\npeso_min=${diagnosticoRef.value.peso_min}g  peso_max=${diagnosticoRef.value.peso_max}g  balance=${diagnosticoRef.value.balance_preferido}\nNarre EXATAMENTE estes valores. É proibido usar qualquer outro número de peso no diagnóstico desta conversa.`,
     })
   }
-  // When chips are pending, inject the EXACT fixed question text for the field.
-  // The model must use that phrase verbatim — preventing improvisation and orphaned chips.
-  // A code-level fallback below covers the case where the model still returns empty text.
+  // When chips are pending, inject system instruction.
+  // For akinator fields: model writes only the acuse; the code injects the question text
+  // deterministically below (after the stream). For preco/marca/disambig: model writes
+  // the question itself, with a code-level fallback for empty responses.
   if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
     const fixedText = field
@@ -1086,11 +1087,14 @@ async function streamResponse(
         : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
         : getFixedQuestionText(field as FieldKey)
       : null
+    const isAkinatorField = field && !field.startsWith('disambig:') && field !== 'preco' && field !== 'marca'
     systemBlocks.push({
       type: 'text',
-      text: fixedText
-        ? `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta DEVE conter EXATAMENTE esta pergunta, sem alterar uma palavra:\n"${fixedText}"\nVocê pode escrever UMA frase curta de acolhimento do que a pessoa disse ANTES da pergunta (ex: "Entendido!", "Boa!"). Nada depois da pergunta. Não improvise outra formulação.\nPROIBIDO escrever mais de uma pergunta nesta mensagem. Não mencione nenhuma outra dimensão (lesão, nível, estilo, orçamento, preço, marca) além da frase exata acima.`
-        : `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nOs chips de opção foram exibidos automaticamente abaixo desta mensagem. Sua resposta DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos".`,
+      text: isAkinatorField
+        ? `\n\n[INSTRUÇÃO OBRIGATÓRIA]\nEscreva SOMENTE uma frase curta de acolhimento (ex: "Entendido!", "Boa!"). NÃO escreva a pergunta — o código a injetará automaticamente. NÃO mencione lesão, nível, estilo, preço ou marca.`
+        : fixedText
+          ? `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nSua resposta DEVE conter EXATAMENTE esta pergunta, sem alterar uma palavra:\n"${fixedText}"\nVocê pode escrever UMA frase curta de acolhimento ANTES da pergunta. Nada depois.`
+          : `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nSua resposta DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos".`,
     })
   }
 
@@ -1118,20 +1122,30 @@ async function streamResponse(
   const finalMsg = await stream.finalMessage()
   addUsage(usage, finalMsg.usage)
 
-  // Code-level fallback: if the model returned empty text but chips are pending,
-  // emit the fixed question directly. This guarantees chips are never orphaned even
-  // if the model ignores the system block instruction.
-  if (!text.trim() && pendingSuggestions.length > 0) {
+  // For akinator fields: always append the fixed question text after the model's acuse.
+  // The question comes from the fixed set — never from the model — making it deterministic.
+  // For preco/marca/disambig: model writes the question; fallback only when text is empty.
+  if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
-    const fallback = field
-      ? field === 'preco' ? PRECO_QUESTION_TEXT
-        : field === 'marca' ? (pendingRecommendations.length > 0 ? MARCA_FILTRO_QUESTION_TEXT : MARCA_QUESTION_TEXT)
-        : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
-        : getFixedQuestionText(field as FieldKey)
-      : null
-    if (fallback) {
-      text = fallback
-      onToken(fallback)
+    const isAkinator = field && !field.startsWith('disambig:') && field !== 'preco' && field !== 'marca'
+    if (isAkinator) {
+      const fixedQ = getFixedQuestionText(field as FieldKey)
+      if (fixedQ && !text.includes(fixedQ)) {
+        const addition = (text.trim() ? '\n\n' : '') + fixedQ
+        text += addition
+        onToken(addition)
+      }
+    } else if (!text.trim()) {
+      const fallback = field
+        ? field === 'preco' ? PRECO_QUESTION_TEXT
+          : field === 'marca' ? (pendingRecommendations.length > 0 ? MARCA_FILTRO_QUESTION_TEXT : MARCA_QUESTION_TEXT)
+          : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
+          : null
+        : null
+      if (fallback) {
+        text = fallback
+        onToken(fallback)
+      }
     }
   }
 
