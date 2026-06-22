@@ -215,15 +215,66 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     }
   }
 
-  // Nivel: NOT a filter — the scorer already adjusts ranking via baseWeights().
-  // Filtering by nivel_sugerido==='avancado' would exclude comfort-first rackets
-  // (CÉU, Kronos, Athena tagged 'iniciante') that are exactly right for injured advanced players.
-  if (filtros.nivel) {
+  // Nivel ceiling filter — asymmetric teto: users can receive rackets BELOW their level,
+  // but NOT above. Iniciante/intermediário are protected from expert rackets.
+  // Avançado sees the full catalog (including iniciante-tagged comfort rackets for injuries).
+  // Not applied for name/athlete lookups (user asked for a specific model by name).
+  //
+  // Inline version of derivarNivel() — avoids circular import with lib/nivel.ts.
+  const isNivelAvancado = (r: RacketWithInsights): boolean => {
+    const ins = r.racket_insights
+    if (!ins) return false
+    const f = ins.forgiveness, p = ins.power, c = ins.control, co = ins.comfort
+    if (f == null || p == null || c == null || co == null) return ins.nivel_sugerido === 'avancado'
+    return (f <= 6 && (p >= 8 || c >= 8)) || (f <= 7 && p >= 9)
+  }
+
+  if (filtros.nivel && !filtros.nome && !filtros.atleta && results.length > 0) {
+    const before = results.length
+
+    if (filtros.nivel === 'iniciante') {
+      // Exclude avancado + any intermediario with forgiveness ≤ 5 (borderline harsh rackets
+      // like ML10 PRO CUP f=3 that formula calls intermediario but punish beginners' arms).
+      // Pool never silently degrades: if empty in a price range, agent reports honestly.
+      results = results.filter(r => {
+        const ins = r.racket_insights
+        if (!ins) return true  // no insights → keep (unknown is not confirmed harmful)
+        if (ins.forgiveness != null && ins.forgiveness <= 5) return false
+        return !isNivelAvancado(r)
+      })
+      filterTrace.push({
+        filtro: 'teto de nível: iniciante (exclui avancado + forgiveness ≤ 5)',
+        antes: before,
+        depois: results.length,
+        relaxado: false,
+        note: `${before - results.length} raquete(s) removida(s) do pool`,
+      })
+    } else if (filtros.nivel === 'intermediario') {
+      // Exclude avancado only — borderline forgiveness 4-5 intermediario stays (intermediary
+      // players can handle some demanding rackets; no forgiveness floor here).
+      results = results.filter(r => !isNivelAvancado(r))
+      filterTrace.push({
+        filtro: 'teto de nível: intermediario (exclui avancado)',
+        antes: before,
+        depois: results.length,
+        relaxado: false,
+        note: `${before - results.length} raquete(s) removida(s) do pool`,
+      })
+    } else {
+      // avancado: no ceiling — full catalog visible, scorer weights handle ranking
+      filterTrace.push({
+        filtro: `nível "avancado" → sem teto (vê todo o catálogo)`,
+        depois: results.length,
+        relaxado: false,
+        note: 'scorer pondera conforme perfil',
+      })
+    }
+  } else if (filtros.nivel) {
+    // Nome/atleta lookup: skip ceiling, just log
     filterTrace.push({
-      filtro: `nível "${filtros.nivel}" → pesos do scorer (não filtra)`,
+      filtro: `nível "${filtros.nivel}" em busca por nome/atleta → teto não aplicado`,
       depois: results.length,
       relaxado: false,
-      note: 'candidatas abertas para todos os níveis; scorer pondera conforme perfil',
     })
   }
 
