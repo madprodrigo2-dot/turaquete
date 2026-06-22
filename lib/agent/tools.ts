@@ -8,8 +8,9 @@ export const agentTools: Anthropic.Tool[] = [
       'Retorna raquetes com specs objetivos (peso, balance, core, face_material, model_year, specs_extra) ' +
       'e análise especializada (potência, controle, conforto, etc.). ' +
       'specs_extra pode conter atleta firmante, número de furos, saida_de_bola (fácil/média/exigente) e outros dados técnicos. ' +
-      'Candidatas já vêm ordenadas por match_score (0–10) calculado pelo perfil — apresente nessa ordem e explique o porquê. ' +
-      'Use esta ferramenta antes de recomendar qualquer raquete.',
+      'Candidatas já vêm filtradas e ordenadas por match_score (0–10) calculado pelo perfil. ' +
+      'REGRA OBRIGATÓRIA: chame recomendar_raquetas com os IDs das 3 PRIMEIRAS candidatas da lista, na ordem em que vieram — o scorer já decidiu o ranking; não reordene nem substitua por outras. ' +
+      'Use SOMENTE IDs desta resposta — nunca IDs de chamadas anteriores nem de memória.',
     input_schema: {
       type: 'object' as const,
       properties: {

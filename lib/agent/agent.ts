@@ -498,14 +498,16 @@ async function executeTool(
       const specsClean = Object.fromEntries(
         Object.entries((specs_extra ?? {}) as Record<string, unknown>).filter(([k]) => !ADMIN_SPECS.has(k))
       )
-      const { observations: _obs, summary: _sum, good_for_beginners: _gb, good_for_intermediate: _gi, good_for_advanced: _ga, ...insClean } = (racket_insights ?? {}) as Record<string, unknown>
+      // elbow_friendly/shoulder_friendly omitidos: o filtro de lesão já rodou antes de chegar aqui.
+      // Expor esses flags faz o modelo excluir raquetes boas para usuários SEM lesão.
+      const { observations: _obs, summary: _sum, good_for_beginners: _gb, good_for_intermediate: _gi, good_for_advanced: _ga, elbow_friendly: _ef, shoulder_friendly: _sf, ...insClean } = (racket_insights ?? {}) as Record<string, unknown>
       return {
         ...base,
         ...(Object.keys(specsClean).length > 0 ? { specs_extra: specsClean } : {}),
         ...(Object.keys(insClean).length > 0 ? { racket_insights: insClean } : {}),
       }
     }
-    const MAX_CANDIDATES = 6
+    const MAX_CANDIDATES = 10
 
     if (ranked.length === 0) {
       // Lookup (nome/atleta) returned nothing — current racket not in catalog.
