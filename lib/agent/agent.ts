@@ -205,16 +205,34 @@ function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<stri
     const update = CHIP_TO_PROFILE[m.content.trim()]
     if (update) Object.assign(confirmed, update)
   }
-  // Also capture nivel from first-person declarations in free text when no chip was used.
-  // Covers TROCA/lesao flows where the user states their level in the opening message.
-  // First-person pattern ("sou iniciante") avoids false positives like "meu parceiro é avançado".
-  if (confirmed.nivel == null) {
-    for (const m of history) {
-      if (m.role !== 'user') continue
-      const t = m.content.toLowerCase()
-      if (/\bsou iniciante\b|\bestou começando\b|\bsou novato\b/.test(t)) { confirmed.nivel = 'iniciante'; break }
-      if (/\bsou intermediári[oa]\b/.test(t))                             { confirmed.nivel = 'intermediario'; break }
-      if (/\bsou avançad[oa]\b/.test(t))                                  { confirmed.nivel = 'avancado'; break }
+  // Free-text extraction: nivel and estilo from explicit declarations in any user message.
+  // Court position ("esquerda"/"direita") intentionally excluded — it is not a profile field.
+  // Negation guard: "não/nao/nem" within 20 chars before the match → skip.
+  const notNegated = (text: string, pat: RegExp): boolean => {
+    const m = pat.exec(text)
+    if (!m) return false
+    const before = text.slice(Math.max(0, m.index - 20), m.index)
+    return !/\bnão\b|\bnao\b|\bnem\b/.test(before)
+  }
+  for (const m of history) {
+    if (m.role !== 'user') continue
+    if (confirmed.nivel != null && confirmed.estilo != null) break
+    const t = m.content.toLowerCase()
+    if (confirmed.nivel == null) {
+      if      (notNegated(t, /\bsou iniciante\b|\bestou começando\b|\bsou novato\b/))
+        confirmed.nivel = 'iniciante'
+      else if (notNegated(t, /\bsou intermediári[oa]\b/))
+        confirmed.nivel = 'intermediario'
+      else if (notNegated(t, /\bsou avançad[oa]\b|\bsou\s+(?:jogador?\s+)?profissional\b|\bjogo\s+(?:em\s+)?torneios?\b|\bcategoria\s+(?:a|pro)\b/))
+        confirmed.nivel = 'avancado'
+    }
+    if (confirmed.estilo == null) {
+      if      (notNegated(t, /\bjogo\s+(?:no\s+)?(?:ataque|ofensiv[oa])\b|\bsou\s+(?:jogador?\s+)?ofensiv[oa]\b|\bgosto\s+de\s+(?:finalizar|atacar)\b/))
+        confirmed.estilo = 'ofensivo'
+      else if (notNegated(t, /\bjogo\s+(?:no\s+)?(?:defesa|defensiv[oa])\b|\bsou\s+(?:jogador?\s+)?defensiv[oa]\b|\bgosto\s+de\s+defender\b/))
+        confirmed.estilo = 'defensivo'
+      else if (notNegated(t, /\bjogo\s+(?:equilibrad[oa]|misto)\b|\bsou\s+(?:equilibrad[oa]|mist[oa])\b/))
+        confirmed.estilo = 'misto'
     }
   }
   return confirmed
