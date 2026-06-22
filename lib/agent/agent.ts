@@ -1097,8 +1097,8 @@ export async function runAgentTurn(
   // User picked a brand from the brand list → buscar + deterministic rec, 0 model calls
   if (postRecMode === 'escolher_marca') {
     const marcaEscolhida = lastUserContent
-    const buildBudgetFilters = (label: string): Partial<RacketFilters> => {
-      if (label === 'Tanto faz / me mostra opções') return { presupuesto_min: 0 }
+    const buildBudgetFiltersEM = (label: string): Partial<RacketFilters> => {
+      if (label === 'Tanto faz / me mostra opções') return {}
       const bucket = PRECO_BUCKETS.find(b => b.label === label)
       return {
         ...(bucket?.min && bucket.min > 0 ? { presupuesto_min: bucket.min } : {}),
@@ -1106,54 +1106,67 @@ export async function runAgentTurn(
       }
     }
     const priceMsg = history.findLast(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
-    const buscarInput: Record<string, unknown> = {
-      ...confirmedProfile,
-      ...(priceMsg ? buildBudgetFilters(priceMsg.content.trim()) : {}),
-      marca_preferida: marcaEscolhida,
+    const budgetFiltersEM = priceMsg ? buildBudgetFiltersEM(priceMsg.content.trim()) : {}
+
+    // Call buscarRaquetas directly (bypass executeTool's MAX_CANDIDATES=6 cap) so we see
+    // the full brand pool. marca_preferida in the SQL is only a boost — post-filter strictly.
+    const filtersForEM: RacketFilters = { ...(confirmedProfile as RacketFilters), ...budgetFiltersEM }
+    const { raquetes: fullPoolEM } = await buscarRaquetas(filtersForEM)
+
+    // Strict brand match (case-insensitive) — never fill with other brands
+    const brandPool = fullPoolEM.filter(r =>
+      r.brands?.name?.toLowerCase() === marcaEscolhida.toLowerCase()
+    )
+    // Exclude rackets already shown in this session (initial rec + any previous brand selections)
+    const brandUnseen = brandPool.filter(r => !postRecShownIds.has(r.id))
+
+    if (brandPool.length === 0) {
+      // Brand has no rackets matching the profile/price at all
+      const noText = `Não encontrei ${marcaEscolhida} que encaixe no seu perfil. Quer ver outra marca ou mudar a faixa?`
+      if (onToken) onToken(noText)
+      return { text: noText, suggestions: POST_REC_CHIPS.filter(c => c !== 'Ver mais opções'), usage, debug: debugRef.value }
     }
-    // Use ver_mais mode to exclude already-seen rackets while searching brand-specific pool
+
+    if (brandUnseen.length === 0) {
+      // All brand X rackets were already shown in this session
+      const text = `Já te mostrei as opções da ${marcaEscolhida} que encaixam no seu perfil. Quer ver outra marca ou mudar a faixa?`
+      if (onToken) onToken(text)
+      return { text, suggestions: POST_REC_CHIPS.filter(c => c !== 'Ver mais opções'), usage, debug: debugRef.value }
+    }
+
+    const REC_BATCH_MARCA = 3
+    const topBrand = brandUnseen.slice(0, REC_BATCH_MARCA)
+    const topRaquetes = topBrand.map(r => ({
+      id: r.id,
+      razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
+    }))
+
+    // Inject synthetic buscar/recomend tool messages for model context
+    const fakeBuscarId = `det_marca_buscar_${Date.now()}`
+    const buscarPayload = JSON.stringify({ encontradas: brandPool.length, raquetes: topBrand.map(r => ({ id: r.id, name: r.name })) })
+    messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeBuscarId, name: 'buscar_raquetas', input: { ...filtersForEM, marca_preferida: marcaEscolhida } } as Anthropic.ToolUseBlockParam] })
+    messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarPayload } as Anthropic.ToolResultBlockParam] })
+    compactOldToolResults(messages)
+
+    const recomendarInput = { raquetes: topRaquetes, tipo: 'perfil_completo' }
     const postRecCtxMarca: PostRecCtx = { mode: 'ver_mais', shownIds: postRecShownIds, shownBrands: postRecShownBrands }
     const runTool = (tname: string, tinput: Record<string, unknown>) =>
       executeTool(tname, tinput, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, postRecCtxMarca)
-    const fakeBuscarId = `det_marca_buscar_${Date.now()}`
-    const buscarResult = await runTool('buscar_raquetas', buscarInput)
-    type SlimRacket = { id: number; racket_insights?: Record<string, unknown> }
-    const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimRacket[]; fora_do_orcamento?: boolean }
-    // fora_do_orcamento=true means the fallback fired: no in-budget candidates, out-of-budget shown.
-    // We must NOT silently recommend those — show honest "no match in this faixa" instead.
-    if (buscarParsed.fora_do_orcamento) {
-      const faixaLabel = priceMsg?.content.trim() ?? 'essa faixa'
-      const noText = `A ${marcaEscolhida} não tem opções dentro de "${faixaLabel}". Quer ver em outra faixa ou escolher outra marca?`
-      if (onToken) onToken(noText)
-      return { text: noText, suggestions: ['Outra faixa de preço', 'Outra marca'], usage, debug: debugRef.value }
-    }
-    if (buscarParsed.encontradas > 0 && buscarParsed.raquetes?.length && !priceAskPendingRef.value) {
-      messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeBuscarId, name: 'buscar_raquetas', input: buscarInput } as Anthropic.ToolUseBlockParam] })
-      messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarResult } as Anthropic.ToolResultBlockParam] })
-      compactOldToolResults(messages)
-      const topRaquetes = buscarParsed.raquetes.slice(0, 3).map(r => ({
-        id: r.id,
-        razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
-      }))
-      const recomendarInput = { raquetes: topRaquetes, tipo: 'perfil_completo' }
-      const fakeRecId = `det_marca_rec_${Date.now()}`
-      const recResult = await runTool('recomendar_raquetas', recomendarInput as Record<string, unknown>)
-      messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeRecId, name: 'recomendar_raquetas', input: recomendarInput } as Anthropic.ToolUseBlockParam] })
-      messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeRecId, content: recResult } as Anthropic.ToolResultBlockParam] })
-      compactOldToolResults(messages)
-      const text = `Aqui estão as melhores opções da ${marcaEscolhida} para o seu perfil.`
-      if (onToken) onToken(text)
-      // If the brand pool is fully shown in this batch, don't offer "Ver mais opções"
-      const hasMoreMarca = (buscarParsed.raquetes?.length ?? 0) > 3
-      const marcaChipsFinal = hasMoreMarca
-        ? [...POST_REC_CHIPS]
-        : POST_REC_CHIPS.filter(c => c !== 'Ver mais opções')
-      pendingSuggestions.splice(0, pendingSuggestions.length, ...marcaChipsFinal)
-      return { text, recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined, suggestions: marcaChipsFinal, usage, debug: debugRef.value }
-    }
-    const noText = `Não encontrei ${marcaEscolhida} que encaixe no seu perfil e faixa de preço. Quer ver outra marca ou mudar a faixa?`
-    if (onToken) onToken(noText)
-    return { text: noText, suggestions: POST_REC_CHIPS.filter(c => c !== 'Ver mais opções'), usage, debug: debugRef.value }
+    const fakeRecId = `det_marca_rec_${Date.now()}`
+    const recResult = await runTool('recomendar_raquetas', recomendarInput as Record<string, unknown>)
+    messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeRecId, name: 'recomendar_raquetas', input: recomendarInput } as Anthropic.ToolUseBlockParam] })
+    messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeRecId, content: recResult } as Anthropic.ToolResultBlockParam] })
+    compactOldToolResults(messages)
+
+    const text = `Aqui estão as melhores opções da ${marcaEscolhida} para o seu perfil.`
+    if (onToken) onToken(text)
+    // Only offer "Ver mais opções" if the brand has more unseen rackets beyond this batch
+    const hasMoreMarca = brandUnseen.length > REC_BATCH_MARCA
+    const marcaChipsFinal = hasMoreMarca
+      ? [...POST_REC_CHIPS]
+      : POST_REC_CHIPS.filter(c => c !== 'Ver mais opções')
+    pendingSuggestions.splice(0, pendingSuggestions.length, ...marcaChipsFinal)
+    return { text, recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined, suggestions: marcaChipsFinal, usage, debug: debugRef.value }
   }
 
   // ── Chip short-circuit: profile chip or price chip → 0 or 1 model API calls ──
