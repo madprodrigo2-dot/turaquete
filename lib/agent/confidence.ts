@@ -102,7 +102,7 @@ export const PRECO_QUESTION_TEXT = 'Pra fechar a indicação certa, qual faixa d
 
 // Location-only follow-up when pain was mentioned in apertura but location not given
 export const LESAO_LOCAL_QUESTION_TEXT = 'Onde você sente essa dor?'
-export const LESAO_LOCAL_CHIPS = ['Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar']
+export const LESAO_LOCAL_CHIPS = ['Cotovelo', 'Ombro', 'Punho ou outro lugar']
 
 export function getFixedQuestionText(field: FieldKey): string {
   return FIELD_DEFS.find(d => d.key === field)?.question ?? ''

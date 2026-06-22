@@ -166,7 +166,9 @@ const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
   'Jogo muito na rede':         { jogo_aereo_predominante: true },
   'Prefiro o fundo de quadra':  { jogo_aereo_predominante: false },
   'Sim, cotovelo':              { cotovelo_sensivel: true },
+  'Cotovelo':                   { cotovelo_sensivel: true },
   'Sim, ombro':                 { ombro_sensivel: true },
+  'Ombro':                      { ombro_sensivel: true },
   'Punho ou outro lugar':       { punho_sensivel: true },
   'Não tenho dor':              { sem_lesao: true },
 }
