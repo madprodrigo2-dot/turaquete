@@ -252,6 +252,143 @@ function fallbackRazao(ins: Insights): string {
   return `Destaque: ${top.join(' e ')}.`
 }
 
+// Gender agreement for "com boa/bom X" phrases
+const DIM_PT_GENDER: Record<InsightKey, 'boa' | 'bom'> = {
+  power: 'boa', control: 'bom', comfort: 'bom',
+  maneuverability: 'bom', stability: 'boa', spin: 'bom', forgiveness: 'bom',
+}
+
+/**
+ * Generates one distinct razão per candidate by comparing the group.
+ * Candidate 0 (#1 scorer) → "best match". Others → unique dimension or price angle.
+ * Avoids em-dash, "tolerância"/"forgiveness", and invented specs.
+ */
+function razoesDiferenciadas(
+  candidates: Array<{ id: number; price?: number | null; racket_insights?: unknown }>,
+  perfil?: { estilo?: string },
+): string[] {
+  const n = candidates.length
+  if (n === 0) return []
+  if (n === 1) {
+    const ins = candidates[0].racket_insights as Insights | null | undefined
+    return [ins ? fallbackRazao(ins) : 'Boa escolha para o seu perfil.']
+  }
+
+  const getIns = (i: number) => candidates[i].racket_insights as Insights | null | undefined
+  const sc = (i: number, dim: InsightKey): number => {
+    const ins = getIns(i)
+    return ins ? (getInsightScore(ins, dim) ?? 0) : 0
+  }
+
+  const estilo = perfil?.estilo
+  const DIM_ORDER: InsightKey[] =
+    estilo === 'defensivo'
+      ? ['control', 'comfort', 'maneuverability', 'stability', 'power', 'forgiveness']
+      : ['power', 'control', 'comfort', 'stability', 'maneuverability', 'forgiveness']
+
+  // Returns the one candidate with strictly highest value for dim, -1 if tied
+  const uniqueMax = (dim: InsightKey): number => {
+    const vals = candidates.map((_, i) => sc(i, dim))
+    const max = Math.max(...vals)
+    const idxs = vals.reduce<number[]>((acc, v, i) => v === max ? [...acc, i] : acc, [])
+    return idxs.length === 1 ? idxs[0] : -1
+  }
+
+  // Cheapest with known price, no tie — returns index or -1
+  const prices = candidates.map(c => c.price ?? null)
+  const minP = (() => {
+    const valid = prices.filter((p): p is number => p != null)
+    return valid.length > 0 ? Math.min(...valid) : null
+  })()
+  const cheapIdx = (() => {
+    if (minP == null) return -1
+    const idxs = prices.reduce<number[]>((acc, p, i) => p === minP ? [...acc, i] : acc, [])
+    return idxs.length === 1 ? idxs[0] : -1
+  })()
+
+  // Append secondary supporting dimension if one scores ≥ 8 (and isn't the primary)
+  const withSecond = (lead: string, ins: Insights | null | undefined, skip: InsightKey): string => {
+    const sd = ins ? DIM_ORDER.find(d => d !== skip && (getInsightScore(ins, d) ?? 0) >= 8) : undefined
+    return sd ? `${lead}, com ${DIM_PT_GENDER[sd]} ${DIM_PT_LABEL[sd]}.` : `${lead}.`
+  }
+
+  // Lead phrases when this candidate is uniquely best for the dimension
+  const uniqueLead = (dim: InsightKey): string =>
+    dim === 'power' ? (estilo === 'ofensivo' ? 'A mais agressiva das três' : 'A de mais potência entre as três') :
+    dim === 'control' ? 'A de mais controle e precisão' :
+    dim === 'comfort' ? 'A mais confortável das três' :
+    dim === 'forgiveness' ? 'A de sweet spot mais amplo' :
+    dim === 'stability' ? 'A mais estável das três' :
+    dim === 'maneuverability' ? 'A mais ágil das três' :
+    `A de mais ${DIM_PT_LABEL[dim]}`
+
+  // Lead phrases for fallback (softer — doesn't claim "das três")
+  const genericLead = (dim: InsightKey): string =>
+    dim === 'power' ? (estilo === 'ofensivo' ? 'Potente e agressiva' : 'Alta potência') :
+    dim === 'control' ? 'Controle e precisão elevados' :
+    dim === 'comfort' ? 'Confortável e suave de usar' :
+    dim === 'forgiveness' ? 'Sweet spot generoso' :
+    dim === 'stability' ? 'Alta estabilidade' :
+    dim === 'maneuverability' ? 'Ágil e fácil de manobrar' :
+    `Bom nível de ${DIM_PT_LABEL[dim]}`
+
+  const reasons: (string | null)[] = Array(n).fill(null)
+  const usedDims = new Set<InsightKey>()
+
+  // Candidate 0 (#1 scorer): always "best match" + top supporting dim if ≥ 9
+  {
+    const ins = getIns(0)
+    const topDim = ins ? DIM_ORDER.find(d => (getInsightScore(ins, d) ?? 0) >= 9) : undefined
+    reasons[0] = topDim
+      ? `A que melhor encaixa no seu perfil, com ${DIM_PT_LABEL[topDim]} no topo.`
+      : 'A que melhor encaixa no seu perfil.'
+  }
+
+  // Cheapest (if not #0): cost-benefit angle + top strength
+  if (cheapIdx > 0) {
+    const ins = getIns(cheapIdx)
+    const sd = ins ? DIM_ORDER.find(d => (getInsightScore(ins, d) ?? 0) >= 8) : undefined
+    reasons[cheapIdx] = sd
+      ? `Melhor custo-benefício das três, sem abrir mão de ${DIM_PT_GENDER[sd]} ${DIM_PT_LABEL[sd]}.`
+      : 'Melhor custo-benefício das três.'
+  }
+
+  // Assign dimension-based angles to unique best candidates
+  for (const dim of DIM_ORDER) {
+    const winner = uniqueMax(dim)
+    if (winner <= 0 || reasons[winner] !== null) continue
+    reasons[winner] = withSecond(uniqueLead(dim), getIns(winner), dim)
+    usedDims.add(dim)
+  }
+
+  // Fallback for still-unassigned (all dims tied / cheapIdx was 0)
+  for (let i = 1; i < n; i++) {
+    if (reasons[i] !== null) continue
+    const ins = getIns(i)
+    const altDim = DIM_ORDER.find(d => !usedDims.has(d) && sc(i, d) >= 8)
+    if (altDim) {
+      const sd = ins ? DIM_ORDER.find(d => d !== altDim && (getInsightScore(ins, d) ?? 0) >= 8) : undefined
+      const lead = genericLead(altDim)
+      reasons[i] = sd ? `${lead}, com ${DIM_PT_GENDER[sd]} ${DIM_PT_LABEL[sd]}.` : `${lead}.`
+      usedDims.add(altDim)
+    } else {
+      // Truly balanced: top-2 dims of this specific racket
+      const top2 = ins
+        ? (Object.keys(DIM_PT_LABEL) as InsightKey[])
+            .map(k => ({ k, v: getInsightScore(ins, k) ?? 0 }))
+            .filter(e => e.v > 0)
+            .sort((a, b) => b.v - a.v)
+            .slice(0, 2)
+        : []
+      reasons[i] = top2.length >= 2
+        ? `Equilibrada, com ${DIM_PT_LABEL[top2[0].k]} e ${DIM_PT_LABEL[top2[1].k]} sólidos.`
+        : 'Opção equilibrada para o seu perfil.'
+    }
+  }
+
+  return reasons.map(r => r ?? 'Boa escolha para o seu perfil.')
+}
+
 function validateRazao(razao: string, ins: Insights | null): string {
   if (!ins) return razao
   for (const [key, re] of DIM_PATTERNS) {
@@ -1015,7 +1152,7 @@ export async function runAgentTurn(
       executeTool(tname, tinput, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, postRecCtxVM)
 
     const buscarResult = await runToolVM('buscar_raquetas', buscarInput)
-    type SlimVM = { id: number; racket_insights?: Record<string, unknown> }
+    type SlimVM = { id: number; price?: number | null; racket_insights?: Record<string, unknown> }
     const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimVM[]; fora_do_orcamento?: boolean }
 
     // REC_BATCH: how many to show per "Ver mais" click
@@ -1033,10 +1170,8 @@ export async function runAgentTurn(
     messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarResult } as Anthropic.ToolResultBlockParam] })
     compactOldToolResults(messages)
 
-    const topRaquetesVM = nextBatch.map(r => ({
-      id: r.id,
-      razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
-    }))
+    const razoesVM = razoesDiferenciadas(nextBatch, confirmedProfile as { estilo?: string })
+    const topRaquetesVM = nextBatch.map((r, i) => ({ id: r.id, razao: razoesVM[i] }))
     const recomendarInput = { raquetes: topRaquetesVM, tipo: 'perfil_completo' }
     const fakeRecId = `vm_rec_${Date.now()}`
     await runToolVM('recomendar_raquetas', recomendarInput as Record<string, unknown>)
@@ -1156,10 +1291,8 @@ export async function runAgentTurn(
 
     const REC_BATCH_MARCA = 3
     const topBrand = brandUnseen.slice(0, REC_BATCH_MARCA)
-    const topRaquetes = topBrand.map(r => ({
-      id: r.id,
-      razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
-    }))
+    const razoesMarca = razoesDiferenciadas(topBrand, confirmedProfile as { estilo?: string })
+    const topRaquetes = topBrand.map((r, i) => ({ id: r.id, razao: razoesMarca[i] }))
 
     // Inject synthetic buscar/recomend tool messages for model context
     const fakeBuscarId = `det_marca_buscar_${Date.now()}`
@@ -1256,7 +1389,7 @@ export async function runAgentTurn(
 
       const fakeBuscarId = `det_buscar_${Date.now()}`
       const buscarResult = await runTool('buscar_raquetas', buscarInput)
-      type SlimRacket = { id: number; racket_insights?: Record<string, unknown> }
+      type SlimRacket = { id: number; price?: number | null; racket_insights?: Record<string, unknown> }
       const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimRacket[] }
 
       if (buscarParsed.encontradas > 0 && buscarParsed.raquetes?.length && !priceAskPendingRef.value) {
@@ -1265,10 +1398,9 @@ export async function runAgentTurn(
         messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarResult } as Anthropic.ToolResultBlockParam] })
         compactOldToolResults(messages)
 
-        const topRaquetes = buscarParsed.raquetes.slice(0, 3).map(r => ({
-          id: r.id,
-          razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
-        }))
+        const top3 = buscarParsed.raquetes.slice(0, 3)
+        const razoes = razoesDiferenciadas(top3, confirmedProfile as { estilo?: string })
+        const topRaquetes = top3.map((r, i) => ({ id: r.id, razao: razoes[i] }))
         const recomendarInput = { raquetes: topRaquetes, tipo: 'perfil_completo' }
         const fakeRecId = `det_rec_${Date.now()}`
         const recResult = await runTool('recomendar_raquetas', recomendarInput as Record<string, unknown>)
