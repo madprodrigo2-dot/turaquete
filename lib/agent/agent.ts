@@ -1051,8 +1051,9 @@ export async function runAgentTurn(
 
   // "Outra marca" → derive brand list from pool, show as chips, 0 model calls
   if (postRecMode === 'outra_marca') {
-    const buildBudgetFilters = (label: string): Partial<RacketFilters> => {
-      if (label === 'Tanto faz / me mostra opções') return { presupuesto_min: 0 }
+    const buildBudgetFiltersOM = (label: string): Partial<RacketFilters> => {
+      // "Tanto faz" = no price restriction at all; pass nothing so the full pool is visible
+      if (label === 'Tanto faz / me mostra opções') return {}
       const bucket = PRECO_BUCKETS.find(b => b.label === label)
       return {
         ...(bucket?.min && bucket.min > 0 ? { presupuesto_min: bucket.min } : {}),
@@ -1060,22 +1061,29 @@ export async function runAgentTurn(
       }
     }
     const priceMsg = history.findLast(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
-    const buscarInput: Record<string, unknown> = { ...confirmedProfile, ...(priceMsg ? buildBudgetFilters(priceMsg.content.trim()) : {}) }
-    // Fetch full pool with no post-rec filtering so we can compute which brands are available
-    const buscarResult = await executeTool('buscar_raquetas', buscarInput, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, undefined)
-    type PoolRacket = { brands?: { name: string } | null }
-    const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: PoolRacket[] }
+    const isTantoFaz = !priceMsg || priceMsg.content.trim() === 'Tanto faz / me mostra opções'
+    const budgetFiltersOM = priceMsg ? buildBudgetFiltersOM(priceMsg.content.trim()) : {}
+
+    // Brand discovery needs the FULL scored pool — executeTool caps at MAX_CANDIDATES=6,
+    // which can hide every non-Adidas brand when top 6 happen to be the same brand.
+    // Call buscarRaquetas directly to bypass the cap; brands are extracted, not shown verbatim.
+    const filtersForOM: RacketFilters = { ...(confirmedProfile as RacketFilters), ...budgetFiltersOM }
+    const { raquetes: fullPoolOM } = await buscarRaquetas(filtersForOM)
+
     const brandCount = new Map<string, number>()
-    for (const r of buscarParsed.raquetes ?? []) {
-      const bn = r.brands?.name
+    for (const r of fullPoolOM) {
+      const bn = (r as { brands?: { name: string } | null }).brands?.name
       if (bn && !postRecShownBrands.has(bn)) brandCount.set(bn, (brandCount.get(bn) ?? 0) + 1)
     }
     const sortedBrands = [...brandCount.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name)
     if (sortedBrands.length === 0) {
-      const noText = 'Não encontrei candidatas de outras marcas para esse perfil e faixa de preço. Quer tentar outra faixa?'
+      const noText = isTantoFaz
+        ? 'Não encontrei candidatas de outras marcas para esse perfil. Quer começar uma nova busca?'
+        : 'Não encontrei candidatas de outras marcas para esse perfil nessa faixa de preço. Quer tentar outra faixa?'
       if (onToken) onToken(noText)
       // Remove "Outra marca" from chips — no brands remain, offering it again would loop
-      return { text: noText, suggestions: ['Outra faixa de preço'], usage, debug: debugRef.value }
+      const noSuggestions = isTantoFaz ? [] : ['Outra faixa de preço']
+      return { text: noText, suggestions: noSuggestions, usage, debug: debugRef.value }
     }
     const MAX_BRAND_CHIPS = 5
     const brandChips = sortedBrands.slice(0, MAX_BRAND_CHIPS)
