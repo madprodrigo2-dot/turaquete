@@ -58,11 +58,33 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   ])
   if (!racket) notFound()
 
+  // Strip year suffixes and common qualifiers to detect same model series
+  function modelSeries(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/\b20\d{2}\b/g, '')
+      .replace(/\b(luxury|ltd|limited|pro cup|cup)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+  // Brand-prefixed names (Head, Adidas, Drop Shot, Kona) — skip to avoid
+  // matching all models of a brand as "same family"
+  const BRAND_FIRST_WORDS = new Set(['head', 'adidas', 'drop', 'kona'])
+  function sameFamily(a: string, b: string): boolean {
+    const sa = modelSeries(a)
+    const sb = modelSeries(b)
+    if (sa === sb) return true
+    const firstA = sa.split(' ')[0]
+    if (firstA.length < 3 || BRAND_FIRST_WORDS.has(firstA)) return false
+    return firstA === sb.split(' ')[0]
+  }
+
   const sugestoes = allRackets
     .filter(r => r.slug !== racket.slug)
     .map(r => ({
       r,
       score:
+        (sameFamily(r.name, racket.name) ? 20 : 0) +
         (r.brands?.name === racket.brands?.name ? 10 : 0) +
         (racket.price && r.price
           ? Math.abs(r.price - racket.price) / racket.price < 0.3 ? 5 : 0
