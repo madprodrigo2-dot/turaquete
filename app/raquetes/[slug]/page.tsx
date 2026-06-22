@@ -171,7 +171,12 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
             {/* Título + preço + badges + CTA e specs resumidas (só desktop) */}
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl font-bold text-tinta leading-tight">{racket.name}</h1>
-              {price && <p className="text-coral text-xl font-bold">{price}</p>}
+              {price && (
+                <div>
+                  <p className="text-coral text-xl font-bold">{price}</p>
+                  <p className="text-[10px] text-tinta/40 mt-0.5">Preço de referência, pode variar na loja.</p>
+                </div>
+              )}
               <div className="flex gap-2 flex-wrap">
                 {athlete && <AthleteBadge athlete={athlete} />}
                 {(() => {
