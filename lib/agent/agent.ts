@@ -323,6 +323,13 @@ async function executeTool(
     if (modelDetectedPain && !locationResolvedByChip) {
       safeInput.dor_mencionada = true
     }
+    // Fallback: when intent is 'lesao_dor', pain was explicitly mentioned in the apertura.
+    // The model is instructed NOT to guess the location, so it won't pass pain fields for
+    // generic pain like "dor no braço". Use the intent as the pain signal so the Akinator
+    // shows location-only chips (cotovelo/ombro/punho) instead of the full yes/no question.
+    if (intencaoRef.value === 'lesao_dor' && !locationResolvedByChip && !safeInput.dor_mencionada) {
+      safeInput.dor_mencionada = true
+    }
 
     const { faixa, trace } = calcular_faixa_ideal_traced(safeInput as FittingProfile)
     diagnosticoRef.value = faixa
@@ -1516,7 +1523,7 @@ async function streamResponse(
       text: isAkinatorField
         ? (field === 'preco'
           ? `\n\n[INSTRUÇÃO OBRIGATÓRIA]\nEscreva SOMENTE uma frase curta de transição (ex: "Achei boas opções pra você!", "Encontrei candidatas pro seu perfil."). NÃO escreva a pergunta de preço — o código a injetará automaticamente. NÃO cite valores, faixas ou marcas.`
-          : `\n\n[INSTRUÇÃO OBRIGATÓRIA]\nEscreva SOMENTE uma frase curta de acolhimento (ex: "Entendido!", "Boa!"). NÃO escreva a pergunta — o código a injetará automaticamente. NÃO mencione lesão, nível, estilo, preço ou marca.`)
+          : `\n\n[INSTRUÇÃO OBRIGATÓRIA]\nEscreva SOMENTE uma frase curta de acolhimento (ex: "Entendido!", "Boa!", "Certo!"). NÃO escreva a pergunta — o código a injetará automaticamente. NÃO mencione lesão, nível, estilo, preço ou marca. NÃO mencione chips, botões, interface ou qualquer mecânica do sistema ("os chips vão aparecer", "pode tocar", "as opções vão aparecer aí").`)
         : fixedText
           ? `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nSua resposta DEVE conter EXATAMENTE esta pergunta, sem alterar uma palavra:\n"${fixedText}"\nVocê pode escrever UMA frase curta de acolhimento ANTES da pergunta. Nada depois.`
           : `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nSua resposta DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos".`,

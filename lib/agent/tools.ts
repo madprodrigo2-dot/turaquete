@@ -116,15 +116,17 @@ export const agentTools: Anthropic.Tool[] = [
     name: 'diagnosticar_perfil',
     description:
       'Calcula a faixa de peso e balance ideal para a pessoa antes de buscar raquetes. ' +
-      'Chame quando tiver o essencial: nível e/ou estilo de jogo. ' +
-      'Sinais pessoais (idade, porte, força) são opcionais — passe APENAS o que a pessoa mencionou espontaneamente, nunca pergunte.',
+      'Chame com os campos que o usuário declarou explicitamente — pode ser chamado com zero campos se a abertura não trouxe dados de perfil. ' +
+      'REGRA ANTI-ALUCINAÇÃO OBRIGATÓRIA: passe SOMENTE campos que o usuário declarou nesta conversa. ' +
+      'NUNCA invente, suponha ou use valor padrão para nível, estilo ou qualquer outro campo. ' +
+      'Um campo omitido é sempre melhor que um campo inventado.',
     input_schema: {
       type: 'object' as const,
       properties: {
         nivel: {
           type: 'string',
           enum: ['iniciante', 'intermediario', 'avancado'],
-          description: 'Nível do jogador',
+          description: 'Nível do jogador. OMITA se o usuário não declarou o nível explicitamente — nem inferir, nem usar padrão. Só passe se o usuário disse "sou iniciante", "jogo no avançado", etc., ou respondeu um chip de nível.',
         },
         estilo: {
           type: 'string',
