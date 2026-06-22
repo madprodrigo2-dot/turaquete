@@ -81,6 +81,7 @@ export type AgentDebugInfo = {
   criteriosRelaxados?: string[]
   decisionTrace?: DecisionTrace
   confidenceInfo?: ConfidenceInfo
+  filteredPoolSize?: number  // candidates available after shownIds filter (used to decide if "Ver mais" should appear)
 }
 
 export type AgentResult = {
@@ -622,6 +623,7 @@ async function executeTool(
     }
 
     const topCandidates = filteredPool.slice(0, MAX_CANDIDATES).map(slimForModel)
+    debugRef.value.filteredPoolSize = filteredPool.length
     const payload: Record<string, unknown> = {
       encontradas: ranked.length,
       raquetes: topCandidates,
@@ -980,6 +982,66 @@ export async function runAgentTurn(
     return { text: PRECO_QUESTION_TEXT, suggestions: chips, usage, debug: {} }
   }
 
+  // "Ver mais opções" → next batch from scorer ranking, fully deterministic, 0 model calls
+  if (postRecMode === 'ver_mais') {
+    const buildBudgetFiltersVM = (label: string): Partial<RacketFilters> => {
+      if (label === 'Tanto faz / me mostra opções') return { presupuesto_min: 0 }
+      const bucket = PRECO_BUCKETS.find(b => b.label === label)
+      return {
+        ...(bucket?.min && bucket.min > 0 ? { presupuesto_min: bucket.min } : {}),
+        ...(bucket?.max != null ? { presupuesto_max: bucket.max } : {}),
+      }
+    }
+    const priceMsg = history.findLast(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
+    const buscarInput: Record<string, unknown> = {
+      ...confirmedProfile,
+      ...(priceMsg ? buildBudgetFiltersVM(priceMsg.content.trim()) : {}),
+    }
+    const postRecCtxVM: PostRecCtx = { mode: 'ver_mais', shownIds: postRecShownIds, shownBrands: postRecShownBrands }
+    const runToolVM = (tname: string, tinput: Record<string, unknown>) =>
+      executeTool(tname, tinput, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, postRecCtxVM)
+
+    const buscarResult = await runToolVM('buscar_raquetas', buscarInput)
+    type SlimVM = { id: number; racket_insights?: Record<string, unknown> }
+    const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimVM[]; fora_do_orcamento?: boolean }
+
+    // REC_BATCH: how many to show per "Ver mais" click
+    const REC_BATCH = 3
+    const nextBatch = buscarParsed.raquetes?.slice(0, REC_BATCH) ?? []
+
+    if (nextBatch.length === 0 || buscarParsed.fora_do_orcamento) {
+      const exhaustedText = 'Essas são todas as que encaixam no seu perfil e faixa. Quer tentar outra faixa de preço ou outra marca?'
+      if (onToken) onToken(exhaustedText)
+      return { text: exhaustedText, suggestions: ['Outra faixa de preço', 'Outra marca'], usage, debug: debugRef.value }
+    }
+
+    const fakeBuscarId = `vm_buscar_${Date.now()}`
+    messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeBuscarId, name: 'buscar_raquetas', input: buscarInput } as Anthropic.ToolUseBlockParam] })
+    messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarResult } as Anthropic.ToolResultBlockParam] })
+    compactOldToolResults(messages)
+
+    const topRaquetesVM = nextBatch.map(r => ({
+      id: r.id,
+      razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
+    }))
+    const recomendarInput = { raquetes: topRaquetesVM, tipo: 'perfil_completo' }
+    const fakeRecId = `vm_rec_${Date.now()}`
+    await runToolVM('recomendar_raquetas', recomendarInput as Record<string, unknown>)
+    messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeRecId, name: 'recomendar_raquetas', input: recomendarInput } as Anthropic.ToolUseBlockParam] })
+    messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeRecId, content: JSON.stringify({ confirmado: true }) } as Anthropic.ToolResultBlockParam] })
+    compactOldToolResults(messages)
+
+    // Only offer "Ver mais" if more candidates remain beyond this batch
+    const hasMoreVM = (buscarParsed.raquetes?.length ?? 0) > REC_BATCH
+    const vmChips = hasMoreVM
+      ? [...POST_REC_CHIPS]
+      : POST_REC_CHIPS.filter(c => c !== 'Ver mais opções')
+
+    const text = 'Aqui estão mais opções para o seu perfil.'
+    if (onToken) onToken(text)
+    return { text, recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined, suggestions: vmChips, usage, debug: debugRef.value }
+  }
+
   // "Outra marca" → derive brand list from pool, show as chips, 0 model calls
   if (postRecMode === 'outra_marca') {
     const buildBudgetFilters = (label: string): Partial<RacketFilters> => {
@@ -1066,12 +1128,17 @@ export async function runAgentTurn(
       compactOldToolResults(messages)
       const text = `Aqui estão as melhores opções da ${marcaEscolhida} para o seu perfil.`
       if (onToken) onToken(text)
-      pendingSuggestions.splice(0, pendingSuggestions.length, ...POST_REC_CHIPS)
-      return { text, recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined, suggestions: [...POST_REC_CHIPS], usage, debug: debugRef.value }
+      // If the brand pool is fully shown in this batch, don't offer "Ver mais opções"
+      const hasMoreMarca = (buscarParsed.raquetes?.length ?? 0) > 3
+      const marcaChipsFinal = hasMoreMarca
+        ? [...POST_REC_CHIPS]
+        : POST_REC_CHIPS.filter(c => c !== 'Ver mais opções')
+      pendingSuggestions.splice(0, pendingSuggestions.length, ...marcaChipsFinal)
+      return { text, recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined, suggestions: marcaChipsFinal, usage, debug: debugRef.value }
     }
     const noText = `Não encontrei ${marcaEscolhida} que encaixe no seu perfil e faixa de preço. Quer ver outra marca ou mudar a faixa?`
     if (onToken) onToken(noText)
-    return { text: noText, suggestions: [...POST_REC_CHIPS], usage, debug: debugRef.value }
+    return { text: noText, suggestions: POST_REC_CHIPS.filter(c => c !== 'Ver mais opções'), usage, debug: debugRef.value }
   }
 
   // ── Chip short-circuit: profile chip or price chip → 0 or 1 model API calls ──
@@ -1325,6 +1392,17 @@ export async function runAgentTurn(
     // Exits without an extra API round — streamResponse injects the question text.
     if (priceAskPendingRef.value && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
       break
+    }
+  }
+
+  // After initial rec: remove "Ver mais opções" if the scorer pool is exhausted.
+  // filteredPoolSize = how many candidates were available (after shownIds filter, if any).
+  // If we recommended all of them, there's nothing left to page through.
+  if (pendingRecommendations.length > 0 && pendingSuggestions.includes('Ver mais opções')) {
+    const poolSize = debugRef.value.filteredPoolSize ?? 0
+    if (poolSize <= pendingRecommendations.length) {
+      const idx = pendingSuggestions.indexOf('Ver mais opções')
+      if (idx >= 0) pendingSuggestions.splice(idx, 1)
     }
   }
 
