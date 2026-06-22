@@ -40,6 +40,20 @@ function computePrecoDecision(budgetKnown: boolean): PrecoDecision {
     : { status: 'disparo',      note: 'orçamento desconhecido → perguntar faixa obrigatoriamente' }
 }
 
+// Known price-range answers — module-level so post-rec state detection can reference them
+const PRICE_ANSWERS = new Set([
+  'Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000',
+  'Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500', 'Acima de R$2.500', 'Acima de R$3.000',
+  'Tanto faz / me mostra opções',
+])
+
+// Fixed post-recommendation action chips and types
+const POST_REC_CHIPS = ['Ver mais opções', 'Outra faixa de preço', 'Outra marca'] as const
+const POST_REC_REDIRECT_TEXT = 'Posso te mostrar mais opções, outra faixa de preço ou outra marca. É só tocar.'
+export type PostRecContext = { shownIds: number[]; shownBrands: string[] }
+type PostRecMode = 'ver_mais' | 'outra_marca' | 'outra_faixa' | 'livre'
+type PostRecCtx = { mode: PostRecMode | null; shownIds: Set<number>; shownBrands: Set<string> }
+
 // Stable system prompt as a cacheable block — sent on every turn but only billed
 // once per cache TTL (~5 min). Dynamic injections (FAIXA VINCULANTE) are appended
 // as a second uncached block in streamResponse.
@@ -256,7 +270,8 @@ async function executeTool(
   marcaChipsRef: { value: string[] },
   showAllBrandsRef: { value: boolean },
   confirmedMarca: string | null | undefined,
-  chatHistory: readonly ChatMessage[]
+  chatHistory: readonly ChatMessage[],
+  postRecCtx?: PostRecCtx
 ): Promise<string> {
   if (name === 'registrar_intencao') {
     intencaoRef.value = input.intencao as IntencaoTipo
@@ -545,6 +560,23 @@ async function executeTool(
         })
       : ranked
 
+    // Post-rec filtering: exclude shown IDs ("Ver mais opções") or shown brands ("Outra marca")
+    const filteredPool = postRecCtx?.mode === 'ver_mais'
+      ? candidatePool.filter(r => !postRecCtx!.shownIds.has(r.id))
+      : postRecCtx?.mode === 'outra_marca'
+      ? candidatePool.filter(r => !postRecCtx!.shownBrands.has((r as { brands?: { name: string } | null }).brands?.name ?? ''))
+      : candidatePool
+    if (postRecCtx?.mode === 'outra_marca' && filteredPool.length === 0 && candidatePool.length > 0) {
+      return JSON.stringify({
+        encontradas: 0,
+        POST_REC_SEM_OUTRA_MARCA: {
+          instrucao_OBRIGATORIA:
+            `Para esse perfil, as melhores candidatas são todas das marcas já mostradas (${[...postRecCtx.shownBrands].join(', ')}). ` +
+            `AÇÃO OBRIGATÓRIA: informe honestamente que não há candidatas de outras marcas e ofereça ampliar a faixa de preço ou relaxar um critério de perfil.`,
+        },
+      })
+    }
+
     // Disambiguation: when a lookup (nome/atleta) returns multiple candidates, inject a
     // fixed question text so the model's sugerir_opcoes chips are never orphaned.
     if (isLookupCall && ranked.length > 1) {
@@ -553,7 +585,7 @@ async function executeTool(
       pendingQuestionFieldRef.value = `disambig:${term}`
     }
 
-    const topCandidates = candidatePool.slice(0, MAX_CANDIDATES).map(slimForModel)
+    const topCandidates = filteredPool.slice(0, MAX_CANDIDATES).map(slimForModel)
     const payload: Record<string, unknown> = {
       encontradas: ranked.length,
       raquetes: topCandidates,
@@ -769,9 +801,8 @@ async function executeTool(
 
     // Mutate the array passed in — caller reads it after the loop
     pendingRecommendations.push(...built)
-
-
-
+    // Post-rec action chips — always shown after every recommendation set
+    pendingSuggestions.splice(0, pendingSuggestions.length, ...POST_REC_CHIPS)
     return JSON.stringify({ confirmado: true, registradas: built.length })
   }
 
@@ -803,7 +834,8 @@ const MAX_HISTORY_MESSAGES = 20  // keep last 10 turns; older turns rarely affec
 export async function runAgentTurn(
   history: ChatMessage[],
   onToken?: (token: string) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  postRecContext?: PostRecContext
 ): Promise<AgentResult> {
   // Truncate history for the model context while keeping full history for profile derivations.
   // Profile state (confirmedProfile, brandAskedRef, etc.) is derived from the FULL history
@@ -825,13 +857,6 @@ export async function runAgentTurn(
   const marcaAskPendingRef: { value: boolean } = { value: false }
   // Derive brand/budget answered state from history — prevents re-asking when the model
   // omits marca_preferida or presupuesto_min in subsequent turns after the user answered.
-  const PRICE_ANSWERS = new Set([
-    // Current buckets
-    'Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000',
-    // Legacy buckets (backward compat — old BUDGET_CHIPS labels from before 0.3.439)
-    'Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500', 'Acima de R$2.500', 'Acima de R$3.000',
-    'Tanto faz / me mostra opções',
-  ])
   const brandAskedRef: { value: boolean } = {
     value: (() => {
       // Backward compat: old hardcoded chips
@@ -894,6 +919,29 @@ export async function runAgentTurn(
   // discarded — messages stays untouched so the forced retry gets a clean slate.
   let stalledOnce = false
   let confidenceInsufficient = false
+
+  // Post-rec state: detect which action chip (if any) the user tapped
+  const postRecShownIds = new Set<number>(postRecContext?.shownIds ?? [])
+  const postRecShownBrands = new Set<string>(postRecContext?.shownBrands ?? [])
+  const lastUserContent = history.findLast(m => m.role === 'user')?.content.trim() ?? ''
+  const isPriceAnswerMsg = PRICE_ANSWERS.has(lastUserContent)
+  const postRecMode: PostRecMode | null = postRecContext && !isPriceAnswerMsg
+    ? (lastUserContent === 'Ver mais opções' ? 'ver_mais'
+      : lastUserContent === 'Outra marca' ? 'outra_marca'
+      : lastUserContent === 'Outra faixa de preço' ? 'outra_faixa'
+      : 'livre')
+    : null
+  // Free text in post-rec state → fixed redirect, 0 API calls
+  if (postRecMode === 'livre') {
+    if (onToken) onToken(POST_REC_REDIRECT_TEXT)
+    return { text: POST_REC_REDIRECT_TEXT, suggestions: [...POST_REC_CHIPS], usage, debug: {} }
+  }
+  // "Outra faixa de preço" → re-ask price deterministically, 0 API calls
+  if (postRecMode === 'outra_faixa') {
+    const chips = computePrecoChips([])
+    if (onToken) onToken(PRECO_QUESTION_TEXT)
+    return { text: PRECO_QUESTION_TEXT, suggestions: chips, usage, debug: {} }
+  }
 
   // Intents that require profile-building: force diagnosticar_perfil immediately
   // after registrar_intencao so the Akinator system (not the model) decides what
@@ -985,7 +1033,7 @@ export async function runAgentTurn(
 
       let result: string
       try {
-        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history)
+        result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, { mode: postRecMode, shownIds: postRecShownIds, shownBrands: postRecShownBrands })
       } catch (toolErr) {
         console.error(`Tool ${block.name} error:`, toolErr)
         result = JSON.stringify({ erro: 'Ferramenta temporariamente indisponível. Continue sem ela.', encontradas: 0 })
@@ -1058,7 +1106,7 @@ export async function runAgentTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = []
         for (const block of recBlocks) {
           if (block.type !== 'tool_use') continue
-          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history)
+          const result = await executeTool(block.name, block.input as Record<string, unknown>, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, { mode: postRecMode, shownIds: postRecShownIds, shownBrands: postRecShownBrands })
           if ((block.input as { tipo?: string }).tipo === 'comparacao') isComparison = true
           toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result })
         }

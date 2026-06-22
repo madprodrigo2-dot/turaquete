@@ -256,6 +256,16 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
       const apiMessages = updated.map(({ role, content }) => ({ role, content }))
       const isFirstMessage = !baseMessages.some(m => m.role === 'user')
       const reqBody: Record<string, unknown> = { messages: apiMessages, sessionId }
+      // Post-rec context: send shown IDs (all previous rec turns) and brands (last rec turn)
+      // so the server can handle "Ver mais opções", "Outra marca", and free-text redirect
+      const allShownIds = baseMessages.flatMap(m => m.recommendations?.map(r => r.racket.id) ?? [])
+      if (allShownIds.length > 0) {
+        const lastRecMsg = [...baseMessages].reverse().find(m => m.recommendations?.length)
+        const shownBrands = [...new Set(
+          lastRecMsg?.recommendations?.flatMap(r => r.racket.brands?.name ? [r.racket.brands.name] : []) ?? []
+        )]
+        reqBody.postRecContext = { shownIds: allShownIds, shownBrands }
+      }
       if (isFirstMessage) {
         reqBody.primeiraMensagem = text
         reqBody.starterUsado = starterUsadoRef.current ?? null
