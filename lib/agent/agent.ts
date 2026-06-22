@@ -482,6 +482,15 @@ async function executeTool(
     delete safeInput.sem_lesao
     Object.assign(safeInput, confirmedProfile)
 
+    // Accumulate non-lesão safe fields back into confirmedProfile so they persist if the model
+    // calls diagnosticar_perfil again in the same turn without re-passing them.
+    // Cross-turn persistence is handled by PERFIL_ACUMULADO in the result (tells the model to re-pass).
+    for (const f of ['nivel', 'estilo', 'forca_declarada', 'jogo_aereo_predominante', 'genero_organico', 'porte', 'idade'] as const) {
+      if (safeInput[f] != null && confirmedProfile[f] == null) {
+        confirmedProfile[f] = safeInput[f]
+      }
+    }
+
     // If model detected pain but chip hasn't confirmed location yet → set dor_mencionada.
     // This tells confidence to: (a) prioritize lesão question, (b) use location-only chips.
     const locationResolvedByChip = !!(confirmedProfile.cotovelo_sensivel || confirmedProfile.ombro_sensivel || confirmedProfile.punho_sensivel || confirmedProfile.sem_lesao)
@@ -507,6 +516,15 @@ async function executeTool(
     const confidence = computeProfileConfidence(safeInput, profileQuestionsAsked, intencaoRef.value ?? undefined)
     debugRef.value.confidenceInfo = confidence
 
+    // PERFIL_ACUMULADO: safe non-lesão fields confirmed so far, for the model to re-pass
+    // in future diagnosticar_perfil calls. Cross-turn persistence mechanism for nivel/estilo
+    // captured by model inference (not chip/regex) — prevents profile reset between turns.
+    const perfilAcumulado: Record<string, unknown> = {}
+    for (const f of ['nivel', 'estilo', 'forca_declarada', 'jogo_aereo_predominante', 'genero_organico', 'porte', 'idade'] as const) {
+      const v = safeInput[f]
+      if (v != null) perfilAcumulado[f] = v
+    }
+
     const baseResult = {
       peso_min: faixa.peso_min,
       peso_max: faixa.peso_max,
@@ -514,6 +532,7 @@ async function executeTool(
       prioridades: faixa.prioridades,
       descricao: `${faixa.peso_min}–${faixa.peso_max}g, balance ${faixa.balance_preferido}, priorize ${faixa.prioridades.join(', ')}`,
       DADO_VINCULANTE: `Narre EXATAMENTE "${faixa.peso_min}–${faixa.peso_max}g" no diagnóstico. PROIBIDO usar outros valores de peso. Estes números vieram do código e são definitivos.`,
+      ...(Object.keys(perfilAcumulado).length > 0 ? { PERFIL_ACUMULADO: perfilAcumulado } : {}),
     }
 
     if (!confidence.willRecommend && confidence.nextQuestion) {
@@ -526,6 +545,7 @@ async function executeTool(
       // API round per question turn and prevents paraphrase-based orphaned chips.
       pendingSuggestions.splice(0, pendingSuggestions.length, ...q.chips)
       return JSON.stringify({
+        ...(Object.keys(perfilAcumulado).length > 0 ? { PERFIL_ACUMULADO: perfilAcumulado } : {}),
         CONFIANCA_DO_PERFIL: {
           score_pct: confidence.score,
           threshold_pct: confidence.threshold,
@@ -1115,7 +1135,23 @@ export async function runAgentTurn(
   // Each user turn corresponds to one answered question (or "nao sei"). This is immune
   // to model paraphrasing — the old includes()-based counter stayed at 0 when the model
   // improvised wording, causing recommendAnyway to never fire (infinite "nao sei" loop).
-  const profileQuestionsAsked = Math.max(0, history.filter(m => m.role === 'user').length - 1)
+  // TROCA offset: when the "Quero trocar minha raquete" chip was used, subtract free-text
+  // context turns (current racket name + o que falta discussion) that precede the first
+  // diagnostic chip — those are troca setup, not profile answers, and must not burn the cap.
+  const trocaContextOffset = (() => {
+    const trocaChipIdx = history.findIndex(m => m.role === 'user' && m.content.trim() === 'Quero trocar minha raquete')
+    if (trocaChipIdx === -1) return 0
+    const diagChipSet = new Set(Object.keys(CHIP_TO_PROFILE))
+    let ctx = 0
+    for (let i = trocaChipIdx + 1; i < history.length; i++) {
+      const m = history[i]
+      if (m.role !== 'user') continue
+      if (diagChipSet.has(m.content.trim()) || PRICE_ANSWERS.has(m.content.trim())) break
+      ctx++
+    }
+    return Math.min(ctx, 2)  // cap: at most 2 context turns subtracted
+  })()
+  const profileQuestionsAsked = Math.max(0, history.filter(m => m.role === 'user').length - 1 - trocaContextOffset)
   // Profile state derived from chip answers in history — immune to model omission between turns.
   // Lesão fields are also stripped from model input and re-injected from here (prevents inference).
   const confirmedProfile = extractConfirmedProfileFromHistory(history)

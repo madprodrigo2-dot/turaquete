@@ -120,7 +120,8 @@ export const agentTools: Anthropic.Tool[] = [
       'Chame com os campos que o usuário declarou explicitamente — pode ser chamado com zero campos se a abertura não trouxe dados de perfil. ' +
       'REGRA ANTI-ALUCINAÇÃO OBRIGATÓRIA: passe SOMENTE campos que o usuário declarou nesta conversa. ' +
       'NUNCA invente, suponha ou use valor padrão para nível, estilo ou qualquer outro campo. ' +
-      'Um campo omitido é sempre melhor que um campo inventado.',
+      'Um campo omitido é sempre melhor que um campo inventado. ' +
+      'PERFIL_ACUMULADO: quando o resultado de uma chamada anterior incluir o campo PERFIL_ACUMULADO, re-passe TODOS os seus campos em chamadas futuras a diagnosticar_perfil, sem modificação — são dados já confirmados nesta conversa, não invenção.',
     input_schema: {
       type: 'object' as const,
       properties: {

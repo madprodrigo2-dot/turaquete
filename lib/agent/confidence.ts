@@ -161,7 +161,13 @@ export function computeProfileConfidence(
   const { threshold, maxQuestions } = CONFIDENCE_CONFIG
   const thresholdReason = `lesão e nível obrigatórios → ${threshold}% (sem nível: max 72% < limiar; sem lesão: max 78% < limiar; estilo+nível+lesão=82% ≥ limiar)`
 
-  const recommendAnyway = conversationTurns >= maxQuestions
+  // Hard gates: nivel and lesão must be answered regardless of rounds exhausted.
+  // recommendAnyway (rounds cap reached) only fires when both hard gates are satisfied.
+  // Without this, a 32%-confidence profile (only estilo) could bypass the 80% gate.
+  const hasNivel = presentFields.some(f => f.key === 'nivel')
+  const hasLesao  = presentFields.some(f => f.key === 'lesao')
+  const hardGatesPass = hasNivel && hasLesao
+  const recommendAnyway = conversationTurns >= maxQuestions && hardGatesPass
   const willRecommend   = score >= threshold || recommendAnyway
 
   // dor_mencionada: model extracted a pain signal in apertura but location not confirmed by chip.
