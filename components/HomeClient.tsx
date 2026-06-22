@@ -631,7 +631,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
               </div>
             )}
 
-            <ChatInput onSend={sendMessage} disabled={loading || isStreaming || isAnimating || atLimit} />
+            {(!hasUserMessages || (!loading && !isStreaming && !isAnimating && !hasAkinatorChips)) && (
+              <ChatInput onSend={sendMessage} disabled={loading || isStreaming || isAnimating || atLimit} />
+            )}
           </div>
         </div>
       )}
