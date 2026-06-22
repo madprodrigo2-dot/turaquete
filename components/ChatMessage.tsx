@@ -252,7 +252,9 @@ export default function ChatMessage({
               ? 'grid grid-cols-2 gap-2'
               : 'flex flex-col gap-3'
           }>
-            {recommendations!.map((rec, i) => (
+            {(() => {
+              const userNivel = (debug?.perfilInput?.nivel as 'iniciante' | 'intermediario' | 'avancado' | undefined)
+              return recommendations!.map((rec, i) => (
               <div
                 key={rec.racket.id}
                 className="msg-enter"
@@ -264,9 +266,11 @@ export default function ChatMessage({
                 sessionId={sessionId}
                 calce={!isComparison ? calceBadge(recommendations!, rec.racket.id) : null}
                 custoBeneficio={!isComparison ? custoBeneficioBadge(recommendations!, rec.racket.id) : false}
+                userNivel={userNivel}
               />
               </div>
-            ))}
+            ))
+            })()}
           </div>
           {!isComparison && recommendations!.some(r => r.racket.price) && (
             <p className="text-[10px] text-tinta/40 mt-0.5">Preços de referência, podem variar por loja.</p>

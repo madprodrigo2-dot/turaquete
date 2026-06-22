@@ -13,7 +13,10 @@ interface Props {
   sessionId?: string
   calce?: 'ideal' | 'encaixa' | null
   custoBeneficio?: boolean
+  userNivel?: 'iniciante' | 'intermediario' | 'avancado'
 }
+
+const NIVEL_ORDER: Record<string, number> = { iniciante: 0, intermediario: 1, avancado: 2 }
 
 function fireEvent(body: Record<string, unknown>) {
   fetch('/api/events', {
@@ -23,7 +26,7 @@ function fireEvent(body: Record<string, unknown>) {
   }).catch(() => {})
 }
 
-export default function RacketCard({ racket, razao, sessionId, calce, custoBeneficio }: Props) {
+export default function RacketCard({ racket, razao, sessionId, calce, custoBeneficio, userNivel }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
@@ -121,14 +124,17 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
 
           <p className="text-gray-600 text-xs leading-relaxed break-words">{razao}</p>
 
-          {/* Pra quem */}
+          {/* Pra quem — hide when the racket is above the user's level to avoid
+              contradiction ("recomendamos esta" + "mas não é pra você"). */}
           {(() => {
             const nivel = derivarNivel(racket)
-            return nivel ? (
+            if (!nivel) return null
+            if (userNivel && (NIVEL_ORDER[nivel] ?? 0) > (NIVEL_ORDER[userNivel] ?? 0)) return null
+            return (
               <p className="text-tinta/40 text-xs">
                 Pra quem: <span className="text-tinta/60">{NIVEL_LABEL[nivel] ?? nivel}</span>
               </p>
-            ) : null
+            )
           })()}
 
           {/* Top-2 dimensões */}
