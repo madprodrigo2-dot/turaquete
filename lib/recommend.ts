@@ -164,7 +164,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     query = query.lte('price', filtros.presupuesto_max)
   }
 
-  const { data, error } = await query.limit(30)
+  const { data, error } = await query.limit(500)
   if (error) throw new Error(`Supabase: ${error.message}`)
 
   const allCandidates = ((data as unknown[]) ?? []).map(normalizeRacket)
