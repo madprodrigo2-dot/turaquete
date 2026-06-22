@@ -268,6 +268,9 @@ export default function ChatMessage({
               </div>
             ))}
           </div>
+          {!isComparison && recommendations!.some(r => r.racket.price) && (
+            <p className="text-[10px] text-tinta/40 mt-0.5">Preços de referência, podem variar por loja.</p>
+          )}
         </div>
       )}
 
