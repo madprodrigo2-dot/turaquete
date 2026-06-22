@@ -31,46 +31,13 @@ function computePrecoChips(_ranked: Array<{ price: number | null }>): string[] {
   return [...PRECO_BUCKETS.map(b => b.label), 'Tanto faz / me mostra opções']
 }
 
-// Price dispersion: ask budget only when spread among top candidates >= R$1000.
-// Narrow spreads (all candidates similarly priced) don't need a budget gate —
-// the budget question adds friction without changing the recommendation.
-const PRICE_DISPERSION_CONFIG = {
-  topN: 5,         // candidates to examine
-  minRangeBrl: 1000, // R$ spread that triggers the question
-} as const
-
-function computePrecoDecision(
-  ranked: Array<{ price: number | null; fora_da_faixa?: boolean }>,
-  budgetKnown: boolean,
-): PrecoDecision {
-  if (budgetKnown) {
-    return { status: 'budget_known', note: 'usuário informou faixa de preço — filtrado na busca' }
-  }
-  // Prefer in-range candidates; fall back to all if fewer than 2 in-range have prices
-  const inRange = ranked.filter(r => !r.fora_da_faixa)
-  const pool    = (inRange.length >= 2 ? inRange : ranked).slice(0, PRICE_DISPERSION_CONFIG.topN)
-  const prices  = pool.map(r => r.price).filter((p): p is number => p != null && p > 0)
-
-  if (prices.length < 2) {
-    return { status: 'sem_preco', note: 'dados de preço insuficientes nas candidatas top' }
-  }
-
-  const rangeMin = Math.min(...prices)
-  const rangeMax = Math.max(...prices)
-  const rangeBrl = rangeMax - rangeMin
-
-  if (rangeBrl >= PRICE_DISPERSION_CONFIG.minRangeBrl) {
-    return {
-      status: 'disparo',
-      note: `orçamento desconhecido + candidatas R$${rangeMin}–R$${rangeMax} → perguntar faixa`,
-      rangeMin, rangeMax, rangeBrl,
-    }
-  }
-  return {
-    status: 'similar',
-    note: `preços similares (R$${rangeMin}–R$${rangeMax}, spread R$${rangeBrl}) — não precisa perguntar`,
-    rangeMin, rangeMax, rangeBrl,
-  }
+// Price question is mandatory after profile fit — always ask when budget is unknown.
+// Spread heuristic removed: a narrow spread among candidates doesn't mean the user's
+// budget fits them; one extra turn is always worth the transparency.
+function computePrecoDecision(budgetKnown: boolean): PrecoDecision {
+  return budgetKnown
+    ? { status: 'budget_known', note: 'usuário informou faixa de preço' }
+    : { status: 'disparo',      note: 'orçamento desconhecido → perguntar faixa obrigatoriamente' }
 }
 
 // Stable system prompt as a cacheable block — sent on every turn but only billed
@@ -412,8 +379,29 @@ async function executeTool(
       confirmedMarca !== undefined && (input as RacketFilters).marca_preferida === undefined
         ? { ...(input as RacketFilters), marca_preferida: confirmedMarca }
         : (input as RacketFilters)
-    const { raquetes, criteriosRelaxados, filterTrace, yearMatchInfo } = await buscarRaquetas(effectiveFilters)
-    const ranked = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
+    // Strip presupuesto_max from DB query — budget ceiling is soft-applied below
+    // so rackets above budget are flagged (fora_da_faixa_preco), never silently excluded.
+    const presupuestoMaxBudget = effectiveFilters.presupuesto_max
+    const filtersForDb: RacketFilters = presupuestoMaxBudget != null
+      ? { ...effectiveFilters, presupuesto_max: undefined }
+      : effectiveFilters
+    const { raquetes, criteriosRelaxados, filterTrace, yearMatchInfo } = await buscarRaquetas(filtersForDb)
+    const rankedBase = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
+    // Soft budget sort: mark rackets above declared max, sort in-budget first
+    const ranked = presupuestoMaxBudget != null
+      ? rankedBase.map(r => ({
+          ...r,
+          fora_da_faixa_preco: r.price != null && r.price > presupuestoMaxBudget,
+        })).sort((a, b) => {
+          if (a.fora_da_faixa_preco !== b.fora_da_faixa_preco) return a.fora_da_faixa_preco ? 1 : -1
+          const aFora = (a as { fora_da_faixa?: boolean }).fora_da_faixa ?? false
+          const bFora = (b as { fora_da_faixa?: boolean }).fora_da_faixa ?? false
+          const aTier = aFora ? 2 : a.weight_g == null ? 1 : 0
+          const bTier = bFora ? 2 : b.weight_g == null ? 1 : 0
+          if (aTier !== bTier) return aTier - bTier
+          return b.match_score - a.match_score
+        })
+      : rankedBase.map(r => ({ ...r, fora_da_faixa_preco: false as boolean }))
     debugRef.value.scorerResults = ranked.slice(0, 10).map(r => ({
       id: r.id,
       name: r.name,
@@ -480,14 +468,14 @@ async function executeTool(
           },
         })
       }
-      const filters = input as RacketFilters
-      if (filters.presupuesto_max) {
-        // Budget filter yielded zero — degrade: re-run without budget ceiling and mark results.
-        const { raquetes: raquetesSemOrc, criteriosRelaxados: relSemOrc } = await buscarRaquetas({ ...filters, presupuesto_max: undefined })
+      const originalFilters = input as RacketFilters
+      // presupuesto_max is now soft-filtered (not a DB hard filter), so 0 results here
+      // only happen for presupuesto_min constraints (e.g. "Mais de R$3.000" with no premium matches).
+      if (originalFilters.presupuesto_min && originalFilters.presupuesto_min > 0) {
+        const { raquetes: raquetesSemOrc, criteriosRelaxados: relSemOrc } = await buscarRaquetas({ ...effectiveFilters, presupuesto_min: undefined, presupuesto_max: undefined })
         const rankedSemOrc = diagnosticoRef.value ? applyFaixaFilter(raquetesSemOrc, diagnosticoRef.value) : raquetesSemOrc
         if (rankedSemOrc.length > 0) {
           const topSemOrc = rankedSemOrc.slice(0, MAX_CANDIDATES).map(slimForModel)
-          // Sort by price to surface the most affordable option in the instruction
           const cheapest = [...rankedSemOrc].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))[0]
           const cheapestDesc = cheapest.price != null ? `${cheapest.name} (R$${cheapest.price})` : cheapest.name
           const payload: Record<string, unknown> = {
@@ -496,16 +484,15 @@ async function executeTool(
             fora_do_orcamento: true,
             AVISO_ORCAMENTO_OBRIGATORIO: {
               status: 'ZERO_NA_FAIXA',
-              faixa_solicitada: `até R$${filters.presupuesto_max}`,
+              faixa_solicitada: `acima de R$${originalFilters.presupuesto_min}`,
               mais_acessivel: cheapestDesc,
               instrucao_OBRIGATORIA:
-                `Nenhuma raquete disponível dentro de R$${filters.presupuesto_max}. ` +
-                `As raquetes listadas estão ACIMA desse valor. ` +
+                `Nenhuma raquete disponível acima de R$${originalFilters.presupuesto_min} para esse perfil. ` +
+                `As raquetes listadas estão abaixo desse valor. ` +
                 `AÇÃO OBRIGATÓRIA: ` +
-                `(1) diga com honestidade que não há opções nessa faixa — ex.: "Dentro de R$${filters.presupuesto_max} não tenho opções. A mais em conta que tenho é a ${cheapestDesc}."; ` +
-                `(2) ofereça alternativas: "Quer que eu te mostre as mais acessíveis, ou prefere ajustar o valor?"; ` +
-                `(3) NÃO chame recomendar_raquetas nesta resposta — espere o usuário confirmar que quer ver opções acima do orçamento. ` +
-                `PROIBIDO apresentar essas raquetes como se cumprissem o orçamento pedido.`,
+                `(1) diga com honestidade que não há opções nessa faixa — ex.: "Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. A que melhor encaixa disponível é a ${cheapestDesc}."; ` +
+                `(2) pergunte se o usuário quer ver essas opções mesmo assim; ` +
+                `(3) NÃO chame recomendar_raquetas nesta resposta — espere confirmação.`,
             },
           }
           if (relSemOrc.length > 0) payload.criterios_relaxados = relSemOrc
@@ -527,10 +514,17 @@ async function executeTool(
     const budgetKnown = isNameSearch || !!(input as RacketFilters).presupuesto_max
       || (input as RacketFilters).presupuesto_min !== undefined
       || budgetAnsweredRef.value
-    const priceDecision = computePrecoDecision(ranked, budgetKnown)
+    const priceDecision = computePrecoDecision(budgetKnown)
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
-    if (priceDecision.status === 'disparo') pendingQuestionFieldRef.value = 'preco'
+    if (priceDecision.status === 'disparo') {
+      pendingQuestionFieldRef.value = 'preco'
+      // Pre-populate chips — skips the sugerir_opcoes API round; the short-circuit
+      // break below exits the while loop immediately after buscar_raquetas resolves.
+      const chips = computePrecoChips(ranked)
+      precoChipsRef.value = chips
+      pendingSuggestions.splice(0, pendingSuggestions.length, ...chips)
+    }
 
     // Price tiebreaker: when budget is open, among near-equal candidates (score diff ≤ 0.3)
     // the cheaper one rises — so the model is more likely to pick/present it first.
@@ -621,31 +615,38 @@ async function executeTool(
     }
 
     if (priceDecision.status === 'disparo') {
-      const precoChips = computePrecoChips(ranked)
-      precoChipsRef.value = precoChips
+      // Chips already pre-populated above in the priceDecision block.
       const bucketMappings = PRECO_BUCKETS
-        .filter(b => precoChips.includes(b.label))
         .map(b => `"${b.label}" → ${b.instrucao}`)
-        .concat(['"Tanto faz" → presupuesto_min=0 (sem filtro de preço)'])
+        .concat(['"Tanto faz / me mostra opções" → presupuesto_min=0 (sem filtro de preço)'])
         .join('; ')
       payload.PRECO = {
         status: 'ORCAMENTO_DESCONHECIDO',
-        candidatas: priceDecision.rangeMin != null ? `R$${priceDecision.rangeMin}–R$${priceDecision.rangeMax}` : undefined,
         instrucao_OBRIGATORIA:
           `Orçamento não informado. ` +
-          `AÇÃO OBRIGATÓRIA: (1) escreva uma frase de pergunta sobre faixa de preço no texto — ex.: "${PRECO_QUESTION_TEXT}" — sem essa frase os chips ficam órfãos e o usuário não entende o que os botões significam; ` +
-          `(2) chame sugerir_opcoes com chips ${JSON.stringify(precoChips)}. ` +
+          `AÇÃO OBRIGATÓRIA: escreva a pergunta "${PRECO_QUESTION_TEXT}" (chips já configurados pelo sistema — NÃO chame sugerir_opcoes). ` +
           `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
-          `Após receber a faixa, chame buscar_raquetas novamente com os filtros ANTES de recomendar: ` +
-          `${bucketMappings}. ` +
-          `Se a faixa escolhida retornar 0 raquetes: diga honestamente e mostre a opção mais próxima fora da faixa.`,
+          `Após receber a faixa, chame buscar_raquetas novamente com os filtros: ${bucketMappings}.`,
       }
     } else {
+      const inFaixaCount = presupuestoMaxBudget != null
+        ? ranked.filter(r => !(r as { fora_da_faixa_preco?: boolean }).fora_da_faixa_preco).length
+        : null
+      const overBudgetCount = presupuestoMaxBudget != null
+        ? ranked.filter(r => !!(r as { fora_da_faixa_preco?: boolean }).fora_da_faixa_preco).length
+        : null
       payload.PRECO = {
-        status: priceDecision.status === 'similar' ? 'PRECO_SIMILAR' : 'BUDGET_CONHECIDO',
+        status: 'BUDGET_CONHECIDO',
         note: priceDecision.note,
         ...(isBudgetOpen ? {
-          instrucao_custo_beneficio: 'Orçamento aberto ("tanto faz"). Na recomendação, mencione brevemente qual opção oferece melhor custo-benefício — ex.: "a [modelo] rende quase igual às outras e é a mais em conta".',
+          instrucao_custo_beneficio: 'Orçamento aberto ("tanto faz"). Na recomendação, mencione qual opção oferece melhor custo-benefício.',
+        } : presupuestoMaxBudget != null ? {
+          instrucao_CUSTO_BENEFICIO:
+            `Orçamento declarado: até R$${presupuestoMaxBudget}. ` +
+            `${inFaixaCount} raquete(s) dentro da faixa (fora_da_faixa_preco=false) — apresente a melhor como recomendação principal com etiqueta de custo-benefício. ` +
+            (overBudgetCount && overBudgetCount > 0
+              ? `${overBudgetCount} raquete(s) acima do orçamento (fora_da_faixa_preco=true) — mostre-as honestamente como "acima do seu orçamento", NUNCA as omita. Se for a melhor opção de encaixe, mencione UMA vez: "tem opção acima do orçamento que encaixa melhor, se quiser ver."`
+              : ''),
         } : {}),
       }
     }
@@ -1029,7 +1030,7 @@ export async function runAgentTurn(
         try {
           const parsed = JSON.parse(result) as { encontradas: number; fora_do_orcamento?: boolean; raquetes?: Array<{ id: number }> }
           // Only mark hasSearchResults when results are in-budget AND it's a profile search.
-          if (parsed.encontradas > 0 && !parsed.fora_do_orcamento && !isLookup) hasSearchResults = true
+          if (parsed.encontradas > 0 && !isLookup) hasSearchResults = true
           // Track lookup IDs so recomendar_raquetas can exclude the current racket (TROCA flow)
           if (isLookup) {
             for (const r of parsed.raquetes ?? []) {
@@ -1055,6 +1056,11 @@ export async function runAgentTurn(
     // streamResponse, which will inject the fixed question text from pendingQuestionFieldRef.
     if (debugRef.value.confidenceInfo?.willRecommend === false && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
       confidenceInsufficient = true  // ensure post-loop guard reads correct state
+      break
+    }
+    // Short-circuit for price question: chips pre-populated in buscar_raquetas handler.
+    // Exits without an extra API round — streamResponse injects the question text.
+    if (priceAskPendingRef.value && pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
       break
     }
   }
