@@ -191,7 +191,7 @@ const CHIP_REACTIONS: Record<string, string> = {
   'Prefiro o fundo de quadra':  'Fundo de quadra, certo.',
   'Sim, cotovelo':              'Entendido, cotovelo no radar.',
   'Sim, ombro':                 'Ombro no radar, certo.',
-  'Punho ou outro lugar':       'Punho, anotado.',
+  'Punho ou outro lugar':       'Anotado, vou levar isso em conta.',
   'Não tenho dor':              'Sem dor, ótimo.',
 }
 const CHIP_REACTION_FALLBACK = 'Tá bom.'
