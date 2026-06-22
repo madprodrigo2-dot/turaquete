@@ -15,9 +15,9 @@ export default function RacketKeyStats({ racket }: Props) {
 
   const forgiveness = ins.forgiveness ?? null
   const sweetSpotLabel = forgiveness != null
-    ? forgiveness >= 8 ? 'generoso (perdoa erros)'
-    : forgiveness >= 6 ? 'médio'
-    : 'exigente (pede técnica)'
+    ? forgiveness >= 8 ? 'maior (perdoa mais os erros)'
+    : forgiveness >= 6 ? 'médio (equilibrado)'
+    : 'menor (exige mais precisão)'
     : null
 
   if (!saidaDeBola && !sweetSpotLabel) return null

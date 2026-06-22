@@ -10,6 +10,32 @@ import { auth } from '@/auth'
 const dedupCache = new Map<string, { lastMsg: string; ts: number }>()
 const DEDUP_WINDOW_MS = 2_000
 
+const MAX_MESSAGE_CHARS = 1_000
+
+// Daily spend cap — cached for 60s to avoid a DB hit on every turn
+const dailySpendCache = { total: 0, fetchedAt: 0 }
+const SPEND_CACHE_TTL_MS = 60_000
+
+async function getDailySpendUsd(): Promise<number | null> {
+  const now = Date.now()
+  if (now - dailySpendCache.fetchedAt < SPEND_CACHE_TTL_MS) return dailySpendCache.total
+  try {
+    const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD UTC
+    const { data, error } = await getSupabaseAdmin()
+      .from('conversations')
+      .select('custo_usd')
+      .gte('created_at', today)
+    if (error) throw error
+    const total = (data ?? []).reduce((sum: number, row: { custo_usd: number | null }) => sum + (row.custo_usd ?? 0), 0)
+    dailySpendCache.total = total
+    dailySpendCache.fetchedAt = now
+    return total
+  } catch (err) {
+    console.warn('[spend-cap] failed to fetch daily spend:', err)
+    return null // fail open — cap is a backstop, not a hard gate
+  }
+}
+
 const VOCAB_BLOCKLIST: [RegExp, string][] = [
   [/\bforgiveness\b/gi, 'sweet spot'],
   [/\bmaneuverability\b/gi, 'manuseio'],
@@ -165,6 +191,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'messages obrigatório' }, { status: 400 })
     }
 
+    const lastMsg = messages[messages.length - 1]
+    if (typeof lastMsg.content === 'string' && lastMsg.content.length > MAX_MESSAGE_CHARS) {
+      return NextResponse.json(
+        { error: `Mensagem muito longa. Máximo ${MAX_MESSAGE_CHARS} caracteres.` },
+        { status: 400 }
+      )
+    }
+
     const ip =
       req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
       req.headers.get('x-real-ip') ??
@@ -193,6 +227,19 @@ export async function POST(req: NextRequest) {
         for (const [k, v] of dedupCache) {
           if (v.ts < cutoff) dedupCache.delete(k)
         }
+      }
+    }
+
+    // Global daily spend cap — fail open if DB is unreachable
+    const maxDailySpend = process.env.MAX_DAILY_USD_SPEND ? parseFloat(process.env.MAX_DAILY_USD_SPEND) : null
+    if (maxDailySpend != null && maxDailySpend > 0) {
+      const todaySpend = await getDailySpendUsd()
+      if (todaySpend !== null && todaySpend >= maxDailySpend) {
+        console.warn(`[spend-cap] daily cap reached: $${todaySpend.toFixed(4)} >= $${maxDailySpend}`)
+        return NextResponse.json(
+          { error: 'Serviço temporariamente indisponível. Tente novamente mais tarde.' },
+          { status: 503 }
+        )
       }
     }
 

@@ -50,6 +50,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
           onKeyDown={handleKeyDown}
           placeholder="Me conta como você joga..."
           disabled={disabled}
+          maxLength={500}
           rows={1}
           className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:opacity-50 bg-gray-50"
         />

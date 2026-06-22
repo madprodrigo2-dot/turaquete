@@ -93,7 +93,10 @@ export const agentTools: Anthropic.Tool[] = [
               },
               razao: {
                 type: 'string',
-                description: 'Por que essa raquete combina com o jogador — 1 frase curta e específica',
+                description:
+                  'Por que essa raquete combina com o jogador — 1 frase qualitativa e específica. ' +
+                  'PROIBIDO citar valores numéricos de dimensões (ex: "spin 9", "controle 8", "potência de 7") — ' +
+                  'os números já são exibidos pelo código no radar/destaques. Escreva apenas qualitativamente.',
               },
             },
             required: ['id', 'razao'],

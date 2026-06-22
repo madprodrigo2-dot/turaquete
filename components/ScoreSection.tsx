@@ -48,9 +48,9 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop }: {
       {spinLisa && (
         <TermoGlossario
           entry={SPIN_LISA_ENTRY}
-          className="text-[10px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none shrink-0"
+          className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none shrink-0"
         >
-          dá pra subir
+          ajustável
         </TermoGlossario>
       )}
     </div>

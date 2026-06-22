@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { agentTools } from './tools'
 import { SYSTEM_PROMPT } from './prompt'
 import { PRICING, TokenUsage } from './pricing'
-import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights } from '../recommend'
+import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights, Insights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
@@ -10,7 +10,7 @@ import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getC
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const MODEL = PRICING.model
-const MAX_TOKENS = 2048  // 1024 was too tight for tool call JSON + final recommendation text
+const MAX_TOKENS = 1200  // 1024 was tight for tool call JSON; 1200 fits full rec text with brevity prompt
 const MAX_TOOL_ROUNDS = 4  // normal flows need ≤4 rounds (troca+marca-filtro worst case)
 
 const MARCA_QUESTION_TEXT = 'Tem alguma marca que você curte ou tanto faz?'
@@ -206,6 +206,68 @@ function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<stri
   return confirmed
 }
 
+// ── Razão guard ─────────────────────────────────────────────────────────────
+// The model is instructed not to cite numeric scores in the razao, but as a
+// backstop we scan for patterns like "spin 9" and cross-check with real data.
+// Any mismatch beyond tolerance is replaced with a code-generated fallback.
+
+type InsightKey = 'power' | 'control' | 'comfort' | 'maneuverability' | 'stability' | 'spin' | 'forgiveness'
+
+const DIM_PT_LABEL: Record<InsightKey, string> = {
+  power: 'potência', control: 'controle', comfort: 'conforto',
+  maneuverability: 'manuseio', stability: 'estabilidade', spin: 'spin', forgiveness: 'sweet spot',
+}
+
+// Each tuple: [field key, regex matching Portuguese/English aliases]
+const DIM_PATTERNS: Array<[InsightKey, RegExp]> = [
+  ['power',           /\b(?:potên?cia|power)\b/],
+  ['control',         /\b(?:controle?|control)\b/],
+  ['comfort',         /\b(?:conforto|comfort)\b/],
+  ['maneuverability', /\b(?:manuseio|maneuverabilidade)\b/],
+  ['stability',       /\b(?:estabilidade|stability)\b/],
+  ['spin',            /\bspin\b/],
+  ['forgiveness',     /\b(?:sweet\s+spot|forgiveness)\b/],
+]
+
+const RAZAO_TOLERANCE = 2  // ±2 points considered close enough; beyond this → fallback
+
+function getInsightScore(ins: Insights, key: InsightKey): number | null {
+  const val: unknown = ins[key as keyof Insights]
+  return typeof val === 'number' ? val : null
+}
+
+function fallbackRazao(ins: Insights): string {
+  const ranked = (Object.keys(DIM_PT_LABEL) as InsightKey[])
+    .map(k => ({ k, v: getInsightScore(ins, k) ?? 0 }))
+    .filter(e => e.v > 0)
+    .sort((a, b) => b.v - a.v)
+  if (ranked.length === 0) return 'Ótima opção para o seu perfil.'
+  const top = ranked.slice(0, 2).map(e => DIM_PT_LABEL[e.k])
+  return `Destaque: ${top.join(' e ')}.`
+}
+
+function validateRazao(razao: string, ins: Insights | null): string {
+  if (!ins) return razao
+  for (const [key, re] of DIM_PATTERNS) {
+    // Matches: "spin 9", "controle: 8", "potência de 7", "spin de 9/10"
+    const combined = new RegExp(`${re.source}\\s*(?::|de\\s+)?\\s*(\\d+(?:[.,]\\d+)?)`, 'gi')
+    let m: RegExpExecArray | null
+    while ((m = combined.exec(razao)) !== null) {
+      const cited = parseFloat(m[1].replace(',', '.'))
+      if (cited < 1 || cited > 10) continue
+      const real = getInsightScore(ins, key)
+      if (real === null) continue
+      if (Math.abs(cited - real) > RAZAO_TOLERANCE) {
+        console.warn(`[razao-guard] "${key}" cited=${cited} real=${real} — replacing with fallback`)
+        return fallbackRazao(ins)
+      }
+    }
+  }
+  return razao
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function executeTool(
   name: string,
   input: Record<string, unknown>,
@@ -396,7 +458,7 @@ async function executeTool(
         ...(Object.keys(insClean).length > 0 ? { racket_insights: insClean } : {}),
       }
     }
-    const MAX_CANDIDATES = 8
+    const MAX_CANDIDATES = 6
 
     if (ranked.length === 0) {
       // Lookup (nome/atleta) returned nothing — current racket not in catalog.
@@ -698,7 +760,8 @@ async function executeTool(
         const racket = rackets.find(rk => rk.id === r.id)
         if (!racket) return []
         const scoreEntry = debugRef.value.scorerResults?.find(s => s.id === r.id)
-        const rec: RecommendedRacket = { racket, razao: r.razao, match_score: scoreEntry?.score }
+        const razaoValidada = validateRazao(r.razao, racket.racket_insights)
+        const rec: RecommendedRacket = { racket, razao: razaoValidada, match_score: scoreEntry?.score }
         return [rec]
       })
       .sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0))
