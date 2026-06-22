@@ -1108,21 +1108,35 @@ export async function runAgentTurn(
     const priceMsg = history.findLast(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
     const budgetFiltersEM = priceMsg ? buildBudgetFiltersEM(priceMsg.content.trim()) : {}
 
-    // Call buscarRaquetas directly (bypass executeTool's MAX_CANDIDATES=6 cap) so we see
-    // the full brand pool. marca_preferida in the SQL is only a boost — post-filter strictly.
-    const filtersForEM: RacketFilters = { ...(confirmedProfile as RacketFilters), ...budgetFiltersEM }
-    const { raquetes: fullPoolEM } = await buscarRaquetas(filtersForEM)
+    // Re-compute the profile's ideal weight/balance range — the same calculation
+    // diagnosticar_perfil runs in the main flow. diagnosticoRef.value is null here
+    // (post-rec early return, before the model loop), so we derive it directly.
+    const { faixa: faixaEM } = calcular_faixa_ideal_traced(confirmedProfile as FittingProfile)
 
-    // Strict brand match (case-insensitive) — never fill with other brands
-    const brandPool = fullPoolEM.filter(r =>
+    // Call buscarRaquetas directly (bypass executeTool's MAX_CANDIDATES=6 cap) so we see
+    // the full pool. The scorer applies profile weights (nivel/estilo/lesão) to match_score.
+    const filtersForEM: RacketFilters = { ...(confirmedProfile as RacketFilters), ...budgetFiltersEM }
+    const { raquetes: rawPoolEM } = await buscarRaquetas(filtersForEM)
+
+    // Apply the same faixa filter the main recommendation flow uses.
+    // This sorts in-range rackets first and marks heavy/light outliers as fora_da_faixa.
+    // For iniciante (peso_max=325g) a Shark Attack at 360g → (360-10)=350 > 325 → fora.
+    const rankedPoolEM = applyFaixaFilter(rawPoolEM, faixaEM)
+
+    // Eligible = in the profile's weight range (fora_da_faixa=false includes in-range + unknown weight).
+    // This is the same set the main recommendation considers — brand selection must stay within it.
+    const eligiblePoolEM = rankedPoolEM.filter(r => !r.fora_da_faixa)
+
+    // Strict brand match within the eligible pool — never show out-of-profile rackets
+    const brandPool = eligiblePoolEM.filter(r =>
       r.brands?.name?.toLowerCase() === marcaEscolhida.toLowerCase()
     )
     // Exclude rackets already shown in this session (initial rec + any previous brand selections)
     const brandUnseen = brandPool.filter(r => !postRecShownIds.has(r.id))
 
     if (brandPool.length === 0) {
-      // Brand has no rackets matching the profile/price at all
-      const noText = `Não encontrei ${marcaEscolhida} que encaixe no seu perfil. Quer ver outra marca ou mudar a faixa?`
+      // Brand has no rackets matching the profile's weight range and scorer minimum
+      const noText = `A ${marcaEscolhida} não tem opções que encaixem no seu perfil. Quer ver outra marca?`
       if (onToken) onToken(noText)
       return { text: noText, suggestions: POST_REC_CHIPS.filter(c => c !== 'Ver mais opções'), usage, debug: debugRef.value }
     }
