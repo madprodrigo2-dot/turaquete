@@ -1005,7 +1005,8 @@ export async function runAgentTurn(
     if (sortedBrands.length === 0) {
       const noText = 'Não encontrei candidatas de outras marcas para esse perfil e faixa de preço. Quer tentar outra faixa?'
       if (onToken) onToken(noText)
-      return { text: noText, suggestions: [...POST_REC_CHIPS], usage, debug: debugRef.value }
+      // Remove "Outra marca" from chips — no brands remain, offering it again would loop
+      return { text: noText, suggestions: ['Outra faixa de preço'], usage, debug: debugRef.value }
     }
     const MAX_BRAND_CHIPS = 5
     const brandChips = sortedBrands.slice(0, MAX_BRAND_CHIPS)
@@ -1040,7 +1041,15 @@ export async function runAgentTurn(
     const fakeBuscarId = `det_marca_buscar_${Date.now()}`
     const buscarResult = await runTool('buscar_raquetas', buscarInput)
     type SlimRacket = { id: number; racket_insights?: Record<string, unknown> }
-    const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimRacket[] }
+    const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimRacket[]; fora_do_orcamento?: boolean }
+    // fora_do_orcamento=true means the fallback fired: no in-budget candidates, out-of-budget shown.
+    // We must NOT silently recommend those — show honest "no match in this faixa" instead.
+    if (buscarParsed.fora_do_orcamento) {
+      const faixaLabel = priceMsg?.content.trim() ?? 'essa faixa'
+      const noText = `A ${marcaEscolhida} não tem opções dentro de "${faixaLabel}". Quer ver em outra faixa ou escolher outra marca?`
+      if (onToken) onToken(noText)
+      return { text: noText, suggestions: ['Outra faixa de preço', 'Outra marca'], usage, debug: debugRef.value }
+    }
     if (buscarParsed.encontradas > 0 && buscarParsed.raquetes?.length && !priceAskPendingRef.value) {
       messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeBuscarId, name: 'buscar_raquetas', input: buscarInput } as Anthropic.ToolUseBlockParam] })
       messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarResult } as Anthropic.ToolResultBlockParam] })
