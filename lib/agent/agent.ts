@@ -163,6 +163,27 @@ const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
   'Não tenho dor':              { sem_lesao: true },
 }
 
+// Fixed reactions for chip turns — short, warm, no emoji, no em-dash.
+// Keyed by exact chip text from FIELD_DEFS (confidence.ts).
+const CHIP_REACTIONS: Record<string, string> = {
+  'Ataque (potência, smash)':  'Ofensivo, entendido.',
+  'Defesa e controle':          'Defesa e controle, anotado.',
+  'Equilibrado':                'Equilibrado, ótimo.',
+  'Estou começando (cat. E/D)': 'Legal, iniciante!',
+  'Intermediário (cat. C/B)':   'Intermediário, ótimo.',
+  'Avançado (cat. A/Pro)':      'Avançado, excelente.',
+  'Sou iniciante':              'Legal, iniciante!',
+  'Minha batida é forte':       'Batida forte, anotado.',
+  'Minha batida é suave':       'Batida mais suave, entendido.',
+  'Jogo muito na rede':         'Rede, entendido.',
+  'Prefiro o fundo de quadra':  'Fundo de quadra, certo.',
+  'Sim, cotovelo':              'Entendido, cotovelo no radar.',
+  'Sim, ombro':                 'Ombro no radar, certo.',
+  'Punho ou outro lugar':       'Punho, anotado.',
+  'Não tenho dor':              'Sem dor, ótimo.',
+}
+const CHIP_REACTION_FALLBACK = 'Tá bom.'
+
 // Scan user chip messages in history → build confirmed profile.
 // Chip-answered fields are immune to model omission or re-inference between turns.
 function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<string, unknown> {
@@ -656,7 +677,7 @@ async function executeTool(
         status: 'ORCAMENTO_DESCONHECIDO',
         instrucao_OBRIGATORIA:
           `Orçamento não informado. ` +
-          `AÇÃO OBRIGATÓRIA: escreva a pergunta "${PRECO_QUESTION_TEXT}" (chips já configurados pelo sistema — NÃO chame sugerir_opcoes). ` +
+          `AÇÃO OBRIGATÓRIA: escreva UMA frase curta de transição (ex: "Achei boas opções pra você!", "Encontrei candidatas pro seu perfil."). NÃO escreva a pergunta de preço — o sistema a injetará automaticamente (chips já configurados — NÃO chame sugerir_opcoes). ` +
           `PROIBIDO chamar recomendar_raquetas antes de receber a resposta. ` +
           `Após receber a faixa, chame buscar_raquetas novamente com os filtros: ${bucketMappings}.`,
       }
@@ -943,6 +964,118 @@ export async function runAgentTurn(
     return { text: PRECO_QUESTION_TEXT, suggestions: chips, usage, debug: {} }
   }
 
+  // ── Chip short-circuit: profile chip or price chip → 0 or 1 model API calls ──
+  // Profile chip mid-flow (confidence insufficient): fixed reaction + next question. 0 API calls.
+  // Profile chip reaching confidence (budget unknown): fixed reaction + price question. 0 API calls.
+  // Price chip (or confidence+budget known): run buscar+rec without tool-call round-trips,
+  //   then call streamResponse for narration only (1 API call, no tool_use).
+  const isProfileChip = Object.prototype.hasOwnProperty.call(CHIP_TO_PROFILE, lastUserContent)
+  const isPriceChipMsg = PRICE_ANSWERS.has(lastUserContent) && !postRecContext  // post-rec price handled separately
+  if ((isProfileChip || isPriceChipMsg) && postRecMode === null) {
+    const { faixa, trace } = calcular_faixa_ideal_traced(confirmedProfile as FittingProfile)
+    diagnosticoRef.value = faixa
+    debugRef.value.perfilInput = confirmedProfile
+    if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
+    debugRef.value.decisionTrace.faixaSteps = trace.steps
+    debugRef.value.decisionTrace.conflitos = trace.conflitos
+    const confidence = computeProfileConfidence(confirmedProfile, profileQuestionsAsked, undefined)
+    debugRef.value.confidenceInfo = confidence
+
+    const reaction = isProfileChip ? (CHIP_REACTIONS[lastUserContent] ?? CHIP_REACTION_FALLBACK) : ''
+
+    // CASE 1: profile chip, confidence still insufficient → fixed reaction + next question
+    if (isProfileChip && !confidence.willRecommend && confidence.nextQuestion) {
+      const q = confidence.nextQuestion
+      pendingQuestionFieldRef.value = q.field
+      pendingSuggestions.splice(0, pendingSuggestions.length, ...q.chips)
+      const text = reaction + '\n\n' + getFixedQuestionText(q.field)
+      if (onToken) onToken(text)
+      return { text, suggestions: [...q.chips], diagnostico: faixa, usage, debug: debugRef.value }
+    }
+
+    // CASE 2: profile chip reaches confidence, budget still unknown → price question
+    if (isProfileChip && confidence.willRecommend && !budgetAnsweredRef.value) {
+      const chips = computePrecoChips([])
+      pendingQuestionFieldRef.value = 'preco'
+      pendingSuggestions.splice(0, pendingSuggestions.length, ...chips)
+      const text = reaction + '\n\n' + PRECO_QUESTION_TEXT
+      if (onToken) onToken(text)
+      return { text, suggestions: chips, diagnostico: faixa, usage, debug: debugRef.value }
+    }
+
+    // CASE 3: price chip (or profile chip with confidence+budget known) →
+    //   run buscar+rec without model tool calls, then streamResponse for narration
+    const isRecPath = isPriceChipMsg || (isProfileChip && confidence.willRecommend && budgetAnsweredRef.value)
+    if (isRecPath) {
+      // Build budget filters from price chip, or recover from history for the profile-chip case
+      const buildBudgetFilters = (label: string): Partial<RacketFilters> => {
+        if (label === 'Tanto faz / me mostra opções') return { presupuesto_min: 0 }
+        const bucket = PRECO_BUCKETS.find(b => b.label === label)
+        return {
+          ...(bucket?.min && bucket.min > 0 ? { presupuesto_min: bucket.min } : {}),
+          ...(bucket?.max != null ? { presupuesto_max: bucket.max } : {}),
+        }
+      }
+      let buscarInput: Record<string, unknown>
+      if (isPriceChipMsg) {
+        budgetAnsweredRef.value = true
+        buscarInput = { ...confirmedProfile, ...buildBudgetFilters(lastUserContent) }
+      } else {
+        const priceMsg = history.findLast(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
+        buscarInput = { ...confirmedProfile, ...(priceMsg ? buildBudgetFilters(priceMsg.content.trim()) : {}) }
+      }
+
+      // Local helper: call executeTool with all current closure refs
+      const runTool = (tname: string, tinput: Record<string, unknown>) =>
+        executeTool(tname, tinput, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, { mode: postRecMode, shownIds: postRecShownIds, shownBrands: postRecShownBrands })
+
+      const fakeBuscarId = `det_buscar_${Date.now()}`
+      const buscarResult = await runTool('buscar_raquetas', buscarInput)
+      type SlimRacket = { id: number; racket_insights?: Record<string, unknown> }
+      const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimRacket[] }
+
+      if (buscarParsed.encontradas > 0 && buscarParsed.raquetes?.length && !priceAskPendingRef.value) {
+        hasSearchResults = true
+        messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeBuscarId, name: 'buscar_raquetas', input: buscarInput } as Anthropic.ToolUseBlockParam] })
+        messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarResult } as Anthropic.ToolResultBlockParam] })
+        compactOldToolResults(messages)
+
+        const topRaquetes = buscarParsed.raquetes.slice(0, 3).map(r => ({
+          id: r.id,
+          razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
+        }))
+        const recomendarInput = { raquetes: topRaquetes, tipo: 'perfil_completo' }
+        const fakeRecId = `det_rec_${Date.now()}`
+        const recResult = await runTool('recomendar_raquetas', recomendarInput as Record<string, unknown>)
+        messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeRecId, name: 'recomendar_raquetas', input: recomendarInput } as Anthropic.ToolUseBlockParam] })
+        messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeRecId, content: recResult } as Anthropic.ToolResultBlockParam] })
+        compactOldToolResults(messages)
+
+        if (onToken) {
+          return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
+        }
+        // Non-streaming path (rare in production — always streams)
+        const finalResp = await anthropic.messages.create({
+          model: MODEL, max_tokens: MAX_TOKENS, system: SYSTEM_CACHED,
+          tools: agentTools, tool_choice: { type: 'none' }, messages,
+        }, { signal })
+        addUsage(usage, finalResp.usage)
+        const textBlock = finalResp.content.find(b => b.type === 'text')
+        return {
+          text: textBlock?.type === 'text' ? textBlock.text : '',
+          recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
+          suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
+          isComparison: isComparison || undefined,
+          diagnostico: pendingRecommendations.length > 0 ? (diagnosticoRef.value ?? undefined) : undefined,
+          intencao: intencaoRef.value ?? undefined,
+          usage, debug: debugRef.value,
+        }
+      }
+      // buscar returned 0 results, price gate fired, or other edge case → fall through to model loop
+    }
+  }
+  // ── End chip short-circuit ───────────────────────────────────────────────────
+
   // Intents that require profile-building: force diagnosticar_perfil immediately
   // after registrar_intencao so the Akinator system (not the model) decides what
   // to ask next. Excludes troca/ajuste (need current-racket question first),
@@ -1165,9 +1298,8 @@ async function streamResponse(
     })
   }
   // When chips are pending, inject system instruction.
-  // For akinator fields: model writes only the acuse; the code injects the question text
-  // deterministically below (after the stream). For preco/marca/disambig: model writes
-  // the question itself, with a code-level fallback for empty responses.
+  // For akinator fields AND preco: model writes only a short phrase, code injects question text.
+  // For marca/disambig: model writes the question itself, with code fallback for empty responses.
   if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
     const fixedText = field
@@ -1176,11 +1308,15 @@ async function streamResponse(
         : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
         : getFixedQuestionText(field as FieldKey)
       : null
-    const isAkinatorField = field && !field.startsWith('disambig:') && field !== 'preco' && field !== 'marca'
+    // preco joins akinator fields: model writes a short transition, code appends the fixed question.
+    // Prevents improvisation like "Espera aí, preciso... 😊" before the price chips.
+    const isAkinatorField = field && !field.startsWith('disambig:') && field !== 'marca'
     systemBlocks.push({
       type: 'text',
       text: isAkinatorField
-        ? `\n\n[INSTRUÇÃO OBRIGATÓRIA]\nEscreva SOMENTE uma frase curta de acolhimento (ex: "Entendido!", "Boa!"). NÃO escreva a pergunta — o código a injetará automaticamente. NÃO mencione lesão, nível, estilo, preço ou marca.`
+        ? (field === 'preco'
+          ? `\n\n[INSTRUÇÃO OBRIGATÓRIA]\nEscreva SOMENTE uma frase curta de transição (ex: "Achei boas opções pra você!", "Encontrei candidatas pro seu perfil."). NÃO escreva a pergunta de preço — o código a injetará automaticamente. NÃO cite valores, faixas ou marcas.`
+          : `\n\n[INSTRUÇÃO OBRIGATÓRIA]\nEscreva SOMENTE uma frase curta de acolhimento (ex: "Entendido!", "Boa!"). NÃO escreva a pergunta — o código a injetará automaticamente. NÃO mencione lesão, nível, estilo, preço ou marca.`)
         : fixedText
           ? `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nSua resposta DEVE conter EXATAMENTE esta pergunta, sem alterar uma palavra:\n"${fixedText}"\nVocê pode escrever UMA frase curta de acolhimento ANTES da pergunta. Nada depois.`
           : `\n\n[INSTRUÇÃO OBRIGATÓRIA — PERGUNTA PARA OS CHIPS]\nSua resposta DEVE conter uma frase introdutória que explique ao usuário o que os botões significam — sem ela os chips aparecem "órfãos".`,
@@ -1211,14 +1347,14 @@ async function streamResponse(
   const finalMsg = await stream.finalMessage()
   addUsage(usage, finalMsg.usage)
 
-  // For akinator fields: always append the fixed question text after the model's acuse.
-  // The question comes from the fixed set — never from the model — making it deterministic.
-  // For preco/marca/disambig: model writes the question; fallback only when text is empty.
+  // For akinator fields AND preco: always append the fixed question text after the model's phrase.
+  // The question is code-injected, never model-generated — deterministic across all runs.
+  // For marca/disambig: model writes the question; fallback only when text is empty.
   if (pendingSuggestions.length > 0 && pendingRecommendations.length === 0) {
     const field = pendingQuestionFieldRef.value
-    const isAkinator = field && !field.startsWith('disambig:') && field !== 'preco' && field !== 'marca'
+    const isAkinator = field && !field.startsWith('disambig:') && field !== 'marca'
     if (isAkinator) {
-      const fixedQ = getFixedQuestionText(field as FieldKey)
+      const fixedQ = field === 'preco' ? PRECO_QUESTION_TEXT : getFixedQuestionText(field as FieldKey)
       if (fixedQ && !text.includes(fixedQ)) {
         const addition = (text.trim() ? '\n\n' : '') + fixedQ
         text += addition
@@ -1226,8 +1362,7 @@ async function streamResponse(
       }
     } else if (!text.trim()) {
       const fallback = field
-        ? field === 'preco' ? PRECO_QUESTION_TEXT
-          : field === 'marca' ? (pendingRecommendations.length > 0 ? MARCA_FILTRO_QUESTION_TEXT : MARCA_QUESTION_TEXT)
+        ? field === 'marca' ? (pendingRecommendations.length > 0 ? MARCA_FILTRO_QUESTION_TEXT : MARCA_QUESTION_TEXT)
           : field.startsWith('disambig:') ? `Achei algumas ${field.slice('disambig:'.length)}. Qual delas é a sua?`
           : null
         : null
