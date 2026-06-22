@@ -289,7 +289,7 @@ export async function POST(req: NextRequest) {
           const safeFlushed = (thinkFlushed ? toolFilter.feed(thinkFlushed) : '') + toolFilter.flush()
           if (safeFlushed) writeEvent(controller, { type: 'token', token: sanitizeToken(safeFlushed) })
 
-          const { text, recommendations, suggestions, isComparison, diagnostico, intencao, usage, debug } = result
+          const { text, recommendations, suggestions, isComparison, diagnostico, intencao, marcaListPending, usage, debug } = result
           const { usd, brl } = calcCost(usage)
 
           // Strip thinking from text stored in DB so conversation history is clean
@@ -358,6 +358,7 @@ export async function POST(req: NextRequest) {
             isComparison: isComparison ?? false,
             diagnostico: diagnostico ?? null,
             intencao: intencao ?? null,
+            marcaListPending: marcaListPending ?? false,
           })
         } catch (err) {
           clearTimeout(agentTimeout)

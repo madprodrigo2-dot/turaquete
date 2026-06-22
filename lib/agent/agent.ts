@@ -50,8 +50,8 @@ const PRICE_ANSWERS = new Set([
 // Fixed post-recommendation action chips and types
 const POST_REC_CHIPS = ['Ver mais opções', 'Outra faixa de preço', 'Outra marca'] as const
 const POST_REC_REDIRECT_TEXT = 'Posso te mostrar mais opções, outra faixa de preço ou outra marca. É só tocar.'
-export type PostRecContext = { shownIds: number[]; shownBrands: string[] }
-type PostRecMode = 'ver_mais' | 'outra_marca' | 'outra_faixa' | 'livre'
+export type PostRecContext = { shownIds: number[]; shownBrands: string[]; marcaListPending?: boolean }
+type PostRecMode = 'ver_mais' | 'outra_marca' | 'outra_faixa' | 'escolher_marca' | 'livre'
 type PostRecCtx = { mode: PostRecMode | null; shownIds: Set<number>; shownBrands: Set<string> }
 
 // Stable system prompt as a cacheable block — sent on every turn but only billed
@@ -90,6 +90,7 @@ export type AgentResult = {
   isComparison?: boolean
   diagnostico?: FaixaIdeal
   intencao?: IntencaoTipo
+  marcaListPending?: boolean
   usage: TokenUsage
   debug: AgentDebugInfo
 }
@@ -950,6 +951,7 @@ export async function runAgentTurn(
     ? (lastUserContent === 'Ver mais opções' ? 'ver_mais'
       : lastUserContent === 'Outra marca' ? 'outra_marca'
       : lastUserContent === 'Outra faixa de preço' ? 'outra_faixa'
+      : postRecContext.marcaListPending && !POST_REC_CHIPS.includes(lastUserContent as typeof POST_REC_CHIPS[number]) ? 'escolher_marca'
       : 'livre')
     : null
   // Free text in post-rec state → fixed redirect, 0 API calls
@@ -962,6 +964,91 @@ export async function runAgentTurn(
     const chips = computePrecoChips([])
     if (onToken) onToken(PRECO_QUESTION_TEXT)
     return { text: PRECO_QUESTION_TEXT, suggestions: chips, usage, debug: {} }
+  }
+
+  // "Outra marca" → derive brand list from pool, show as chips, 0 model calls
+  if (postRecMode === 'outra_marca') {
+    const buildBudgetFilters = (label: string): Partial<RacketFilters> => {
+      if (label === 'Tanto faz / me mostra opções') return { presupuesto_min: 0 }
+      const bucket = PRECO_BUCKETS.find(b => b.label === label)
+      return {
+        ...(bucket?.min && bucket.min > 0 ? { presupuesto_min: bucket.min } : {}),
+        ...(bucket?.max != null ? { presupuesto_max: bucket.max } : {}),
+      }
+    }
+    const priceMsg = history.findLast(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
+    const buscarInput: Record<string, unknown> = { ...confirmedProfile, ...(priceMsg ? buildBudgetFilters(priceMsg.content.trim()) : {}) }
+    // Fetch full pool with no post-rec filtering so we can compute which brands are available
+    const buscarResult = await executeTool('buscar_raquetas', buscarInput, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, undefined)
+    type PoolRacket = { brands?: { name: string } | null }
+    const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: PoolRacket[] }
+    const brandCount = new Map<string, number>()
+    for (const r of buscarParsed.raquetes ?? []) {
+      const bn = r.brands?.name
+      if (bn && !postRecShownBrands.has(bn)) brandCount.set(bn, (brandCount.get(bn) ?? 0) + 1)
+    }
+    const sortedBrands = [...brandCount.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name)
+    if (sortedBrands.length === 0) {
+      const noText = 'Não encontrei candidatas de outras marcas para esse perfil e faixa de preço. Quer tentar outra faixa?'
+      if (onToken) onToken(noText)
+      return { text: noText, suggestions: [...POST_REC_CHIPS], usage, debug: debugRef.value }
+    }
+    const MAX_BRAND_CHIPS = 5
+    const brandChips = sortedBrands.slice(0, MAX_BRAND_CHIPS)
+    if (sortedBrands.length > MAX_BRAND_CHIPS) brandChips.push('Outras marcas')
+    const marcaListText = 'Qual marca você quer ver?'
+    pendingSuggestions.splice(0, pendingSuggestions.length, ...brandChips)
+    if (onToken) onToken(marcaListText)
+    return { text: marcaListText, suggestions: [...brandChips], marcaListPending: true, usage, debug: debugRef.value }
+  }
+
+  // User picked a brand from the brand list → buscar + deterministic rec, 0 model calls
+  if (postRecMode === 'escolher_marca') {
+    const marcaEscolhida = lastUserContent
+    const buildBudgetFilters = (label: string): Partial<RacketFilters> => {
+      if (label === 'Tanto faz / me mostra opções') return { presupuesto_min: 0 }
+      const bucket = PRECO_BUCKETS.find(b => b.label === label)
+      return {
+        ...(bucket?.min && bucket.min > 0 ? { presupuesto_min: bucket.min } : {}),
+        ...(bucket?.max != null ? { presupuesto_max: bucket.max } : {}),
+      }
+    }
+    const priceMsg = history.findLast(m => m.role === 'user' && PRICE_ANSWERS.has(m.content.trim()))
+    const buscarInput: Record<string, unknown> = {
+      ...confirmedProfile,
+      ...(priceMsg ? buildBudgetFilters(priceMsg.content.trim()) : {}),
+      marca_preferida: marcaEscolhida,
+    }
+    // Use ver_mais mode to exclude already-seen rackets while searching brand-specific pool
+    const postRecCtxMarca: PostRecCtx = { mode: 'ver_mais', shownIds: postRecShownIds, shownBrands: postRecShownBrands }
+    const runTool = (tname: string, tinput: Record<string, unknown>) =>
+      executeTool(tname, tinput, pendingRecommendations, pendingSuggestions, diagnosticoRef, intencaoRef, debugRef, profileQuestionsAsked, priceAskPendingRef, pendingQuestionFieldRef, marcaAskPendingRef, brandAskedRef, currentRacketIds, currentRacketNotFoundRef, confirmedProfile, budgetAnsweredRef, precoChipsRef, marcaChipsRef, showAllBrandsRef, confirmedMarca, history, postRecCtxMarca)
+    const fakeBuscarId = `det_marca_buscar_${Date.now()}`
+    const buscarResult = await runTool('buscar_raquetas', buscarInput)
+    type SlimRacket = { id: number; racket_insights?: Record<string, unknown> }
+    const buscarParsed = JSON.parse(buscarResult) as { encontradas: number; raquetes?: SlimRacket[] }
+    if (buscarParsed.encontradas > 0 && buscarParsed.raquetes?.length && !priceAskPendingRef.value) {
+      messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeBuscarId, name: 'buscar_raquetas', input: buscarInput } as Anthropic.ToolUseBlockParam] })
+      messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeBuscarId, content: buscarResult } as Anthropic.ToolResultBlockParam] })
+      compactOldToolResults(messages)
+      const topRaquetes = buscarParsed.raquetes.slice(0, 3).map(r => ({
+        id: r.id,
+        razao: r.racket_insights ? fallbackRazao(r.racket_insights as unknown as Insights) : 'Boa escolha para o seu perfil.',
+      }))
+      const recomendarInput = { raquetes: topRaquetes, tipo: 'perfil_completo' }
+      const fakeRecId = `det_marca_rec_${Date.now()}`
+      const recResult = await runTool('recomendar_raquetas', recomendarInput as Record<string, unknown>)
+      messages.push({ role: 'assistant', content: [{ type: 'tool_use', id: fakeRecId, name: 'recomendar_raquetas', input: recomendarInput } as Anthropic.ToolUseBlockParam] })
+      messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeRecId, content: recResult } as Anthropic.ToolResultBlockParam] })
+      compactOldToolResults(messages)
+      const text = `Aqui estão as melhores opções da ${marcaEscolhida} para o seu perfil.`
+      if (onToken) onToken(text)
+      pendingSuggestions.splice(0, pendingSuggestions.length, ...POST_REC_CHIPS)
+      return { text, recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined, suggestions: [...POST_REC_CHIPS], usage, debug: debugRef.value }
+    }
+    const noText = `Não encontrei ${marcaEscolhida} que encaixe no seu perfil e faixa de preço. Quer ver outra marca ou mudar a faixa?`
+    if (onToken) onToken(noText)
+    return { text: noText, suggestions: [...POST_REC_CHIPS], usage, debug: debugRef.value }
   }
 
   // ── Chip short-circuit: profile chip or price chip → 0 or 1 model API calls ──

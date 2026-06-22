@@ -51,6 +51,7 @@ type Message = {
   isFirstRec?: boolean   // true on the first assistant message that contains recommendations
   intencao?: string      // conversation intencao, stored here for persistence
   turnosAteRec?: number  // user turn count when this first rec was shown
+  marcaListPending?: boolean  // true when the last assistant message is a brand-list prompt
   _isTimeout?: true  // internal flag: stripped from API payloads, triggers history rollback on retry
   _retryText?: string  // original user text to resend when retry chip is tapped
 }
@@ -264,7 +265,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         const shownBrands = [...new Set(
           lastRecMsg?.recommendations?.flatMap(r => r.racket.brands?.name ? [r.racket.brands.name] : []) ?? []
         )]
-        reqBody.postRecContext = { shownIds: allShownIds, shownBrands }
+        const lastAssistantMsg = [...baseMessages].reverse().find(m => m.role === 'assistant')
+        const marcaListPending = lastAssistantMsg?.marcaListPending ?? false
+        reqBody.postRecContext = { shownIds: allShownIds, shownBrands, ...(marcaListPending ? { marcaListPending: true } : {}) }
       }
       if (isFirstMessage) {
         reqBody.primeiraMensagem = text
@@ -299,7 +302,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         if (!line.startsWith('data: ')) return
         const payload = line.slice(6).trim()
         if (!payload) return
-        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; intencao?: string; message?: string } & Partial<DebugData>
+        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; intencao?: string; marcaListPending?: boolean; message?: string } & Partial<DebugData>
         try { evt = JSON.parse(payload) } catch { return }
 
         if (evt.type === 'token' && evt.token !== undefined) {
@@ -337,6 +340,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
             isFirstRec: isFirstRec || undefined,
             intencao: isFirstRec ? intencaoConvRef.current : undefined,
             turnosAteRec: isFirstRec ? turnosAteRecRef.current : undefined,
+            marcaListPending: evt.marcaListPending || undefined,
           }])
           if (recs && recs.length > 0) {
             sendGAEvent({ event: 'recomendacao_exibida', count: recs.length })
@@ -523,6 +527,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                         isLast && !loading && !isStreaming && !isAnimating && !atLimit
                           ? (s) => {
                               if (s === 'Ver todas as marcas') { setShowBrandPicker(true); return }
+                              if (s === 'Outras marcas') { setShowBrandPicker(true); return }
                               sendMessage(m._retryText && s === '↻ Tentar de novo' ? m._retryText : s)
                             }
                           : undefined
