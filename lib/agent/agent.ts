@@ -78,6 +78,8 @@ export type AgentDebugInfo = {
     id: number; name: string; score: number
     weight_g: number | null; elbow_friendly?: boolean | null; fora_da_faixa?: boolean
   }>
+  // Top 3 IDs do scorer (após faixa filter) — usados para corrigir escolhas erradas do modelo
+  scorerTopIds?: number[]
   criteriosRelaxados?: string[]
   decisionTrace?: DecisionTrace
   confidenceInfo?: ConfidenceInfo
@@ -633,6 +635,11 @@ async function executeTool(
 
     const topCandidates = filteredPool.slice(0, MAX_CANDIDATES).map(slimForModel)
     debugRef.value.filteredPoolSize = filteredPool.length
+    // Store the top-3 IDs from the scorer so recomendar_raquetas can enforce them
+    // regardless of which IDs the model chooses to pass.
+    if (!isLookupCall) {
+      debugRef.value.scorerTopIds = filteredPool.slice(0, 3).map(r => r.id)
+    }
     const topIds = topCandidates.map((r: { id: number }) => r.id)
     const payload: Record<string, unknown> = {
       encontradas: ranked.length,
@@ -825,7 +832,20 @@ async function executeTool(
         instrucao: 'NÃO recomende. Feche com mensagem amável: diga que sem saber o nível fica difícil indicar a raquete certa e convide a voltar quando souber. Não insista mais.',
       })
     }
-    const { raquetes } = input as RecommendInput
+    let { raquetes } = input as RecommendInput
+    // For profile recommendations: enforce the scorer's top-3 IDs regardless of what
+    // the model passed. The model tends to skip #1 based on racket name/brand bias.
+    // scorerTopIds is set by buscar_raquetas handler after applying faixa filter.
+    const scorerTop = debugRef.value.scorerTopIds
+    if (scorerTop && scorerTop.length > 0 && tipoDaRec !== 'compra_direta' && tipoDaRec !== 'comparacao') {
+      const modelIds = raquetes.slice(0, 3).map(r => r.id)
+      const matches = modelIds.every((id, i) => id === scorerTop[i])
+      if (!matches) {
+        // Keep model's razoes in order; reassign to correct rackets by position
+        const modelRazoes = raquetes.slice(0, 3).map(r => r.razao)
+        raquetes = scorerTop.map((id, i) => ({ id, razao: modelRazoes[i] ?? 'Ótima opção para o seu perfil.' }))
+      }
+    }
     // Cap at 3, then exclude the current racket identified by lookup in TROCA flow.
     // Exception: compra_direta — the looked-up racket IS what the user wants, never exclude it.
     const capped = raquetes.slice(0, 3)
