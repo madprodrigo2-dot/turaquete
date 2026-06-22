@@ -158,8 +158,10 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const maneuverability = Math.min(10, Math.max(1, man))
 
   // Forgiveness — face grade + core softness + redonda(+1) + espessura
+  // VIDRO +2 (era +3): fibra de vidro é forgiving mas não ao ponto de dominar o ranking de iniciante
+  // HYBRID_VIDRO +1 (era +2): mantém gradiente abaixo do vidro puro
   const FACE_FORG: Record<FaceGrade, number> = {
-    VIDRO: +3, HYBRID_VIDRO: +2, KEVLAR_PURE: +1, KEVLAR_CARBON: 0,
+    VIDRO: +2, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: 0,
     CARBON_3K: 0, CARBON_3K_METAL: 0, CARBON_6K_15K: 0,
     CARBON_24K: -1, CARBON_18K: -1,
   }
