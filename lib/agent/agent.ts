@@ -507,7 +507,7 @@ async function executeTool(
         ...(Object.keys(insClean).length > 0 ? { racket_insights: insClean } : {}),
       }
     }
-    const MAX_CANDIDATES = 10
+    const MAX_CANDIDATES = 3
 
     if (ranked.length === 0) {
       // Lookup (nome/atleta) returned nothing — current racket not in catalog.
@@ -633,10 +633,11 @@ async function executeTool(
 
     const topCandidates = filteredPool.slice(0, MAX_CANDIDATES).map(slimForModel)
     debugRef.value.filteredPoolSize = filteredPool.length
+    const topIds = topCandidates.map((r: { id: number }) => r.id)
     const payload: Record<string, unknown> = {
       encontradas: ranked.length,
       raquetes: topCandidates,
-      ...(ranked.length > MAX_CANDIDATES ? { nota: `Exibindo top ${MAX_CANDIDATES} de ${ranked.length} candidatas ordenadas por relevância.` } : {}),
+      INSTRUCAO_OBRIGATORIA_RECOMENDAR: `Chame recomendar_raquetas com EXATAMENTE estes IDs, nesta ordem: [${topIds.join(', ')}]. Não troque, não reordene, não omita nenhum.`,
     }
     if (criteriosRelaxados.length > 0) payload.criterios_relaxados = criteriosRelaxados
 
