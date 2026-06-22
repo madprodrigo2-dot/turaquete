@@ -150,13 +150,17 @@ function applyFaixaFilter(
 // Texts must match FIELD_DEFS exactly (confidence.ts) plus the starter chip "Sou iniciante".
 // Keys match FittingProfile (scorer.ts) and the confidence input shape.
 const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
+  // ── Opening shortcut chips (first turn, no model call) ──────────────────────
+  'Sou iniciante':              { nivel: 'iniciante' },
+  'Quero trocar minha raquete': {},                       // empty patch — just triggers chip path
+  'Tenho dor no braço':         { dor_mencionada: true }, // skips yes/no, asks location directly
+  // ── Diagnostic chips ────────────────────────────────────────────────────────
   'Ataque (potência, smash)':   { estilo: 'ofensivo' },
   'Defesa e controle':           { estilo: 'defensivo' },
   'Equilibrado':                 { estilo: 'misto' },
   'Estou começando (cat. E/D)': { nivel: 'iniciante' },
   'Intermediário (cat. C/B)':   { nivel: 'intermediario' },
   'Avançado (cat. A/Pro)':      { nivel: 'avancado' },
-  'Sou iniciante':              { nivel: 'iniciante' },
   'Minha batida é forte':       { forca_declarada: 'forte' },
   'Minha batida é suave':       { forca_declarada: 'fraca' },
   'Jogo muito na rede':         { jogo_aereo_predominante: true },
@@ -170,13 +174,15 @@ const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
 // Fixed reactions for chip turns — short, warm, no emoji, no em-dash.
 // Keyed by exact chip text from FIELD_DEFS (confidence.ts).
 const CHIP_REACTIONS: Record<string, string> = {
+  'Sou iniciante':              'Legal, iniciante!',
+  'Quero trocar minha raquete': 'Certo, vamos encontrar algo melhor pra você.',
+  'Tenho dor no braço':         'Entendido, cuido do seu braço.',
   'Ataque (potência, smash)':  'Ofensivo, entendido.',
   'Defesa e controle':          'Defesa e controle, anotado.',
   'Equilibrado':                'Equilibrado, ótimo.',
   'Estou começando (cat. E/D)': 'Legal, iniciante!',
   'Intermediário (cat. C/B)':   'Intermediário, ótimo.',
   'Avançado (cat. A/Pro)':      'Avançado, excelente.',
-  'Sou iniciante':              'Legal, iniciante!',
   'Minha batida é forte':       'Batida forte, anotado.',
   'Minha batida é suave':       'Batida mais suave, entendido.',
   'Jogo muito na rede':         'Rede, entendido.',
@@ -1346,7 +1352,12 @@ export async function runAgentTurn(
       const q = confidence.nextQuestion
       pendingQuestionFieldRef.value = q.field
       pendingSuggestions.splice(0, pendingSuggestions.length, ...q.chips)
-      const text = reaction + '\n\n' + getFixedQuestionText(q.field)
+      // When pain was already confirmed ("Tenho dor no braço"), skip the yes/no and
+      // ask for location directly using the specific "Onde você sente essa dor?" text.
+      const questionText = (confidence.dorMencionada && q.field === 'lesao')
+        ? LESAO_LOCAL_QUESTION_TEXT
+        : getFixedQuestionText(q.field)
+      const text = reaction + '\n\n' + questionText
       if (onToken) onToken(text)
       return { text, suggestions: [...q.chips], diagnostico: faixa, usage, debug: debugRef.value }
     }
