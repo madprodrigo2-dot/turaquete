@@ -589,24 +589,7 @@ async function executeTool(
       pendingSuggestions.splice(0, pendingSuggestions.length, ...chips)
     }
 
-    // Price tiebreaker: when budget is open, among near-equal candidates (score diff ≤ 0.3)
-    // the cheaper one rises — so the model is more likely to pick/present it first.
-    // Never sacrifices aptitude: only breaks genuine ties, preserves fora_da_faixa priority.
-    type AnyRanked = { match_score: number; price: number | null; fora_da_faixa?: boolean }
-    const candidatePool = isBudgetOpen
-      ? [...ranked].sort((a, b) => {
-          const aFora = (a as AnyRanked).fora_da_faixa ?? false
-          const bFora = (b as AnyRanked).fora_da_faixa ?? false
-          if (aFora !== bFora) return aFora ? 1 : -1
-          const scoreDiff = b.match_score - a.match_score
-          const aPrice = a.price
-          const bPrice = b.price
-          if (Math.abs(scoreDiff) <= 0.3 && aPrice != null && bPrice != null && aPrice !== bPrice) {
-            return aPrice - bPrice
-          }
-          return scoreDiff
-        })
-      : ranked
+    const candidatePool = ranked
 
     // Post-rec filtering: exclude shown IDs ("Ver mais opções") or shown brands ("Outra marca")
     const filteredPool = postRecCtx?.mode === 'ver_mais'
