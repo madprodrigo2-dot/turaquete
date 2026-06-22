@@ -1439,7 +1439,18 @@ export async function runAgentTurn(
     }
   }
 
-  // Fallback if MAX_TOOL_ROUNDS exhausted
+  // Fallback if MAX_TOOL_ROUNDS exhausted.
+  // Guard: if the model loop produced no chips and no recs (e.g. apertura with no extractable
+  // profile data), pre-populate the first Akinator question so streamResponse injects it
+  // with a proper model intro instead of emitting blank output.
+  if (pendingRecommendations.length === 0 && pendingSuggestions.length === 0 && pendingQuestionFieldRef.value === null) {
+    const fallbackConf = computeProfileConfidence(confirmedProfile, profileQuestionsAsked, undefined)
+    const q = fallbackConf.nextQuestion
+    if (q) {
+      pendingQuestionFieldRef.value = q.field
+      pendingSuggestions.splice(0, pendingSuggestions.length, ...q.chips)
+    }
+  }
   if (onToken) {
     return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
   }
@@ -1558,6 +1569,22 @@ async function streamResponse(
       if (fallback) {
         text = fallback
         onToken(fallback)
+      }
+    }
+  }
+
+  // Hard guarantee: the apertura turn must NEVER return blank.
+  // If the model emitted no text AND no chips/recs were set by any tool,
+  // force the first Akinator question so the user always gets something.
+  if (!text.trim() && pendingSuggestions.length === 0 && pendingRecommendations.length === 0) {
+    const fallbackConf = computeProfileConfidence({}, 0, undefined)
+    const q = fallbackConf.nextQuestion
+    if (q) {
+      const qText = getFixedQuestionText(q.field as FieldKey)
+      if (qText) {
+        text = qText
+        onToken(qText)
+        pendingSuggestions.splice(0, pendingSuggestions.length, ...q.chips)
       }
     }
   }
