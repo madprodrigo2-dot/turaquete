@@ -94,6 +94,11 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
             {status === 'saving' ? '...' : 'Salvar'}
           </button>
         </div>
+        {affiliateUrl && (
+          <p className="text-[10px] text-gray-400 mt-1 truncate font-mono" title={affiliateUrl}>
+            afiliado: <a href={affiliateUrl} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 underline">{affiliateUrl}</a>
+          </p>
+        )}
         {sourceUrl && (
           <p className="text-[10px] text-gray-400 mt-1 truncate font-mono" title={sourceUrl}>
             source: <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 underline">{sourceUrl}</a>
