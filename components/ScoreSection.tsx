@@ -45,12 +45,14 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop }: {
           {label}
         </span>
       </TermoGlossario>
-      <TermoGlossario
-        entry={SPIN_LISA_ENTRY}
-        className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none shrink-0"
-      >
-        ajustável
-      </TermoGlossario>
+      {spinLisa && (
+        <TermoGlossario
+          entry={SPIN_LISA_ENTRY}
+          className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none shrink-0"
+        >
+          ajustável
+        </TermoGlossario>
+      )}
     </div>
   )
   return (
@@ -95,7 +97,7 @@ export default function ScoreSection({
       <ScoreRow label="Controle"     entry={D_CONTROLE}     value={control}                                                                              strong={strong(control)}         isTop={isTop(control)} />
       <ScoreRow label="Conforto"     entry={D_CONFORTO}     value={comfort}         sublabel={comfort    != null ? comfortSublabel(comfort)   : undefined} strong={strong(comfort)}         isTop={isTop(comfort)} />
       <ScoreRow label="Manuseio"     entry={D_MANUSEIO}     value={maneuverability}                                                                       strong={strong(maneuverability)} isTop={isTop(maneuverability)} />
-      <ScoreRow label="Spin"         entry={D_SPIN}         value={spin}            spinLisa={spinLisa}                                                   strong={strong(spin)}            isTop={isTop(spin)} />
+      <ScoreRow label="Spin"         entry={D_SPIN}         value={spin}            spinLisa={true}                                                       strong={strong(spin)}            isTop={isTop(spin)} />
       <ScoreRow label="Estabilidade" entry={D_ESTABILIDADE} value={stability}                                                                             strong={strong(stability)}       isTop={isTop(stability)} />
     </div>
   )
