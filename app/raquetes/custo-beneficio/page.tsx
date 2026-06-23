@@ -7,6 +7,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: 'Raquetes de Beach Tennis Custo-Benefício | Turaquete',
   description: 'Raquetes de beach tennis com o melhor custo-benefício. Bom desempenho real sem precisar gastar muito. Especificações verificadas.',
+  alternates: { canonical: 'https://www.turaquete.com.br/raquetes/custo-beneficio' },
 }
 
 function IconCustoBeneficio() {

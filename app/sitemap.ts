@@ -9,7 +9,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     listarMarcas().catch(() => []),
   ])
 
-  const CATEGORY_SLUGS = ['iniciante', 'intermediario', 'avancado', 'conforto']
+  const CATEGORY_SLUGS = [
+    'iniciante', 'intermediario', 'avancado', 'conforto',
+    'custo-beneficio', 'ate-1000',
+  ]
 
   const GUIA_SLUGS = [
     '', 'peso', 'balance', 'material', 'eva', 'espessura',
@@ -17,8 +20,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   return [
-    { url: BASE, lastModified: new Date(), changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${BASE}/comparar`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: BASE,                      lastModified: new Date(), changeFrequency: 'weekly',  priority: 1.0 },
+    { url: `${BASE}/comparar`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/privacidade`,     lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.2 },
+    { url: `${BASE}/termos`,          lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.2 },
     ...GUIA_SLUGS.map(slug => ({
       url: slug ? `${BASE}/guia/${slug}` : `${BASE}/guia`,
       lastModified: new Date(),

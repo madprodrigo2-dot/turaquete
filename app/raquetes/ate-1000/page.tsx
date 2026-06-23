@@ -7,6 +7,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: 'Raquetes de Beach Tennis até R$1.000 | Turaquete',
   description: 'As melhores raquetes de beach tennis com preço até R$1.000. Curadoria com especificações reais, sem achismo.',
+  alternates: { canonical: 'https://www.turaquete.com.br/raquetes/ate-1000' },
 }
 
 function IconOrcamento() {

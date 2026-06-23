@@ -39,7 +39,6 @@ export const metadata: Metadata = {
   openGraph: {
     title:       OG_TITLE,
     description: DESCRIPTION,
-    images:      ['/opengraph-image.png'],
     locale:      'pt_BR',
     type:        'website',
     url:         'https://www.turaquete.com.br',

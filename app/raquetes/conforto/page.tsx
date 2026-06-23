@@ -7,6 +7,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: 'Raquetes de Beach Tennis para Cotovelo e Ombro | Turaquete',
   description: 'Raquetes de beach tennis leves nas articulações. Modelos com absorção de vibração e saída de bola suave, indicados para quem tem sensibilidade no cotovelo ou ombro.',
+  alternates: { canonical: 'https://www.turaquete.com.br/raquetes/conforto' },
 }
 
 function IconConforto() {

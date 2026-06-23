@@ -7,6 +7,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: 'Raquetes para Jogadores Intermediários — Beach Tennis | Turaquete',
   description: 'Raquetes de beach tennis para intermediários: equilíbrio entre controle e potência, com especificações técnicas reais e avaliação honesta.',
+  alternates: { canonical: 'https://www.turaquete.com.br/raquetes/intermediario' },
 }
 
 function IconIntermediario() {

@@ -7,6 +7,7 @@ export const revalidate = 300
 export const metadata: Metadata = {
   title: 'Raquetes para Jogadores Avançados — Beach Tennis | Turaquete',
   description: 'Raquetes de beach tennis de alto desempenho para jogadores avançados. Potência máxima, controle preciso e materiais premium.',
+  alternates: { canonical: 'https://www.turaquete.com.br/raquetes/avancado' },
 }
 
 function IconAvancado() {
