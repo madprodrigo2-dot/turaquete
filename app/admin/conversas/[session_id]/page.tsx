@@ -15,6 +15,41 @@ function getAdmin() {
 
 type Msg = { role: 'user' | 'assistant'; content: string }
 
+async function RecsBlock({ ids }: { ids: number[] }) {
+  const sb = getAdmin()
+  const { data } = await sb
+    .from('rackets')
+    .select('id, name, slug')
+    .in('id', ids)
+  const byId = Object.fromEntries((data ?? []).map(r => [r.id, r]))
+  return (
+    <div className="mt-3 bg-gray-50 rounded-xl p-4 border border-gray-100">
+      <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-2">Raquetes recomendadas</p>
+      <div className="flex flex-col gap-1">
+        {ids.map(id => {
+          const r = byId[id]
+          return (
+            <div key={id} className="flex items-center gap-2 text-xs">
+              <span className="font-mono text-gray-300 w-8 shrink-0">{id}</span>
+              {r ? (
+                <Link
+                  href={`/raquetes/${r.slug}`}
+                  target="_blank"
+                  className="text-teal-700 hover:underline"
+                >
+                  {r.name}
+                </Link>
+              ) : (
+                <span className="text-gray-400 italic">ID não encontrado</span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -115,10 +150,7 @@ export default async function ConversaDetailPage({
       )}
 
       {row.recommended_racket_ids && (row.recommended_racket_ids as number[]).length > 0 && (
-        <div className="mt-3 bg-gray-50 rounded-xl p-4 border border-gray-100">
-          <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Raquetes recomendadas</p>
-          <p className="text-xs text-gray-600 font-mono">IDs: {(row.recommended_racket_ids as number[]).join(', ')}</p>
-        </div>
+        <RecsBlock ids={row.recommended_racket_ids as number[]} />
       )}
     </div>
   )
