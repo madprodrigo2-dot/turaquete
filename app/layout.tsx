@@ -20,7 +20,7 @@ const sans = Plus_Jakarta_Sans({
 
 const TITLE       = 'Turaquete | Especialista em raquetes de beach tennis'
 const OG_TITLE    = 'Turaquete | A raquete certa de primeira.'
-const DESCRIPTION = 'Conte como você joga e nosso especialista indica a raquete ideal pro seu nível, estilo e bolso. De graça, explicando o porquê de cada escolha.'
+const DESCRIPTION = 'Conta como você joga e Tury indica a raquete ideal para o seu nível, estilo e bolso. De graça, com explicação do porquê.'
 
 export const viewport: Viewport = {
   themeColor: [

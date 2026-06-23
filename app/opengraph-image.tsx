@@ -7,113 +7,128 @@ export const size        = { width: 1200, height: 630 }
 export default function Image() {
   return new ImageResponse(
     (
+      // Outer: exact pixel size, no padding, overflow hidden only for decorative circles
       <div
         style={{
-          width: '100%',
-          height: '100%',
+          width: 1200,
+          height: 630,
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'center',
           background: '#0E3A40',
-          padding: '72px 80px',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Decorative circle — top right */}
+        {/* Decorative circle — top right (stays in bounds) */}
         <div
           style={{
             position: 'absolute',
-            top: -120,
-            right: -120,
-            width: 480,
-            height: 480,
-            borderRadius: '50%',
-            background: 'rgba(12,192,190,0.08)',
+            top: -100,
+            right: -100,
+            width: 400,
+            height: 400,
+            borderRadius: 200,
+            background: 'rgba(12,192,190,0.09)',
             display: 'flex',
           }}
         />
-        {/* Decorative circle — bottom left */}
+        {/* Decorative circle — bottom left (stays in bounds) */}
         <div
           style={{
             position: 'absolute',
-            bottom: -80,
-            left: -80,
-            width: 320,
-            height: 320,
-            borderRadius: '50%',
-            background: 'rgba(255,94,58,0.06)',
-            display: 'flex',
-          }}
-        />
-
-        {/* Aqua accent bar */}
-        <div
-          style={{
-            width: 64,
-            height: 6,
-            borderRadius: 3,
-            background: '#0CC0BE',
-            marginBottom: 36,
+            bottom: -60,
+            left: -60,
+            width: 280,
+            height: 280,
+            borderRadius: 140,
+            background: 'rgba(255,94,58,0.07)',
             display: 'flex',
           }}
         />
 
-        {/* Brand name */}
+        {/* Content column — inner div owns the padding so overflow:hidden on outer never clips text */}
         <div
           style={{
-            fontSize: 96,
-            fontWeight: 800,
-            color: '#FFFFFF',
-            letterSpacing: '-3px',
-            lineHeight: 1,
-            marginBottom: 24,
             display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 96px',
+            width: 1200,
+            height: 630,
+            position: 'relative',
           }}
         >
-          Turaquete
-        </div>
+          {/* Aqua accent bar */}
+          <div
+            style={{
+              width: 56,
+              height: 5,
+              borderRadius: 3,
+              background: '#0CC0BE',
+              marginBottom: 32,
+              display: 'flex',
+            }}
+          />
 
-        {/* Tagline */}
-        <div
-          style={{
-            fontSize: 34,
-            fontWeight: 500,
-            color: '#0CC0BE',
-            lineHeight: 1.3,
-            marginBottom: 16,
-            display: 'flex',
-          }}
-        >
-          Especialista em raquetes de beach tennis
-        </div>
+          {/* Brand name — centered, no negative letter-spacing, whiteSpace nowrap */}
+          <div
+            style={{
+              fontSize: 80,
+              fontWeight: 800,
+              color: '#FFFFFF',
+              whiteSpace: 'nowrap',
+              lineHeight: 1,
+              marginBottom: 22,
+              display: 'flex',
+            }}
+          >
+            Turaquete
+          </div>
 
-        {/* Sub-tagline */}
-        <div
-          style={{
-            fontSize: 26,
-            fontWeight: 400,
-            color: 'rgba(255,255,255,0.45)',
-            display: 'flex',
-          }}
-        >
-          A raquete certa de primeira.
-        </div>
+          {/* Tagline */}
+          <div
+            style={{
+              fontSize: 30,
+              fontWeight: 500,
+              color: '#0CC0BE',
+              textAlign: 'center',
+              lineHeight: 1.35,
+              marginBottom: 14,
+              maxWidth: 720,
+              display: 'flex',
+            }}
+          >
+            Especialista em raquetes de beach tennis
+          </div>
 
-        {/* URL — bottom right */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 44,
-            right: 80,
-            fontSize: 20,
-            color: 'rgba(12,192,190,0.5)',
-            letterSpacing: '0.5px',
-            display: 'flex',
-          }}
-        >
-          turaquete.com.br
+          {/* Sub-tagline */}
+          <div
+            style={{
+              fontSize: 22,
+              fontWeight: 400,
+              color: 'rgba(255,255,255,0.40)',
+              textAlign: 'center',
+              display: 'flex',
+            }}
+          >
+            A raquete certa de primeira.
+          </div>
+
+          {/* URL — bottom right, absolute within inner div */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 40,
+              right: 64,
+              fontSize: 18,
+              color: 'rgba(12,192,190,0.45)',
+              display: 'flex',
+            }}
+          >
+            turaquete.com.br
+          </div>
         </div>
       </div>
     ),
