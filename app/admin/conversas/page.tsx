@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
+import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,13 +48,17 @@ export default async function ConversasPage() {
   }
 
   const sb = getAdmin()
+  const cookieStore = await cookies()
+  const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 
   // Latest snapshot per session (most messages = last row per session_id)
-  const { data: raw } = await sb
+  const base = sb
     .from('conversations')
     .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages')
     .order('created_at', { ascending: false })
     .limit(500)
+
+  const { data: raw } = await (includeTest ? base : base.eq('is_test', false))
 
   if (!raw) {
     return <p className="text-sm text-gray-500 p-4">Sem dados.</p>
