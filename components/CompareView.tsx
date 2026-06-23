@@ -256,24 +256,42 @@ export default function CompareView({ rackets }: Props) {
             const aWins  = diff != null && diff > 0
             const bWins  = diff != null && diff < 0
             const absDiff = diff != null ? Math.abs(diff) : 0
+            const spinAjustA = key === 'spin' &&
+              (rackets[0]?.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica === false
+            const spinAjustB = key === 'spin' &&
+              (rackets[1]?.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica === false
             return (
               <div key={key} className="flex items-start gap-3">
                 <div className="w-24 shrink-0 pt-0.5">
                   <span className="text-tinta/60 text-sm">{label}</span>
                 </div>
                 <div className="flex-1 flex flex-col gap-1">
-                  <ScoreBar
-                    value={valA}
-                    color={COLORS[0]}
-                    muted={bWins}
-                    badge={aWins && absDiff >= 2 ? `+${diff}` : undefined}
-                  />
-                  <ScoreBar
-                    value={valB}
-                    color={COLORS[1]}
-                    muted={aWins}
-                    badge={bWins && absDiff >= 2 ? `+${-diff!}` : undefined}
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <ScoreBar
+                      value={valA}
+                      color={COLORS[0]}
+                      muted={bWins}
+                      badge={aWins && absDiff >= 2 ? `+${diff}` : undefined}
+                    />
+                    {spinAjustA && (
+                      <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none shrink-0">
+                        ajustável
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <ScoreBar
+                      value={valB}
+                      color={COLORS[1]}
+                      muted={aWins}
+                      badge={bWins && absDiff >= 2 ? `+${-diff!}` : undefined}
+                    />
+                    {spinAjustB && (
+                      <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none shrink-0">
+                        ajustável
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             )

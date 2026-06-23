@@ -86,14 +86,21 @@ export default function CompareTable({ recommendations }: Props) {
               </div>
               {values.map((v, ci) => {
                 const isBest = hasVariation && v != null && v === max
+                const spinAjust = dim.key === 'spin' &&
+                  (recommendations[ci]?.racket.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica === false
                 return (
-                  <div key={ci} className="py-[5px] flex items-center justify-center">
+                  <div key={ci} className="py-[5px] flex flex-col items-center justify-center gap-0.5">
                     {v != null ? (
                       <span className={`text-[12px] font-bold tabular-nums leading-none ${isBest ? 'text-aqua' : 'text-tinta/50'}`}>
                         {v}
                       </span>
                     ) : (
                       <span className="text-tinta/20 text-[10px]">—</span>
+                    )}
+                    {spinAjust && (
+                      <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 px-1 py-0.5 rounded-full leading-none">
+                        ajust.
+                      </span>
                     )}
                   </div>
                 )
