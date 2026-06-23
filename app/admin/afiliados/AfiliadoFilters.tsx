@@ -31,6 +31,16 @@ function Filters({ brands, currentFilter, currentBrand }: Props) {
         Todas
       </button>
       <button
+        onClick={() => update('filter', currentFilter === 'com_afiliado' ? null : 'com_afiliado')}
+        className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+          currentFilter === 'com_afiliado'
+            ? 'bg-teal-600 text-white'
+            : 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200'
+        }`}
+      >
+        ✓ Com afiliado
+      </button>
+      <button
         onClick={() => update('filter', currentFilter === 'sem_afiliado' ? null : 'sem_afiliado')}
         className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
           currentFilter === 'sem_afiliado'

@@ -63,6 +63,8 @@ export default async function AfiliadosPage({
   }
   if (filter === 'sem_afiliado') {
     filtered = filtered.filter(r => !r.affiliate_url)
+  } else if (filter === 'com_afiliado') {
+    filtered = filtered.filter(r => !!r.affiliate_url)
   }
 
   const total = rows.length
@@ -143,6 +145,8 @@ export default async function AfiliadosPage({
                 <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic text-sm">
                   {filter === 'sem_afiliado'
                     ? 'Todas as raquetes já têm link de afiliado. ✓'
+                    : filter === 'com_afiliado'
+                    ? 'Nenhuma raquete com afiliado ainda.'
                     : 'Nenhuma raquete encontrada.'}
                 </td>
               </tr>
