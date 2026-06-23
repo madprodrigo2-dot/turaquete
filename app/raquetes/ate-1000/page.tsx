@@ -30,7 +30,6 @@ export default async function Ate1000Page() {
       subtitle="As melhores opções dentro desse orçamento. Ordenadas por preço para facilitar a comparação."
       rackets={rackets}
       emptyMessage="Nenhuma raquete nessa faixa de preço no momento."
-      pageNivel="ate-1000"
       defaultSort="menor-preco"
       showPrecoFilter={false}
     />

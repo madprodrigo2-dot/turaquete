@@ -9,7 +9,6 @@ interface Props {
   subtitle: string
   rackets: RacketWithInsights[]
   emptyMessage?: string
-  pageNivel?: string
   defaultSort?: SortKey
   showPrecoFilter?: boolean
 }
@@ -20,8 +19,7 @@ export default function DiscoveryPageLayout({
   subtitle,
   rackets,
   emptyMessage,
-  pageNivel = 'intermediario',
-  defaultSort = 'pontuacao',
+  defaultSort = 'menor-preco',
   showPrecoFilter = true,
 }: Props) {
   return (
@@ -58,7 +56,6 @@ export default function DiscoveryPageLayout({
         ) : (
           <DiscoveryFilters
             rackets={rackets}
-            pageNivel={pageNivel}
             defaultSort={defaultSort}
             showPrecoFilter={showPrecoFilter}
           />

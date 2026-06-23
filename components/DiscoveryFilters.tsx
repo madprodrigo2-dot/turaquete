@@ -15,23 +15,7 @@ const PRECO_BUCKETS = [
   { label: 'Mais de R$3.000',   min: 3001, max: null  },
 ] as const
 
-export type SortKey = 'menor-preco' | 'maior-preco' | 'pontuacao'
-
-function listingScore(r: RacketWithInsights, nivel: string): number {
-  const i = r.racket_insights
-  if (!i) return 0
-  const v = (x: number | null) => x ?? 5
-  if (nivel === 'iniciante') {
-    return v(i.forgiveness) * 3 + v(i.comfort) * 3 + v(i.maneuverability) * 2 + v(i.stability) * 2
-  }
-  if (nivel === 'avancado') {
-    return v(i.power) * 3 + v(i.control) * 3 + v(i.stability) * 2 + v(i.maneuverability) * 2
-  }
-  if (nivel === 'conforto') {
-    return v(i.comfort) * 4 + v(i.forgiveness) * 3 + v(i.maneuverability) * 2 + v(i.stability) * 1
-  }
-  return v(i.power) * 2 + v(i.control) * 2 + v(i.comfort) * 2 + v(i.maneuverability) * 2 + v(i.stability) * 2
-}
+export type SortKey = 'menor-preco' | 'maior-preco'
 
 function RacketCard({ racket }: { racket: RacketWithInsights }) {
   const price = racket.price
@@ -60,12 +44,11 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
 
 interface Props {
   rackets: RacketWithInsights[]
-  pageNivel: string
   defaultSort: SortKey
   showPrecoFilter: boolean
 }
 
-export default function DiscoveryFilters({ rackets, pageNivel, defaultSort, showPrecoFilter }: Props) {
+export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter }: Props) {
   const [precoKey, setPrecoKey] = useState<string>('todas')
   const [marca, setMarca] = useState<string>('todas')
   const [sort, setSort] = useState<SortKey>(defaultSort)
@@ -98,14 +81,12 @@ export default function DiscoveryFilters({ rackets, pageNivel, defaultSort, show
 
     if (sort === 'menor-preco') {
       out.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
-    } else if (sort === 'maior-preco') {
-      out.sort((a, b) => (b.price ?? 0) - (a.price ?? 0))
     } else {
-      out.sort((a, b) => listingScore(b, pageNivel) - listingScore(a, pageNivel))
+      out.sort((a, b) => (b.price ?? 0) - (a.price ?? 0))
     }
 
     return out
-  }, [rackets, precoKey, marca, sort, pageNivel, showPrecoFilter])
+  }, [rackets, precoKey, marca, sort, showPrecoFilter])
 
   const hasActiveFilter = (showPrecoFilter && precoKey !== 'todas') || marca !== 'todas'
 
@@ -170,7 +151,6 @@ export default function DiscoveryFilters({ rackets, pageNivel, defaultSort, show
               onChange={e => setSort(e.target.value as SortKey)}
               className="text-xs border border-tinta/15 rounded-lg px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
-              <option value="pontuacao">Melhor pontuação</option>
               <option value="menor-preco">Menor preço</option>
               <option value="maior-preco">Maior preço</option>
             </select>
