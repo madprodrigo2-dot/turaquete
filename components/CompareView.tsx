@@ -142,9 +142,31 @@ function DivergentRow({
   const numColorB = spinAjustB || aWins ? '#94a3b8' : colorB
   const numWeightB: number = bWins ? 700 : aWins ? 400 : 500
 
+  const showAjustBadge = spinAjustA || spinAjustB
+
   return (
     <div>
-      <p className="text-center text-xs text-tinta/50 mb-2">{label}</p>
+      {showAjustBadge ? (
+        <div className="grid grid-cols-3 items-center mb-2">
+          <div className="flex justify-start">
+            {spinAjustA && (
+              <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none">
+                ajustável
+              </span>
+            )}
+          </div>
+          <span className="text-xs text-tinta/50 text-center">{label}</span>
+          <div className="flex justify-end">
+            {spinAjustB && (
+              <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none">
+                ajustável
+              </span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="text-center text-xs text-tinta/50 mb-2">{label}</p>
+      )}
 
       <div className="flex items-center" style={{ minHeight: 28 }}>
         {/* Left half: [star?][number] · [bar→center] */}
@@ -193,16 +215,6 @@ function DivergentRow({
         </div>
       </div>
 
-      {/* ajustável notes below bar */}
-      {bothAjust && (
-        <p className="text-center text-[10px] text-gray-400 mt-1.5">ajustável nas duas</p>
-      )}
-      {!bothAjust && spinAjustA && (
-        <p className="text-[10px] text-gray-400 mt-1.5">ajustável</p>
-      )}
-      {!bothAjust && spinAjustB && (
-        <p className="text-right text-[10px] text-gray-400 mt-1.5">ajustável</p>
-      )}
     </div>
   )
 }
