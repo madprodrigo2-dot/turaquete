@@ -7,7 +7,7 @@ import type { GlossarioEntry } from '@/lib/glossario'
 
 const SPIN_LISA_ENTRY: GlossarioEntry = {
   termo: 'Spin: dá pra subir',
-  definicao: 'Superfície lisa de fábrica. Dá pra aumentar o efeito com areado aplicado depois da compra, sem alterar a estrutura da raquete.',
+  definicao: 'Dá pra aumentar o efeito com areado aplicado depois da compra, sem alterar a estrutura da raquete.',
 }
 
 const D_POTENCIA    = GLOSSARIO.find(e => e.termo === 'potência')!
@@ -45,14 +45,12 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop }: {
           {label}
         </span>
       </TermoGlossario>
-      {spinLisa && (
-        <TermoGlossario
-          entry={SPIN_LISA_ENTRY}
-          className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none shrink-0"
-        >
-          ajustável
-        </TermoGlossario>
-      )}
+      <TermoGlossario
+        entry={SPIN_LISA_ENTRY}
+        className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none shrink-0"
+      >
+        ajustável
+      </TermoGlossario>
     </div>
   )
   return (

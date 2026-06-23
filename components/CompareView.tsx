@@ -20,7 +20,7 @@ const COLORS = ['#D85A30', '#5DCAA5'] as const
 
 const SPIN_LISA_ENTRY: GlossarioEntry = {
   termo: 'Spin: dá pra subir',
-  definicao: 'Superfície lisa de fábrica. Dá pra aumentar o efeito com areado aplicado depois da compra, sem alterar a estrutura da raquete.',
+  definicao: 'Dá pra aumentar o efeito com areado aplicado depois da compra, sem alterar a estrutura da raquete.',
 }
 
 const SCORE_USE_LABEL: Record<string, string> = {
