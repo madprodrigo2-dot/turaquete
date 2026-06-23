@@ -28,6 +28,9 @@ export default async function CustoBeneficioPage() {
       subtitle="Bom desempenho real sem gastar o máximo. Modelos que entregam acima do esperado pelo preço — ordenados do mais acessível ao topo da faixa."
       rackets={rackets}
       emptyMessage="Nenhuma raquete nessa faixa de preço no momento."
+      pageNivel="custo-beneficio"
+      defaultSort="menor-preco"
+      showPrecoFilter={false}
     />
   )
 }

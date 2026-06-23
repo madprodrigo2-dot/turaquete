@@ -28,6 +28,7 @@ export default async function ConfortoPage() {
       subtitle="Raquetes indicadas para quem tem sensibilidade no cotovelo ou ombro. Modelos com absorção de vibração e saída de bola suave."
       rackets={rackets}
       emptyMessage="Nenhuma raquete com esse perfil catalogada ainda."
+      pageNivel="conforto"
     />
   )
 }

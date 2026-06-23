@@ -29,6 +29,7 @@ export default async function AvancadoPage() {
       subtitle="Alta performance para quem joga no limite. Modelos com materiais premium e saída de bola exigente — exigem técnica para aproveitar o máximo."
       rackets={rackets}
       emptyMessage="Nenhuma raquete avançada catalogada ainda."
+      pageNivel="avancado"
     />
   )
 }
