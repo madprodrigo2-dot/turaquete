@@ -128,9 +128,9 @@ function DivergentRow({
   const starA = valA === 10 && !spinAjustA
   const starB = valB === 10 && !spinAjustB
 
-  // Bar widths as % of the flex bar zone (ajustável gets a fixed neutral stub)
-  const barPctA = spinAjustA ? 28 : ((valA ?? 0) / 10) * 100
-  const barPctB = spinAjustB ? 28 : ((valB ?? 0) / 10) * 100
+  // Bar widths: always use real value (ajustável shows real height but muted)
+  const barPctA = ((valA ?? 0) / 10) * 100
+  const barPctB = ((valB ?? 0) / 10) * 100
 
   // Bar fill: winner = full color, loser = muted, ajustável = neutral
   const barColorA = spinAjustA ? NEUTRAL_BAR : bWins ? `${colorA}55` : colorA
@@ -177,7 +177,7 @@ function DivergentRow({
               className="text-sm tabular-nums leading-none"
               style={{ color: numColorA, fontWeight: numWeightA }}
             >
-              {spinAjustA ? '—' : (valA ?? '—')}
+              {valA ?? '—'}
             </span>
           </div>
           <div className="flex flex-1 justify-end items-center">
@@ -208,7 +208,7 @@ function DivergentRow({
               className="text-sm tabular-nums leading-none"
               style={{ color: numColorB, fontWeight: numWeightB }}
             >
-              {spinAjustB ? '—' : (valB ?? '—')}
+              {valB ?? '—'}
             </span>
             {starB && <StarIcon color={colorB} />}
           </div>
