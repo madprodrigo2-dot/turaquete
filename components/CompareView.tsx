@@ -4,6 +4,8 @@ import { buildSpecRows, NIVEL_LABEL } from './SpecsGrid'
 import RacketImageTile from './RacketImageTile'
 import CompareHexagon from './CompareHexagon'
 import { derivarNivel } from '@/lib/nivel'
+import TermoGlossario from './TermoGlossario'
+import type { GlossarioEntry } from '@/lib/glossario'
 
 const SCORES = [
   { key: 'power',           label: 'Potência'     },
@@ -15,6 +17,11 @@ const SCORES = [
 ] as const
 
 const COLORS = ['#D85A30', '#5DCAA5'] as const
+
+const SPIN_LISA_ENTRY: GlossarioEntry = {
+  termo: 'Spin: dá pra subir',
+  definicao: 'Superfície lisa de fábrica. Dá pra aumentar o efeito com areado aplicado depois da compra, sem alterar a estrutura da raquete.',
+}
 
 const SCORE_USE_LABEL: Record<string, string> = {
   power:           'ataque e potência',
@@ -142,26 +149,26 @@ function DivergentRow({
   const numColorB = spinAjustB || aWins ? '#94a3b8' : colorB
   const numWeightB: number = bWins ? 700 : aWins ? 400 : 500
 
-  const showAjustBadge = spinAjustA || spinAjustB
-
   return (
     <div>
-      {showAjustBadge ? (
+      {eitherAjust ? (
         <div className="grid grid-cols-3 items-center mb-2">
           <div className="flex justify-start">
-            {spinAjustA && (
-              <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none">
-                ajustável
-              </span>
-            )}
+            <TermoGlossario
+              entry={SPIN_LISA_ENTRY}
+              className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none"
+            >
+              ajustável
+            </TermoGlossario>
           </div>
           <span className="text-xs text-tinta/50 text-center">{label}</span>
           <div className="flex justify-end">
-            {spinAjustB && (
-              <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none">
-                ajustável
-              </span>
-            )}
+            <TermoGlossario
+              entry={SPIN_LISA_ENTRY}
+              className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full hover:bg-amber-200 transition-colors focus:outline-none leading-none"
+            >
+              ajustável
+            </TermoGlossario>
           </div>
         </div>
       ) : (
