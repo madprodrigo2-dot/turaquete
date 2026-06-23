@@ -114,7 +114,7 @@ function StarIcon({ color }: { color: string }) {
 const NEUTRAL_BAR = '#CBD5E1'
 
 function DivergentRow({
-  label, valA, valB, colorA, colorB, spinAjustA, spinAjustB,
+  label, valA, valB, colorA, colorB, spinAjustA, spinAjustB, showSpinBadge,
 }: {
   label: string
   valA: number | null
@@ -123,6 +123,7 @@ function DivergentRow({
   colorB: string
   spinAjustA: boolean
   spinAjustB: boolean
+  showSpinBadge?: boolean
 }) {
   if (valA === null && valB === null && !spinAjustA && !spinAjustB) return null
 
@@ -151,7 +152,7 @@ function DivergentRow({
 
   return (
     <div>
-      {eitherAjust ? (
+      {showSpinBadge ? (
         <div className="grid grid-cols-3 items-center mb-2">
           <div className="flex justify-start">
             <TermoGlossario
@@ -417,6 +418,7 @@ export default function CompareView({ rackets }: Props) {
                 colorB={COLORS[1]}
                 spinAjustA={isSpinRow && spinAjustA}
                 spinAjustB={isSpinRow && spinAjustB}
+                showSpinBadge={isSpinRow}
               />
             )
           })}
