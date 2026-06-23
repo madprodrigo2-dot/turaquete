@@ -3,7 +3,6 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import { buildSpecRows, NIVEL_LABEL } from './SpecsGrid'
 import RacketImageTile from './RacketImageTile'
 import CompareHexagon from './CompareHexagon'
-import ScoreBar from './ScoreBar'
 import { derivarNivel } from '@/lib/nivel'
 
 const SCORES = [
@@ -15,7 +14,7 @@ const SCORES = [
   { key: 'stability',       label: 'Estabilidade' },
 ] as const
 
-const COLORS = ['#FF5E3A', '#0CC0BE'] as const
+const COLORS = ['#D85A30', '#5DCAA5'] as const
 
 const SCORE_USE_LABEL: Record<string, string> = {
   power:           'ataque e potência',
@@ -26,11 +25,17 @@ const SCORE_USE_LABEL: Record<string, string> = {
   stability:       'defesa e bloqueios',
 }
 
-function computePlacar(rackets: RacketWithInsights[]) {
+function computePlacar(
+  rackets: RacketWithInsights[],
+  spinAjustA: boolean,
+  spinAjustB: boolean,
+) {
   const ins0 = rackets[0]?.racket_insights
   const ins1 = rackets[1]?.racket_insights
   let winsA = 0, winsB = 0, ties = 0
   for (const { key } of SCORES) {
+    // Either racket has adjustable spin → not comparable, count as tie
+    if (key === 'spin' && (spinAjustA || spinAjustB)) { ties++; continue }
     const a = ins0 ? (ins0[key] as number | null) : null
     const b = ins1 ? (ins1[key] as number | null) : null
     if (a == null || b == null) continue
@@ -41,12 +46,18 @@ function computePlacar(rackets: RacketWithInsights[]) {
   return { winsA, winsB, ties }
 }
 
-function melhorPara(a: RacketWithInsights, b: RacketWithInsights): [string[], string[]] {
+function melhorPara(
+  a: RacketWithInsights,
+  b: RacketWithInsights,
+  spinAjustA: boolean,
+  spinAjustB: boolean,
+): [string[], string[]] {
   const insA = a.racket_insights
   const insB = b.racket_insights
   const winsA: { key: string; margin: number }[] = []
   const winsB: { key: string; margin: number }[] = []
   for (const { key } of SCORES) {
+    if (key === 'spin' && (spinAjustA || spinAjustB)) continue
     const va = insA ? (insA[key] as number | null) : null
     const vb = insB ? (insB[key] as number | null) : null
     if (va == null || vb == null) continue
@@ -81,6 +92,121 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <h2 className="text-[10px] font-bold text-tinta/40 uppercase tracking-widest mb-4">{children}</h2>
 )
 
+function StarIcon({ color }: { color: string }) {
+  return (
+    <svg
+      width="11" height="11" viewBox="0 0 24 24"
+      fill={color} aria-hidden="true"
+      style={{ flexShrink: 0 }}
+    >
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+    </svg>
+  )
+}
+
+const NEUTRAL_BAR = '#CBD5E1'
+
+function DivergentRow({
+  label, valA, valB, colorA, colorB, spinAjustA, spinAjustB,
+}: {
+  label: string
+  valA: number | null
+  valB: number | null
+  colorA: string
+  colorB: string
+  spinAjustA: boolean
+  spinAjustB: boolean
+}) {
+  if (valA === null && valB === null && !spinAjustA && !spinAjustB) return null
+
+  const bothAjust  = spinAjustA && spinAjustB
+  const eitherAjust = spinAjustA || spinAjustB
+
+  const aWins = !eitherAjust && valA != null && valB != null && valA > valB
+  const bWins = !eitherAjust && valA != null && valB != null && valB > valA
+
+  const starA = valA === 10 && !spinAjustA
+  const starB = valB === 10 && !spinAjustB
+
+  // Bar widths as % of the flex bar zone (ajustável gets a fixed neutral stub)
+  const barPctA = spinAjustA ? 28 : ((valA ?? 0) / 10) * 100
+  const barPctB = spinAjustB ? 28 : ((valB ?? 0) / 10) * 100
+
+  // Bar fill: winner = full color, loser = muted, ajustável = neutral
+  const barColorA = spinAjustA ? NEUTRAL_BAR : bWins ? `${colorA}55` : colorA
+  const barColorB = spinAjustB ? NEUTRAL_BAR : aWins ? `${colorB}55` : colorB
+
+  // Number color/weight: winner bold+color, loser gray, tie medium+color
+  const numColorA = spinAjustA || bWins ? '#94a3b8' : colorA
+  const numWeightA: number = aWins ? 700 : bWins ? 400 : 500
+  const numColorB = spinAjustB || aWins ? '#94a3b8' : colorB
+  const numWeightB: number = bWins ? 700 : aWins ? 400 : 500
+
+  return (
+    <div>
+      <p className="text-center text-xs text-tinta/50 mb-2">{label}</p>
+
+      <div className="flex items-center" style={{ minHeight: 28 }}>
+        {/* Left half: [star?][number] · [bar→center] */}
+        <div className="flex items-center gap-2" style={{ width: 'calc(50% - 1px)' }}>
+          <div className="flex items-center justify-end gap-1 shrink-0" style={{ width: 42 }}>
+            {starA && <StarIcon color={colorA} />}
+            <span
+              className="text-sm tabular-nums leading-none"
+              style={{ color: numColorA, fontWeight: numWeightA }}
+            >
+              {spinAjustA ? '—' : (valA ?? '—')}
+            </span>
+          </div>
+          <div className="flex flex-1 justify-end items-center">
+            <div style={{
+              width: `${barPctA}%`,
+              height: 10,
+              background: barColorA,
+              borderRadius: '4px 0 0 4px',
+            }} />
+          </div>
+        </div>
+
+        {/* Center divider */}
+        <div className="shrink-0" style={{ width: 2, height: 28, background: '#e2e8f0' }} />
+
+        {/* Right half: [center→bar] · [number][star?] */}
+        <div className="flex items-center gap-2" style={{ width: 'calc(50% - 1px)' }}>
+          <div className="flex flex-1 justify-start items-center">
+            <div style={{
+              width: `${barPctB}%`,
+              height: 10,
+              background: barColorB,
+              borderRadius: '0 4px 4px 0',
+            }} />
+          </div>
+          <div className="flex items-center gap-1 shrink-0" style={{ width: 42 }}>
+            <span
+              className="text-sm tabular-nums leading-none"
+              style={{ color: numColorB, fontWeight: numWeightB }}
+            >
+              {spinAjustB ? '—' : (valB ?? '—')}
+            </span>
+            {starB && <StarIcon color={colorB} />}
+          </div>
+        </div>
+      </div>
+
+      {/* ajustável notes below bar */}
+      {bothAjust && (
+        <p className="text-center text-[10px] text-gray-400 mt-1.5">ajustável nas duas</p>
+      )}
+      {!bothAjust && spinAjustA && (
+        <p className="text-[10px] text-gray-400 mt-1.5">ajustável</p>
+      )}
+      {!bothAjust && spinAjustB && (
+        <p className="text-right text-[10px] text-gray-400 mt-1.5">ajustável</p>
+      )}
+    </div>
+  )
+}
+
 interface Props {
   rackets: RacketWithInsights[]
 }
@@ -88,9 +214,15 @@ interface Props {
 export default function CompareView({ rackets }: Props) {
   const specs = alignedSpecs(rackets)
   const hasTwoRackets = rackets.length === 2
-  const placar = hasTwoRackets ? computePlacar(rackets) : null
+
+  const extraA = (rackets[0]?.specs_extra as Record<string, unknown> | null) ?? {}
+  const extraB = (rackets[1]?.specs_extra as Record<string, unknown> | null) ?? {}
+  const spinAjustA = extraA.tratamento_fabrica === false
+  const spinAjustB = extraB.tratamento_fabrica === false
+
+  const placar = hasTwoRackets ? computePlacar(rackets, spinAjustA, spinAjustB) : null
   const [melA, melB] = hasTwoRackets
-    ? melhorPara(rackets[0], rackets[1])
+    ? melhorPara(rackets[0], rackets[1], spinAjustA, spinAjustB)
     : [[], []]
 
   return (
@@ -227,73 +359,46 @@ export default function CompareView({ rackets }: Props) {
         )
       })()}
 
-      {/* Scores */}
+      {/* Pontuações — divergent bars */}
       <section className="bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] p-5">
         <SectionLabel>Pontuações</SectionLabel>
+
+        {/* Legend: A name left, B name right — mirrors bar direction */}
         {hasTwoRackets && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-5">
-            {rackets.slice(0, 2).map((r, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span
-                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: COLORS[i] }}
-                />
-                <span className="text-[11px] font-semibold leading-snug" style={{ color: COLORS[i] }}>
-                  {r.name}
-                </span>
-              </div>
-            ))}
+          <div className="flex justify-between items-center mb-5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[0] }} />
+              <span className="text-[11px] font-semibold leading-snug truncate" style={{ color: COLORS[0] }}>
+                {rackets[0].name}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[11px] font-semibold leading-snug truncate text-right" style={{ color: COLORS[1] }}>
+                {rackets[1].name}
+              </span>
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: COLORS[1] }} />
+            </div>
           </div>
         )}
+
         <div className="flex flex-col gap-5">
           {SCORES.map(({ key, label }) => {
             const ins0 = rackets[0]?.racket_insights
             const ins1 = rackets[1]?.racket_insights
             const valA = ins0 ? (ins0[key] as number | null) : null
             const valB = ins1 ? (ins1[key] as number | null) : null
-            if (valA === null && valB === null) return null
-            const diff = valA != null && valB != null ? valA - valB : null
-            const aWins  = diff != null && diff > 0
-            const bWins  = diff != null && diff < 0
-            const absDiff = diff != null ? Math.abs(diff) : 0
-            const spinAjustA = key === 'spin' &&
-              (rackets[0]?.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica === false
-            const spinAjustB = key === 'spin' &&
-              (rackets[1]?.specs_extra as Record<string, unknown> | null)?.tratamento_fabrica === false
+            const isSpinRow = key === 'spin'
             return (
-              <div key={key} className="flex items-start gap-3">
-                <div className="w-24 shrink-0 pt-0.5">
-                  <span className="text-tinta/60 text-sm">{label}</span>
-                </div>
-                <div className="flex-1 flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <ScoreBar
-                      value={valA}
-                      color={COLORS[0]}
-                      muted={bWins}
-                      badge={aWins && absDiff >= 2 ? `+${diff}` : undefined}
-                    />
-                    {spinAjustA && (
-                      <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none shrink-0">
-                        ajustável
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <ScoreBar
-                      value={valB}
-                      color={COLORS[1]}
-                      muted={aWins}
-                      badge={bWins && absDiff >= 2 ? `+${-diff!}` : undefined}
-                    />
-                    {spinAjustB && (
-                      <span className="text-[9px] font-semibold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full leading-none shrink-0">
-                        ajustável
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <DivergentRow
+                key={key}
+                label={label}
+                valA={valA}
+                valB={valB}
+                colorA={COLORS[0]}
+                colorB={COLORS[1]}
+                spinAjustA={isSpinRow && spinAjustA}
+                spinAjustB={isSpinRow && spinAjustB}
+              />
             )
           })}
         </div>
