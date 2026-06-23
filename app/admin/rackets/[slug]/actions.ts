@@ -18,6 +18,7 @@ async function assertAdmin(): Promise<string> {
 export interface TechEntry { nome: string; tipo: string }
 
 export interface FisicosData {
+  name: string
   face_material: string
   core: string
   weight_g: number | null
@@ -75,6 +76,7 @@ export async function salvarFisicos(slug: string, data: FisicosData) {
   }
 
   await sb.from('rackets').update({
+    name: data.name || null,
     face_material: data.face_material || null,
     core: data.core || null,
     weight_g: data.weight_g,

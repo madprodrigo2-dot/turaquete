@@ -25,6 +25,7 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
   const router = useRouter()
   const [pending, startTransition] = useTransition()
 
+  const [name, setName] = useState(racket.name ?? '')
   const [faceMaterial, setFaceMaterial] = useState(racket.face_material ?? '')
   const [core, setCore] = useState(racket.core ?? '')
   const [weightG, setWeightG] = useState<string>(racket.weight_g?.toString() ?? '')
@@ -58,6 +59,7 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
     startTransition(async () => {
       try {
         const result = await salvarFisicos(slug, {
+          name,
           face_material: faceMaterial,
           core,
           weight_g: weightG !== '' ? Number(weightG) : null,
@@ -88,6 +90,17 @@ export default function BlocoA({ slug, racket }: { slug: string; racket: AdminRa
       </div>
 
       <div className="p-5 space-y-4">
+        {/* Nome */}
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Nome</label>
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
+            placeholder="ex: Z Xtreme 2025"
+          />
+        </div>
+
         {/* Face + Núcleo */}
         <div className="grid grid-cols-2 gap-3">
           <div>
