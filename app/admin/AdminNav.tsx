@@ -5,12 +5,13 @@ import { usePathname } from 'next/navigation'
 import { useAdminTheme } from './AdminShell'
 
 const TABS = [
-  { label: 'Dados',      href: '/admin/analise'   },
-  { label: 'Ranking',    href: '/admin/ranking'    },
-  { label: 'Afiliados',  href: '/admin/afiliados'  },
-  { label: 'Raquetas',   href: '/admin/rackets'    },
-  { label: 'Motor',      href: '/admin/motor'      },
-  { label: 'Conteúdo',   href: '/admin/qualidade'  },
+  { label: 'Dados',       href: '/admin/analise'    },
+  { label: 'Ranking',     href: '/admin/ranking'    },
+  { label: 'Afiliados',   href: '/admin/afiliados'  },
+  { label: 'Conversas',   href: '/admin/conversas'  },
+  { label: 'Raquetas',    href: '/admin/rackets'    },
+  { label: 'Motor',       href: '/admin/motor'      },
+  { label: 'Conteúdo',    href: '/admin/qualidade'  },
 ]
 
 export default function AdminNav() {
