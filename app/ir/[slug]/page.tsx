@@ -30,10 +30,7 @@ async function sendGa4ClickEvent(opts: {
 }) {
   const measurementId = process.env.NEXT_PUBLIC_GA_ID
   const apiSecret     = process.env.GA4_API_SECRET
-  if (!measurementId || !apiSecret) {
-    console.warn('[GA4] env vars ausentes — NEXT_PUBLIC_GA_ID:', !!measurementId, 'GA4_API_SECRET:', !!apiSecret)
-    return
-  }
+  if (!measurementId || !apiSecret) return
 
   const eventParams: Record<string, unknown> = {
     racket_slug:          opts.slug,
@@ -46,20 +43,17 @@ async function sendGa4ClickEvent(opts: {
     eventParams.currency = opts.currency ?? 'BRL'
   }
 
-  const payload = {
-    client_id: opts.clientId,
-    events: [{ name: 'click_comprar', params: eventParams }],
-  }
-
-  const res = await fetch(
+  await fetch(
     `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`,
     {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        client_id: opts.clientId,
+        events: [{ name: 'click_comprar', params: eventParams }],
+      }),
     }
   )
-  console.log('[GA4] status:', res.status, 'slug:', opts.slug, 'client_id:', opts.clientId)
 }
 
 export default async function IrPage({
