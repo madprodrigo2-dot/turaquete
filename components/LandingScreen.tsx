@@ -1178,7 +1178,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           <p className="text-center text-tinta/40 text-xs leading-relaxed max-w-xs">
             A Turaquete pode receber comissão por compras feitas pelos links indicados, sem custo extra pra você.
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <a
               href="https://wa.me/5547997649011?text=Oi!%20Vim%20pelo%20Turaquete%20e%20queria%20tirar%20uma%20d%C3%BAvida."
               target="_blank"
