@@ -46,7 +46,7 @@ const STEPS: { label: string; desc?: string }[] = [
   },
 ]
 
-const FAQS = [
+const FAQS: { q: string; a: ReactNode }[] = [
   {
     q: 'É grátis mesmo?',
     a: 'Sim. Você conta como joga e recebe as recomendações na hora. Sem cadastro, sem plano, sem custo de nenhum tipo.',
@@ -58,6 +58,18 @@ const FAQS = [
   {
     q: 'Vocês vendem raquetes?',
     a: 'Não. Indicamos onde comprar (Mercado Livre e lojas parceiras) com o link direto. A Turaquete não tem estoque nem processa pagamentos.',
+  },
+  {
+    q: 'Tenho uma loja ou marca de beach tennis. Posso aparecer aqui?',
+    a: (
+      <>
+        Sim. Se você tem uma loja ou marca e quer que seus produtos apareçam nas indicações,{' '}
+        <Link href="/para-lojas" className="text-aqua underline underline-offset-2 hover:opacity-80">
+          veja como funciona a parceria
+        </Link>
+        .
+      </>
+    ),
   },
 ]
 
