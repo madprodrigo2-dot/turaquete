@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function ParaLojasPage() {
   return (
-    <div className="min-h-screen sand-texture flex flex-col items-center px-5 py-12 md:py-16">
-      <div className="w-full max-w-2xl flex flex-col gap-8">
+    <div className="min-h-screen sand-texture">
+      <div className="max-w-4xl mx-auto px-5 md:px-8 py-12 md:py-16 flex flex-col gap-8">
 
         <Link href="/" className="text-aqua text-sm font-medium hover:underline">
           ← Voltar
