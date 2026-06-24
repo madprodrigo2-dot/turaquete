@@ -7,11 +7,14 @@ import { auth } from '@/auth'
 
 export const dynamic = 'force-dynamic'
 
-// _ga cookie format: GA1.X.XXXXXXXXXX.XXXXXXXXXX — client_id is the last two segments
+// _ga cookie format: GA1.X.XXXXXXXXXX.XXXXXXXXXX — client_id is the last two segments.
+// Falls back to a random UUID so the event is always sent even without the cookie.
 function gaClientId(raw: string | undefined): string {
-  if (!raw) return ''
-  const parts = raw.split('.')
-  return parts.length >= 4 ? `${parts[2]}.${parts[3]}` : ''
+  if (raw) {
+    const parts = raw.split('.')
+    if (parts.length >= 4) return `${parts[2]}.${parts[3]}`
+  }
+  return crypto.randomUUID()
 }
 
 // Sends a "click_comprar" event to GA4 via Measurement Protocol (server-side).
@@ -93,7 +96,7 @@ export default async function IrPage({
         referrer: hdrs.get('referer') ?? null,
         user_agent: hdrs.get('user-agent') ?? null,
       }),
-    !isTest && clientId
+    !isTest
       ? sendGa4ClickEvent({
           clientId,
           slug,
