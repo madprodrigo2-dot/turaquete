@@ -6,6 +6,7 @@ import { useAdminTheme } from './AdminShell'
 
 const TABS = [
   { label: 'Dados',       href: '/admin/analise'    },
+  { label: 'Cliques',     href: '/admin/cliques'    },
   { label: 'Ranking',     href: '/admin/ranking'    },
   { label: 'Afiliados',   href: '/admin/afiliados'  },
   { label: 'Conversas',   href: '/admin/conversas'  },
