@@ -1199,6 +1199,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             >
               Termos de Uso
             </Link>
+            <span className="text-tinta/20 text-xs">·</span>
+            <Link
+              href="/para-lojas"
+              className="text-tinta/40 text-xs hover:text-tinta/70 transition-colors"
+            >
+              Para lojas
+            </Link>
           </div>
         </footer>
 

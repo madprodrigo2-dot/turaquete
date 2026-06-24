@@ -24,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/comparar`,        lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/privacidade`,     lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.2 },
     { url: `${BASE}/termos`,          lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.2 },
+    { url: `${BASE}/para-lojas`,      lastModified: new Date(), changeFrequency: 'yearly',  priority: 0.2 },
     ...GUIA_SLUGS.map(slug => ({
       url: slug ? `${BASE}/guia/${slug}` : `${BASE}/guia`,
       lastModified: new Date(),
