@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import VercelAnalytics from "@/components/VercelAnalytics";
+import PresenceTracker from "@/components/PresenceTracker";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
@@ -64,6 +65,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR">
       <body className={`${display.variable} ${sans.variable} antialiased`}>
         {children}
+        <PresenceTracker
+          url={process.env.SUPABASE_URL!}
+          anonKey={process.env.SUPABASE_ANON_KEY!}
+        />
         <VercelAnalytics />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
