@@ -33,9 +33,10 @@ async function sendGa4ClickEvent(opts: {
   if (!measurementId || !apiSecret) return
 
   const eventParams: Record<string, unknown> = {
-    racket_slug: opts.slug,
-    racket_name: opts.racketName,
-    link_type:   opts.tipo,
+    racket_slug:          opts.slug,
+    racket_name:          opts.racketName,
+    link_type:            opts.tipo,
+    engagement_time_msec: 1, // required for real-time reports in GA4
   }
   if (opts.price) {
     eventParams.value    = opts.price
