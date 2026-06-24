@@ -38,6 +38,9 @@ export async function generateMetadata(
   return {
     title,
     description,
+    alternates: {
+      canonical: `https://www.turaquete.com.br/raquetes/${slug}`,
+    },
     openGraph: {
       title,
       description,
@@ -109,7 +112,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
     name: racket.name,
     ...(ins?.perfil_resumo && { description: ins.perfil_resumo }),
     ...(racket.image_url && { image: racket.image_url }),
-    brand: { '@type': 'Brand', name: "Heroe's" },
+    ...(racket.brands?.name && { brand: { '@type': 'Brand', name: racket.brands.name } }),
     ...(racket.price && buyUrl && {
       offers: {
         '@type': 'Offer',

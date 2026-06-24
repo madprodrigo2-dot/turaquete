@@ -44,11 +44,13 @@ export const metadata: Metadata = {
     type:        'website',
     url:         'https://www.turaquete.com.br',
     siteName:    'Turaquete',
+    images: [{ url: '/hero-beach-tennis2.png', width: 1200, height: 630, alt: 'Turaquete' }],
   },
   twitter: {
     card:        'summary_large_image',
     title:       OG_TITLE,
     description: DESCRIPTION,
+    images:      ['/hero-beach-tennis2.png'],
   },
   icons: {
     icon: [

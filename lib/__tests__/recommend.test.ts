@@ -20,13 +20,13 @@ let mockFixtures: unknown[] = []
 vi.mock('@/lib/supabase', () => {
   return {
     getSupabase: () => {
-      let chain: Record<string, unknown>
+      const chain: Record<string, unknown> = {}
       const noop = () => chain
-      chain = {
+      Object.assign(chain, {
         from: noop, select: noop, eq: noop, order: noop,
         gte: noop, lte: noop, ilike: noop, filter: noop,
         limit: () => Promise.resolve({ data: mockFixtures, error: null }),
-      }
+      })
       return chain
     },
   }
