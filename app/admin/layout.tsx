@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <AdminShell>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 h-11 flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-11 flex items-center gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <span className="hidden md:inline shrink-0 text-xs text-gray-400 font-medium tracking-wide">
               Turaquete Admin
@@ -43,7 +43,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </form>
         </div>
       </div>
-      <div className="max-w-4xl mx-auto px-6 py-6">{children}</div>
+      <div className="max-w-7xl mx-auto px-6 py-6">{children}</div>
     </AdminShell>
   )
 }
