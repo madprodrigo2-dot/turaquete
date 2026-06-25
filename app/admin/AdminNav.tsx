@@ -32,27 +32,10 @@ export default function AdminNav() {
   const activeTab = TABS.find(isActive)
 
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex items-center gap-2">
 
-      {/* Desktop: todas as pills visíveis */}
-      <nav className="hidden md:flex items-center gap-0.5">
-        {TABS.map(tab => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${
-              isActive(tab)
-                ? 'bg-teal-600 text-white'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
-
-      {/* Mobile: dropdown com página atual + chevron */}
-      <div className="md:hidden relative">
+      {/* Dropdown para todos os tamanhos */}
+      <div className="relative">
         <button
           onClick={() => setOpen(o => !o)}
           className="flex items-center gap-1.5 text-xs font-medium text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
@@ -93,7 +76,7 @@ export default function AdminNav() {
       <button
         onClick={toggle}
         aria-label="Alternar tema"
-        className="ml-2 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
       >
         {dark ? (
           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
