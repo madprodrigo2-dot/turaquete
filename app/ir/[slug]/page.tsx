@@ -88,7 +88,9 @@ export default async function IrPage({
 }) {
   const [{ slug }, sp, hdrs, session, cookieStore] = await Promise.all([params, searchParams, headers(), auth(), cookies()])
   const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
-  const isTest  = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
+  const ua      = hdrs.get('user-agent') ?? ''
+  const isBot   = /bot|crawler|spider|google|bing|baidu|yandex|facebook|slurp|preview/i.test(ua)
+  const isTest  = isAdmin || isBot || cookieStore.get('turaquete_test_mode')?.value === '1'
   const racket = await getRaquetaPorSlug(slug)
 
   if (!racket) notFound()
