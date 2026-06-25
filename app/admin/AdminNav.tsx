@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { useAdminTheme } from './AdminShell'
 
 const TABS = [
@@ -18,28 +19,77 @@ const TABS = [
 export default function AdminNav() {
   const pathname = usePathname()
   const { dark, toggle } = useAdminTheme()
+  const [open, setOpen] = useState(false)
+
+  function isActive(tab: { href: string }) {
+    const DADOS_ALIASES = ['/admin/analise', '/admin/intencoes']
+    return (
+      (tab.href === '/admin/analise' && DADOS_ALIASES.some(a => pathname === a || pathname.startsWith(a + '?')))
+      || (tab.href !== '/admin/analise' && (pathname === tab.href || pathname.startsWith(tab.href + '?') || pathname.startsWith(tab.href + '/')))
+    )
+  }
+
+  const activeTab = TABS.find(isActive)
 
   return (
-    <nav className="flex items-center gap-0.5">
-      {TABS.map(tab => {
-        const DADOS_ALIASES = ['/admin/analise', '/admin/intencoes']
-        const active =
-          (tab.href === '/admin/analise' && DADOS_ALIASES.some(a => pathname === a || pathname.startsWith(a + '?')))
-          || (tab.href !== '/admin/analise' && (pathname === tab.href || pathname.startsWith(tab.href + '?') || pathname.startsWith(tab.href + '/')))
-        return (
+    <div className="flex items-center gap-0.5">
+
+      {/* Desktop: todas as pills visíveis */}
+      <nav className="hidden md:flex items-center gap-0.5">
+        {TABS.map(tab => (
           <Link
             key={tab.href}
             href={tab.href}
             className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${
-              active
+              isActive(tab)
                 ? 'bg-teal-600 text-white'
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
             }`}
           >
             {tab.label}
           </Link>
-        )
-      })}
+        ))}
+      </nav>
+
+      {/* Mobile: dropdown com página atual + chevron */}
+      <div className="md:hidden relative">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="flex items-center gap-1.5 text-xs font-medium text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        >
+          <span>{activeTab?.label ?? 'Menu'}</span>
+          <svg
+            className={`w-3 h-3 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+
+        {open && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+            <div className="absolute top-full left-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50 min-w-[150px]">
+              {TABS.map(tab => (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center px-4 py-2.5 text-xs font-medium transition-colors ${
+                    isActive(tab)
+                      ? 'text-teal-600 bg-teal-50'
+                      : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab.label}
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Tema */}
       <button
         onClick={toggle}
         aria-label="Alternar tema"
@@ -55,6 +105,6 @@ export default function AdminNav() {
           </svg>
         )}
       </button>
-    </nav>
+    </div>
   )
 }
