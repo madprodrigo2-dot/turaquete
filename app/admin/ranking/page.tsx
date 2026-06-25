@@ -26,17 +26,25 @@ function pct(num: number, den: number): string {
 export default async function RankingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>
+  searchParams: Promise<{ days?: string; from?: string; to?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30' } = await searchParams
+  const { days: daysParam = '30', from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
-  const daysBack   = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
-  const cutoff     = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
-  const daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
+
+  let cutoff: string
+  let daysLabel: string
+  if (fromParam) {
+    cutoff    = new Date(fromParam + 'T00:00:00').toISOString()
+    daysLabel = `${fromParam} → ${toParam ?? 'hoje'}`
+  } else {
+    const daysBack = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
+    cutoff    = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+    daysLabel = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
+  }
 
   const sb = getAdmin()
 
@@ -121,7 +129,7 @@ export default async function RankingPage({
         </div>
         <div className="flex items-center gap-2">
           <Suspense fallback={null}>
-            <AdminPeriodFilter current={daysParam} />
+            <AdminPeriodFilter current={fromParam ? '' : daysParam} currentFrom={fromParam} currentTo={toParam} />
           </Suspense>
         </div>
       </div>

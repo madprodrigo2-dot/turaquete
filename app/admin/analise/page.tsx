@@ -48,17 +48,28 @@ function avg(arr: number[]): number | null {
 export default async function AnaliseAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; starter?: string }>
+  searchParams: Promise<{ days?: string; starter?: string; from?: string; to?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30', starter: starterParam } = await searchParams
+  const { days: daysParam = '30', starter: starterParam, from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
-  const daysBack      = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
-  const cutoffDate    = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
-  const daysLabel     = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
+
+  const daysBack: number = fromParam
+    ? Math.max(1, Math.ceil((Date.now() - new Date(fromParam + 'T00:00:00').getTime()) / 86400000))
+    : daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
+
+  let cutoffDate: string
+  let daysLabel: string
+  if (fromParam) {
+    cutoffDate = new Date(fromParam + 'T00:00:00').toISOString()
+    daysLabel  = `${fromParam} → ${toParam ?? 'hoje'}`
+  } else {
+    cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+    daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
+  }
   const filterStarter = starterParam !== undefined ? decodeURIComponent(starterParam) : null
 
   const sb  = getAdmin()
@@ -274,7 +285,7 @@ export default async function AnaliseAdmin({
         </div>
         <div className="flex items-center gap-2">
           <Suspense fallback={null}>
-            <AdminPeriodFilter current={daysParam} />
+            <AdminPeriodFilter current={fromParam ? '' : daysParam} currentFrom={fromParam} currentTo={toParam} />
           </Suspense>
         </div>
       </div>
