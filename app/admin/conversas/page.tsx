@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import { cookies } from 'next/headers'
+import { Suspense } from 'react'
+import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,23 +42,44 @@ function fmtDate(iso: string) {
   })
 }
 
-export default async function ConversasPage() {
+export default async function ConversasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string; from?: string; to?: string }>
+}) {
   const session = await auth()
   if (!session?.user?.email?.endsWith('@gmail.com') &&
       session?.user?.email !== 'madprodrigo@gmail.com') {
     redirect('/admin/login')
   }
 
-  const sb = getAdmin()
+  const { days: daysParam = '30', from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 
+  let cutoffDate: string
+  let daysLabel: string
+  if (fromParam) {
+    cutoffDate = new Date(fromParam + 'T00:00:00').toISOString()
+    daysLabel  = `${fromParam} → ${toParam ?? 'hoje'}`
+  } else {
+    const daysBack = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
+    cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+    daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
+  }
+  const cutoffEnd = toParam ? new Date(toParam + 'T23:59:59').toISOString() : null
+
+  const sb = getAdmin()
+
   // Latest snapshot per session (most messages = last row per session_id)
-  const base = sb
+  let base = sb
     .from('conversations')
     .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages')
+    .gte('created_at', cutoffDate)
     .order('created_at', { ascending: false })
     .limit(500)
+
+  if (cutoffEnd) base = base.lte('created_at', cutoffEnd) as typeof base
 
   const { data: raw } = await (includeTest ? base : base.eq('is_test', false))
 
@@ -96,9 +119,14 @@ export default async function ConversasPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-sm font-semibold text-gray-900">Conversas recentes</h1>
-        <span className="text-xs text-gray-400">{sessions.length} sessões</span>
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div>
+          <h1 className="text-sm font-semibold text-gray-900">Conversas</h1>
+          <p className="text-[11px] text-gray-400 mt-0.5">{sessions.length} sessões · {daysLabel}</p>
+        </div>
+        <Suspense fallback={null}>
+          <AdminPeriodFilter current={fromParam ? '' : daysParam} currentFrom={fromParam} currentTo={toParam} />
+        </Suspense>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
