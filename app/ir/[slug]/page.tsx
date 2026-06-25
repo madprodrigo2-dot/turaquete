@@ -17,6 +17,29 @@ function gaClientId(raw: string | undefined): string {
   return crypto.randomUUID()
 }
 
+// Sends a Telegram notification to the owner on every real buy click.
+async function sendTelegramNotification(opts: {
+  racketName: string
+  tipo: 'afiliado' | 'oficial'
+  price: number | null
+}) {
+  const token  = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) return
+
+  const emoji  = opts.tipo === 'afiliado' ? '💰' : '🔗'
+  const preco  = opts.price
+    ? `R$${opts.price.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+    : 'sem preço'
+  const text   = `${emoji} Clique em Comprar\n${opts.racketName}\n${opts.tipo} · ${preco}`
+
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  })
+}
+
 // Sends a "click_comprar" event to GA4 via Measurement Protocol (server-side).
 // Uses NEXT_PUBLIC_GA_ID (measurement_id) + GA4_API_SECRET.
 // Errors are swallowed — must never affect the redirect.
@@ -82,7 +105,9 @@ export default async function IrPage({
 
   const clientId = gaClientId(cookieStore.get('_ga')?.value)
 
-  // DB insert and GA4 event run concurrently; Promise.allSettled swallows both errors
+  const price = racket.price ? Number(racket.price) : null
+
+  // DB insert, GA4 event and Telegram notification run concurrently
   await Promise.allSettled([
     getSupabaseAdmin()
       .from('link_clicks')
@@ -103,9 +128,12 @@ export default async function IrPage({
           slug,
           racketName: racket.name,
           tipo,
-          price:    racket.price ? Number(racket.price) : null,
+          price,
           currency: racket.currency ?? 'BRL',
         })
+      : Promise.resolve(),
+    !isTest
+      ? sendTelegramNotification({ racketName: racket.name, tipo, price })
       : Promise.resolve(),
   ])
 
