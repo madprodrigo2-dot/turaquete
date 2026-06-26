@@ -31,7 +31,7 @@ export type MotorDim = (typeof MOTOR_DIMS)[number]
 
 type FaceGrade =
   | 'VIDRO' | 'HYBRID_VIDRO' | 'KEVLAR_PURE' | 'KEVLAR_CARBON'
-  | 'CARBON_3K' | 'CARBON_3K_METAL' | 'CARBON_6K_15K' | 'CARBON_24K' | 'CARBON_18K'
+  | 'CARBON_3K' | 'CARBON_3K_METAL' | 'CARBON_6K' | 'CARBON_6K_15K' | 'CARBON_24K' | 'CARBON_18K'
 
 export function classifyFace(face: string | null | undefined): FaceGrade {
   const f = (face || '').toLowerCase()
@@ -43,7 +43,7 @@ export function classifyFace(face: string | null | undefined): FaceGrade {
   if (f.includes('18k') || f.includes('21k') || f.includes('forjado') || f.includes('forged')) return 'CARBON_18K'
   if (f.includes('24k') || f.includes('triaxial')) return 'CARBON_24K'
   if (f.includes('12k') || f.includes('15k') || f.includes('16k')) return 'CARBON_6K_15K'
-  if (f.includes('6k')) return 'CARBON_6K_15K'
+  if (f.includes('6k')) return 'CARBON_6K'
   if (
     f.includes('titanio') || f.includes('titanium') || f.includes('titânio') ||
     f.includes('metal fusion') || f.includes('silver') || f.includes('mft') ||
@@ -126,7 +126,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const FACE_POWER: Record<FaceGrade, number> = {
     VIDRO: 4, HYBRID_VIDRO: 5,
     KEVLAR_PURE: 6, CARBON_3K: 6,
-    KEVLAR_CARBON: 7, CARBON_3K_METAL: 7,
+    KEVLAR_CARBON: 7, CARBON_3K_METAL: 7, CARBON_6K: 7,
     CARBON_6K_15K: 8,
     CARBON_24K: 9, CARBON_18K: 9,
   }
@@ -164,7 +164,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   // HYBRID_VIDRO +1 (era +2): mantém gradiente abaixo do vidro puro
   const FACE_FORG: Record<FaceGrade, number> = {
     VIDRO: +2, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: 0,
-    CARBON_3K: 0, CARBON_3K_METAL: 0, CARBON_6K_15K: 0,
+    CARBON_3K: 0, CARBON_3K_METAL: 0, CARBON_6K: 0, CARBON_6K_15K: 0,
     CARBON_24K: -1, CARBON_18K: -1,
   }
   const CORE_FORG: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }

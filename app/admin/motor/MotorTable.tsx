@@ -59,6 +59,7 @@ const GRADE_ABBR: Record<string, string> = {
   KEVLAR_CARBON: 'K+C',
   CARBON_3K: '3K',
   CARBON_3K_METAL: '3K+M',
+  CARBON_6K: '6K',
   CARBON_6K_15K: '12K',
   CARBON_24K: '24K',
   CARBON_18K: '18K',
@@ -67,15 +68,16 @@ const GRADE_ABBR: Record<string, string> = {
 type GradeKey = keyof typeof GRADE_ABBR
 
 const GRADE_INFO: Record<string, { exemplos: string; power: number }> = {
-  CARBON_24K:   { exemplos: '24K, triaxial',                          power: 9 },
-  CARBON_18K:   { exemplos: '18K, 21K, forjado, 18K Aluminizado',    power: 9 },
-  CARBON_6K_15K:{ exemplos: '6K, 12K, 15K, 16K, Aluminizado 15K',   power: 8 },
-  CARBON_3K_METAL:{ exemplos: 'titanium, silver, mft, aluminizado',  power: 7 },
-  KEVLAR_CARBON:{ exemplos: 'kevlar + carbono',                       power: 7 },
-  CARBON_3K:    { exemplos: '3K genérico',                            power: 6 },
-  KEVLAR_PURE:  { exemplos: 'kevlar puro',                            power: 6 },
-  HYBRID_VIDRO: { exemplos: 'carbono + fibra de vidro',               power: 5 },
-  VIDRO:        { exemplos: 'fibra de vidro',                         power: 4 },
+  CARBON_24K:     { exemplos: '24K, triaxial',                         power: 9 },
+  CARBON_18K:     { exemplos: '18K, 21K, forjado, 18K Aluminizado',   power: 9 },
+  CARBON_6K_15K:  { exemplos: '12K, 15K, 16K, Aluminizado 15K',       power: 8 },
+  CARBON_3K_METAL:{ exemplos: 'titanium, silver, mft, aluminizado',   power: 7 },
+  CARBON_6K:      { exemplos: '6K',                                    power: 7 },
+  KEVLAR_CARBON:  { exemplos: 'kevlar + carbono',                      power: 7 },
+  CARBON_3K:      { exemplos: '3K genérico',                           power: 6 },
+  KEVLAR_PURE:    { exemplos: 'kevlar puro',                           power: 6 },
+  HYBRID_VIDRO:   { exemplos: 'carbono + fibra de vidro',              power: 5 },
+  VIDRO:          { exemplos: 'fibra de vidro',                        power: 4 },
 }
 
 const CORE_ABBR: Record<string, string> = {
@@ -92,6 +94,7 @@ const GRADE_COLOR: Record<string, string> = {
   KEVLAR_CARBON: 'bg-orange-50 text-orange-700',
   CARBON_3K: 'bg-gray-100 text-gray-600',
   CARBON_3K_METAL: 'bg-slate-100 text-slate-600',
+  CARBON_6K: 'bg-sky-50 text-sky-700',
   CARBON_6K_15K: 'bg-teal-50 text-teal-700',
   CARBON_24K: 'bg-violet-50 text-violet-700',
   CARBON_18K: 'bg-purple-50 text-purple-700',
