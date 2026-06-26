@@ -153,7 +153,7 @@ export default function RacketHexagon({ racket }: Props) {
               >
                 {v}
               </text>
-              {v === 10 && (
+              {v >= 9 && (
                 <text
                   x={x} y={y + starOffsetY}
                   textAnchor="middle"

@@ -124,11 +124,11 @@ export function calcularMotor(input: MotorInput): MotorResult {
 
   // Power — face é o driver dominante; core duro acrescenta, supersoft absorve
   const FACE_POWER: Record<FaceGrade, number> = {
-    VIDRO: 4, HYBRID_VIDRO: 5,
-    KEVLAR_PURE: 6, CARBON_3K: 6,
-    KEVLAR_CARBON: 7, CARBON_3K_METAL: 7, CARBON_6K: 7,
-    CARBON_6K_15K: 8,
-    CARBON_24K: 9, CARBON_18K: 9,
+    VIDRO: 4, HYBRID_VIDRO: 4,
+    KEVLAR_PURE: 5, CARBON_3K: 5,
+    KEVLAR_CARBON: 6, CARBON_3K_METAL: 6, CARBON_6K: 6,
+    CARBON_6K_15K: 7,
+    CARBON_24K: 8, CARBON_18K: 8,
   }
   const CORE_POWER: Record<CoreClass, number> = { SUPERSOFT: -1, SOFT: 0, MEDIUM: 0, HARD: +1 }
   let power = FACE_POWER[faceGrade]
