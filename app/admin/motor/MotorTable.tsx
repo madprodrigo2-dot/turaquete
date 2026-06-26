@@ -64,6 +64,20 @@ const GRADE_ABBR: Record<string, string> = {
   CARBON_18K: '18K',
 }
 
+type GradeKey = keyof typeof GRADE_ABBR
+
+const GRADE_INFO: Record<string, { exemplos: string; power: number }> = {
+  CARBON_24K:   { exemplos: '24K, triaxial',                          power: 9 },
+  CARBON_18K:   { exemplos: '18K, 21K, forjado, 18K Aluminizado',    power: 9 },
+  CARBON_6K_15K:{ exemplos: '6K, 12K, 15K, 16K, Aluminizado 15K',   power: 8 },
+  CARBON_3K_METAL:{ exemplos: 'titanium, silver, mft, aluminizado',  power: 7 },
+  KEVLAR_CARBON:{ exemplos: 'kevlar + carbono',                       power: 7 },
+  CARBON_3K:    { exemplos: '3K genérico',                            power: 6 },
+  KEVLAR_PURE:  { exemplos: 'kevlar puro',                            power: 6 },
+  HYBRID_VIDRO: { exemplos: 'carbono + fibra de vidro',               power: 5 },
+  VIDRO:        { exemplos: 'fibra de vidro',                         power: 4 },
+}
+
 const CORE_ABBR: Record<string, string> = {
   SUPERSOFT: 'SS',
   SOFT: 'S',
@@ -114,6 +128,7 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
   const [sortCol, setSortCol] = useState<SortCol>('name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [search, setSearch] = useState('')
+  const [activeGrade, setActiveGrade] = useState<GradeKey | null>(null)
 
   function handleSort(col: SortCol) {
     if (sortCol === col) {
@@ -161,6 +176,41 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
         onChange={e => setSearch(e.target.value)}
         className="w-full max-w-sm text-sm border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-teal-400"
       />
+
+      {activeGrade && (
+        <div className="rounded-xl border border-gray-200 bg-white p-3 text-xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-semibold text-gray-700">Referência — Face Grades (power base)</span>
+            <button onClick={() => setActiveGrade(null)} className="text-gray-400 hover:text-gray-700 text-sm leading-none">✕</button>
+          </div>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="text-[10px] uppercase tracking-wide text-gray-400 border-b border-gray-100">
+                <th className="text-left py-1 pr-3">Grade</th>
+                <th className="text-left py-1 pr-3">Materiais</th>
+                <th className="text-center py-1">Pwr</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(GRADE_INFO).map(([grade, info]) => (
+                <tr
+                  key={grade}
+                  className={`border-b border-gray-50 cursor-pointer transition-colors ${activeGrade === grade ? 'bg-gray-50' : 'hover:bg-gray-50/60'}`}
+                  onClick={() => setActiveGrade(grade as GradeKey)}
+                >
+                  <td className="py-1 pr-3">
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${GRADE_COLOR[grade] ?? 'bg-gray-100 text-gray-500'}`}>
+                      {GRADE_ABBR[grade] ?? grade}
+                    </span>
+                  </td>
+                  <td className="py-1 pr-3 text-gray-500">{info.exemplos}</td>
+                  <td className="py-1 text-center font-mono font-semibold text-gray-700">{info.power}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-xl border border-gray-200">
         <table className="w-full text-xs border-collapse">
@@ -241,11 +291,12 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                 </td>
                 <td className="px-2 py-1">
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <span
-                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${GRADE_COLOR[r.faceGrade] ?? 'bg-gray-100 text-gray-500'}`}
+                    <button
+                      onClick={() => setActiveGrade(g => g === r.faceGrade ? null : r.faceGrade as GradeKey)}
+                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold cursor-pointer ring-offset-1 transition-shadow ${GRADE_COLOR[r.faceGrade] ?? 'bg-gray-100 text-gray-500'} ${activeGrade === r.faceGrade ? 'ring-2 ring-gray-400' : ''}`}
                     >
                       {GRADE_ABBR[r.faceGrade] ?? r.faceGrade}
-                    </span>
+                    </button>
                     {r.face_material && (
                       <span className="text-[9px] text-gray-400 leading-tight truncate max-w-[90px]" title={r.face_material}>
                         {r.face_material}
