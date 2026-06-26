@@ -240,12 +240,18 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                   }
                 </td>
                 <td className="px-2 py-1">
-                  <span
-                    className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${GRADE_COLOR[r.faceGrade] ?? 'bg-gray-100 text-gray-500'}`}
-                    title={r.face_material ?? undefined}
-                  >
-                    {GRADE_ABBR[r.faceGrade] ?? r.faceGrade}
-                  </span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span
+                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${GRADE_COLOR[r.faceGrade] ?? 'bg-gray-100 text-gray-500'}`}
+                    >
+                      {GRADE_ABBR[r.faceGrade] ?? r.faceGrade}
+                    </span>
+                    {r.face_material && (
+                      <span className="text-[9px] text-gray-400 leading-tight truncate max-w-[90px]" title={r.face_material}>
+                        {r.face_material}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-2 py-1">
                   <span

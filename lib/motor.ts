@@ -42,11 +42,12 @@ export function classifyFace(face: string | null | undefined): FaceGrade {
   if (f.includes('kevlar') && (f.includes('carbon') || f.includes('carbono'))) return 'KEVLAR_CARBON'
   if (f.includes('18k') || f.includes('21k') || f.includes('forjado') || f.includes('forged')) return 'CARBON_18K'
   if (f.includes('24k') || f.includes('triaxial')) return 'CARBON_24K'
-  if (f.includes('12k') || f.includes('15k') || f.includes('16k') || f.includes('aluminizado')) return 'CARBON_6K_15K'
+  if (f.includes('12k') || f.includes('15k') || f.includes('16k')) return 'CARBON_6K_15K'
   if (f.includes('6k')) return 'CARBON_6K_15K'
   if (
     f.includes('titanio') || f.includes('titanium') || f.includes('titânio') ||
-    f.includes('metal fusion') || f.includes('silver') || f.includes('mft')
+    f.includes('metal fusion') || f.includes('silver') || f.includes('mft') ||
+    f.includes('aluminizado')
   ) return 'CARBON_3K_METAL'
   return 'CARBON_3K'
 }
