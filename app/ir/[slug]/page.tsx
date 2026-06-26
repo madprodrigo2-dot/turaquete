@@ -17,11 +17,27 @@ function gaClientId(raw: string | undefined): string {
   return crypto.randomUUID()
 }
 
+function summarizeReferrer(ref: string | null): string {
+  if (!ref) return 'direto'
+  try {
+    const path = new URL(ref).pathname
+    if (path === '/' || path === '') return 'agente'
+    if (path.startsWith('/raquetes/')) return 'página da raquete'
+    if (path === '/raquetes') return 'catálogo'
+    if (path.startsWith('/comparar')) return 'comparar'
+    return path.slice(1, 24)
+  } catch {
+    return 'direto'
+  }
+}
+
 // Sends a Telegram notification to the owner on every real buy click.
 async function sendTelegramNotification(opts: {
   racketName: string
   tipo: 'afiliado' | 'oficial'
   price: number | null
+  nivel: string | null
+  referrer: string | null
 }) {
   const token  = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
@@ -31,7 +47,10 @@ async function sendTelegramNotification(opts: {
   const preco  = opts.price
     ? `R$${opts.price.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
     : 'sem preço'
-  const text   = `${emoji} Clique em Comprar\n${opts.racketName}\n${opts.tipo} · ${preco}`
+  const nivelMap: Record<string, string> = { iniciante: 'iniciante', intermediario: 'intermediário', avancado: 'avançado' }
+  const nivel  = opts.nivel ? (nivelMap[opts.nivel] ?? opts.nivel) : '—'
+  const via    = summarizeReferrer(opts.referrer)
+  const text   = `${emoji} Clique em Comprar\n${opts.racketName}\n${opts.tipo} · ${preco} · ${nivel}\nvia ${via}`
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method:  'POST',
@@ -135,7 +154,13 @@ export default async function IrPage({
         })
       : Promise.resolve(),
     !isTest
-      ? sendTelegramNotification({ racketName: racket.name, tipo, price })
+      ? sendTelegramNotification({
+          racketName: racket.name,
+          tipo,
+          price,
+          nivel: racket.racket_insights?.nivel_sugerido ?? null,
+          referrer: hdrs.get('referer'),
+        })
       : Promise.resolve(),
   ])
 
