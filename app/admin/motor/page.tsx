@@ -13,6 +13,7 @@ type RawRacket = {
   core: string | null
   weight_g: number | null
   balance: string | null
+  thickness_mm: string | number | null
   specs_extra: Record<string, unknown> | null
   brands: { name: string } | null
   racket_insights:
@@ -75,7 +76,7 @@ export default async function AdminMotorPage() {
   const { data, error } = await sb
     .from('rackets')
     .select(`
-      id, name, slug, face_material, core, weight_g, balance, specs_extra,
+      id, name, slug, face_material, core, weight_g, balance, thickness_mm, specs_extra,
       brands(name),
       racket_insights(power, control, comfort, maneuverability, stability, spin, forgiveness, overrides)
     `)
@@ -91,7 +92,10 @@ export default async function AdminMotorPage() {
 
     const extra = (r.specs_extra ?? {}) as Record<string, unknown>
     const furos = typeof extra.furos === 'number' ? extra.furos : null
-    const espessura_mm = typeof extra.espessura_mm === 'number' ? extra.espessura_mm : null
+    const espessura_mm =
+      typeof extra.espessura_mm === 'number' ? extra.espessura_mm :
+      r.thickness_mm != null ? Number(r.thickness_mm) :
+      null
 
     const overrides: string[] = []
     if (ins?.overrides) {
