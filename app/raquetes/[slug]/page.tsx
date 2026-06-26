@@ -12,6 +12,7 @@ import ScoreSection from '@/components/ScoreSection'
 import RacketKeyStats from '@/components/RacketKeyStats'
 import RacketHexagon from '@/components/RacketHexagon'
 import { derivarNivel } from '@/lib/nivel'
+import PriceNote from '@/components/PriceNote'
 
 export async function generateStaticParams() {
   const rackets = await listarRaquetas().catch(() => [])
@@ -177,7 +178,11 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               {price && (
                 <div>
                   <p className="text-coral text-xl font-bold">{price}</p>
-                  <p className="text-[10px] text-tinta/40 mt-0.5">Preço de referência, pode variar na loja.</p>
+                  <PriceNote
+                    updatedAt={racket.price_updated_at}
+                    affiliateUrl={racket.affiliate_url}
+                    className="mt-0.5"
+                  />
                 </div>
               )}
               <div className="flex gap-2 flex-wrap">
@@ -336,6 +341,14 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
             >
               Não tem certeza? Fale com a especialista
             </Link>
+          )}
+
+          {price && (
+            <PriceNote
+              updatedAt={racket.price_updated_at}
+              affiliateUrl={racket.affiliate_url}
+              className="text-center"
+            />
           )}
 
           <p className="text-center text-tinta/40 text-xs leading-relaxed">

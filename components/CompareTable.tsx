@@ -129,11 +129,14 @@ export default function CompareTable({ recommendations }: Props) {
             Preço
           </div>
           {recommendations.map(rec => (
-            <div key={rec.racket.id} className="py-[5px] flex items-center justify-center">
+            <div key={rec.racket.id} className="py-[5px] flex flex-col items-center gap-0.5">
               {rec.racket.price ? (
-                <span className="text-coral text-[11px] font-bold tabular-nums leading-none">
-                  {`R$${rec.racket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`}
-                </span>
+                <>
+                  <span className="text-coral text-[11px] font-bold tabular-nums leading-none">
+                    {`R$${rec.racket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`}
+                  </span>
+                  <span className="text-[8px] text-tinta/30 leading-tight text-center">referência</span>
+                </>
               ) : (
                 <span className="text-tinta/20 text-[10px]">—</span>
               )}
