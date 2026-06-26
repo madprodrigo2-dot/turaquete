@@ -19,6 +19,7 @@ export interface MotorResult {
   control: number
   maneuverability: number
   forgiveness: number
+  saida_de_bola: 'fácil' | 'média' | 'exigente'
 }
 
 export const MOTOR_DIMS = [
@@ -195,5 +196,9 @@ export function calcularMotor(input: MotorInput): MotorResult {
   if (esp != null && esp >= 23) comfort += 1
   comfort = Math.min(10, Math.max(1, comfort))
 
-  return { spin, comfort, stability, power, control, maneuverability, forgiveness }
+  const delta = comfort - power
+  const saida_de_bola: 'fácil' | 'média' | 'exigente' =
+    delta >= 2 ? 'fácil' : delta <= -2 ? 'exigente' : 'média'
+
+  return { spin, comfort, stability, power, control, maneuverability, forgiveness, saida_de_bola }
 }
