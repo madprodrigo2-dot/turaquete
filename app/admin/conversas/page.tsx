@@ -87,6 +87,12 @@ export default async function ConversasPage({
     return <p className="text-sm text-gray-500 p-4">Sem dados.</p>
   }
 
+  // Accumulate total cost per session across all rows in the window
+  const sessionCostMap = new Map<string, number>()
+  for (const r of raw) {
+    sessionCostMap.set(r.session_id, (sessionCostMap.get(r.session_id) ?? 0) + (Number(r.custo_brl) || 0))
+  }
+
   // Dedupe: keep last (first seen when desc-sorted) per session_id
   const seen = new Set<string>()
   const sessions: SessionRow[] = []
@@ -108,13 +114,40 @@ export default async function ConversasPage({
       starter_usado: r.starter_usado,
       intencao_detectada: r.intencao_detectada,
       primeira_mensagem: r.primeira_mensagem,
-      custo_brl: Number(r.custo_brl ?? 0),
+      custo_brl: sessionCostMap.get(r.session_id) ?? 0,
       custo_usd: Number(r.custo_usd ?? 0),
       is_test: !!r.is_test,
       turn_count: userTurns,
       had_rec: hadRec,
     })
     if (sessions.length >= 50) break
+  }
+
+  // Second query: fetch FIRST row per session to get first-turn metadata
+  // (starter_usado, intencao_detectada, primeira_mensagem are only saved on turn 1)
+  const sessionIds = sessions.map(s => s.session_id)
+  if (sessionIds.length > 0) {
+    const { data: firstRows } = await sb
+      .from('conversations')
+      .select('session_id, starter_usado, intencao_detectada, primeira_mensagem')
+      .in('session_id', sessionIds)
+      .order('created_at', { ascending: true })
+      .limit(sessionIds.length * 10)
+
+    if (firstRows) {
+      const firstRowMap = new Map<string, { starter_usado: string | null; intencao_detectada: string | null; primeira_mensagem: string | null }>()
+      for (const r of firstRows) {
+        if (!firstRowMap.has(r.session_id)) firstRowMap.set(r.session_id, r)
+      }
+      for (const s of sessions) {
+        const ft = firstRowMap.get(s.session_id)
+        if (ft) {
+          s.starter_usado       = ft.starter_usado       ?? s.starter_usado
+          s.intencao_detectada  = ft.intencao_detectada  ?? s.intencao_detectada
+          s.primeira_mensagem   = ft.primeira_mensagem   ?? s.primeira_mensagem
+        }
+      }
+    }
   }
 
   return (

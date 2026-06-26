@@ -310,11 +310,9 @@ export async function POST(req: NextRequest) {
               custo_usd:          usd,
               custo_brl:          brl,
               is_test:            isTest,
-              ...(primeiraMensagem !== undefined && {
-                primeira_mensagem: primeiraMensagem,
-                starter_usado: starterUsado ?? null,
-                intencao_detectada: intencao ?? null,
-              }),
+              primeira_mensagem: primeiraMensagem ?? (messages.find(m => m.role === 'user')?.content as string | undefined) ?? null,
+              starter_usado: starterUsado ?? null,
+              intencao_detectada: intencao ?? null,
             })
             .then(({ error }) => {
               if (error) console.error('Conversations insert error:', error.message)
