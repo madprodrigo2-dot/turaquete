@@ -188,6 +188,8 @@ export function calcularMotor(input: MotorInput): MotorResult {
   comfort += CORE_COMFORT[coreClass]
   comfort += Math.min(antivibCount, 2)
   comfort += FACE_COMFORT[faceGrade] ?? 0
+  if (esp != null && esp <= 20) comfort -= 1
+  if (esp != null && esp >= 23) comfort += 1
   comfort = Math.min(10, Math.max(1, comfort))
 
   return { spin, comfort, stability, power, control, maneuverability, forgiveness }
