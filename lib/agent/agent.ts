@@ -631,9 +631,15 @@ async function executeTool(
       : effectiveFilters
     const { raquetes, criteriosRelaxados, filterTrace, yearMatchInfo } = await buscarRaquetas(filtersForDb)
     const rankedBase = diagnosticoRef.value ? applyFaixaFilter(raquetes, diagnosticoRef.value) : raquetes
-    // Soft budget sort: mark rackets above declared max, sort in-budget first
+    // Soft budget sort: mark rackets above declared max, sort in-budget first.
+    // Hard cap: rackets priced >50% above declared budget are removed entirely —
+    // showing a R$2.500 racket to a R$1.000 budget is a bad experience, not a helpful upsell.
+    const OVER_BUDGET_CAP = 1.5
+    const rankedCapped = presupuestoMaxBudget != null
+      ? rankedBase.filter(r => r.price == null || r.price <= presupuestoMaxBudget * OVER_BUDGET_CAP)
+      : rankedBase
     const ranked = presupuestoMaxBudget != null
-      ? rankedBase.map(r => ({
+      ? rankedCapped.map(r => ({
           ...r,
           fora_da_faixa_preco: r.price != null && r.price > presupuestoMaxBudget,
         })).sort((a, b) => {
@@ -645,7 +651,7 @@ async function executeTool(
           if (aTier !== bTier) return aTier - bTier
           return b.match_score - a.match_score
         })
-      : rankedBase.map(r => ({ ...r, fora_da_faixa_preco: false as boolean }))
+      : rankedCapped.map(r => ({ ...r, fora_da_faixa_preco: false as boolean }))
     debugRef.value.scorerResults = ranked.slice(0, 10).map(r => ({
       id: r.id,
       name: r.name,
