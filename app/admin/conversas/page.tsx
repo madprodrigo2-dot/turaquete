@@ -123,21 +123,6 @@ export default async function ConversasPage({
     if (sessions.length >= 50) break
   }
 
-  // Query: fetch ver_na_loja clicks per session
-  if (sessionIds.length > 0) {
-    const { data: clickRows } = await sb
-      .from('feedback_events')
-      .select('session_id')
-      .in('session_id', sessionIds)
-      .eq('event_type', 'ver_na_loja')
-    if (clickRows) {
-      const clickSet = new Set(clickRows.map(r => r.session_id))
-      for (const s of sessions) {
-        if (clickSet.has(s.session_id)) s.had_click = true
-      }
-    }
-  }
-
   // Second query: fetch FIRST row per session to get first-turn metadata
   // (starter_usado, intencao_detectada, primeira_mensagem are only saved on turn 1)
   const sessionIds = sessions.map(s => s.session_id)
@@ -161,6 +146,21 @@ export default async function ConversasPage({
           s.intencao_detectada  = ft.intencao_detectada  ?? s.intencao_detectada
           s.primeira_mensagem   = ft.primeira_mensagem   ?? s.primeira_mensagem
         }
+      }
+    }
+  }
+
+  // Query: fetch ver_na_loja clicks per session
+  if (sessionIds.length > 0) {
+    const { data: clickRows } = await sb
+      .from('feedback_events')
+      .select('session_id')
+      .in('session_id', sessionIds)
+      .eq('event_type', 'ver_na_loja')
+    if (clickRows) {
+      const clickSet = new Set(clickRows.map(r => r.session_id))
+      for (const s of sessions) {
+        if (clickSet.has(s.session_id)) s.had_click = true
       }
     }
   }
