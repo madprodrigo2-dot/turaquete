@@ -20,6 +20,7 @@ export interface MotorResult {
   maneuverability: number
   forgiveness: number
   saida_de_bola: 'fácil' | 'média' | 'exigente'
+  sweet_spot: 'grande' | 'médio' | 'pequeno'
 }
 
 export const MOTOR_DIMS = [
@@ -200,5 +201,8 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const saida_de_bola: 'fácil' | 'média' | 'exigente' =
     delta >= 2 ? 'fácil' : delta <= -2 ? 'exigente' : 'média'
 
-  return { spin, comfort, stability, power, control, maneuverability, forgiveness, saida_de_bola }
+  const sweet_spot: 'grande' | 'médio' | 'pequeno' =
+    forgiveness >= 7 ? 'grande' : forgiveness >= 5 ? 'médio' : 'pequeno'
+
+  return { spin, comfort, stability, power, control, maneuverability, forgiveness, saida_de_bola, sweet_spot }
 }
