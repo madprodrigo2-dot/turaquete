@@ -18,7 +18,7 @@ export function derivarNivel(
 
   if (f == null || p == null || c == null || co == null) return null
 
-  if ((f <= 6 && (p >= 8 || c >= 8)) || (f <= 7 && p >= 9)) return 'avancado'
-  if (f >= 9 && co >= 7 && p <= 6) return 'iniciante'
+  if (f <= 4 || (f <= 6 && (p >= 7 || c >= 7)) || (f <= 7 && p >= 9)) return 'avancado'
+  if (f >= 7 && co >= 6 && p <= 6) return 'iniciante'
   return 'intermediario'
 }
