@@ -729,8 +729,14 @@ async function executeTool(
         if (rankedSemOrc.length > 0) {
           const cheapest = [...rankedSemOrc].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))[0]
           const cheapestDesc = cheapest.price != null ? `${cheapest.name} (R$${cheapest.price})` : cheapest.name
+          // Pre-populate price chips so the user can pick a different range after the AVISO.
+          // priceAskPendingRef triggers the short-circuit break → streamResponse injects chips.
+          // pendingQuestionFieldRef stays null so LLM text is used (not the PRECO_QUESTION_TEXT).
+          const priceChips = computePrecoChips([])
+          priceAskPendingRef.value = true
+          precoChipsRef.value = priceChips
+          pendingSuggestions.splice(0, pendingSuggestions.length, ...priceChips)
           // Do NOT include raquetes in payload — model would present them ignoring the AVISO.
-          // Just send the AVISO so the model is forced to acknowledge the budget gap and ask first.
           return JSON.stringify({
             encontradas: 0,
             AVISO_ORCAMENTO_OBRIGATORIO: {
@@ -740,9 +746,9 @@ async function executeTool(
               instrucao_OBRIGATORIA:
                 `Nenhuma raquete disponível acima de R$${originalFilters.presupuesto_min} para esse perfil. ` +
                 `AÇÃO OBRIGATÓRIA — siga à risca: ` +
-                `(1) diga que não há opções nessa faixa: "Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. A que melhor encaixa é a ${cheapestDesc}."; ` +
-                `(2) pergunte se o usuário quer ver as opções abaixo desse valor mesmo assim; ` +
-                `(3) NÃO chame buscar_raquetas nem recomendar_raquetas — espere confirmação do usuário.`,
+                `(1) diga: "Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. A que melhor encaixa é a ${cheapestDesc}."; ` +
+                `(2) diga que os chips abaixo permitem escolher outra faixa; ` +
+                `(3) NÃO chame buscar_raquetas nem recomendar_raquetas — chips de faixa de preço já foram injetados automaticamente.`,
             },
           })
         }
