@@ -84,6 +84,7 @@ export type AgentDebugInfo = {
   decisionTrace?: DecisionTrace
   confidenceInfo?: ConfidenceInfo
   filteredPoolSize?: number  // candidates available after shownIds filter (used to decide if "Ver mais" should appear)
+  hardcodedText?: string    // set by ZERO_NA_FAIXA to bypass streamResponse (zero LLM credits)
 }
 
 export type AgentResult = {
@@ -727,30 +728,20 @@ async function executeTool(
         const { raquetes: raquetesSemOrc, criteriosRelaxados: relSemOrc } = await buscarRaquetas({ ...effectiveFilters, presupuesto_min: undefined, presupuesto_max: undefined })
         const rankedSemOrc = diagnosticoRef.value ? applyFaixaFilter(raquetesSemOrc, diagnosticoRef.value) : raquetesSemOrc
         if (rankedSemOrc.length > 0) {
-          const cheapest = [...rankedSemOrc].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))[0]
-          const cheapestDesc = cheapest.price != null ? `${cheapest.name} (R$${cheapest.price})` : cheapest.name
-          // Pre-populate price chips so the user can pick a different range after the AVISO.
-          // priceAskPendingRef triggers the short-circuit break → streamResponse injects chips.
-          // pendingQuestionFieldRef stays null so LLM text is used (not the PRECO_QUESTION_TEXT).
+          // Use best-scored racket (not cheapest) as the reference option.
+          const bestMatch = rankedSemOrc[0]
+          const bestDesc = bestMatch.price != null ? `${bestMatch.name} (R$${bestMatch.price})` : bestMatch.name
+          // Build deterministic text — no LLM call needed.
+          const hardcoded =
+            `Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. ` +
+            `A que melhor encaixa é a ${bestDesc}.\n\nSe quiser explorar outras faixas, escolha abaixo:`
+          debugRef.value.hardcodedText = hardcoded
+          // Pre-populate price chips so the user can pick a different range.
           const priceChips = computePrecoChips([])
           priceAskPendingRef.value = true
           precoChipsRef.value = priceChips
           pendingSuggestions.splice(0, pendingSuggestions.length, ...priceChips)
-          // Do NOT include raquetes in payload — model would present them ignoring the AVISO.
-          return JSON.stringify({
-            encontradas: 0,
-            AVISO_ORCAMENTO_OBRIGATORIO: {
-              status: 'ZERO_NA_FAIXA',
-              faixa_solicitada: `acima de R$${originalFilters.presupuesto_min}`,
-              mais_acessivel: cheapestDesc,
-              instrucao_OBRIGATORIA:
-                `Nenhuma raquete disponível acima de R$${originalFilters.presupuesto_min} para esse perfil. ` +
-                `AÇÃO OBRIGATÓRIA — siga à risca: ` +
-                `(1) diga: "Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. A que melhor encaixa é a ${cheapestDesc}."; ` +
-                `(2) diga que os chips abaixo permitem escolher outra faixa; ` +
-                `(3) NÃO chame buscar_raquetas nem recomendar_raquetas — chips de faixa de preço já foram injetados automaticamente.`,
-            },
-          })
+          return JSON.stringify({ encontradas: 0, status: 'ZERO_NA_FAIXA' })
         }
       }
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada com os critérios informados.' })
@@ -1706,6 +1697,14 @@ export async function runAgentTurn(
       pendingSuggestions.splice(0, pendingSuggestions.length, ...q.chips)
     }
   }
+
+  // ZERO_NA_FAIXA: deterministic response — skip LLM call entirely (zero AI credits).
+  if (debugRef.value.hardcodedText) {
+    const text = debugRef.value.hardcodedText
+    if (onToken) onToken(text)
+    return { text, suggestions: pendingSuggestions.length > 0 ? [...pendingSuggestions] : undefined, usage, debug: debugRef.value }
+  }
+
   if (onToken) {
     return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
   }
