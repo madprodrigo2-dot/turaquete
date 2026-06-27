@@ -177,6 +177,12 @@ class ToolCallFilter {
   }
 }
 
+const STARTER_TO_INTENCAO: Record<string, string> = {
+  'Sou iniciante':              'primeira_raquete',
+  'Quero trocar minha raquete': 'troca',
+  'Tenho dor no braço':         'lesao_dor',
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -312,7 +318,7 @@ export async function POST(req: NextRequest) {
               is_test:            isTest,
               primeira_mensagem: primeiraMensagem ?? (messages.find(m => m.role === 'user')?.content as string | undefined) ?? null,
               starter_usado: starterUsado ?? null,
-              intencao_detectada: intencao ?? null,
+              intencao_detectada: intencao ?? (starterUsado ? (STARTER_TO_INTENCAO[starterUsado] ?? null) : null),
             })
             .then(({ error }) => {
               if (error) console.error('Conversations insert error:', error.message)
