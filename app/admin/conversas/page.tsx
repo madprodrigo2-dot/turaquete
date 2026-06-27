@@ -137,7 +137,12 @@ export default async function ConversasPage({
     if (firstRows) {
       const firstRowMap = new Map<string, { starter_usado: string | null; intencao_detectada: string | null; primeira_mensagem: string | null }>()
       for (const r of firstRows) {
-        if (!firstRowMap.has(r.session_id)) firstRowMap.set(r.session_id, r)
+        if (!firstRowMap.has(r.session_id)) {
+          firstRowMap.set(r.session_id, r)
+        } else if (r.intencao_detectada && !firstRowMap.get(r.session_id)!.intencao_detectada) {
+          const prev = firstRowMap.get(r.session_id)!
+          firstRowMap.set(r.session_id, { ...prev, intencao_detectada: r.intencao_detectada })
+        }
       }
       for (const s of sessions) {
         const ft = firstRowMap.get(s.session_id)
