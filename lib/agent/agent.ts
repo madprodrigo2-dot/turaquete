@@ -727,28 +727,24 @@ async function executeTool(
         const { raquetes: raquetesSemOrc, criteriosRelaxados: relSemOrc } = await buscarRaquetas({ ...effectiveFilters, presupuesto_min: undefined, presupuesto_max: undefined })
         const rankedSemOrc = diagnosticoRef.value ? applyFaixaFilter(raquetesSemOrc, diagnosticoRef.value) : raquetesSemOrc
         if (rankedSemOrc.length > 0) {
-          const topSemOrc = rankedSemOrc.slice(0, MAX_CANDIDATES).map(slimForModel)
           const cheapest = [...rankedSemOrc].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity))[0]
           const cheapestDesc = cheapest.price != null ? `${cheapest.name} (R$${cheapest.price})` : cheapest.name
-          const payload: Record<string, unknown> = {
-            encontradas: rankedSemOrc.length,
-            raquetes: topSemOrc,
-            fora_do_orcamento: true,
+          // Do NOT include raquetes in payload — model would present them ignoring the AVISO.
+          // Just send the AVISO so the model is forced to acknowledge the budget gap and ask first.
+          return JSON.stringify({
+            encontradas: 0,
             AVISO_ORCAMENTO_OBRIGATORIO: {
               status: 'ZERO_NA_FAIXA',
               faixa_solicitada: `acima de R$${originalFilters.presupuesto_min}`,
               mais_acessivel: cheapestDesc,
               instrucao_OBRIGATORIA:
                 `Nenhuma raquete disponível acima de R$${originalFilters.presupuesto_min} para esse perfil. ` +
-                `As raquetes listadas estão abaixo desse valor. ` +
-                `AÇÃO OBRIGATÓRIA: ` +
-                `(1) diga com honestidade que não há opções nessa faixa — ex.: "Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. A que melhor encaixa disponível é a ${cheapestDesc}."; ` +
-                `(2) pergunte se o usuário quer ver essas opções mesmo assim; ` +
-                `(3) NÃO chame recomendar_raquetas nesta resposta — espere confirmação.`,
+                `AÇÃO OBRIGATÓRIA — siga à risca: ` +
+                `(1) diga que não há opções nessa faixa: "Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. A que melhor encaixa é a ${cheapestDesc}."; ` +
+                `(2) pergunte se o usuário quer ver as opções abaixo desse valor mesmo assim; ` +
+                `(3) NÃO chame buscar_raquetas nem recomendar_raquetas — espere confirmação do usuário.`,
             },
-          }
-          if (relSemOrc.length > 0) payload.criterios_relaxados = relSemOrc
-          return JSON.stringify(payload)
+          })
         }
       }
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada com os critérios informados.' })
