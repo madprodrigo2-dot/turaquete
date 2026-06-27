@@ -123,34 +123,47 @@ export default async function ConversasPage({
     if (sessions.length >= 50) break
   }
 
-  // Second query: fetch FIRST row per session to get first-turn metadata
-  // (starter_usado, intencao_detectada, primeira_mensagem are only saved on turn 1)
+  // Second query: fetch FIRST row per session to get turn-1 metadata
   const sessionIds = sessions.map(s => s.session_id)
   if (sessionIds.length > 0) {
-    const { data: firstRows } = await sb
-      .from('conversations')
-      .select('session_id, starter_usado, intencao_detectada, primeira_mensagem')
-      .in('session_id', sessionIds)
-      .order('created_at', { ascending: true })
-      .limit(sessionIds.length * 10)
+    const [{ data: firstRows }, { data: intencaoRows }] = await Promise.all([
+      sb.from('conversations')
+        .select('session_id, starter_usado, primeira_mensagem')
+        .in('session_id', sessionIds)
+        .order('created_at', { ascending: true })
+        .limit(sessionIds.length),
+      sb.from('conversations')
+        .select('session_id, intencao_detectada')
+        .in('session_id', sessionIds)
+        .not('intencao_detectada', 'is', null)
+        .order('created_at', { ascending: true })
+        .limit(sessionIds.length),
+    ])
 
     if (firstRows) {
-      const firstRowMap = new Map<string, { starter_usado: string | null; intencao_detectada: string | null; primeira_mensagem: string | null }>()
+      const firstRowMap = new Map<string, { starter_usado: string | null; primeira_mensagem: string | null }>()
       for (const r of firstRows) {
-        if (!firstRowMap.has(r.session_id)) {
-          firstRowMap.set(r.session_id, r)
-        } else if (r.intencao_detectada && !firstRowMap.get(r.session_id)!.intencao_detectada) {
-          const prev = firstRowMap.get(r.session_id)!
-          firstRowMap.set(r.session_id, { ...prev, intencao_detectada: r.intencao_detectada })
-        }
+        if (!firstRowMap.has(r.session_id)) firstRowMap.set(r.session_id, r)
       }
       for (const s of sessions) {
         const ft = firstRowMap.get(s.session_id)
         if (ft) {
-          s.starter_usado       = ft.starter_usado       ?? s.starter_usado
-          s.intencao_detectada  = ft.intencao_detectada  ?? s.intencao_detectada
-          s.primeira_mensagem   = ft.primeira_mensagem   ?? s.primeira_mensagem
+          s.starter_usado      = ft.starter_usado      ?? s.starter_usado
+          s.primeira_mensagem  = ft.primeira_mensagem  ?? s.primeira_mensagem
         }
+      }
+    }
+
+    if (intencaoRows) {
+      const intencaoMap = new Map<string, string>()
+      for (const r of intencaoRows) {
+        if (!intencaoMap.has(r.session_id) && r.intencao_detectada) {
+          intencaoMap.set(r.session_id, r.intencao_detectada)
+        }
+      }
+      for (const s of sessions) {
+        const intencao = intencaoMap.get(s.session_id)
+        if (intencao) s.intencao_detectada = intencao
       }
     }
   }
