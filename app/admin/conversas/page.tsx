@@ -74,7 +74,7 @@ export default async function ConversasPage({
   // Latest snapshot per session (most messages = last row per session_id)
   let base = sb
     .from('conversations')
-    .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages')
+    .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages, recommended_racket_ids')
     .gte('created_at', cutoffDate)
     .order('created_at', { ascending: false })
     .limit(500)
@@ -89,8 +89,12 @@ export default async function ConversasPage({
 
   // Accumulate total cost per session across all rows in the window
   const sessionCostMap = new Map<string, number>()
+  const sessionHadRecMap = new Map<string, boolean>()
   for (const r of raw) {
     sessionCostMap.set(r.session_id, (sessionCostMap.get(r.session_id) ?? 0) + (Number(r.custo_brl) || 0))
+    if (Array.isArray(r.recommended_racket_ids) && r.recommended_racket_ids.length > 0) {
+      sessionHadRecMap.set(r.session_id, true)
+    }
   }
 
   // Dedupe: keep last (first seen when desc-sorted) per session_id
@@ -101,13 +105,7 @@ export default async function ConversasPage({
     seen.add(r.session_id)
     const msgs: Array<{ role: string }> = Array.isArray(r.messages) ? r.messages : []
     const userTurns = msgs.filter(m => m.role === 'user').length
-    const assistantMsgs = msgs.filter(m => m.role === 'assistant')
-    const lastAssistant = assistantMsgs[assistantMsgs.length - 1] as { role: string; content?: string } | undefined
-    const hadRec = typeof lastAssistant?.content === 'string'
-      ? lastAssistant.content.includes('essas são as que eu escolheria') ||
-        lastAssistant.content.includes('escolheria pra você') ||
-        lastAssistant.content.includes('recomendo')
-      : false
+    const hadRec = sessionHadRecMap.get(r.session_id) ?? false
     sessions.push({
       session_id: r.session_id,
       created_at: r.created_at,
