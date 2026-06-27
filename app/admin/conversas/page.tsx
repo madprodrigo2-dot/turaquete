@@ -27,6 +27,7 @@ type SessionRow = {
   is_test: boolean
   turn_count: number
   had_rec: boolean
+  had_click: boolean
 }
 
 function fmtBrl(v: number) {
@@ -117,8 +118,24 @@ export default async function ConversasPage({
       is_test: !!r.is_test,
       turn_count: userTurns,
       had_rec: hadRec,
+      had_click: false,
     })
     if (sessions.length >= 50) break
+  }
+
+  // Query: fetch ver_na_loja clicks per session
+  if (sessionIds.length > 0) {
+    const { data: clickRows } = await sb
+      .from('feedback_events')
+      .select('session_id')
+      .in('session_id', sessionIds)
+      .eq('event_type', 'ver_na_loja')
+    if (clickRows) {
+      const clickSet = new Set(clickRows.map(r => r.session_id))
+      for (const s of sessions) {
+        if (clickSet.has(s.session_id)) s.had_click = true
+      }
+    }
   }
 
   // Second query: fetch FIRST row per session to get first-turn metadata
@@ -170,6 +187,7 @@ export default async function ConversasPage({
               <th className="text-center px-3 py-2">Turnos</th>
               <th className="text-right px-3 py-2">Custo</th>
               <th className="text-center px-3 py-2">Rec?</th>
+              <th className="text-center px-3 py-2">Loja?</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -203,6 +221,11 @@ export default async function ConversasPage({
                 <td className="px-3 py-2 text-center">
                   {s.had_rec
                     ? <span className="text-teal-600 font-bold">✓</span>
+                    : <span className="text-gray-200">—</span>}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {s.had_click
+                    ? <span className="text-orange-500 font-bold">✓</span>
                     : <span className="text-gray-200">—</span>}
                 </td>
                 <td className="px-3 py-2">
