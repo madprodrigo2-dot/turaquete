@@ -13,11 +13,10 @@ export default function RacketKeyStats({ racket }: Props) {
   const saidaDeBola = saidaDeBolaRaw === 'rascunho_pendente' ? undefined : saidaDeBolaRaw
   const power = ins.power ?? 0
 
-  const forgiveness = ins.forgiveness ?? null
-  const sweetSpotLabel = forgiveness != null
-    ? forgiveness >= 8 ? 'maior (perdoa mais os erros)'
-    : forgiveness >= 6 ? 'médio (equilibrado)'
-    : 'menor (exige mais precisão)'
+  const sweetSpotRaw = extra.sweet_spot as 'grande' | 'médio' | 'pequeno' | undefined
+  const sweetSpotLabel = sweetSpotRaw === 'grande' ? 'maior (perdoa mais os erros)'
+    : sweetSpotRaw === 'médio' ? 'médio (equilibrado)'
+    : sweetSpotRaw === 'pequeno' ? 'menor (exige mais precisão)'
     : null
 
   if (!saidaDeBola && !sweetSpotLabel) return null
@@ -28,10 +27,11 @@ export default function RacketKeyStats({ racket }: Props) {
     ? 'bg-amber-50 text-amber-700 border-amber-200'
     : 'bg-gray-100 text-gray-600 border-gray-200'
 
-  const sweetSpotChipClass = forgiveness == null ? '' :
-    forgiveness >= 8 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    : forgiveness >= 6 ? 'bg-gray-100 text-gray-600 border-gray-200'
-    : 'bg-amber-50 text-amber-700 border-amber-200'
+  const sweetSpotChipClass = sweetSpotRaw === 'grande'
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    : sweetSpotRaw === 'pequeno'
+    ? 'bg-amber-50 text-amber-700 border-amber-200'
+    : 'bg-gray-100 text-gray-600 border-gray-200'
 
   return (
     <div className="flex flex-col gap-2">

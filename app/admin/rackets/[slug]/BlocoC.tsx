@@ -15,7 +15,7 @@ const NIVEL_OPTIONS = [
 const SAIDA_OPTIONS = [
   { value: '', label: '— (não definido)' },
   { value: 'fácil', label: 'Fácil' },
-  { value: 'médio', label: 'Médio' },
+  { value: 'média', label: 'Média' },
   { value: 'exigente', label: 'Exigente' },
 ]
 
