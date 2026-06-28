@@ -198,39 +198,26 @@ export default async function CliquesAdmin({
       {/* Cliques por dia */}
       <section>
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-          Cliques por dia <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— ultimos 30 dias</span>
+          Cliques por dia <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— últimos 30 dias</span>
         </h2>
         {days.length === 0 ? (
-          <p className="text-gray-400 italic text-xs">Ainda nao ha cliques nos ultimos 30 dias.</p>
+          <p className="text-gray-400 italic text-xs">Sem cliques nos últimos 30 dias.</p>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <table className="w-full border-collapse text-xs">
-              <thead className="bg-gray-50 text-gray-400 uppercase">
-                <tr>
-                  <th className="text-left px-4 py-2">Data</th>
-                  <th className="px-4 py-2 w-1/2"></th>
-                  <th className="text-right px-4 py-2">Cliques</th>
-                </tr>
-              </thead>
-              <tbody>
-                {days.map(d => (
-                  <tr key={d.day} className="border-t border-gray-100">
-                    <td className="px-4 py-2 text-gray-600 font-mono whitespace-nowrap">
-                      {new Date(d.day + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </td>
-                    <td className="px-4 py-2">
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-[#0CC0BE]"
-                          style={{ width: `${maxDayCount > 0 ? Math.round((d.total / maxDayCount) * 100) : 0}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 text-right font-semibold text-gray-800">{d.total}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+            {days.map(d => {
+              const pct = maxDayCount > 0 ? Math.round((d.total / maxDayCount) * 100) : 0
+              return (
+                <div key={d.day} className="flex items-center gap-3 px-4 py-2.5">
+                  <span className="text-xs text-gray-500 w-16 shrink-0">
+                    {new Date(d.day + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                  </span>
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#0CC0BE]" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-xs font-semibold text-gray-800 w-6 text-right shrink-0">{d.total}</span>
+                </div>
+              )
+            })}
           </div>
         )}
       </section>
