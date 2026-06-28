@@ -93,7 +93,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               <AthleteBadge athlete={athlete} />
             </div>
           )}
-          {(calce || custoBeneficio) && (
+          {(calce || custoBeneficio || (racket.weight_g != null && racket.weight_g >= 340)) && (
             <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
               {calce && (
                 <div className={`rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none ${
@@ -107,6 +107,11 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               {custoBeneficio && (
                 <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
                   Melhor custo-benefício
+                </div>
+              )}
+              {racket.weight_g != null && racket.weight_g >= 340 && (
+                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-slate-100 text-slate-600 border border-slate-200 shadow-sm">
+                  Peso alto de fábrica
                 </div>
               )}
             </div>
