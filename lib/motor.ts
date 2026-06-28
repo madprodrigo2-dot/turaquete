@@ -141,7 +141,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   // Control — firme = preciso, suave = disperso (invertido em relação a forgiveness)
   const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
   const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
-    CARBON_18K: +1, CARBON_24K: +1,
+    CARBON_18K: +1, CARBON_24K: +1, CARBON_6K_15K: +1,
     KEVLAR_PURE: -1, KEVLAR_CARBON: -1, HYBRID_VIDRO: -1, VIDRO: -1,
   }
   let control = 5
