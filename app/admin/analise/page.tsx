@@ -20,7 +20,7 @@ interface SessionCostRow {
   first_turn_at: string
 }
 interface ClickRow  { session_id: string; event_type: string }
-interface RacketRow { id: number; name: string }
+interface RacketRow { id: number; name: string; slug: string }
 interface RecEventRow { racket_id: number }
 
 const COMISSAO_ESTIMADA_BRL: number | null = null
@@ -204,10 +204,13 @@ export default async function AnaliseAdmin({
   for (const e of recEventRows) racketCounts[e.racket_id] = (racketCounts[e.racket_id] ?? 0) + 1
   const topRacketIds = Object.entries(racketCounts).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 10).map(([id]) => Number(id))
   const racketNames: RacketRow[] = topRacketIds.length
-    ? await sb.from('rackets').select('id, name').in('id', topRacketIds).then(r => (r.data ?? []) as RacketRow[])
+    ? await sb.from('rackets').select('id, name, slug').in('id', topRacketIds).then(r => (r.data ?? []) as RacketRow[])
     : []
   const topRaquetes = topRacketIds.map(id => ({
-    id, name: racketNames.find(r => r.id === id)?.name ?? `ID ${id}`, count: racketCounts[id] ?? 0,
+    id,
+    name: racketNames.find(r => r.id === id)?.name ?? `ID ${id}`,
+    slug: racketNames.find(r => r.id === id)?.slug ?? null,
+    count: racketCounts[id] ?? 0,
   }))
 
   // ── Insights ──────────────────────────────────────────────────────────────
@@ -410,7 +413,11 @@ export default async function AnaliseAdmin({
                 {topRaquetes.map((r, i) => (
                   <tr key={r.id} className="border-t border-gray-100">
                     <td className="px-4 py-2 text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-2 font-medium text-gray-800">{r.name}</td>
+                    <td className="px-4 py-2 font-medium text-gray-800">
+                      {r.slug
+                        ? <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">{r.name}</a>
+                        : r.name}
+                    </td>
                     <td className="px-4 py-2 text-right font-semibold">{r.count}</td>
                     <td className="px-4 py-2 text-right text-gray-400">{pct(r.count, recEventRows.length)}</td>
                   </tr>
