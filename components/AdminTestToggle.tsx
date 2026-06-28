@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 const COOKIE = 'admin_test_view'
+const TEST_MODE_COOKIE = 'turaquete_test_mode'
 
 export default function AdminTestToggle() {
   const [active, setActive] = useState(false)
@@ -11,6 +12,8 @@ export default function AdminTestToggle() {
 
   useEffect(() => {
     setActive(document.cookie.split(';').some(c => c.trim().startsWith(`${COOKIE}=1`)))
+    // Marca automaticamente sessões de chat como teste enquanto admin estiver logado
+    document.cookie = `${TEST_MODE_COOKIE}=1; path=/; max-age=86400`
   }, [])
 
   const toggle = () => {
