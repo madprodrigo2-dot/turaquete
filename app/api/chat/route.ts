@@ -186,12 +186,15 @@ const STARTER_TO_INTENCAO: Record<string, string> = {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { messages, sessionId, primeiraMensagem, starterUsado, postRecContext } = body as {
+    const { messages, sessionId, primeiraMensagem, starterUsado, postRecContext, origemReferrer, origemUtmSource, origemUtmMedium } = body as {
       messages: ChatMessage[]
       sessionId: string
       primeiraMensagem?: string
       starterUsado?: string | null
       postRecContext?: PostRecContext
+      origemReferrer?: string
+      origemUtmSource?: string
+      origemUtmMedium?: string
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -324,6 +327,9 @@ export async function POST(req: NextRequest) {
               starter_usado: starterUsado ?? null,
               intencao_detectada: intencao ?? (starterUsado ? (STARTER_TO_INTENCAO[starterUsado] ?? null) : null),
               ip_hash: ipHash,
+              referrer:   origemReferrer  ? new URL(origemReferrer).hostname.replace(/^www\./, '') : null,
+              utm_source: origemUtmSource ?? null,
+              utm_medium: origemUtmMedium ?? null,
             })
             .then(({ error }) => {
               if (error) console.error('Conversations insert error:', error.message)

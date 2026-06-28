@@ -86,6 +86,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const starterUsadoRef = useRef<string | null>(null)
   // Counts consecutive timeouts — resets on success; ≥2 breaks the retry chip loop
   const consecutiveTimeoutsRef = useRef(0)
+  const origemRef = useRef<{ referrer?: string; utm_source?: string; utm_medium?: string }>({})
   const [isAdmin, setIsAdmin] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
   const pendingDebugRef = useRef<DebugData | null>(null)
@@ -106,6 +107,19 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const handleAnimationChange = useCallback((v: boolean) => {
     setIsAnimating(v)
     if (!v) setStreamRawText('')
+  }, [])
+
+  // Capture referrer + UTM on mount (only available client-side)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const ref = document.referrer
+    const src = params.get('utm_source')
+    const med = params.get('utm_medium')
+    origemRef.current = {
+      ...(ref ? { referrer: ref } : {}),
+      ...(src ? { utm_source: src } : {}),
+      ...(med ? { utm_medium: med } : {}),
+    }
   }, [])
 
   // Restore conversation from sessionStorage on mount
@@ -271,6 +285,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
       if (isFirstMessage) {
         reqBody.primeiraMensagem = text
         reqBody.starterUsado = starterUsadoRef.current ?? null
+        const o = origemRef.current
+        if (o.referrer)   reqBody.origemReferrer  = o.referrer
+        if (o.utm_source) reqBody.origemUtmSource = o.utm_source
+        if (o.utm_medium) reqBody.origemUtmMedium = o.utm_medium
       }
       starterUsadoRef.current = null
 

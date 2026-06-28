@@ -30,6 +30,9 @@ type SessionRow = {
   had_click: boolean
   ip_hash: string | null
   ip_session_count: number
+  utm_source: string | null
+  utm_medium: string | null
+  referrer: string | null
 }
 
 function fmtBrl(v: number) {
@@ -77,7 +80,7 @@ export default async function ConversasPage({
   // Latest snapshot per session (most messages = last row per session_id)
   let base = sb
     .from('conversations')
-    .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages, recommended_racket_ids, ip_hash')
+    .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages, recommended_racket_ids, ip_hash, utm_source, utm_medium, referrer')
     .gte('created_at', cutoffDate)
     .order('created_at', { ascending: false })
     .limit(500)
@@ -132,6 +135,9 @@ export default async function ConversasPage({
       had_click: false,
       ip_hash: sessionIpMap.get(r.session_id) ?? null,
       ip_session_count: 0,
+      utm_source: r.utm_source ?? null,
+      utm_medium: r.utm_medium ?? null,
+      referrer: r.referrer ?? null,
     })
     if (sessions.length >= 50) break
   }
@@ -223,6 +229,7 @@ export default async function ConversasPage({
               <th className="text-center px-3 py-2">Rec?</th>
               <th className="text-center px-3 py-2">Loja?</th>
               <th className="text-center px-3 py-2">IP</th>
+              <th className="text-left px-3 py-2">Origem</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -272,6 +279,15 @@ export default async function ConversasPage({
                       {s.ip_session_count >= 3 ? `×${s.ip_session_count}` : '·'}
                     </span>
                   ) : <span className="text-gray-200">—</span>}
+                </td>
+                <td className="px-3 py-2 text-xs text-gray-500 max-w-[120px]">
+                  {s.utm_source ? (
+                    <span className="font-medium text-teal-700">{s.utm_source}{s.utm_medium ? `/${s.utm_medium}` : ''}</span>
+                  ) : s.referrer ? (
+                    <span className="text-gray-400 truncate block">{s.referrer}</span>
+                  ) : (
+                    <span className="text-gray-200">—</span>
+                  )}
                 </td>
                 <td className="px-3 py-2">
                   <Link
