@@ -28,6 +28,8 @@ type SessionRow = {
   turn_count: number
   had_rec: boolean
   had_click: boolean
+  ip_hash: string | null
+  ip_session_count: number
 }
 
 function fmtBrl(v: number) {
@@ -75,7 +77,7 @@ export default async function ConversasPage({
   // Latest snapshot per session (most messages = last row per session_id)
   let base = sb
     .from('conversations')
-    .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages, recommended_racket_ids')
+    .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages, recommended_racket_ids, ip_hash')
     .gte('created_at', cutoffDate)
     .order('created_at', { ascending: false })
     .limit(500)
@@ -91,11 +93,20 @@ export default async function ConversasPage({
   // Accumulate total cost per session across all rows in the window
   const sessionCostMap = new Map<string, number>()
   const sessionHadRecMap = new Map<string, boolean>()
+  const sessionIpMap = new Map<string, string | null>()
   for (const r of raw) {
     sessionCostMap.set(r.session_id, (sessionCostMap.get(r.session_id) ?? 0) + (Number(r.custo_brl) || 0))
     if (Array.isArray(r.recommended_racket_ids) && r.recommended_racket_ids.length > 0) {
       sessionHadRecMap.set(r.session_id, true)
     }
+    if (!sessionIpMap.has(r.session_id) && r.ip_hash) {
+      sessionIpMap.set(r.session_id, r.ip_hash)
+    }
+  }
+  // Count sessions per ip_hash to detect heavy users
+  const ipSessionCount = new Map<string, number>()
+  for (const hash of sessionIpMap.values()) {
+    if (hash) ipSessionCount.set(hash, (ipSessionCount.get(hash) ?? 0) + 1)
   }
 
   // Dedupe: keep last (first seen when desc-sorted) per session_id
@@ -119,8 +130,13 @@ export default async function ConversasPage({
       turn_count: userTurns,
       had_rec: hadRec,
       had_click: false,
+      ip_hash: sessionIpMap.get(r.session_id) ?? null,
+      ip_session_count: 0,
     })
     if (sessions.length >= 50) break
+  }
+  for (const s of sessions) {
+    if (s.ip_hash) s.ip_session_count = ipSessionCount.get(s.ip_hash) ?? 1
   }
 
   // Second query: fetch FIRST row per session to get turn-1 metadata
@@ -206,6 +222,7 @@ export default async function ConversasPage({
               <th className="text-right px-3 py-2">Custo</th>
               <th className="text-center px-3 py-2">Rec?</th>
               <th className="text-center px-3 py-2">Loja?</th>
+              <th className="text-center px-3 py-2">IP</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -245,6 +262,16 @@ export default async function ConversasPage({
                   {s.had_click
                     ? <span className="text-orange-500 font-bold">✓</span>
                     : <span className="text-gray-200">—</span>}
+                </td>
+                <td className="px-3 py-2 text-center font-mono">
+                  {s.ip_hash ? (
+                    <span
+                      title={`hash: ${s.ip_hash}`}
+                      className={s.ip_session_count >= 3 ? 'text-red-500 font-bold' : 'text-gray-300'}
+                    >
+                      {s.ip_session_count >= 3 ? `×${s.ip_session_count}` : '·'}
+                    </span>
+                  ) : <span className="text-gray-200">—</span>}
                 </td>
                 <td className="px-3 py-2">
                   <Link

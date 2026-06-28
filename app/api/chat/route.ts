@@ -301,6 +301,10 @@ export async function POST(req: NextRequest) {
           // Strip thinking from text stored in DB so conversation history is clean
           const cleanText = text.replace(/<thinking>[\s\S]*?<\/thinking>\s*/g, '').trim() || text
 
+          // Hash IP for abuse detection (SHA-256, irreversible)
+          const ipHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip))
+            .then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16))
+
           // Fire-and-forget persistence
           getSupabase()
             .from('conversations')
@@ -319,6 +323,7 @@ export async function POST(req: NextRequest) {
               primeira_mensagem: primeiraMensagem ?? (messages.find(m => m.role === 'user')?.content as string | undefined) ?? null,
               starter_usado: starterUsado ?? null,
               intencao_detectada: intencao ?? (starterUsado ? (STARTER_TO_INTENCAO[starterUsado] ?? null) : null),
+              ip_hash: ipHash,
             })
             .then(({ error }) => {
               if (error) console.error('Conversations insert error:', error.message)
