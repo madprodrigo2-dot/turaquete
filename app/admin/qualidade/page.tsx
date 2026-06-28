@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import { cookies } from 'next/headers'
+import Link from 'next/link'
 import type { DecisionTrace } from '@/lib/debug-types'
 
 export const dynamic = 'force-dynamic'
@@ -229,6 +230,47 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
           )}
         </section>
 
+        {/* ── Todos os ratings ── */}
+        {ratings.length > 0 && (
+          <section>
+            <h2 className="text-base font-semibold text-gray-700 mb-3">Todos os ratings</h2>
+            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase tracking-wide text-gray-400">
+                    <th className="text-left px-3 py-2">Data</th>
+                    <th className="text-center px-3 py-2">Rating</th>
+                    <th className="text-left px-3 py-2">Intenção</th>
+                    <th className="text-left px-3 py-2">Motivo</th>
+                    <th className="text-left px-3 py-2">Comentário</th>
+                    <th className="px-3 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {ratings.map(e => (
+                    <tr key={e.id} className="hover:bg-gray-50/60">
+                      <td className="px-3 py-2 whitespace-nowrap text-gray-400 font-mono">
+                        {new Date(e.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
+                      </td>
+                      <td className="px-3 py-2 text-center text-base">
+                        {e.event_type === 'rating_positive' ? '👍' : '👎'}
+                      </td>
+                      <td className="px-3 py-2 text-gray-500 font-mono">{e.intencao ?? <span className="text-gray-300">—</span>}</td>
+                      <td className="px-3 py-2 text-gray-500">{e.motivo ?? <span className="text-gray-300">—</span>}</td>
+                      <td className="px-3 py-2 text-gray-600 max-w-[200px] truncate">{e.comentario ?? <span className="text-gray-300">—</span>}</td>
+                      <td className="px-3 py-2">
+                        <Link href={`/admin/conversas/${e.session_id}`} className="text-teal-600 hover:underline whitespace-nowrap">
+                          Ver conversa →
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
         {/* ── Últimos 👎 ── */}
         <section>
           <h2 className="text-base font-semibold text-gray-700 mb-3">Últimos 👎</h2>
@@ -250,6 +292,9 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                     {e.turnos_ate_recomendacao != null && (
                       <span className="text-gray-300">{e.turnos_ate_recomendacao} turnos</span>
                     )}
+                    <Link href={`/admin/conversas/${e.session_id}`} className="text-teal-600 hover:underline ml-auto">
+                      Ver conversa →
+                    </Link>
                   </div>
                   {/* Comentário livre */}
                   {e.comentario && (
