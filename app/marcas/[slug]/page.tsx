@@ -53,26 +53,43 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
     levelClause = `do nível ${min} ao ${max}`
   }
 
+  // Extract athletes: split "A & B" or "A e B", filter out non-name strings (parentheses, >35 chars)
+  const rawAthletes = rackets.flatMap(r => {
+    const raw = (r.specs_extra as Record<string, unknown> | null)?.atleta
+    const strs: string[] = Array.isArray(raw)
+      ? (raw as string[]).filter(Boolean)
+      : typeof raw === 'string' && raw.trim() ? [raw.trim()] : []
+    return strs.flatMap(s =>
+      s.split(/\s*[&]\s*|\s+e\s+(?=[A-Z])/).map(p => p.trim()).filter(Boolean)
+    )
+  })
   const athletes = [...new Set(
-    rackets
-      .flatMap(r => {
-        const raw = (r.specs_extra as Record<string, unknown> | null)?.atleta
-        if (Array.isArray(raw)) return (raw as string[]).filter(Boolean)
-        if (typeof raw === 'string' && raw.trim()) return [raw.trim()]
-        return []
-      })
+    rawAthletes.filter(a => a.length <= 35 && !a.includes('(') && !a.includes('Edição'))
   )]
+
+  // Price range
+  const prices = rackets.map(r => r.price).filter((p): p is number => p != null && p > 0)
+  const minPrice = prices.length ? Math.min(...prices) : null
+  const maxPrice = prices.length ? Math.max(...prices) : null
+  const fmtPrice = (v: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
+
   let intro = `A ${brandName} tem ${n} ${n === 1 ? 'raquete' : 'raquetes'} no Turaquete`
   const clauses: string[] = []
   if (domMaterial) clauses.push(`a maioria em ${domMaterial}`)
   if (levelClause) clauses.push(levelClause)
+  if (minPrice != null && maxPrice != null) {
+    clauses.push(minPrice === maxPrice ? `a partir de ${fmtPrice(minPrice)}` : `de ${fmtPrice(minPrice)} a ${fmtPrice(maxPrice)}`)
+  }
   if (clauses.length > 0) intro += `, ${clauses.join(', ')}`
   if (athletes.length > 0) {
-    const names = athletes.slice(0, 3)
-    const listed = names.length === 1
-      ? names[0]
-      : names.slice(0, -1).join(', ') + ' e ' + names[names.length - 1]
-    intro += `, com modelos assinados por ${listed}`
+    const MAX = 5
+    const shown = athletes.slice(0, MAX)
+    const rest  = athletes.length - shown.length
+    const listed = shown.length === 1
+      ? shown[0]
+      : shown.slice(0, -1).join(', ') + ' e ' + shown[shown.length - 1]
+    intro += `, com modelos assinados por ${listed}${rest > 0 ? ` e mais ${rest}` : ''}`
   }
   return intro + '.'
 }
