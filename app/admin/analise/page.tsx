@@ -342,7 +342,7 @@ export default async function AnaliseAdmin({
         </div>
       </section>
 
-      {/* ── Custos desglosados ── */}
+      {/* ── Custos ── */}
       <section>
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
           Custos (API Anthropic) <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
@@ -350,67 +350,42 @@ export default async function AnaliseAdmin({
         {sessions.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Sem dados de custo para o período.</p>
         ) : (
-          <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-3 gap-3">
-              {([
-                { label: 'Custo médio — hoje',          brl: avg1Brl, usd: avg1Usd, n: sessions1.length },
-                { label: 'Custo médio — 7 dias',        brl: avg7Brl, usd: avg7Usd, n: sessions7.length },
-                { label: `Custo médio — ${daysLabel}`,  brl: avgBrl,  usd: avgUsd,  n: sessions.length, star: true },
-              ] as { label: string; brl: number | null; usd: number | null; n: number; star?: boolean }[]).map(({ label, brl, usd, n, star }) => (
-                <div key={label} className={`bg-white rounded-xl border shadow-sm p-4 flex flex-col gap-1 ${star ? 'border-teal-300' : 'border-gray-100'}`}>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
-                  <p className={`font-bold text-gray-900 ${star ? 'text-2xl' : 'text-lg'}`}>{brl != null ? fmtBrl(brl) : '—'}</p>
-                  {usd != null && <p className="text-[11px] text-gray-400">{fmtUsd(usd)}</p>}
-                  <p className="text-[10px] text-gray-300">{n} conv.</p>
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { label: 'Total — 7 dias',         value: fmtBrl(total7Brl, 2), sub: fmtUsd(total7Usd) },
-                { label: `Total — ${daysLabel}`,    value: fmtBrl(totalBrl, 2),  sub: fmtUsd(totalUsd) },
-                { label: 'Conversa mais cara',      value: maxCost != null ? fmtBrl(maxCost) : '—', sub: 'detectar anomalias' },
-                { label: 'Custo médio / turno',     value: avgCostTurn != null ? fmtBrl(avgCostTurn) : '—', sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/conv` : '' },
-              ].map(({ label, value, sub }) => (
-                <div key={label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
-                  <p className="text-base font-bold text-gray-800">{value}</p>
-                  <p className="text-[10px] text-gray-300">{sub}</p>
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Custo médio/conversa', value: avgBrl != null ? fmtBrl(avgBrl) : '—', sub: avgUsd != null ? fmtUsd(avgUsd) : '', highlight: true },
+              { label: 'Total no período',      value: fmtBrl(totalBrl, 2), sub: fmtUsd(totalUsd) },
+              { label: 'Conversa mais cara',    value: maxCost != null ? fmtBrl(maxCost) : '—', sub: 'anomalia' },
+              { label: 'Custo médio / turno',   value: avgCostTurn != null ? fmtBrl(avgCostTurn) : '—', sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/conv` : '' },
+            ].map(({ label, value, sub, highlight }) => (
+              <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${highlight ? 'border-teal-200' : 'border-gray-100'}`}>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
+                <p className={`font-bold ${highlight ? 'text-xl text-gray-900' : 'text-base text-gray-800'}`}>{value}</p>
+                {sub && <p className="text-[10px] text-gray-300">{sub}</p>}
+              </div>
+            ))}
           </div>
         )}
       </section>
 
       {/* ── Rentabilidade ── */}
-      {sessions.length > 0 && (
+      {sessions.length > 0 && (custoPorClique != null || taxaConversao > 0) && (
         <section>
           <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">Rentabilidade</h2>
-          <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            {custoPorClique != null && (
               <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Custo / clique afiliado</p>
-                <p className="text-base font-bold text-gray-800">{custoPorClique != null ? fmtBrl(custoPorClique) : '—'}</p>
+                <p className="text-base font-bold text-gray-800">{fmtBrl(custoPorClique)}</p>
                 <p className="text-[10px] text-gray-300">{affiliateClicks.length} cliques &ldquo;Ver na loja&rdquo;</p>
               </div>
+            )}
+            {taxaConversao > 0 && (
               <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Taxa rec. → clique</p>
-                <p className="text-base font-bold text-gray-800">{taxaConversao > 0 ? pct(sessionsWithClick.length, sessionsWithRec.length) : '—'}</p>
+                <p className="text-base font-bold text-gray-800">{pct(sessionsWithClick.length, sessionsWithRec.length)}</p>
                 <p className="text-[10px] text-gray-300">entre conversas c/ recomendação</p>
               </div>
-              <div className={`rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${isAboveEquilibrio === true ? 'bg-emerald-50 border-emerald-200' : isAboveEquilibrio === false ? 'bg-amber-50 border-amber-200' : 'bg-white border-gray-100'}`}>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Ponto de equilíbrio</p>
-                {COMISSAO_ESTIMADA_BRL == null ? (
-                  <p className="text-[11px] text-gray-400 italic">Defina COMISSAO_ESTIMADA_BRL</p>
-                ) : (
-                  <>
-                    <p className="text-base font-bold text-gray-800">{pontoEquilibrio != null ? `${pontoEquilibrio} conv./venda` : '—'}</p>
-                    <p className="text-[10px] text-gray-300">comissão est. {fmtBrl(COMISSAO_ESTIMADA_BRL, 2)}</p>
-                  </>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </section>
       )}
@@ -563,39 +538,6 @@ export default async function AnaliseAdmin({
           </div>
         </section>
       )}
-
-      {/* ── Últimas 50 primeiras mensagens ── */}
-      <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">Últimas 50 primeiras mensagens</h2>
-        {primeiraMsgColumnMissing ? (
-          <p className="text-amber-600 italic text-xs bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-            Execute a migration SQL acima para habilitar esta seção.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {msgRows.map((r, i) => (
-              <div key={i} className="bg-white rounded-lg px-4 py-3 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
-                  <span>{new Date(r.created_at).toLocaleString('pt-BR')}</span>
-                  {r.starter_usado && (
-                    <Link href={starterDetailHref(r.starter_usado)} className="bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5 font-medium hover:bg-emerald-200 transition-colors">
-                      {r.starter_usado}
-                    </Link>
-                  )}
-                  {!r.starter_usado && (
-                    <Link href={starterDetailHref(null)} className="bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 font-medium italic hover:bg-gray-200 transition-colors">
-                      livre
-                    </Link>
-                  )}
-                  {r.intencao_detectada && <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>}
-                </div>
-                <p className="text-gray-800 leading-snug text-sm">{r.primeira_mensagem}</p>
-              </div>
-            ))}
-            {msgRows.length === 0 && <p className="text-gray-400 italic text-xs">Sem primeiras mensagens registradas ainda.</p>}
-          </div>
-        )}
-      </section>
 
       <div className="flex gap-4 pt-2 border-t border-gray-100">
         <a href="/admin/intencoes" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver intenções detalhadas →</a>
