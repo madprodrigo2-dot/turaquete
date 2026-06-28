@@ -200,6 +200,11 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                     Leve nas articulações
                   </span>
                 )}
+                {racket.weight_g != null && racket.weight_g >= 340 && (
+                  <span className="bg-slate-100 text-slate-600 text-xs font-semibold px-3 py-1 rounded-full border border-slate-200">
+                    Peso alto de fábrica
+                  </span>
+                )}
               </div>
 
               {irUrl && (
