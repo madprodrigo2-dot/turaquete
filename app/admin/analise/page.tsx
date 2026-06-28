@@ -85,28 +85,13 @@ export default async function AnaliseAdmin({
   const primeiraMsgColumnMissing = !columnCheck.ok
 
   const [
-    intentRows,
-    starterRows,
-    msgRows,
     sessionCostRows,
     clickRows,
     recEventRows,
+    intentRaw,
+    starterRaw,
     starterDetailRows,
   ] = await Promise.all([
-    sb.rpc('admin_intencao_counts', { p_include_test: includeTest }).then(r => (r.data ?? []) as IntencaoRow[]),
-    sb.rpc('admin_starter_counts', { p_include_test: includeTest }).then(r => (r.data ?? []) as StarterRow[]),
-
-    primeiraMsgColumnMissing
-      ? Promise.resolve([] as MensagemRow[])
-      : (() => {
-          const q = sb.from('conversations')
-            .select('created_at, starter_usado, intencao_detectada, primeira_mensagem')
-            .not('primeira_mensagem', 'is', null)
-            .order('created_at', { ascending: false })
-            .limit(50)
-          return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as MensagemRow[])
-        })(),
-
     sb.rpc('admin_cost_by_session', { days_back: daysBack, p_include_test: includeTest }).then(r => (r.data ?? []) as SessionCostRow[]),
 
     (() => {
@@ -124,12 +109,43 @@ export default async function AnaliseAdmin({
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as RecEventRow[])
     })(),
 
+    // Intenções filtradas pelo período
+    (() => {
+      const q = sb.from('conversations')
+        .select('intencao_detectada')
+        .not('intencao_detectada', 'is', null)
+        .gte('created_at', cutoffDate)
+      return (includeTest ? q : q.eq('is_test', false)).then(r => {
+        const c: Record<string, number> = {}
+        for (const row of (r.data ?? []) as { intencao_detectada: string }[])
+          c[row.intencao_detectada] = (c[row.intencao_detectada] ?? 0) + 1
+        return Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total)
+      })
+    })(),
+
+    // Starters filtrados pelo período
+    (() => {
+      const q = sb.from('conversations')
+        .select('starter_usado')
+        .not('primeira_mensagem', 'is', null)
+        .gte('created_at', cutoffDate)
+      return (includeTest ? q : q.eq('is_test', false)).then(r => {
+        const c: Record<string, number> = {}
+        for (const row of (r.data ?? []) as { starter_usado: string | null }[]) {
+          const k = row.starter_usado ?? 'livre'
+          c[k] = (c[k] ?? 0) + 1
+        }
+        return Object.entries(c).map(([k, v]) => ({ starter: k === 'livre' ? null : k, total: v })).sort((a, b) => b.total - a.total)
+      })
+    })(),
+
     filterStarter === null || primeiraMsgColumnMissing
       ? Promise.resolve([] as MensagemRow[])
       : (() => {
           const base = sb.from('conversations')
             .select('created_at, primeira_mensagem, intencao_detectada, starter_usado')
             .not('primeira_mensagem', 'is', null)
+            .gte('created_at', cutoffDate)
             .order('created_at', { ascending: false })
             .limit(100)
           const withIsTest = includeTest ? base : base.eq('is_test', false)
@@ -140,32 +156,8 @@ export default async function AnaliseAdmin({
         })(),
   ])
 
-  // ── Fallback RPCs ─────────────────────────────────────────────────────────
-  const intencoes: IntencaoRow[] = intentRows.length
-    ? intentRows
-    : await (() => {
-        const q = sb.from('conversations').select('intencao_detectada').not('intencao_detectada', 'is', null)
-        return (includeTest ? q : q.eq('is_test', false)).then(r => {
-          const c: Record<string, number> = {}
-          for (const row of (r.data ?? []) as { intencao_detectada: string }[])
-            c[row.intencao_detectada] = (c[row.intencao_detectada] ?? 0) + 1
-          return Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total)
-        })
-      })()
-
-  const starters: StarterRow[] = starterRows.length
-    ? starterRows
-    : await (() => {
-        const q = sb.from('conversations').select('starter_usado').not('primeira_mensagem', 'is', null)
-        return (includeTest ? q : q.eq('is_test', false)).then(r => {
-          const c: Record<string, number> = {}
-          for (const row of (r.data ?? []) as { starter_usado: string | null }[]) {
-            const k = row.starter_usado ?? 'livre'
-            c[k] = (c[k] ?? 0) + 1
-          }
-          return Object.entries(c).map(([k, v]) => ({ starter: k === 'livre' ? null : k, total: v })).sort((a, b) => b.total - a.total)
-        })
-      })()
+  const intencoes: IntencaoRow[] = intentRaw
+  const starters: StarterRow[]   = starterRaw
 
   // ── Cost stats ────────────────────────────────────────────────────────────
   const sessions          = sessionCostRows.filter(r => r.total_brl > 0)
@@ -432,7 +424,7 @@ export default async function AnaliseAdmin({
       {/* ── Intenções ── */}
       <section>
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">Por intenção</h2>
-        <p className="text-[11px] text-gray-400 mb-3">Todos os tempos</p>
+        <p className="text-[11px] text-gray-400 mb-3">{daysLabel}</p>
         {intencoes.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
         ) : (
@@ -469,7 +461,7 @@ export default async function AnaliseAdmin({
       {/* ── Starters ── */}
       <section>
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">Starters usados</h2>
-        <p className="text-[11px] text-gray-400 mb-3">Todos os tempos · clique para ver as primeiras mensagens</p>
+        <p className="text-[11px] text-gray-400 mb-3">{daysLabel} · clique para ver as primeiras mensagens</p>
         {starters.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
         ) : (
@@ -546,10 +538,6 @@ export default async function AnaliseAdmin({
         </section>
       )}
 
-      <div className="flex gap-4 pt-2 border-t border-gray-100">
-        <a href="/admin/intencoes" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver intenções detalhadas →</a>
-        <a href="/admin/revisao" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver revisao de conversas →</a>
-      </div>
 
     </div>
   )
