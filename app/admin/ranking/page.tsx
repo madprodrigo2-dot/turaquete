@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
 import { Suspense } from 'react'
+import { InfoTooltip } from '../InfoTooltip'
 
 export const dynamic = 'force-dynamic'
 
@@ -162,12 +163,30 @@ export default async function RankingPage({
                 <tr>
                   <th className="text-left px-4 py-2">#</th>
                   <th className="text-left px-4 py-2">Raquete</th>
-                  <th className="text-right px-4 py-2">Recs</th>
-                  <th className="text-right px-4 py-2">Cliques</th>
-                  <th className="text-right px-4 py-2">Taxa</th>
-                  <th className="text-right px-4 py-2">Score med.</th>
-                  <th className="text-right px-4 py-2">Rank med.</th>
-                  <th className="text-center px-4 py-2">ML</th>
+                  <th className="text-right px-4 py-2">
+                    Recs
+                    <InfoTooltip text="Vezes que esta raquete foi incluída numa recomendação do assistente no período." />
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    Cliques
+                    <InfoTooltip text='Cliques em "Ver na loja" (rota /ir/) para esta raquete no período.' />
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    Taxa
+                    <InfoTooltip text="Conversão: % de recomendações que geraram pelo menos um clique (Cliques ÷ Recs)." />
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    Score med.
+                    <InfoTooltip text="Média do score de confiança calculado pelo scorer no momento da recomendação (escala 0–10). Quanto maior, mais alinhada estava a raquete com o perfil do usuário." />
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    Rank med.
+                    <InfoTooltip text="Posição média desta raquete nas recomendações (1 = sempre sugerida primeiro). Quanto menor, mais frequentemente aparece no topo." />
+                  </th>
+                  <th className="text-center px-4 py-2">
+                    ML
+                    <InfoTooltip text="Indica se a raquete tem URL de afiliado do Mercado Livre cadastrada (rastreável)." side="bottom" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -215,9 +234,18 @@ export default async function RankingPage({
                 <tr>
                   <th className="text-left px-4 py-2">Raquete</th>
                   <th className="text-right px-4 py-2">Recs</th>
-                  <th className="text-right px-4 py-2">Cliques /ir/</th>
-                  <th className="text-right px-4 py-2">Cliques ML</th>
-                  <th className="text-right px-4 py-2">Taxa rec→clique</th>
+                  <th className="text-right px-4 py-2">
+                    Cliques /ir/
+                    <InfoTooltip text="Total de cliques rastreados pela rota interna /ir/ (inclui ML e outros destinos)." side="bottom" />
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    Cliques ML
+                    <InfoTooltip text="Cliques cujo destination_type=ml. Comparar com o painel do Mercado Livre para validar rastreamento." side="bottom" />
+                  </th>
+                  <th className="text-right px-4 py-2">
+                    Taxa rec→clique
+                    <InfoTooltip text="% de recomendações que geraram um clique /ir/ (Cliques ÷ Recs)." side="bottom" />
+                  </th>
                 </tr>
               </thead>
               <tbody>

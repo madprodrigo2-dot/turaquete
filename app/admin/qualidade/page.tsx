@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import type { DecisionTrace } from '@/lib/debug-types'
+import { InfoTooltip } from '../InfoTooltip'
 
 export const dynamic = 'force-dynamic'
 
@@ -144,14 +145,16 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
         <section>
           <h2 className="text-base font-semibold text-gray-700 mb-3">Resumo</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: 'Ratings recebidos', value: String(ratings.length), sub: `${positives.length} 👍 · ${negatives.length} 👎` },
-              { label: '% positivos', value: pct(positives.length, ratings.length), sub: 'de quem avaliou' },
-              { label: 'Cliques "Ver na loja"', value: String(verLoja.length), sub: 'sinais implícitos' },
-              { label: 'Média de turnos até rec.', value: avgTurnos ?? '—', sub: `${turnosValues.length} amostras` },
-            ].map(({ label, value, sub }) => (
+            {([
+              { label: 'Ratings recebidos', value: String(ratings.length), sub: `${positives.length} 👍 · ${negatives.length} 👎`, tip: 'Total de avaliações 👍/👎 recebidas pelos usuários após uma recomendação.' },
+              { label: '% positivos', value: pct(positives.length, ratings.length), sub: 'de quem avaliou', tip: 'Satisfação: proporção de 👍 sobre o total de ratings recebidos.' },
+              { label: 'Cliques "Ver na loja"', value: String(verLoja.length), sub: 'sinais implícitos', tip: 'Cliques em "Ver na loja" registrados como feedback implícito de interesse — mesmo sem rating explícito.' },
+              { label: 'Média de turnos até rec.', value: avgTurnos ?? '—', sub: `${turnosValues.length} amostras`, tip: 'Quantas mensagens do usuário foram necessárias em média até o assistente fazer uma recomendação. Menos é mais eficiente.' },
+            ] as { label: string; value: string; sub: string; tip: string }[]).map(({ label, value, sub, tip }) => (
               <div key={label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">{label}</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
+                  {label}<InfoTooltip text={tip} side="bottom" />
+                </p>
                 <p className="text-base font-bold text-gray-800">{value}</p>
                 <p className="text-[10px] text-gray-300">{sub}</p>
               </div>
@@ -160,11 +163,17 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
 
           <div className="grid grid-cols-2 gap-3 mt-3">
             <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Ver análise completa</p>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
+                Ver análise completa
+                <InfoTooltip text='Usuários que clicaram em "Ver análise completa" na recomendação — sinal de engajamento aprofundado.' side="bottom" />
+              </p>
               <p className="text-base font-bold text-gray-800">{verAnalise.length}</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight">Nova conversa pós-rec</p>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
+                Nova conversa pós-rec
+                <InfoTooltip text="Usuários que iniciaram uma nova conversa logo após receber uma recomendação — indica que não ficaram satisfeitos ou querem explorar mais." side="bottom" />
+              </p>
               <p className="text-base font-bold text-gray-800">{novaConv.length}</p>
               <p className="text-[10px] text-gray-300">usuário reiniciou após ver rec</p>
             </div>
