@@ -95,6 +95,20 @@ export default async function QualidadeAdmin() {
   // Recent negatives with trace
   const recentNegatives = negatives.slice(0, 20)
 
+  // Enrich ratings with conversation context (starter_usado + primeira_mensagem)
+  const ratingSessionIds = [...new Set(ratings.map(e => e.session_id))]
+  const convMap = new Map<string, { starter_usado: string | null; primeira_mensagem: string | null }>()
+  if (ratingSessionIds.length > 0) {
+    const { data: convRows } = await sb
+      .from('conversations')
+      .select('session_id, starter_usado, primeira_mensagem')
+      .in('session_id', ratingSessionIds)
+      .order('created_at', { ascending: true })
+    for (const r of convRows ?? []) {
+      if (!convMap.has(r.session_id)) convMap.set(r.session_id, r)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-8">
 
@@ -240,14 +254,16 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                   <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase tracking-wide text-gray-400">
                     <th className="text-left px-3 py-2">Data</th>
                     <th className="text-center px-3 py-2">Rating</th>
-                    <th className="text-left px-3 py-2">Intenção</th>
-                    <th className="text-left px-3 py-2">Motivo</th>
-                    <th className="text-left px-3 py-2">Comentário</th>
+                    <th className="text-left px-3 py-2">Conversa</th>
+                    <th className="text-left px-3 py-2">Motivo / Comentário</th>
                     <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {ratings.map(e => (
+                  {ratings.map(e => {
+                    const conv = convMap.get(e.session_id)
+                    const label = conv?.starter_usado ?? conv?.primeira_mensagem?.slice(0, 60) ?? null
+                    return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
                       <td className="px-3 py-2 whitespace-nowrap text-gray-400 font-mono">
                         {new Date(e.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
@@ -255,16 +271,26 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                       <td className="px-3 py-2 text-center text-base">
                         {e.event_type === 'rating_positive' ? '👍' : '👎'}
                       </td>
-                      <td className="px-3 py-2 text-gray-500 font-mono">{e.intencao ?? <span className="text-gray-300">—</span>}</td>
-                      <td className="px-3 py-2 text-gray-500">{e.motivo ?? <span className="text-gray-300">—</span>}</td>
-                      <td className="px-3 py-2 text-gray-600 max-w-[200px] truncate">{e.comentario ?? <span className="text-gray-300">—</span>}</td>
+                      <td className="px-3 py-2 max-w-[220px]">
+                        {label ? (
+                          <span className={conv?.starter_usado ? 'bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-medium' : 'text-gray-600 text-xs truncate block'}>
+                            {label}
+                          </span>
+                        ) : <span className="text-gray-300 text-xs">—</span>}
+                      </td>
+                      <td className="px-3 py-2 text-gray-500 text-xs max-w-[200px]">
+                        {e.motivo && <span className="font-medium">{e.motivo}</span>}
+                        {e.comentario && <span className="text-gray-400"> · {e.comentario}</span>}
+                        {!e.motivo && !e.comentario && <span className="text-gray-300">—</span>}
+                      </td>
                       <td className="px-3 py-2">
-                        <Link href={`/admin/conversas/${e.session_id}`} className="text-teal-600 hover:underline whitespace-nowrap">
-                          Ver conversa →
+                        <Link href={`/admin/conversas/${e.session_id}`} className="text-teal-600 hover:underline whitespace-nowrap text-xs">
+                          Ver →
                         </Link>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
