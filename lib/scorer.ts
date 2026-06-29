@@ -406,7 +406,7 @@ export function scoreForNivel(
   const w = baseWeights({ nivel })
   const total = w.power + w.control + w.comfort + w.maneuverability + w.spin + w.stability + w.forgiveness
   const sum = pw*w.power + ct*w.control + cf*w.comfort + mn*w.maneuverability + (spin ?? 0)*w.spin + st*w.stability + fg*w.forgiveness
-  return Math.round(sum / total * 10 * 10) / 10
+  return Math.round(sum / total * 10) / 10
 }
 
 export function computeScorerWeights(profile: ScorerProfile): Record<string, number> {
