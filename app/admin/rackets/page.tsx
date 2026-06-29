@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
-import { scoreForNivel, clasificarNivel } from '@/lib/scorer'
+import { scoreForNivel } from '@/lib/scorer'
 import RaquetasTable from './RaquetasTable'
 
 const SCORE_FIELDS = ['power', 'control', 'maneuverability', 'stability'] as const
@@ -48,7 +48,7 @@ export default async function AdminRaquetasPage() {
     const scoreIni = scoreForNivel(ins, 'iniciante')
     const scoreInt = scoreForNivel(ins, 'intermediario')
     const scoreAva = scoreForNivel(ins, 'avancado')
-    const nivel = scoreAva != null && scoreIni != null ? clasificarNivel(scoreAva, scoreIni) : null
+    const nivel = (ins?.nivel_sugerido as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null
     return {
       id: r.id,
       name: r.name,
