@@ -190,10 +190,10 @@ function baseWeights(profile: ScorerProfile): Weights {
     maneuverability: 18, spin: 0, stability: 17, forgiveness: 14,
   }
 
-  // avançado misto / default — maneuserability sobe (net play) e forgiveness cai (hit limpo)
+  // avançado misto / default — controle domina; stability recua para deixar controle subir
   return {
-    power: 20, control: 25, comfort: 6,
-    maneuverability: 20, spin: 0, stability: 24, forgiveness: 5,
+    power: 20, control: 30, comfort: 6,
+    maneuverability: 20, spin: 0, stability: 19, forgiveness: 5,
   }
 }
 
