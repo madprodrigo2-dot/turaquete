@@ -113,8 +113,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const ref = document.referrer
+    // Explicit UTM params take priority; fall back to auto-detection via click IDs
     const src = params.get('utm_source')
+      ?? (params.get('gclid') ? 'google' : null)
+      ?? (params.get('fbclid') ? 'instagram' : null)
     const med = params.get('utm_medium')
+      ?? (params.get('gclid') ? 'cpc' : null)
+      ?? (params.get('fbclid') ? 'paid' : null)
     origemRef.current = {
       ...(ref ? { referrer: ref } : {}),
       ...(src ? { utm_source: src } : {}),
