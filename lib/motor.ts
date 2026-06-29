@@ -143,7 +143,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   let control = 5
   control += CORE_CTRL[coreClass]
   control += FACE_CTRL[faceGrade] ?? 0
-  if (furos != null && furos >= 40) control -= 1
+  if (furos != null && furos >= 42) control -= 1
   if (furos != null && furos <= 20) control += 1
   if (wg != null && wg > 340) control -= 1
   if (esp != null && esp <= 20) control += 2
@@ -248,7 +248,7 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
     KEVLAR_PURE: -1, KEVLAR_CARBON: -1, HYBRID_VIDRO: -1, VIDRO: -1,
   }
   const ctrlEsp = esp == null ? 0 : esp <= 20 ? 2 : esp === 21 ? 1 : esp >= 23 ? -2 : 0
-  const ctrlFuros = furos != null && furos >= 40 ? -1 : furos != null && furos <= 20 ? 1 : 0
+  const ctrlFuros = furos != null && furos >= 42 ? -1 : furos != null && furos <= 20 ? 1 : 0
   const ctrlPeso = wg != null && wg > 340 ? -1 : 0
   const ctrlRaw = 5 + (CORE_CTRL[coreClass]) + (FACE_CTRL[faceGrade] ?? 0) + ctrlFuros + ctrlPeso + ctrlEsp
   const controlFinal = Math.min(10, Math.max(1, ctrlRaw))
