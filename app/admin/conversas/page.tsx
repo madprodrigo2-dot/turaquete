@@ -153,6 +153,7 @@ export default async function ConversasPage({
       sb.from('conversations')
         .select('session_id, starter_usado, primeira_mensagem')
         .in('session_id', sessionIds)
+        .not('starter_usado', 'is', null)
         .order('created_at', { ascending: true })
         .limit(sessionIds.length),
       sb.from('conversations')
