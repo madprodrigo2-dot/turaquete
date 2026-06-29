@@ -67,17 +67,17 @@ const GRADE_ABBR: Record<string, string> = {
 
 type GradeKey = keyof typeof GRADE_ABBR
 
-const GRADE_INFO: Record<string, { exemplos: string; power: number }> = {
-  CARBON_24K:     { exemplos: '24K, triaxial',                         power: 8 },
-  CARBON_18K:     { exemplos: '18K, 21K, forjado, 18K Aluminizado',   power: 8 },
-  CARBON_6K_15K:  { exemplos: '12K, 15K, 16K, Aluminizado 15K',       power: 7 },
-  CARBON_3K_METAL:{ exemplos: 'titanium, silver, mft, aluminizado',   power: 6 },
-  CARBON_6K:      { exemplos: '6K',                                    power: 6 },
-  KEVLAR_CARBON:  { exemplos: 'kevlar + carbono',                      power: 6 },
-  CARBON_3K:      { exemplos: '3K genérico',                           power: 5 },
-  KEVLAR_PURE:    { exemplos: 'kevlar puro',                           power: 5 },
-  HYBRID_VIDRO:   { exemplos: 'carbono + fibra de vidro',              power: 4 },
-  VIDRO:          { exemplos: 'fibra de vidro',                        power: 4 },
+const GRADE_INFO: Record<string, { exemplos: string; power: number; ctrl: number; forg: number }> = {
+  CARBON_24K:     { exemplos: '24K, triaxial',                         power: 8, ctrl: +1, forg: -1 },
+  CARBON_18K:     { exemplos: '18K, 21K, forjado, 18K Aluminizado',   power: 8, ctrl: +1, forg: -1 },
+  CARBON_6K_15K:  { exemplos: '12K, 15K, 16K, Aluminizado 15K',       power: 7, ctrl: +1, forg:  0 },
+  CARBON_3K_METAL:{ exemplos: 'titanium, silver, mft, aluminizado',   power: 6, ctrl:  0, forg:  0 },
+  CARBON_6K:      { exemplos: '6K',                                    power: 6, ctrl:  0, forg:  0 },
+  KEVLAR_CARBON:  { exemplos: 'kevlar + carbono',                      power: 6, ctrl: -1, forg:  0 },
+  CARBON_3K:      { exemplos: '3K genérico',                           power: 5, ctrl:  0, forg:  0 },
+  KEVLAR_PURE:    { exemplos: 'kevlar puro',                           power: 5, ctrl: -1, forg: +1 },
+  HYBRID_VIDRO:   { exemplos: 'carbono + fibra de vidro',              power: 4, ctrl: -1, forg: +1 },
+  VIDRO:          { exemplos: 'fibra de vidro',                        power: 4, ctrl: -1, forg: +2 },
 }
 
 const CORE_ABBR: Record<string, string> = {
@@ -184,7 +184,7 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
       {activeGrade && (
         <div className="rounded-xl border border-gray-200 bg-white p-3 text-xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-gray-700">Referência — Face Grades (power base)</span>
+            <span className="font-semibold text-gray-700">Referência — Face Grades</span>
             <button onClick={() => setActiveGrade(null)} className="text-gray-400 hover:text-gray-700 text-sm leading-none">✕</button>
           </div>
           <table className="w-full border-collapse">
@@ -192,7 +192,9 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
               <tr className="text-[10px] uppercase tracking-wide text-gray-400 border-b border-gray-100">
                 <th className="text-left py-1 pr-3">Grade</th>
                 <th className="text-left py-1 pr-3">Materiais</th>
-                <th className="text-center py-1">Pwr</th>
+                <th className="text-center py-1 pr-2">Pwr</th>
+                <th className="text-center py-1 pr-2">Ctrl Δ</th>
+                <th className="text-center py-1">Forg Δ</th>
               </tr>
             </thead>
             <tbody>
@@ -208,7 +210,9 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                     </span>
                   </td>
                   <td className="py-1 pr-3 text-gray-500">{info.exemplos}</td>
-                  <td className="py-1 text-center font-mono font-semibold text-gray-700">{info.power}</td>
+                  <td className="py-1 pr-2 text-center font-mono font-semibold text-gray-700">{info.power}</td>
+                  <td className={`py-1 pr-2 text-center font-mono font-semibold ${info.ctrl > 0 ? 'text-green-600' : info.ctrl < 0 ? 'text-red-500' : 'text-gray-400'}`}>{info.ctrl > 0 ? `+${info.ctrl}` : info.ctrl === 0 ? '—' : info.ctrl}</td>
+                  <td className={`py-1 text-center font-mono font-semibold ${info.forg > 0 ? 'text-green-600' : info.forg < 0 ? 'text-red-500' : 'text-gray-400'}`}>{info.forg > 0 ? `+${info.forg}` : info.forg === 0 ? '—' : info.forg}</td>
                 </tr>
               ))}
             </tbody>
