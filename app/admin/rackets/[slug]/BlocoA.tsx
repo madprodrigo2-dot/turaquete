@@ -6,11 +6,11 @@ import { salvarFisicos, type TechEntry } from './actions'
 import type { AdminRacket } from './page'
 
 const TIPO_OPTIONS = [
-  { value: 'antivibração', label: 'antivibração' },
-  { value: 'estrutural', label: 'estrutural' },
-  { value: 'superficie', label: 'superficie' },
-  { value: 'ergonomia', label: 'ergonomia' },
-  { value: 'declarativa', label: 'declarativa' },
+  { value: 'antivibracao', label: 'antivibracao' },
+  { value: 'estrutural',   label: 'estrutural' },
+  { value: 'furação',      label: 'furação' },
+  { value: 'ergonomia',    label: 'ergonomia' },
+  { value: 'declarativa',  label: 'declarativa' },
 ]
 
 const BALANCE_OPTIONS = ['cabo', 'médio/cabo', 'médio', 'médio/cabeça', 'cabeça']
