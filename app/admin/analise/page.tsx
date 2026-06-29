@@ -54,7 +54,7 @@ export default async function AnaliseAdmin({
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30', starter: starterParam, from: fromParam, to: toParam } = await searchParams
+  const { days: daysParam = '1', starter: starterParam, from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 
@@ -110,30 +110,41 @@ export default async function AnaliseAdmin({
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as RecEventRow[])
     })(),
 
-    // Intenções filtradas pelo período
+    // Intenções filtradas pelo período — 1 contagem por session_id
     (() => {
       const q = sb.from('conversations')
-        .select('intencao_detectada')
+        .select('session_id, intencao_detectada')
         .not('intencao_detectada', 'is', null)
         .gte('created_at', cutoffDate)
       return (includeTest ? q : q.eq('is_test', false)).then(r => {
+        const seen = new Set<string>()
         const c: Record<string, number> = {}
-        for (const row of (r.data ?? []) as { intencao_detectada: string }[])
+        for (const row of (r.data ?? []) as { session_id: string; intencao_detectada: string }[]) {
+          if (seen.has(row.session_id)) continue
+          seen.add(row.session_id)
           c[row.intencao_detectada] = (c[row.intencao_detectada] ?? 0) + 1
+        }
         return Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total)
       })
     })(),
 
-    // Starters filtrados pelo período
+    // Starters filtrados pelo período — 1 contagem por session_id
     (() => {
       const q = sb.from('conversations')
-        .select('starter_usado')
+        .select('session_id, starter_usado')
         .not('primeira_mensagem', 'is', null)
         .gte('created_at', cutoffDate)
       return (includeTest ? q : q.eq('is_test', false)).then(r => {
+        // Deduplica: 1 entrada por sessão, priorizando a row com starter_usado preenchido
+        const sessionMap = new Map<string, string | null>()
+        for (const row of (r.data ?? []) as { session_id: string; starter_usado: string | null }[]) {
+          const prev = sessionMap.get(row.session_id)
+          if (prev === undefined || (prev === null && row.starter_usado !== null))
+            sessionMap.set(row.session_id, row.starter_usado)
+        }
         const c: Record<string, number> = {}
-        for (const row of (r.data ?? []) as { starter_usado: string | null }[]) {
-          const k = row.starter_usado ?? 'livre'
+        for (const starter of sessionMap.values()) {
+          const k = starter ?? 'livre'
           c[k] = (c[k] ?? 0) + 1
         }
         return Object.entries(c).map(([k, v]) => ({ starter: k === 'livre' ? null : k, total: v })).sort((a, b) => b.total - a.total)
@@ -477,7 +488,7 @@ export default async function AnaliseAdmin({
               </tr>
             </thead>
             <tbody>
-              {starters.map(r => {
+              {starters.filter(r => r.starter !== null).map(r => {
                 const total    = starters.reduce((a, x) => a + x.total, 0)
                 const isActive = filterStarter !== null && filterStarter === (r.starter ?? 'livre')
                 return (

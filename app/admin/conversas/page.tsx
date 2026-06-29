@@ -59,7 +59,7 @@ export default async function ConversasPage({
     redirect('/admin/login')
   }
 
-  const { days: daysParam = '30', from: fromParam, to: toParam } = await searchParams
+  const { days: daysParam = '1', from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 

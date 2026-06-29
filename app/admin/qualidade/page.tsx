@@ -153,7 +153,7 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
             ] as { label: string; value: string; sub: string; tip: string }[]).map(({ label, value, sub, tip }) => (
               <div key={label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
-                  {label}<InfoTooltip text={tip} side="bottom" />
+                  {label}<InfoTooltip text={tip} />
                 </p>
                 <p className="text-base font-bold text-gray-800">{value}</p>
                 <p className="text-[10px] text-gray-300">{sub}</p>
@@ -165,14 +165,14 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
             <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
               <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
                 Ver análise completa
-                <InfoTooltip text='Usuários que clicaram em "Ver análise completa" na recomendação — sinal de engajamento aprofundado.' side="bottom" />
+                <InfoTooltip text='Usuários que clicaram em "Ver análise completa" na recomendação — sinal de engajamento aprofundado.' />
               </p>
               <p className="text-base font-bold text-gray-800">{verAnalise.length}</p>
             </div>
             <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
               <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
                 Nova conversa pós-rec
-                <InfoTooltip text="Usuários que iniciaram uma nova conversa logo após receber uma recomendação — indica que não ficaram satisfeitos ou querem explorar mais." side="bottom" />
+                <InfoTooltip text="Usuários que iniciaram uma nova conversa logo após receber uma recomendação — indica que não ficaram satisfeitos ou querem explorar mais." />
               </p>
               <p className="text-base font-bold text-gray-800">{novaConv.length}</p>
               <p className="text-[10px] text-gray-300">usuário reiniciou após ver rec</p>

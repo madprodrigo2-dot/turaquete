@@ -391,6 +391,24 @@ export function clasificarNivel(
   return 'intermediario'
 }
 
+type InsightValues = {
+  power: number | null; control: number | null; comfort: number | null
+  maneuverability: number | null; spin: number | null; stability: number | null; forgiveness: number | null
+}
+
+export function scoreForNivel(
+  ins: InsightValues | null,
+  nivel: 'iniciante' | 'intermediario' | 'avancado',
+): number | null {
+  if (!ins) return null
+  const { power: pw, control: ct, comfort: cf, maneuverability: mn, spin, stability: st, forgiveness: fg } = ins
+  if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
+  const w = baseWeights({ nivel })
+  const total = w.power + w.control + w.comfort + w.maneuverability + w.spin + w.stability + w.forgiveness
+  const sum = pw*w.power + ct*w.control + cf*w.comfort + mn*w.maneuverability + (spin ?? 0)*w.spin + st*w.stability + fg*w.forgiveness
+  return Math.round(sum / total * 10 * 10) / 10
+}
+
 export function computeScorerWeights(profile: ScorerProfile): Record<string, number> {
   const w = applyModifiers(baseWeights(profile), profile)
   const all: Record<string, number> = {

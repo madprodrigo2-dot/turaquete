@@ -32,7 +32,7 @@ export default async function RankingPage({
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30', from: fromParam, to: toParam } = await searchParams
+  const { days: daysParam = '1', from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 
@@ -185,7 +185,7 @@ export default async function RankingPage({
                   </th>
                   <th className="text-center px-4 py-2">
                     ML
-                    <InfoTooltip text="Indica se a raquete tem URL de afiliado do Mercado Livre cadastrada (rastreável)." side="bottom" />
+                    <InfoTooltip text="Indica se a raquete tem URL de afiliado do Mercado Livre cadastrada (rastreável)." />
                   </th>
                 </tr>
               </thead>
@@ -236,15 +236,15 @@ export default async function RankingPage({
                   <th className="text-right px-4 py-2">Recs</th>
                   <th className="text-right px-4 py-2">
                     Cliques /ir/
-                    <InfoTooltip text="Total de cliques rastreados pela rota interna /ir/ (inclui ML e outros destinos)." side="bottom" />
+                    <InfoTooltip text="Total de cliques rastreados pela rota interna /ir/ (inclui ML e outros destinos)." />
                   </th>
                   <th className="text-right px-4 py-2">
                     Cliques ML
-                    <InfoTooltip text="Cliques cujo destination_type=ml. Comparar com o painel do Mercado Livre para validar rastreamento." side="bottom" />
+                    <InfoTooltip text="Cliques cujo destination_type=ml. Comparar com o painel do Mercado Livre para validar rastreamento." />
                   </th>
                   <th className="text-right px-4 py-2">
                     Taxa rec→clique
-                    <InfoTooltip text="% de recomendações que geraram um clique /ir/ (Cliques ÷ Recs)." side="bottom" />
+                    <InfoTooltip text="% de recomendações que geraram um clique /ir/ (Cliques ÷ Recs)." />
                   </th>
                 </tr>
               </thead>

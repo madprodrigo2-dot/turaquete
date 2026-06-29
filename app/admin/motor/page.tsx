@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
 import { classifyFace, classifyCore } from '@/lib/motor'
-import { clasificarNivel } from '@/lib/scorer'
+import { clasificarNivel, scoreForNivel } from '@/lib/scorer'
 import MotorTable from './MotorTable'
 
 type RawRacket = {
@@ -129,26 +129,13 @@ export default async function AdminMotorPage() {
         const vals = [ins?.power, ins?.control, ins?.maneuverability, ins?.stability].filter((v): v is number => v != null)
         return vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null
       })(),
-      scoreIni: (() => {
-        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
-        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*8 + ct*13 + cf*18 + mn*15 + st*16 + fg*30) / 10) / 10
-      })(),
-      scoreInt: (() => {
-        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
-        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*12 + ct*18 + cf*12 + mn*17 + st*22 + fg*19) / 10) / 10
-      })(),
-      scoreAva: (() => {
-        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
-        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        return Math.round((pw*20 + ct*25 + cf*6 + mn*20 + st*24 + fg*5) / 10) / 10
-      })(),
+      scoreIni: scoreForNivel(ins ?? null, 'iniciante'),
+      scoreInt: scoreForNivel(ins ?? null, 'intermediario'),
+      scoreAva: scoreForNivel(ins ?? null, 'avancado'),
       nivel: (() => {
-        const pw = ins?.power, ct = ins?.control, cf = ins?.comfort, mn = ins?.maneuverability, st = ins?.stability, fg = ins?.forgiveness
-        if (pw == null || ct == null || cf == null || mn == null || st == null || fg == null) return null
-        const sAva = (pw*20 + ct*25 + cf*6 + mn*20 + st*24 + fg*5) / 10
-        const sIni = (pw*8  + ct*13 + cf*18 + mn*15 + st*16 + fg*30) / 10
+        const sAva = scoreForNivel(ins ?? null, 'avancado')
+        const sIni = scoreForNivel(ins ?? null, 'iniciante')
+        if (sAva == null || sIni == null) return null
         return clasificarNivel(sAva, sIni)
       })(),
       overrides,

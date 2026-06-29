@@ -46,7 +46,7 @@ export default async function GeralAdmin({
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '30' } = await searchParams
+  const { days: daysParam = '1' } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
   const daysBack   = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)

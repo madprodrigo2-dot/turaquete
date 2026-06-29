@@ -72,7 +72,7 @@ export default function AdminPeriodFilter({ current, currentFrom, currentTo }: P
             {currentFrom} → {currentTo ?? 'hoje'}
           </span>
           <button
-            onClick={() => setDays('30')}
+            onClick={() => setDays('1')}
             title="Limpar"
             className="p-1 text-gray-400 hover:text-gray-700 transition-colors"
           >

@@ -25,6 +25,7 @@ export type RacketData = {
     maneuverability: number | null
     stability: number | null
     nivel_sugerido: string | null
+    nivel: 'iniciante' | 'intermediario' | 'avancado' | null
     scoreGeral: number | null
     scoreIni: number | null
     scoreInt: number | null
@@ -157,7 +158,7 @@ export default function RaquetasTable({
     }
     if (filterMarca) result = result.filter(r => r.brandName === filterMarca)
     if (filterAno)   result = result.filter(r => r.model_year === Number(filterAno))
-    if (filterNivel) result = result.filter(r => r.ins?.nivel_sugerido === filterNivel)
+    if (filterNivel) result = result.filter(r => r.ins?.nivel === filterNivel)
     if (filterAfiliado === 'com') result = result.filter(r => r.affiliate_url != null)
     if (filterAfiliado === 'sem') result = result.filter(r => r.affiliate_url == null)
     if (filterPublicada === 'publicada') result = result.filter(r => r.publicadaLocal)
@@ -172,7 +173,7 @@ export default function RaquetasTable({
         case 'name':       av = a.name;                                  bv = b.name; break
         case 'brand':      av = a.brandName;                             bv = b.brandName; break
         case 'year':       av = a.model_year ?? 0;                       bv = b.model_year ?? 0; break
-        case 'nivel':      av = nivOrder(a.ins?.nivel_sugerido ?? null); bv = nivOrder(b.ins?.nivel_sugerido ?? null); break
+        case 'nivel':      av = nivOrder(a.ins?.nivel ?? null); bv = nivOrder(b.ins?.nivel ?? null); break
         case 'scoreGeral': av = a.ins?.scoreGeral ?? -1;                 bv = b.ins?.scoreGeral ?? -1; break
         case 'scoreIni':   av = a.ins?.scoreIni ?? -1;                   bv = b.ins?.scoreIni ?? -1; break
         case 'scoreInt':   av = a.ins?.scoreInt ?? -1;                   bv = b.ins?.scoreInt ?? -1; break
@@ -304,7 +305,7 @@ export default function RaquetasTable({
                   <td className="px-4 py-2 text-gray-800 font-medium">{r.name}</td>
                   <td className="px-3 py-2 text-gray-400">{r.brandName}</td>
                   <td className="px-2 py-2 text-center text-gray-400">{r.model_year ?? '—'}</td>
-                  <td className="px-3 py-2 text-gray-400">{nivLabel(r.ins?.nivel_sugerido ?? null)}</td>
+                  <td className="px-3 py-2 text-gray-400">{nivLabel(r.ins?.nivel ?? null)}</td>
                   <td className="px-2 py-2 text-center">
                     {r.ins?.scoreIni != null
                       ? <span className={`font-mono font-semibold ${r.ins.scoreIni >= 7.5 ? 'text-orange-500' : r.ins.scoreIni >= 6.5 ? 'text-teal-600' : 'text-gray-400'}`}>{r.ins.scoreIni}</span>
