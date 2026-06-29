@@ -202,3 +202,151 @@ export function calcularMotor(input: MotorInput): MotorResult {
 
   return { spin, comfort, stability, power, control, maneuverability, forgiveness, saida_de_bola, sweet_spot }
 }
+
+// ── Trace (admin debug) ───────────────────────────────────────────────────────
+
+export type MotorTraceDim = { label: string; value: number | string; isBase?: boolean; isFinal?: boolean; note?: string }[]
+
+export type MotorTrace = {
+  fg: string
+  cc: string
+  power: MotorTraceDim
+  control: MotorTraceDim
+  stability: MotorTraceDim
+  maneuverability: MotorTraceDim
+  forgiveness: MotorTraceDim
+  comfort: MotorTraceDim
+  spin: MotorTraceDim
+}
+
+export function calcularMotorTrace(input: MotorInput): MotorTrace {
+  const techs = input.tecnologias ?? []
+  const hasSpinTech = techs.some(t => t.tipo === 'superficie' || t.tipo === 'spin')
+  const antivibCount = techs.filter(t => t.tipo === 'antivibração' || t.tipo === 'antivibracao').length
+  const estruturalCount = techs.filter(t => t.tipo === 'estrutural').length
+
+  const faceGrade = classifyFace(input.face_material)
+  const coreClass = classifyCore(input.core)
+  const furos = input.furos ?? null
+  const esp   = input.espessura_mm ?? null
+  const wg    = input.weight_g ?? null
+  const bal   = (input.balance || '').toLowerCase()
+
+  const FACE_POWER: Record<FaceGrade, number> = {
+    VIDRO: 4, HYBRID_VIDRO: 4, KEVLAR_PURE: 5, CARBON_3K: 5,
+    KEVLAR_CARBON: 6, CARBON_3K_METAL: 6, CARBON_6K: 6, CARBON_6K_15K: 7,
+    CARBON_24K: 8, CARBON_18K: 8,
+  }
+  const CORE_POWER: Record<CoreClass, number> = { SUPERSOFT: -1, SOFT: -1, MEDIUM: 0, HARD: +1 }
+  const balBonus = bal.includes('pesada para a cabeça') ? 1 : 0
+  const powerRaw = FACE_POWER[faceGrade] + balBonus + CORE_POWER[coreClass]
+  const powerFinal = Math.min(10, Math.max(1, powerRaw))
+
+  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
+  const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
+    CARBON_18K: +1, CARBON_24K: +1, CARBON_6K_15K: +1,
+    KEVLAR_PURE: -1, KEVLAR_CARBON: -1, HYBRID_VIDRO: -1, VIDRO: -1,
+  }
+  const ctrlEsp = esp == null ? 0 : esp <= 20 ? 2 : esp === 21 ? 1 : esp >= 23 ? -2 : 0
+  const ctrlFuros = furos != null && furos >= 40 ? -1 : furos != null && furos <= 20 ? 1 : 0
+  const ctrlPeso = wg != null && wg > 340 ? -1 : 0
+  const ctrlRaw = 5 + (CORE_CTRL[coreClass]) + (FACE_CTRL[faceGrade] ?? 0) + ctrlFuros + ctrlPeso + ctrlEsp
+  const controlFinal = Math.min(10, Math.max(1, ctrlRaw))
+
+  const structBonus = estruturalCount >= 1 ? 1 : 0
+  const stabPeso = wg != null && wg > 340 ? 1 : 0
+  const stabEsp = esp == null ? 0 : esp <= 20 ? -1 : esp <= 22 ? 0 : 1
+  const stabRaw = 5 + (FACE_STAB[faceGrade] ?? 0) + stabPeso + structBonus + stabEsp
+  const stabilityFinal = Math.min(9, Math.max(5, stabRaw))
+
+  const manEsp = esp != null && esp <= 20 ? 1 : esp != null && esp >= 23 ? -1 : 0
+  const manPeso = wg != null && wg >= 340 ? -1 : 0
+  const manFuros = furos != null && furos >= 40 ? 1 : furos != null && furos <= 20 ? -1 : 0
+  const manRaw = 7 + manEsp + manPeso + manFuros
+  const maneuverabilityFinal = Math.min(10, Math.max(1, manRaw))
+
+  const FACE_FORG: Record<FaceGrade, number> = {
+    VIDRO: +2, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: 0,
+    CARBON_3K: 0, CARBON_3K_METAL: 0, CARBON_6K: 0, CARBON_6K_15K: 0,
+    CARBON_24K: -1, CARBON_18K: -1,
+  }
+  const CORE_FORG: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
+  const forgEsp = esp != null && esp >= 22 ? 1 : esp != null && esp <= 20 ? -1 : 0
+  let forgRaw = 4 + FACE_FORG[faceGrade] + CORE_FORG[coreClass] + 1 + forgEsp
+  const forgCapped = (faceGrade === 'CARBON_18K' || faceGrade === 'CARBON_24K') && forgRaw > 7
+  if (forgCapped) forgRaw = 7
+  const forgivenessFinal = Math.min(10, Math.max(1, forgRaw))
+
+  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -2 }
+  const FACE_COMFORT: Partial<Record<FaceGrade, number>> = {
+    VIDRO: +1, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: +1,
+    CARBON_6K_15K: -1, CARBON_18K: -1, CARBON_24K: -1,
+  }
+  const comfEsp = esp != null && esp <= 20 ? -1 : esp != null && esp >= 23 ? 1 : 0
+  const comfAntivib = Math.min(antivibCount, 2)
+  const comfRaw = 5 + CORE_COMFORT[coreClass] + comfAntivib + (FACE_COMFORT[faceGrade] ?? 0) + comfEsp
+  const comfortFinal = Math.min(10, Math.max(1, comfRaw))
+
+  const textura = texturaScore(input.superficie, hasSpinTech)
+  const spinFurosScore = furos == null ? 5 : furos <= 20 ? 2 : furos <= 28 ? 4 : furos <= 32 ? 5 : furos <= 36 ? 6 : furos <= 40 ? 7 : 8
+  const spinEspScore = esp == null ? 5 : esp <= 20 ? 4 : esp <= 22 ? 5 : 6
+  const spinFinal = Math.round(0.7 * textura + 0.15 * spinFurosScore + 0.15 * spinEspScore)
+
+  const fmt = (n: number) => n > 0 ? `+${n}` : `${n}`
+
+  return {
+    fg: faceGrade, cc: coreClass,
+    power: [
+      { label: `FACE_POWER[${faceGrade}]`, value: FACE_POWER[faceGrade], isBase: true },
+      { label: 'balance cabeça', value: fmt(balBonus), note: balBonus === 0 ? 'não se aplica' : undefined },
+      { label: `CORE_POWER[${coreClass}]`, value: fmt(CORE_POWER[coreClass]) },
+      { label: 'resultado', value: powerFinal, isFinal: true, note: powerRaw !== powerFinal ? `clamp de ${powerRaw}` : undefined },
+    ],
+    control: [
+      { label: 'base', value: 5, isBase: true },
+      { label: `CORE_CTRL[${coreClass}]`, value: fmt(CORE_CTRL[coreClass]) },
+      { label: `FACE_CTRL[${faceGrade}]`, value: fmt(FACE_CTRL[faceGrade] ?? 0), note: (FACE_CTRL[faceGrade] ?? 0) === 0 ? 'neutro' : undefined },
+      { label: `furos (${furos ?? '?'})`, value: fmt(ctrlFuros), note: furos == null ? 'sem dado' : undefined },
+      { label: `peso (${wg ?? '?'}g)`, value: fmt(ctrlPeso), note: ctrlPeso === 0 ? '≤340g, sem penalidade' : undefined },
+      { label: `esp (${esp ?? '?'}mm)`, value: fmt(ctrlEsp) },
+      { label: 'resultado', value: controlFinal, isFinal: true, note: ctrlRaw !== controlFinal ? `clamp de ${ctrlRaw}` : undefined },
+    ],
+    stability: [
+      { label: 'base', value: 5, isBase: true },
+      { label: `FACE_STAB[${faceGrade}]`, value: fmt(FACE_STAB[faceGrade] ?? 0) },
+      { label: `peso (${wg ?? '?'}g)`, value: fmt(stabPeso), note: stabPeso === 0 ? '≤340g, sem bônus' : undefined },
+      { label: `estrutural (${estruturalCount})`, value: fmt(structBonus), note: estruturalCount === 0 ? 'sem techs estruturais' : `${estruturalCount} tech(s) → bônus único` },
+      { label: `esp (${esp ?? '?'}mm)`, value: fmt(stabEsp) },
+      { label: 'resultado', value: stabilityFinal, isFinal: true, note: stabRaw !== stabilityFinal ? `clamp [5,9] de ${stabRaw}` : undefined },
+    ],
+    maneuverability: [
+      { label: 'base', value: 7, isBase: true },
+      { label: `esp (${esp ?? '?'}mm)`, value: fmt(manEsp) },
+      { label: `peso (${wg ?? '?'}g)`, value: fmt(manPeso), note: manPeso === 0 ? '<340g, sem penalidade' : undefined },
+      { label: `furos (${furos ?? '?'})`, value: fmt(manFuros) },
+      { label: 'resultado', value: maneuverabilityFinal, isFinal: true, note: manRaw !== maneuverabilityFinal ? `clamp de ${manRaw}` : undefined },
+    ],
+    forgiveness: [
+      { label: 'base', value: 4, isBase: true },
+      { label: `FACE_FORG[${faceGrade}]`, value: fmt(FACE_FORG[faceGrade]) },
+      { label: `CORE_FORG[${coreClass}]`, value: fmt(CORE_FORG[coreClass]) },
+      { label: 'formato redonda', value: '+1' },
+      { label: `esp (${esp ?? '?'}mm)`, value: fmt(forgEsp) },
+      { label: 'resultado', value: forgivenessFinal, isFinal: true, note: forgCapped ? 'cap 7 para faces 18K/24K' : undefined },
+    ],
+    comfort: [
+      { label: 'base', value: 5, isBase: true },
+      { label: `CORE_COMFORT[${coreClass}]`, value: fmt(CORE_COMFORT[coreClass]) },
+      { label: `antivib (${antivibCount} techs)`, value: fmt(comfAntivib), note: antivibCount > 2 ? 'cap em 2' : undefined },
+      { label: `FACE_COMFORT[${faceGrade}]`, value: fmt(FACE_COMFORT[faceGrade] ?? 0), note: (FACE_COMFORT[faceGrade] ?? 0) === 0 ? 'neutro' : undefined },
+      { label: `esp (${esp ?? '?'}mm)`, value: fmt(comfEsp) },
+      { label: 'resultado', value: comfortFinal, isFinal: true, note: comfRaw !== comfortFinal ? `clamp de ${comfRaw}` : undefined },
+    ],
+    spin: [
+      { label: `textura (${input.superficie ?? '?'})`, value: textura, isBase: true, note: hasSpinTech ? 'com spin tech' : 'sem spin tech' },
+      { label: `furos (${furos ?? '?'}) ×0.15`, value: fmt(Math.round(spinFurosScore * 0.15 * 10) / 10) },
+      { label: `esp (${esp ?? '?'}mm) ×0.15`, value: fmt(Math.round(spinEspScore * 0.15 * 10) / 10) },
+      { label: 'resultado (0.7×textura + 0.15×furos + 0.15×esp)', value: spinFinal, isFinal: true },
+    ],
+  }
+}

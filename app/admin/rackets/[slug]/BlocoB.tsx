@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { salvarOverrides, reverterOverride, type DimKey } from './actions'
 import type { AdminRacket } from './page'
+import type { MotorTrace, MotorTraceDim } from '@/lib/motor'
 
 const DIMS: { key: DimKey; label: string }[] = [
   { key: 'power',          label: 'Potência'     },
@@ -15,7 +16,27 @@ const DIMS: { key: DimKey; label: string }[] = [
   { key: 'forgiveness',    label: 'Forgiveness'  },
 ]
 
-export default function BlocoB({ slug, racket }: { slug: string; racket: AdminRacket }) {
+function TracePanel({ steps, onClose }: { steps: MotorTraceDim; onClose: () => void }) {
+  return (
+    <div className="col-span-4 bg-gray-50 border border-gray-100 rounded-lg p-3 text-[11px] font-mono space-y-0.5">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[10px] font-sans font-semibold text-gray-500 uppercase tracking-wider">Cálculo motor</span>
+        <button onClick={onClose} className="text-gray-300 hover:text-gray-500 text-sm leading-none">✕</button>
+      </div>
+      {steps.map((s, i) => (
+        <div key={i} className={`flex gap-3 ${s.isFinal ? 'border-t border-gray-200 pt-1 mt-1 font-semibold text-gray-800' : 'text-gray-500'}`}>
+          <span className="flex-1 truncate">{s.label}</span>
+          <span className={`tabular-nums ${s.isBase ? 'text-gray-700' : typeof s.value === 'string' && s.value.startsWith('+') ? 'text-teal-600' : typeof s.value === 'string' && s.value.startsWith('-') ? 'text-red-500' : 'text-gray-700'}`}>
+            {s.value}
+          </span>
+          {s.note && <span className="text-gray-400 italic text-[10px]">{s.note}</span>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export default function BlocoB({ slug, racket, motorTrace }: { slug: string; racket: AdminRacket; motorTrace?: MotorTrace }) {
   const ins = racket.racket_insights
   const motorCache = ins?.motor_cache ?? {}
   const overrides = ins?.overrides ?? {}
@@ -27,6 +48,7 @@ export default function BlocoB({ slug, racket }: { slug: string; racket: AdminRa
   // Local edits: track which dims changed
   type LocalEdit = { [K in DimKey]?: number | '' }
   const [edits, setEdits] = useState<LocalEdit>({})
+  const [openTrace, setOpenTrace] = useState<DimKey | null>(null)
   const [motivo, setMotivo] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -105,11 +127,19 @@ export default function BlocoB({ slug, racket }: { slug: string; racket: AdminRa
             const motorVal = (motorCache as Record<string, number | null>)[key] ?? null
             const override = (overrides as Record<string, { value: number; motivo: string; por: string; em: string } | null>)[key]
             const activeVal = currentValue(key)
+            const traceSteps = motorTrace?.[key as keyof MotorTrace] as MotorTraceDim | undefined
 
             return (
+              <>
               <div key={key} className="grid grid-cols-[120px_60px_80px_1fr] gap-3 items-start py-1">
-                {/* Label */}
-                <span className="text-xs text-gray-600 pt-1.5">{label}</span>
+                {/* Label — clicável para ver trace */}
+                <button
+                  onClick={() => setOpenTrace(openTrace === key ? null : key)}
+                  className={`text-xs text-left pt-1.5 transition-colors ${traceSteps ? 'text-gray-600 hover:text-teal-600 cursor-pointer underline decoration-dotted underline-offset-2' : 'text-gray-600'}`}
+                  title={traceSteps ? 'Ver cálculo' : undefined}
+                >
+                  {label}
+                </button>
 
                 {/* Motor reference */}
                 <span className="text-xs text-gray-400 pt-1.5 tabular-nums">
@@ -153,6 +183,10 @@ export default function BlocoB({ slug, racket }: { slug: string; racket: AdminRa
                   )}
                 </div>
               </div>
+              {openTrace === key && traceSteps && (
+                <TracePanel steps={traceSteps} onClose={() => setOpenTrace(null)} />
+              )}
+              </>
             )
           })}
         </div>

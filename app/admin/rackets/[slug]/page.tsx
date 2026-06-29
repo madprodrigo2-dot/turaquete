@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import { redirect, notFound } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
 import Link from 'next/link'
+import { calcularMotorTrace } from '@/lib/motor'
 
 import BlocoA from './BlocoA'
 import BlocoB from './BlocoB'
@@ -110,6 +111,18 @@ export default async function EditRaquetaPage({
       : (raw.brand as AdminRacket['brand']),
   }
 
+  const se = (racket.specs_extra ?? {}) as Record<string, unknown>
+  const motorTrace = calcularMotorTrace({
+    face_material: racket.face_material,
+    core: racket.core,
+    weight_g: racket.weight_g,
+    balance: racket.balance,
+    furos: se.furos != null ? Number(se.furos) : null,
+    espessura_mm: se.espessura_mm != null ? Number(se.espessura_mm) : null,
+    superficie: (se.superficie as string | null) ?? null,
+    tecnologias: (se.tecnologias as { nome: string; tipo: string }[] | null) ?? [],
+  })
+
   return (
     <div className="space-y-5">
       {/* Breadcrumb */}
@@ -127,7 +140,7 @@ export default async function EditRaquetaPage({
       </div>
 
       <BlocoA slug={slug} racket={racket} />
-      <BlocoB slug={slug} racket={racket} />
+      <BlocoB slug={slug} racket={racket} motorTrace={motorTrace} />
       <BlocoC slug={slug} racket={racket} />
       <BlocoFoto slug={slug} currentUrl={racket.image_url} />
     </div>
