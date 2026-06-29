@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
 import { classifyFace, classifyCore } from '@/lib/motor'
-import { clasificarNivel, scoreForNivel } from '@/lib/scorer'
+import { scoreForNivel } from '@/lib/scorer'
 import MotorTable from './MotorTable'
 
 type RawRacket = {
@@ -26,6 +26,7 @@ type RawRacket = {
         stability: number | null
         spin: number | null
         forgiveness: number | null
+        nivel_sugerido: string | null
         overrides: Record<string, { valor: number; motivo: string }> | null
       }
     | {
@@ -36,6 +37,7 @@ type RawRacket = {
         stability: number | null
         spin: number | null
         forgiveness: number | null
+        nivel_sugerido: string | null
         overrides: Record<string, { valor: number; motivo: string }> | null
       }[]
     | null
@@ -80,7 +82,7 @@ export default async function AdminMotorPage() {
     .select(`
       id, name, slug, face_material, core, weight_g, balance, thickness_mm, price, specs_extra,
       brands(name),
-      racket_insights(power, control, comfort, maneuverability, stability, spin, forgiveness, overrides)
+      racket_insights(power, control, comfort, maneuverability, stability, spin, forgiveness, nivel_sugerido, overrides)
     `)
     .eq('publicada', true)
     .order('name')
@@ -134,12 +136,7 @@ export default async function AdminMotorPage() {
       scoreIni: scoreForNivel(ins ?? null, 'iniciante'),
       scoreInt: scoreForNivel(ins ?? null, 'intermediario'),
       scoreAva: scoreForNivel(ins ?? null, 'avancado'),
-      nivel: (() => {
-        const sAva = scoreForNivel(ins ?? null, 'avancado')
-        const sIni = scoreForNivel(ins ?? null, 'iniciante')
-        if (sAva == null || sIni == null) return null
-        return clasificarNivel(sAva, sIni)
-      })(),
+      nivel: (ins?.nivel_sugerido as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null,
       price: r.price ?? null,
       overrides,
     }
