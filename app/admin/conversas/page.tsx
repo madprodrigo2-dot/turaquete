@@ -29,6 +29,7 @@ type SessionRow = {
   turn_count: number
   had_rec: boolean
   had_click: boolean
+  had_retry: boolean
   ip_hash: string | null
   ip_session_count: number
   utm_source: string | null
@@ -134,6 +135,7 @@ export default async function ConversasPage({
       turn_count: userTurns,
       had_rec: hadRec,
       had_click: false,
+      had_retry: false,
       ip_hash: sessionIpMap.get(r.session_id) ?? null,
       ip_session_count: 0,
       utm_source: r.utm_source ?? null,
@@ -192,17 +194,22 @@ export default async function ConversasPage({
     }
   }
 
-  // Query: fetch ver_na_loja clicks per session
+  // Query: fetch ver_na_loja clicks and timeout_retry events per session
   if (sessionIds.length > 0) {
-    const { data: clickRows } = await sb
-      .from('feedback_events')
-      .select('session_id')
-      .in('session_id', sessionIds)
-      .eq('event_type', 'ver_na_loja')
+    const [{ data: clickRows }, { data: retryRows }] = await Promise.all([
+      sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'ver_na_loja'),
+      sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'timeout_retry'),
+    ])
     if (clickRows) {
       const clickSet = new Set(clickRows.map(r => r.session_id))
       for (const s of sessions) {
         if (clickSet.has(s.session_id)) s.had_click = true
+      }
+    }
+    if (retryRows) {
+      const retrySet = new Set(retryRows.map(r => r.session_id))
+      for (const s of sessions) {
+        if (retrySet.has(s.session_id)) s.had_retry = true
       }
     }
   }
@@ -230,6 +237,7 @@ export default async function ConversasPage({
               <th className="text-right px-3 py-2">Custo</th>
               <th className="text-center px-3 py-2">Rec?</th>
               <th className="text-center px-3 py-2">Loja?</th>
+              <th className="text-center px-3 py-2" title="Usuário clicou em 'Tentar de novo' após timeout">↻?</th>
               <th className="text-center px-3 py-2">IP</th>
               <th className="text-left px-3 py-2">Origem</th>
               <th className="px-3 py-2"></th>
@@ -270,6 +278,11 @@ export default async function ConversasPage({
                 <td className="px-3 py-2 text-center">
                   {s.had_click
                     ? <span className="text-orange-500 font-bold">✓</span>
+                    : <span className="text-gray-200">—</span>}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {s.had_retry
+                    ? <span className="text-amber-500 font-bold" title="Clicou em Tentar de novo">↻</span>
                     : <span className="text-gray-200">—</span>}
                 </td>
                 <td className="px-3 py-2 text-center font-mono">
