@@ -128,7 +128,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
     CARBON_6K_15K: 7,
     CARBON_24K: 8, CARBON_18K: 8,
   }
-  const CORE_POWER: Record<CoreClass, number> = { SUPERSOFT: -1, SOFT: 0, MEDIUM: 0, HARD: +1 }
+  const CORE_POWER: Record<CoreClass, number> = { SUPERSOFT: -1, SOFT: -1, MEDIUM: 0, HARD: +1 }
   let power = FACE_POWER[faceGrade]
   if (bal.includes('pesada para a cabeça')) power += 1
   power += CORE_POWER[coreClass]
