@@ -297,9 +297,9 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               {irUrl && (
                 <Link
                   href="/?chat=1"
-                  className="w-full border border-aqua/40 text-aqua font-semibold text-sm py-3 rounded-2xl hover:bg-aqua/10 active:scale-[0.98] transition-all text-center block"
+                  className="w-full bg-aqua/10 border border-aqua/50 text-aqua font-semibold text-sm py-3.5 rounded-2xl hover:bg-aqua/20 hover:border-aqua/70 active:scale-[0.98] transition-all text-center block"
                 >
-                  Não tem certeza? Fale com a especialista
+                  Não tem certeza? Fale com a especialista →
                 </Link>
               )}
 
