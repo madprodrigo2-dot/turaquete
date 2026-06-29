@@ -105,7 +105,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
 
   // Stability — face + peso + estrutural + espessura
   const estruturalCount = techs.filter(t => t.tipo === 'estrutural').length
-  const structBonus = estruturalCount === 0 ? 0 : estruturalCount === 1 ? 1 : 2
+  const structBonus = estruturalCount >= 1 ? 1 : 0
   const pesoMod = (wg != null && wg > 340) ? 1 : 0
   const espMod  = esp == null ? 0 : esp <= 20 ? -1 : esp <= 22 ? 0 : 1
   const stability = Math.min(9, Math.max(5,
