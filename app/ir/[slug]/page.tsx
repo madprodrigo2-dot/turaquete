@@ -40,12 +40,14 @@ async function sendTelegramNotification(opts: {
   utmSource: string | null
   utmMedium: string | null
   referrer: string | null
+  hasSession: boolean
 }) {
   const token  = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return
 
-  const emoji  = opts.tipo === 'afiliado' ? '💰' : '🔗'
+  const isBot = !opts.hasSession || (opts.referrer?.includes('/ir/') ?? false)
+  const emoji  = isBot ? '🤖' : (opts.tipo === 'afiliado' ? '💰' : '🔗')
   const preco  = opts.price
     ? `R$${opts.price.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
     : 'sem preço'
@@ -59,7 +61,8 @@ async function sendTelegramNotification(opts: {
     via = opts.referrer
   }
 
-  const text   = `${emoji} Clique em Comprar\n${opts.racketName}\n${opts.tipo} · ${preco} · ${nivel}\nvia ${via}`
+  const label  = isBot ? 'Clique suspeito (bot?)' : 'Clique em Comprar'
+  const text   = `${emoji} ${label}\n${opts.racketName}\n${opts.tipo} · ${preco} · ${nivel}\nvia ${via}`
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method:  'POST',
@@ -183,9 +186,10 @@ export default async function IrPage({
           tipo,
           price,
           nivel: racket.racket_insights?.nivel_sugerido ?? null,
-          utmSource: sessionOrigin?.utm_source ?? null,
-          utmMedium: sessionOrigin?.utm_medium ?? null,
-          referrer:  sessionOrigin?.referrer ?? null,
+          utmSource:  sessionOrigin?.utm_source ?? null,
+          utmMedium:  sessionOrigin?.utm_medium ?? null,
+          referrer:   sessionOrigin?.referrer ?? hdrs.get('referer') ?? null,
+          hasSession: !!sessionId,
         })
       : Promise.resolve(),
   ])
