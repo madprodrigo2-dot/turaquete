@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import AdminPeriodFilter from './AdminPeriodFilter'
 import { Suspense } from 'react'
+import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +51,7 @@ export default async function GeralAdmin({
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
   const daysBack   = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
-  const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+  const cutoffDate = brtCutoff(daysBack)
   const daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
 
   const sb = getAdmin()

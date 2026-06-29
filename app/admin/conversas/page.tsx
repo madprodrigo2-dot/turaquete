@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import { Suspense } from 'react'
 import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
+import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,7 +71,7 @@ export default async function ConversasPage({
     daysLabel  = `${fromParam} → ${toParam ?? 'hoje'}`
   } else {
     const daysBack = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
-    cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+    cutoffDate = brtCutoff(daysBack)
     daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
   }
   const cutoffEnd = toParam ? new Date(toParam + 'T23:59:59').toISOString() : null

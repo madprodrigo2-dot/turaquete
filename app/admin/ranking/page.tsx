@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
 import { Suspense } from 'react'
 import { InfoTooltip } from '../InfoTooltip'
+import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,7 +44,7 @@ export default async function RankingPage({
     daysLabel = `${fromParam} → ${toParam ?? 'hoje'}`
   } else {
     const daysBack = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
-    cutoff    = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+    cutoff    = brtCutoff(daysBack)
     daysLabel = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
   }
 

@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
 import { InfoTooltip } from '../InfoTooltip'
 import { Suspense } from 'react'
+import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,7 +69,7 @@ export default async function AnaliseAdmin({
     cutoffDate = new Date(fromParam + 'T00:00:00').toISOString()
     daysLabel  = `${fromParam} → ${toParam ?? 'hoje'}`
   } else {
-    cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+    cutoffDate = brtCutoff(daysBack)
     daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
   }
   const filterStarter = starterParam !== undefined ? decodeURIComponent(starterParam) : null
