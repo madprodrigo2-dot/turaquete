@@ -545,7 +545,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                           ? (s) => {
                               if (s === 'Ver todas as marcas') { setShowBrandPicker(true); return }
                               if (s === 'Outras marcas') { setShowBrandPicker(true); return }
-                              sendMessage(m._retryText && s === '↻ Tentar de novo' ? m._retryText : s)
+                              if (m._retryText && s === '↻ Tentar de novo') {
+                                const turnos = messages.filter(x => x.role === 'user').length
+                                fireEvent({ session_id: sessionId, event_type: 'timeout_retry', motivo: `turno_${turnos + 1}` })
+                                sendMessage(m._retryText)
+                              } else {
+                                sendMessage(s)
+                              }
                             }
                           : undefined
                       }
