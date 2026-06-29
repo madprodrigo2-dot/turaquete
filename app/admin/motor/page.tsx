@@ -69,6 +69,8 @@ export type MotorRow = {
   nivel: 'iniciante' | 'intermediario' | 'avancado' | null
   price: number | null
   overrides: string[]
+  antivib: number
+  estrutural: number
 }
 
 export default async function AdminMotorPage() {
@@ -110,6 +112,10 @@ export default async function AdminMotorPage() {
       }
     }
 
+    const techs = Array.isArray(extra.tecnologias) ? (extra.tecnologias as { tipo: string }[]) : []
+    const antivib   = techs.filter(t => t.tipo === 'antivibracao' || t.tipo === 'antivibração').length
+    const estrutural = techs.filter(t => t.tipo === 'estrutural').length
+
     return {
       id: r.id,
       name: r.name,
@@ -139,6 +145,8 @@ export default async function AdminMotorPage() {
       nivel: (ins?.nivel_sugerido as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null,
       price: r.price ?? null,
       overrides,
+      antivib,
+      estrutural,
     }
   })
 

@@ -7,7 +7,7 @@ import type { MotorRow } from './page'
 const DIMS = ['spin', 'comfort', 'stability', 'power', 'control', 'maneuverability', 'forgiveness'] as const
 type Dim = (typeof DIMS)[number]
 
-type SortCol = 'name' | 'brand' | 'nivel' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'price' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | Dim
+type SortCol = 'name' | 'brand' | 'nivel' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'price' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | 'antivib' | 'estrutural' | Dim
 type SortDir = 'asc' | 'desc'
 
 function ScoreCell({ value, dim, overrides }: { value: number | null; dim: Dim; overrides: string[] }) {
@@ -120,6 +120,8 @@ function sortVal(row: MotorRow, col: SortCol): string | number {
   if (col === 'furos') return row.furos ?? -1
   if (col === 'espessura_mm') return row.espessura_mm ?? -1
   if (col === 'price') return row.price ?? -1
+  if (col === 'antivib') return row.antivib
+  if (col === 'estrutural') return row.estrutural
   if (col === 'nivel') return row.nivel ?? ''
   if (col === 'scoreGeral') return row.scoreGeral ?? -1
   if (col === 'scoreIni') return row.scoreIni ?? -1
@@ -235,6 +237,8 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
               <Th col="weight_g" active={sortCol} dir={sortDir} onSort={handleSort}>Peso</Th>
               <Th col="furos" active={sortCol} dir={sortDir} onSort={handleSort}>Furos</Th>
               <Th col="espessura_mm" active={sortCol} dir={sortDir} onSort={handleSort}>Esp</Th>
+              <Th col="antivib" active={sortCol} dir={sortDir} onSort={handleSort}><span title="Tecnologias antivibracao">Avib</span></Th>
+              <Th col="estrutural" active={sortCol} dir={sortDir} onSort={handleSort}><span title="Tecnologias estruturais">Estr</span></Th>
               <Th col="price" active={sortCol} dir={sortDir} onSort={handleSort}>Preço</Th>
               <Th col="spin" active={sortCol} dir={sortDir} onSort={handleSort}>Spin</Th>
               <Th col="comfort" active={sortCol} dir={sortDir} onSort={handleSort}>Conf</Th>
@@ -324,6 +328,12 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                 <td className="px-2 py-1 text-center text-gray-500 font-mono">{r.weight_g ?? '—'}</td>
                 <td className="px-2 py-1 text-center text-gray-500 font-mono">{r.furos ?? '—'}</td>
                 <td className="px-2 py-1 text-center text-gray-500 font-mono">{r.espessura_mm ?? '—'}</td>
+                <td className="px-2 py-1 text-center font-mono">
+                  {r.antivib > 0 ? <span className="text-teal-600 font-semibold">{r.antivib}</span> : <span className="text-gray-300">0</span>}
+                </td>
+                <td className="px-2 py-1 text-center font-mono">
+                  {r.estrutural > 0 ? <span className="text-blue-600 font-semibold">{r.estrutural}</span> : <span className="text-gray-300">0</span>}
+                </td>
                 <td className="px-2 py-1 text-center text-gray-500 font-mono whitespace-nowrap">
                   {r.price != null ? `R$${r.price.toLocaleString('pt-BR')}` : '—'}
                 </td>
