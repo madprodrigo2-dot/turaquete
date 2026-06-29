@@ -321,7 +321,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
           <div className="shrink-0">
             {logoSrc ? (
               <>
-                <div className="inline-flex items-center justify-center bg-[#F7F2EB] rounded-xl px-6 py-4">
+                <div className="inline-flex items-center justify-center bg-white border border-gray-100 rounded-xl px-6 py-4">
                   <Image
                     src={logoSrc}
                     alt={brand.name}
