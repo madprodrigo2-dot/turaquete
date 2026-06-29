@@ -1,11 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import type { RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from './RacketImageTile'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
+
+function normalize(s: string) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
 
 // Same canonical buckets as the chat (lib/agent/agent.ts PRECO_BUCKETS)
 const PRECO_BUCKETS = [
@@ -46,12 +50,17 @@ interface Props {
   rackets: RacketWithInsights[]
   defaultSort: SortKey
   showPrecoFilter: boolean
+  showTextSearch?: boolean
+  initialQuery?: string
+  autoFocusSearch?: boolean
 }
 
-export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter }: Props) {
+export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter, showTextSearch, initialQuery, autoFocusSearch }: Props) {
   const [precoKey, setPrecoKey] = useState<string>('todas')
   const [marca, setMarca] = useState<string>('todas')
   const [sort, setSort] = useState<SortKey>(defaultSort)
+  const [query, setQuery] = useState<string>(initialQuery ?? '')
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const brands = useMemo(() => {
     const seen = new Set<string>()
@@ -64,6 +73,14 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
 
   const filtered = useMemo(() => {
     let out = [...rackets]
+
+    if (showTextSearch && query.trim()) {
+      const q = normalize(query.trim())
+      out = out.filter(r =>
+        normalize(r.name).includes(q) ||
+        normalize(r.brands?.name ?? '').includes(q)
+      )
+    }
 
     if (showPrecoFilter && precoKey !== 'todas') {
       const bucket = PRECO_BUCKETS.find(b => b.label === precoKey)
@@ -88,17 +105,50 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
     return out
   }, [rackets, precoKey, marca, sort, showPrecoFilter])
 
-  const hasActiveFilter = (showPrecoFilter && precoKey !== 'todas') || marca !== 'todas'
+  const hasActiveFilter = (showTextSearch && query.trim() !== '') || (showPrecoFilter && precoKey !== 'todas') || marca !== 'todas'
 
   function clearFilters() {
     setPrecoKey('todas')
     setMarca('todas')
+    setQuery('')
   }
 
   return (
     <div className="flex flex-col gap-4">
       {/* Filters */}
       <div className="flex flex-col gap-3">
+        {showTextSearch && (
+          <div className="relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-tinta/30 pointer-events-none"
+              width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+            >
+              <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              ref={searchRef}
+              type="search"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Buscar por nome ou marca..."
+              autoFocus={autoFocusSearch}
+              aria-label="Buscar raquete por nome ou marca"
+              className="w-full pl-9 pr-4 py-2.5 text-sm border border-tinta/15 rounded-xl bg-white text-tinta placeholder:text-tinta/35 focus:outline-none focus:ring-2 focus:ring-aqua/40 focus:border-aqua transition-colors"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                aria-label="Limpar busca"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-tinta/30 hover:text-tinta/60 transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
         {showPrecoFilter && (
           <div className="flex flex-wrap gap-2">
             <button
@@ -174,8 +224,17 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
         </div>
       ) : (
         <div className="py-12 text-center flex flex-col items-center gap-2">
-          <p className="text-tinta/50 text-sm">Nenhuma raquete com esses filtros.</p>
-          <p className="text-tinta/40 text-xs">Tente outra faixa ou marca.</p>
+          {showTextSearch && query.trim() ? (
+            <>
+              <p className="text-tinta/50 text-sm">Nenhuma raquete encontrada para &ldquo;{query.trim()}&rdquo;.</p>
+              <p className="text-tinta/40 text-xs">Tente outro nome ou marca.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-tinta/50 text-sm">Nenhuma raquete com esses filtros.</p>
+              <p className="text-tinta/40 text-xs">Tente outra faixa ou marca.</p>
+            </>
+          )}
           <button
             onClick={clearFilters}
             className="mt-1 text-xs text-aqua hover:underline font-medium"

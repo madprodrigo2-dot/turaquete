@@ -11,6 +11,8 @@ interface Props {
   emptyMessage?: string
   defaultSort?: SortKey
   showPrecoFilter?: boolean
+  showTextSearch?: boolean
+  initialQuery?: string
 }
 
 export default function DiscoveryPageLayout({
@@ -21,6 +23,8 @@ export default function DiscoveryPageLayout({
   emptyMessage,
   defaultSort = 'menor-preco',
   showPrecoFilter = true,
+  showTextSearch,
+  initialQuery,
 }: Props) {
   return (
     <div className="min-h-screen sand-texture">
@@ -58,6 +62,9 @@ export default function DiscoveryPageLayout({
             rackets={rackets}
             defaultSort={defaultSort}
             showPrecoFilter={showPrecoFilter}
+            showTextSearch={showTextSearch}
+            initialQuery={initialQuery}
+            autoFocusSearch={showTextSearch && !initialQuery}
           />
         )}
 

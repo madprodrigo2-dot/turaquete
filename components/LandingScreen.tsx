@@ -1070,6 +1070,19 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               icon={<ShieldCheck weight="duotone" size={24} color="#0E3A40" />}
             />
           </div>
+          <Link
+            href="/busca"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl border border-tinta/10 bg-white/60 hover:border-aqua/40 hover:bg-white transition-all text-tinta/50 hover:text-tinta/70 group"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-tinta/30 group-hover:text-aqua transition-colors">
+              <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span className="text-xs font-medium">Já sei qual modelo quero, buscar por nome</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="ml-auto shrink-0 text-tinta/20 group-hover:translate-x-0.5 transition-transform">
+              <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
         </div>
 
         {/* Compare lado a lado */}
