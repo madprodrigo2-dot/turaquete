@@ -136,10 +136,10 @@ export function calcularMotor(input: MotorInput): MotorResult {
   // Control — firme = preciso, suave = disperso (invertido em relação a forgiveness)
   const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
   const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
-    CARBON_18K: +1, CARBON_24K: +1, CARBON_6K_15K: +1,
+    CARBON_18K: +2, CARBON_24K: +2, CARBON_6K_15K: +1,
     KEVLAR_PURE: -1, KEVLAR_CARBON: -1, HYBRID_VIDRO: -1, VIDRO: -1,
   }
-  let control = 5
+  let control = 4
   control += CORE_CTRL[coreClass]
   control += FACE_CTRL[faceGrade] ?? 0
   if (furos != null && furos >= 42) control -= 1
@@ -244,13 +244,13 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
 
   const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
   const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
-    CARBON_18K: +1, CARBON_24K: +1, CARBON_6K_15K: +1,
+    CARBON_18K: +2, CARBON_24K: +2, CARBON_6K_15K: +1,
     KEVLAR_PURE: -1, KEVLAR_CARBON: -1, HYBRID_VIDRO: -1, VIDRO: -1,
   }
   const ctrlEsp = esp == null ? 0 : esp <= 20 ? 2 : esp === 21 ? 1 : esp >= 23 ? -2 : 0
   const ctrlFuros = furos != null && furos >= 42 ? -1 : furos != null && furos <= 20 ? 1 : 0
   const ctrlPeso = wg != null && wg > 340 ? -1 : 0
-  const ctrlRaw = 5 + (CORE_CTRL[coreClass]) + (FACE_CTRL[faceGrade] ?? 0) + ctrlFuros + ctrlPeso + ctrlEsp
+  const ctrlRaw = 4 + (CORE_CTRL[coreClass]) + (FACE_CTRL[faceGrade] ?? 0) + ctrlFuros + ctrlPeso + ctrlEsp
   const controlFinal = Math.min(10, Math.max(1, ctrlRaw))
 
   const structBonus = estruturalCount >= 1 ? 1 : 0
@@ -304,7 +304,7 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
       { label: 'resultado', value: powerFinal, isFinal: true, note: powerRaw !== powerFinal ? `clamp de ${powerRaw}` : undefined },
     ],
     control: [
-      { label: 'base', value: 5, isBase: true },
+      { label: 'base', value: 4, isBase: true },
       { label: `CORE_CTRL[${coreClass}]`, value: fmt(CORE_CTRL[coreClass]) },
       { label: `FACE_CTRL[${faceGrade}]`, value: fmt(FACE_CTRL[faceGrade] ?? 0), note: (FACE_CTRL[faceGrade] ?? 0) === 0 ? 'neutro' : undefined },
       { label: `furos (${furos ?? '?'})`, value: fmt(ctrlFuros), note: furos == null ? 'sem dado' : undefined },
