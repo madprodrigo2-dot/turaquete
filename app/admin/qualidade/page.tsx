@@ -214,7 +214,7 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
             <div className="flex flex-col gap-1.5">
               {outroComentarios.map(e => (
                 <div key={e.id} className="flex gap-3 items-start text-xs text-gray-600 bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-2.5">
-                  <span className="text-gray-300 shrink-0 pt-0.5">{new Date(e.created_at).toLocaleDateString('pt-BR')}</span>
+                  <span className="text-gray-300 shrink-0 pt-0.5">{new Date(e.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
                   <p className="leading-relaxed">{e.comentario}</p>
                 </div>
               ))}
@@ -317,7 +317,7 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                 <div key={e.id} className="bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-3">
                   {/* Meta */}
                   <div className="flex items-center gap-3 text-xs text-gray-400 mb-2 flex-wrap">
-                    <span>{new Date(e.created_at).toLocaleString('pt-BR')}</span>
+                    <span>{new Date(e.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
                     {e.intencao && (
                       <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{e.intencao}</span>
                     )}

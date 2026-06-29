@@ -540,7 +540,7 @@ export default async function AnaliseAdmin({
             {starterDetailRows.map((r, i) => (
               <div key={i} className="bg-white rounded-lg px-4 py-3 border border-teal-100 shadow-sm">
                 <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
-                  <span>{new Date(r.created_at).toLocaleString('pt-BR')}</span>
+                  <span>{new Date(r.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
                   {r.intencao_detectada && <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>}
                 </div>
                 <p className="text-gray-800 leading-snug text-sm">{r.primeira_mensagem}</p>
