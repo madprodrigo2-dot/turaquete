@@ -14,6 +14,7 @@ type RawRacket = {
   weight_g: number | null
   balance: string | null
   thickness_mm: string | number | null
+  price: number | null
   specs_extra: Record<string, unknown> | null
   brands: { name: string } | null
   racket_insights:
@@ -64,6 +65,7 @@ export type MotorRow = {
   scoreInt: number | null
   scoreAva: number | null
   nivel: 'iniciante' | 'intermediario' | 'avancado' | null
+  price: number | null
   overrides: string[]
 }
 
@@ -76,7 +78,7 @@ export default async function AdminMotorPage() {
   const { data, error } = await sb
     .from('rackets')
     .select(`
-      id, name, slug, face_material, core, weight_g, balance, thickness_mm, specs_extra,
+      id, name, slug, face_material, core, weight_g, balance, thickness_mm, price, specs_extra,
       brands(name),
       racket_insights(power, control, comfort, maneuverability, stability, spin, forgiveness, overrides)
     `)
@@ -138,6 +140,7 @@ export default async function AdminMotorPage() {
         if (sAva == null || sIni == null) return null
         return clasificarNivel(sAva, sIni)
       })(),
+      price: r.price ?? null,
       overrides,
     }
   })
