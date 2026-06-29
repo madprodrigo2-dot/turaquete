@@ -37,6 +37,8 @@ async function sendTelegramNotification(opts: {
   tipo: 'afiliado' | 'oficial'
   price: number | null
   nivel: string | null
+  utmSource: string | null
+  utmMedium: string | null
   referrer: string | null
 }) {
   const token  = process.env.TELEGRAM_BOT_TOKEN
@@ -49,7 +51,14 @@ async function sendTelegramNotification(opts: {
     : 'sem preço'
   const nivelMap: Record<string, string> = { iniciante: 'iniciante', intermediario: 'intermediário', avancado: 'avançado' }
   const nivel  = opts.nivel ? (nivelMap[opts.nivel] ?? opts.nivel) : '—'
-  const via    = summarizeReferrer(opts.referrer)
+
+  let via = 'direto'
+  if (opts.utmSource) {
+    via = opts.utmMedium ? `${opts.utmSource}/${opts.utmMedium}` : opts.utmSource
+  } else if (opts.referrer) {
+    via = opts.referrer
+  }
+
   const text   = `${emoji} Clique em Comprar\n${opts.racketName}\n${opts.tipo} · ${preco} · ${nivel}\nvia ${via}`
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -110,7 +119,22 @@ export default async function IrPage({
   const ua      = hdrs.get('user-agent') ?? ''
   const isBot   = /bot|crawler|spider|google|bing|baidu|yandex|facebook|slurp|preview/i.test(ua)
   const isTest  = isAdmin || isBot || cookieStore.get('turaquete_test_mode')?.value === '1'
-  const racket = await getRaquetaPorSlug(slug)
+
+  // Fetch racket + session origin concurrently
+  const sessionId = sp.s ?? null
+  const [racket, sessionOrigin] = await Promise.all([
+    getRaquetaPorSlug(slug),
+    sessionId
+      ? getSupabaseAdmin()
+          .from('conversations')
+          .select('utm_source, utm_medium, referrer')
+          .eq('session_id', sessionId)
+          .not('utm_source', 'is', null)
+          .limit(1)
+          .maybeSingle()
+          .then(({ data }) => data ?? null)
+      : Promise.resolve(null),
+  ])
 
   if (!racket) notFound()
 
@@ -159,7 +183,9 @@ export default async function IrPage({
           tipo,
           price,
           nivel: racket.racket_insights?.nivel_sugerido ?? null,
-          referrer: hdrs.get('referer'),
+          utmSource: sessionOrigin?.utm_source ?? null,
+          utmMedium: sessionOrigin?.utm_medium ?? null,
+          referrer:  sessionOrigin?.referrer ?? null,
         })
       : Promise.resolve(),
   ])
