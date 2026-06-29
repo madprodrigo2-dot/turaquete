@@ -103,6 +103,14 @@ export function calcularMotor(input: MotorInput): MotorResult {
   // Spin — driver único: textura da superfície
   const spin = texturaScore(input.superficie, hasSpinTech)
 
+  // Classificações
+  const faceGrade = classifyFace(input.face_material)
+  const coreClass = classifyCore(input.core)
+  const furos = input.furos ?? null
+  const esp   = input.espessura_mm ?? null
+  const wg    = input.weight_g ?? null
+  const bal   = (input.balance || '').toLowerCase()
+
   // Stability — face + peso + estrutural + espessura
   const estruturalCount = techs.filter(t => t.tipo === 'estrutural').length
   const structBonus = estruturalCount >= 1 ? 1 : 0
@@ -111,14 +119,6 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const stability = Math.min(9, Math.max(5,
     5 + (FACE_STAB[faceGrade] ?? 0) + pesoMod + structBonus + espMod
   ))
-
-  // Classificações
-  const faceGrade = classifyFace(input.face_material)
-  const coreClass = classifyCore(input.core)
-  const furos = input.furos ?? null
-  const esp   = input.espessura_mm ?? null
-  const wg    = input.weight_g ?? null
-  const bal   = (input.balance || '').toLowerCase()
 
   // Power — face é o driver dominante; core duro acrescenta, supersoft absorve
   const FACE_POWER: Record<FaceGrade, number> = {
