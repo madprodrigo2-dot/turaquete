@@ -90,7 +90,7 @@ const FACE_STAB: Partial<Record<FaceGrade, number>> = {
   KEVLAR_PURE: -1, KEVLAR_CARBON: 0,
   CARBON_3K: 0, CARBON_3K_METAL: 1,
   CARBON_6K: 1, CARBON_6K_15K: 1,
-  CARBON_18K: 2, CARBON_24K: 2,
+  CARBON_18K: 1, CARBON_24K: 1,
 }
 
 // ── Motor principal ───────────────────────────────────────────────────────────
