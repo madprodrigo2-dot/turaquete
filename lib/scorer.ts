@@ -190,10 +190,10 @@ function baseWeights(profile: ScorerProfile): Weights {
     maneuverability: 18, spin: 0, stability: 17, forgiveness: 14,
   }
 
-  // avançado misto / default — controle domina; stability recua para deixar controle subir
+  // avançado misto / default — manuseio sobe; power e comfort recuam
   return {
-    power: 20, control: 30, comfort: 6,
-    maneuverability: 20, spin: 0, stability: 19, forgiveness: 5,
+    power: 17, control: 30, comfort: 4,
+    maneuverability: 25, spin: 0, stability: 19, forgiveness: 5,
   }
 }
 
