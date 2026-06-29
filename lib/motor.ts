@@ -191,6 +191,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   comfort += FACE_COMFORT[faceGrade] ?? 0
   if (esp != null && esp <= 20) comfort -= 1
   if (esp != null && esp >= 23) comfort += 1
+  if (wg != null && wg >= 340) comfort -= 1
   comfort = Math.min(10, Math.max(1, comfort))
 
   const delta = comfort - power
@@ -283,8 +284,9 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
     CARBON_6K_15K: -1, CARBON_18K: -1, CARBON_24K: -1,
   }
   const comfEsp = esp != null && esp <= 20 ? -1 : esp != null && esp >= 23 ? 1 : 0
+  const comfPeso = wg != null && wg >= 340 ? -1 : 0
   const comfAntivib = Math.min(antivibCount, 2)
-  const comfRaw = 5 + CORE_COMFORT[coreClass] + comfAntivib + (FACE_COMFORT[faceGrade] ?? 0) + comfEsp
+  const comfRaw = 5 + CORE_COMFORT[coreClass] + comfAntivib + (FACE_COMFORT[faceGrade] ?? 0) + comfEsp + comfPeso
   const comfortFinal = Math.min(10, Math.max(1, comfRaw))
 
   const textura = texturaScore(input.superficie, hasSpinTech)
@@ -340,6 +342,7 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
       { label: `antivib (${antivibCount} techs)`, value: fmt(comfAntivib), note: antivibCount > 2 ? 'cap em 2' : undefined },
       { label: `FACE_COMFORT[${faceGrade}]`, value: fmt(FACE_COMFORT[faceGrade] ?? 0), note: (FACE_COMFORT[faceGrade] ?? 0) === 0 ? 'neutro' : undefined },
       { label: `esp (${esp ?? '?'}mm)`, value: fmt(comfEsp) },
+      { label: `peso (${wg ?? '?'}g)`, value: fmt(comfPeso), note: comfPeso === 0 ? '<340g, sem penalidade' : undefined },
       { label: 'resultado', value: comfortFinal, isFinal: true, note: comfRaw !== comfortFinal ? `clamp de ${comfRaw}` : undefined },
     ],
     spin: [
