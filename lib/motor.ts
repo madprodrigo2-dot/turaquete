@@ -85,22 +85,12 @@ function texturaScore(superficie: string | null | undefined, hasSpinTech: boolea
   return 5
 }
 
-// Stability — B2+core: espesor + peso (320/330/340) + rigidez de cara + dureza do núcleo.
-function stabilityB(
-  espessura_mm: number | null | undefined,
-  weight_g: number | null | undefined,
-  face_material: string | null | undefined,
-  core: string | null | undefined,
-): number {
-  const face    = (face_material || '').toLowerCase()
-  const c       = (core || '').toLowerCase()
-  const modEsp  = espessura_mm == null ? 1 : espessura_mm <= 20 ? 0 : espessura_mm <= 22 ? 1 : 2
-  const modPeso = weight_g != null && weight_g >= 340 ? 1 : 0  // só raquetes deliberadamente pesadas
-  const modRig  = /18k|21k|24k|forjado|forged|aluminizado/.test(face) ? 1 : 0
-  const isSupersoft = /supersoft|extra soft|extrasoft|branco|white/.test(c) || core === 'EVA 10' || core === 'EVA 13'
-  const isHard = !isSupersoft && (/hard|duro|high density|alta densidade/.test(c) || c.includes('black pro') || (!c.includes('soft') && c.includes('black')))
-  const modCore = isSupersoft ? -1 : isHard ? 1 : 0
-  return Math.min(9, Math.max(5, 5 + modEsp + modPeso + modRig + modCore))
+const FACE_STAB: Partial<Record<FaceGrade, number>> = {
+  VIDRO: -1, HYBRID_VIDRO: -1,
+  KEVLAR_PURE: -1, KEVLAR_CARBON: 0,
+  CARBON_3K: 0, CARBON_3K_METAL: 1,
+  CARBON_6K: 1, CARBON_6K_15K: 1,
+  CARBON_18K: 2, CARBON_24K: 2,
 }
 
 // ── Motor principal ───────────────────────────────────────────────────────────
@@ -113,8 +103,14 @@ export function calcularMotor(input: MotorInput): MotorResult {
   // Spin — driver único: textura da superfície
   const spin = texturaScore(input.superficie, hasSpinTech)
 
-  // Stability — física: espesor + peso + rigidez de cara
-  const stability = stabilityB(input.espessura_mm, input.weight_g, input.face_material, input.core)
+  // Stability — face + peso + estrutural + espessura
+  const estruturalCount = techs.filter(t => t.tipo === 'estrutural').length
+  const structBonus = estruturalCount === 0 ? 0 : estruturalCount === 1 ? 1 : 2
+  const pesoMod = (wg != null && wg > 340) ? 1 : 0
+  const espMod  = esp == null ? 0 : esp <= 20 ? -1 : esp <= 22 ? 0 : 1
+  const stability = Math.min(9, Math.max(5,
+    5 + (FACE_STAB[faceGrade] ?? 0) + pesoMod + structBonus + espMod
+  ))
 
   // Classificações
   const faceGrade = classifyFace(input.face_material)
