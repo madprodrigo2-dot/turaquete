@@ -290,7 +290,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         if (o.utm_source) reqBody.origemUtmSource = o.utm_source
         if (o.utm_medium) reqBody.origemUtmMedium = o.utm_medium
       }
-      starterUsadoRef.current = null
 
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -336,6 +335,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         } else if (evt.type === 'done') {
           streamFinished = true
           consecutiveTimeoutsRef.current = 0
+          if (isFirstMessage) starterUsadoRef.current = null
           const recs = evt.recommendations ?? undefined
           const sugs = evt.suggestions?.length ? evt.suggestions : undefined
           const isCmp = evt.isComparison ?? false
