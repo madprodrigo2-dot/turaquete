@@ -99,6 +99,9 @@ export default async function ConversasPage({
   const sessionCostMap = new Map<string, number>()
   const sessionHadRecMap = new Map<string, boolean>()
   const sessionIpMap = new Map<string, string | null>()
+  const sessionUtmSource = new Map<string, string>()
+  const sessionUtmMedium = new Map<string, string>()
+  const sessionReferrer = new Map<string, string>()
   for (const r of raw) {
     sessionCostMap.set(r.session_id, (sessionCostMap.get(r.session_id) ?? 0) + (Number(r.custo_brl) || 0))
     if (Array.isArray(r.recommended_racket_ids) && r.recommended_racket_ids.length > 0) {
@@ -107,6 +110,9 @@ export default async function ConversasPage({
     if (!sessionIpMap.has(r.session_id) && r.ip_hash) {
       sessionIpMap.set(r.session_id, r.ip_hash)
     }
+    if (!sessionUtmSource.has(r.session_id) && r.utm_source) sessionUtmSource.set(r.session_id, r.utm_source)
+    if (!sessionUtmMedium.has(r.session_id) && r.utm_medium) sessionUtmMedium.set(r.session_id, r.utm_medium)
+    if (!sessionReferrer.has(r.session_id) && r.referrer) sessionReferrer.set(r.session_id, r.referrer)
   }
   // Count sessions per ip_hash to detect heavy users
   const ipSessionCount = new Map<string, number>()
@@ -138,9 +144,9 @@ export default async function ConversasPage({
       had_retry: false,
       ip_hash: sessionIpMap.get(r.session_id) ?? null,
       ip_session_count: 0,
-      utm_source: r.utm_source ?? null,
-      utm_medium: r.utm_medium ?? null,
-      referrer: r.referrer ?? null,
+      utm_source: sessionUtmSource.get(r.session_id) ?? null,
+      utm_medium: sessionUtmMedium.get(r.session_id) ?? null,
+      referrer: sessionReferrer.get(r.session_id) ?? null,
     })
     if (sessions.length >= 50) break
   }
