@@ -9,10 +9,10 @@ const buildLabel = process.env.NEXT_PUBLIC_BUILD_LABEL ?? null
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
-  const pathname = h.get('x-pathname') ?? ''
 
-  // Login e reset não precisam de auth — evita redirect loop
-  if (pathname === '/admin/login' || pathname.startsWith('/admin/reset')) {
+  // Se o middleware não injetou x-admin-protected, estamos em login/reset
+  // (o matcher exclui essas rotas — logo o middleware não rodou)
+  if (!h.get('x-admin-protected')) {
     return <>{children}</>
   }
 

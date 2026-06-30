@@ -37,18 +37,15 @@ export function middleware(req: NextRequest) {
     if (!isAllowedReferer(req.headers.get('referer'))) {
       return new NextResponse(HOTLINK_SVG, {
         status: 200,
-        headers: {
-          'Content-Type': 'image/svg+xml',
-          'Cache-Control': 'no-store',
-        },
+        headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' },
       })
     }
     return NextResponse.next()
   }
 
-  // Passa pathname para o layout poder pular auth em login/reset
+  // Injeta pathname para o layout saber que está numa rota protegida
   const requestHeaders = new Headers(req.headers)
-  requestHeaders.set('x-pathname', pathname)
+  requestHeaders.set('x-admin-protected', '1')
 
   if (!hasSession(req)) {
     return NextResponse.redirect(new URL('/admin/login', req.url))
@@ -56,6 +53,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
+// Exclui login e reset do matcher — middleware não roda para essas rotas
 export const config = {
-  matcher: ['/admin/:path*', '/raquetes/:path*'],
+  matcher: ['/admin/((?!login|reset).+)', '/raquetes/:path*'],
 }
