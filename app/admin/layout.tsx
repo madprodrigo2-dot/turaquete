@@ -1,5 +1,4 @@
-import { auth, signOut } from '@/auth'
-import { redirect } from 'next/navigation'
+import { signOut } from '@/auth'
 import { headers } from 'next/headers'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
@@ -10,16 +9,10 @@ const buildLabel = process.env.NEXT_PUBLIC_BUILD_LABEL ?? null
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const h = await headers()
 
-  // Se o middleware não injetou x-admin-protected, estamos em login/reset
-  // (o matcher exclui essas rotas — logo o middleware não rodou)
+  // Login e reset não usam o shell do admin
   if (!h.get('x-admin-protected')) {
     return <>{children}</>
   }
-
-  const session = await auth()
-  const isAdmin = !!session?.user?.email && session.user.email === process.env.ADMIN_EMAIL
-
-  if (!isAdmin) redirect('/admin/login')
 
   return (
     <AdminShell>
