@@ -45,5 +45,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ['/admin/((?!login).+)', '/raquetes/:path*'],
+  matcher: ['/admin/((?!login|reset).+)', '/raquetes/:path*'],
 }
