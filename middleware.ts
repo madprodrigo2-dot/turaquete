@@ -1,5 +1,4 @@
-import { auth } from '@/auth'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 const HOTLINK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60">
   <rect width="220" height="60" rx="6" fill="#0CC0BE"/>
@@ -22,7 +21,16 @@ function isAllowedReferer(referer: string | null): boolean {
   }
 }
 
-export default auth((req) => {
+function hasSession(req: NextRequest): boolean {
+  return !!(
+    req.cookies.get('authjs.session-token') ||
+    req.cookies.get('__Secure-authjs.session-token') ||
+    req.cookies.get('next-auth.session-token') ||
+    req.cookies.get('__Secure-next-auth.session-token')
+  )
+}
+
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (pathname.startsWith('/raquetes/')) {
@@ -38,11 +46,11 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  if (!req.auth) {
+  if (!hasSession(req)) {
     return NextResponse.redirect(new URL('/admin/login', req.url))
   }
   return NextResponse.next()
-})
+}
 
 export const config = {
   matcher: ['/admin/((?!login|reset).+)', '/raquetes/:path*'],
