@@ -74,6 +74,13 @@ const MATERIAIS = [
     tag: 'alto padrão',
   },
   {
+    nome: 'Kevlar',
+    subtitulo: 'Alta absorção, mais conforto',
+    descricao: 'A fibra de Kevlar é mais macia que o carbono e absorve bem a vibração. Raquetes com face de Kevlar costumam ser mais confortáveis e menos exigentes para o braço. Algumas marcas combinam Kevlar com carbono para equilibrar conforto e potência.',
+    perfil: 'Quem tem cotovelo ou ombro sensível e busca conforto sem abrir mão de durabilidade.',
+    tag: 'conforto e durabilidade',
+  },
+  {
     nome: 'Fibra de quartzo',
     subtitulo: 'Alternativa ao carbono, mais macia',
     descricao: 'A fibra de quartzo é um material distinto do carbono, com maior capacidade de absorção de vibração e mais sensação de toque. Raquetes com face de quartzo tendem a ser mais amigáveis ao braço sem sacrificar o controle.',

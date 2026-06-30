@@ -130,6 +130,9 @@ export default function BalancePage() {
             <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">
               Os três tipos de balance
             </h2>
+            <p className="text-sm text-tinta/60 mb-5">
+              Em beach tennis, o balance médio é de longe o mais comum — a grande maioria das raquetes do mercado se enquadra nessa categoria. Balance ao cabo ou à cabeça existem, mas são minoria no catálogo atual.
+            </p>
             <div className="flex flex-col gap-3">
               {TYPES.map(({ tipo, tag, cor, bg, descricao, para }) => (
                 <div key={tipo} className={`${bg} rounded-2xl p-5 border border-[rgba(14,58,64,0.06)] shadow-sm`}>

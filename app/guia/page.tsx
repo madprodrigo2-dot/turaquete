@@ -68,7 +68,7 @@ const FATORES = [
     slug: 'peso',
     titulo: 'Peso',
     resumo: 'Como a gramagem muda a potência, o manuseio e o cansaço ao longo do jogo.',
-    tag: '320 a 355 g',
+    tag: '320 a 345 g',
   },
   {
     n: 2,
@@ -130,8 +130,8 @@ const FATORES = [
     n: 10,
     slug: 'formato',
     titulo: 'Formato da cabeça',
-    resumo: 'Redonda, gota ou diamante: o que muda no controle, potência e sweet spot.',
-    tag: 'redonda · gota · diamante',
+    resumo: 'Redonda ou oval: como o formato da cabeça define o sweet spot, o balance e a potência.',
+    tag: 'redonda · oval · diamante',
   },
 ]
 

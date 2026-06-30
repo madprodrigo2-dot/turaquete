@@ -87,20 +87,20 @@ export default function TexturaPage() {
             <div className="flex flex-col gap-3">
               {[
                 {
-                  tipo: 'Lisa',
-                  descricao: 'Superfície polida, com pouco atrito. A bola desliza sobre a face, resultando em golpe direto e previsível. Menos spin natural, mais controle de direção.',
-                  para: 'Jogadores que preferem controle e precisão. Iniciantes que ainda estão desenvolvendo o timing.',
-                  tag: 'controle e precisão',
-                },
-                {
-                  tipo: 'Areada',
-                  descricao: `O acabamento ${''} é texturizado, com partículas abrasivas na superfície. O atrito com a bola aumenta, e os golpes com intenção de spin saem com mais efeito. Comum em raquetes intermediárias e avançadas.`,
-                  para: 'Intermediários e avançados que querem gerar efeito nos golpes.',
+                  tipo: 'Áspera',
+                  descricao: 'A superfície áspera tem partículas abrasivas que aumentam o atrito com a bola. Os golpes com intenção de spin saem com mais efeito. É o acabamento mais comum no mercado — a grande maioria das raquetes de beach tennis já sai de fábrica com esse acabamento.',
+                  para: 'A maioria dos jogadores, de todos os níveis. É a escolha padrão do mercado.',
                   tag: 'spin e efeito',
                 },
                 {
+                  tipo: 'Lisa',
+                  descricao: 'Superfície polida, com pouco atrito. A bola desliza sobre a face, resultando em golpe direto e previsível. Menos spin natural, mais controle de direção. Presente em cerca de 23% das raquetes do mercado.',
+                  para: 'Quem prioriza controle e precisão sobre spin. Mais comum em modelos de entrada ou de controle específico.',
+                  tag: 'controle e precisão',
+                },
+                {
                   tipo: 'Fibra de quartzo',
-                  descricao: 'A textura natural da fibra de quartzo cria micro-irregularidades na superfície sem precisar de tratamento adicional. Além do spin, oferece mais sensação de toque e absorção de vibração.',
+                  descricao: 'A textura natural da fibra de quartzo cria micro-irregularidades na superfície sem precisar de tratamento adicional. Além do spin, oferece mais sensação de toque e absorção de vibração — e é mais duradoura que o acabamento áspero convencional.',
                   para: 'Jogadores que buscam spin com conforto. Quem tem sensibilidade no braço.',
                   tag: 'spin + conforto',
                 },

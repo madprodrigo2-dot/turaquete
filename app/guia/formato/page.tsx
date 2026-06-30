@@ -70,7 +70,7 @@ const FORMATOS = [
   },
   {
     nome: 'Gota (lágrima)',
-    apelido: 'também chamada de "teardrop" ou "lágrima"',
+    apelido: 'chamada "oval" por muitas marcas; também: teardrop, lágrima',
     sweet: 'Médio, levemente alto',
     balance: 'Médio ou misto',
     itens: [
@@ -135,6 +135,9 @@ export default function FormatoPage() {
 
           <section>
             <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">Os três formatos</h2>
+            <p className="text-sm text-tinta/60 mb-5">
+              Em beach tennis, a redonda é de longe o formato dominante — cerca de 95% das raquetes do mercado. A oval (gota) e o diamante existem, mas são raros. Entender os três ainda é útil para interpretar as diferenças que existem.
+            </p>
             <div className="flex flex-col gap-4">
               {FORMATOS.map(({ nome, apelido, sweet, balance, itens, para, cor }) => (
                 <div key={nome} className={`rounded-2xl p-5 border shadow-sm ${cor}`}>
@@ -176,9 +179,7 @@ export default function FormatoPage() {
               {' '}no smash.
             </p>
             <p>
-              A maioria dos jogadores intermediários se sai melhor com a gota: ela tolera erros de timing enquanto oferece{' '}
-              <TermoGlossario entry={entManuseio}>manuseio</TermoGlossario>
-              {' '}e potência suficientes para a evolução no jogo.
+              Na prática, a esmagadora maioria das raquetes de beach tennis é redonda. Se quiser uma oval (gota), verifique a ficha técnica — muitas marcas usam o termo "oval" em vez de "gota". Raquetes diamante são muito raras no catálogo atual.
             </p>
           </section>
 
