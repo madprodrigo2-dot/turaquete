@@ -26,11 +26,11 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
     {
-      '@type': 'WebPage',
+      '@type': 'CollectionPage',
       '@id': `${BASE}/guia#webpage`,
       url: `${BASE}/guia`,
       name: 'Guia da raquete de beach tennis',
-      description: 'Os 10 fatores que definem uma raquete de beach tennis.',
+      description: 'Os 10 fatores que definem uma raquete de beach tennis: peso, balance, EVA, carbono, espessura, furos, coração, textura, sweet spot e formato.',
       inLanguage: 'pt-BR',
       isPartOf: { '@id': `${BASE}/#website` },
     },
@@ -39,6 +39,24 @@ const jsonLd = {
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Início', item: BASE },
         { '@type': 'ListItem', position: 2, name: 'Guia da raquete', item: `${BASE}/guia` },
+      ],
+    },
+    {
+      '@type': 'ItemList',
+      name: 'Fatores da raquete de beach tennis',
+      url: `${BASE}/guia`,
+      numberOfItems: 10,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1,  name: 'Peso',             url: `${BASE}/guia/peso` },
+        { '@type': 'ListItem', position: 2,  name: 'Balance',          url: `${BASE}/guia/balance` },
+        { '@type': 'ListItem', position: 3,  name: 'Material e carbono', url: `${BASE}/guia/material` },
+        { '@type': 'ListItem', position: 4,  name: 'EVA (núcleo)',     url: `${BASE}/guia/eva` },
+        { '@type': 'ListItem', position: 5,  name: 'Espessura',        url: `${BASE}/guia/espessura` },
+        { '@type': 'ListItem', position: 6,  name: 'Furos e trama',    url: `${BASE}/guia/furos` },
+        { '@type': 'ListItem', position: 7,  name: 'Coração',          url: `${BASE}/guia/coracao` },
+        { '@type': 'ListItem', position: 8,  name: 'Textura da face',  url: `${BASE}/guia/textura` },
+        { '@type': 'ListItem', position: 9,  name: 'Sweet spot',       url: `${BASE}/guia/sweet-spot` },
+        { '@type': 'ListItem', position: 10, name: 'Formato da cabeça', url: `${BASE}/guia/formato` },
       ],
     },
   ],
