@@ -122,7 +122,7 @@ export default function GuiaPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="max-w-2xl mx-auto px-5 md:px-6 py-10 md:py-14 flex flex-col gap-12">
+      <div className="max-w-4xl mx-auto px-5 md:px-8 py-10 md:py-14 flex flex-col gap-12">
 
         {/* Hero */}
         <header className="flex flex-col gap-4">

@@ -90,7 +90,7 @@ export default function PesoPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <article className="max-w-2xl mx-auto px-5 md:px-6 py-10 md:py-14">
+      <article className="max-w-4xl mx-auto px-5 md:px-8 py-10 md:py-14">
 
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] text-tinta/40 mb-6 flex-wrap">

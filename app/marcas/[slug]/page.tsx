@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from '@/components/RacketImageTile'
 import { derivarNivel } from '@/lib/nivel'
+import SiteNav from '@/components/SiteNav'
 
 export const dynamic = 'force-dynamic'
 
@@ -298,20 +299,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="min-h-screen sand-texture">
-      {/* Nav */}
-      <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
-        <div className="max-w-6xl mx-auto px-5 md:px-10 py-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Início
-          </Link>
-        </div>
-      </div>
+      <SiteNav maxWidth="max-w-6xl" />
 
       <div className="max-w-6xl mx-auto px-5 md:px-10 py-8 flex flex-col gap-6">
 
