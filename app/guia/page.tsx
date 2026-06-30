@@ -68,7 +68,7 @@ const FATORES = [
     slug: 'peso',
     titulo: 'Peso',
     resumo: 'Como a gramagem muda a potência, o manuseio e o cansaço ao longo do jogo.',
-    tag: '330 a 385 g',
+    tag: '320 a 365 g',
   },
   {
     n: 2,
