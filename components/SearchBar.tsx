@@ -171,7 +171,11 @@ export default function SearchBar() {
               ))}
               {query.trim() && (
                 <button
-                  onClick={submit}
+                  onClick={() => {
+                    setOpen(false)
+                    setExpanded(false)
+                    router.push(`/busca?q=${encodeURIComponent(query.trim())}`)
+                  }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-aqua hover:bg-aqua/6 transition-colors border-t border-tinta/6 font-medium"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
