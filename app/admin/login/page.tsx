@@ -1,16 +1,10 @@
 import { signIn } from '@/auth'
-import { redirect } from 'next/navigation'
-import { auth } from '@/auth'
 
 export default async function AdminLoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
-  let session = null
-  try { session = await auth() } catch {}
-  if (session) redirect('/admin/analise')
-
   const { error } = await searchParams
 
   return (

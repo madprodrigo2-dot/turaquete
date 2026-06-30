@@ -30,9 +30,17 @@ function hasSession(req: NextRequest): boolean {
   )
 }
 
+function noStoreRedirect(url: URL): NextResponse {
+  const res = NextResponse.redirect(url)
+  res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+  res.headers.set('Pragma', 'no-cache')
+  return res
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // Hotlink protection para imagens
   if (pathname.startsWith('/raquetes/')) {
     if (!isAllowedReferer(req.headers.get('referer'))) {
       return new NextResponse(HOTLINK_SVG, {
@@ -43,17 +51,39 @@ export function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Injeta pathname para o layout saber que está numa rota protegida
+  const loggedIn = hasSession(req)
+
+  // Rota de reset: sempre permite, sem cache
+  if (pathname.startsWith('/admin/reset')) {
+    const res = NextResponse.next()
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+    return res
+  }
+
+  // Página de login
+  if (pathname === '/admin/login') {
+    // Se já está logado, redireciona para o admin (sem cache)
+    if (loggedIn) {
+      return noStoreRedirect(new URL('/admin/analise', req.url))
+    }
+    // Se não está logado, mostra o login (sem cache para evitar redirect cacheado)
+    const res = NextResponse.next()
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+    res.headers.set('Pragma', 'no-cache')
+    return res
+  }
+
+  // Rotas protegidas: requer sessão
+  if (!loggedIn) {
+    return noStoreRedirect(new URL('/admin/login', req.url))
+  }
+
+  // Passa pathname para o layout renderizar o shell
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-admin-protected', '1')
-
-  if (!hasSession(req)) {
-    return NextResponse.redirect(new URL('/admin/login', req.url))
-  }
   return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
-// Exclui login e reset do matcher — middleware não roda para essas rotas
 export const config = {
-  matcher: ['/admin/((?!login|reset).+)', '/raquetes/:path*'],
+  matcher: ['/admin/:path*', '/raquetes/:path*'],
 }
