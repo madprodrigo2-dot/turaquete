@@ -9,7 +9,7 @@ export default async function AdminLoginPage({
 }) {
   let session = null
   try { session = await auth() } catch {}
-  if (session) redirect('/admin/intencoes')
+  if (session) redirect('/admin/analise')
 
   const { error } = await searchParams
 
@@ -40,7 +40,7 @@ export default async function AdminLoginPage({
         <form
           action={async () => {
             'use server'
-            await signIn('google', { redirectTo: '/admin/intencoes' })
+            await signIn('google', { redirectTo: '/admin/analise' })
           }}
           className="w-full"
         >

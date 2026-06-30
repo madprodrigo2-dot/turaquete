@@ -22,11 +22,7 @@ export default function AdminNav() {
   const [open, setOpen] = useState(false)
 
   function isActive(tab: { href: string }) {
-    const DADOS_ALIASES = ['/admin/analise', '/admin/intencoes']
-    return (
-      (tab.href === '/admin/analise' && DADOS_ALIASES.some(a => pathname === a || pathname.startsWith(a + '?')))
-      || (tab.href !== '/admin/analise' && (pathname === tab.href || pathname.startsWith(tab.href + '?') || pathname.startsWith(tab.href + '/')))
-    )
+    return pathname === tab.href || pathname.startsWith(tab.href + '?') || pathname.startsWith(tab.href + '/')
   }
 
   const activeTab = TABS.find(isActive)
