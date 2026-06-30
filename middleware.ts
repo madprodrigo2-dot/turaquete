@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
+import { NextResponse } from 'next/server'
 
 const HOTLINK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60">
   <rect width="220" height="60" rx="6" fill="#0CC0BE"/>
@@ -21,26 +22,9 @@ function isAllowedReferer(referer: string | null): boolean {
   }
 }
 
-function hasSession(req: NextRequest): boolean {
-  return !!(
-    req.cookies.get('authjs.session-token') ||
-    req.cookies.get('__Secure-authjs.session-token') ||
-    req.cookies.get('next-auth.session-token') ||
-    req.cookies.get('__Secure-next-auth.session-token')
-  )
-}
-
-function noStoreRedirect(url: URL): NextResponse {
-  const res = NextResponse.redirect(url)
-  res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
-  res.headers.set('Pragma', 'no-cache')
-  return res
-}
-
-export function middleware(req: NextRequest) {
+export default auth((req) => {
   const { pathname } = req.nextUrl
 
-  // Hotlink protection para imagens
   if (pathname.startsWith('/raquetes/')) {
     if (!isAllowedReferer(req.headers.get('referer'))) {
       return new NextResponse(HOTLINK_SVG, {
@@ -51,39 +35,18 @@ export function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  const loggedIn = hasSession(req)
-
-  // Rota de reset: sempre permite, sem cache
-  if (pathname.startsWith('/admin/reset')) {
-    const res = NextResponse.next()
+  if (!req.auth) {
+    const res = NextResponse.redirect(new URL('/admin/login', req.url))
     res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
     return res
   }
 
-  // Página de login
-  if (pathname === '/admin/login') {
-    // Se já está logado, redireciona para o admin (sem cache)
-    if (loggedIn) {
-      return noStoreRedirect(new URL('/admin/analise', req.url))
-    }
-    // Se não está logado, mostra o login (sem cache para evitar redirect cacheado)
-    const res = NextResponse.next()
-    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
-    res.headers.set('Pragma', 'no-cache')
-    return res
-  }
-
-  // Rotas protegidas: requer sessão
-  if (!loggedIn) {
-    return noStoreRedirect(new URL('/admin/login', req.url))
-  }
-
-  // Passa pathname para o layout renderizar o shell
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-admin-protected', '1')
   return NextResponse.next({ request: { headers: requestHeaders } })
-}
+})
 
+// Login e reset excluídos do matcher — middleware não roda para essas rotas
 export const config = {
-  matcher: ['/admin/:path*', '/raquetes/:path*'],
+  matcher: ['/admin/((?!login|reset).+)', '/raquetes/:path*'],
 }
