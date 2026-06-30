@@ -62,17 +62,17 @@ const balance   = GLOSSARIO.find(e => e.termo === 'balance')!
 const PROFILES = [
   {
     label: 'Iniciante ou jogador casual',
-    range: '320 a 340 g',
+    range: '320 a 330 g',
     tip:   'Reação mais rápida, menor cansaço. Mais tolerante a erros de tempo no golpe.',
   },
   {
     label: 'Intermediário',
-    range: '335 a 355 g',
+    range: '330 a 345 g',
     tip:   'Equilibra potência e manuseio. Boa base para a maioria dos jogos.',
   },
   {
     label: 'Avançado / ofensivo',
-    range: '350 g ou mais',
+    range: '345 a 355 g',
     tip:   'Mais momentum no smash. Exige braço condicionado para manter a qualidade do gesto ao longo do jogo.',
   },
   {
@@ -110,7 +110,7 @@ export default function PesoPage() {
             Peso da raquete de beach tennis
           </h1>
           <p className="text-tinta/70 text-lg leading-relaxed">
-            O peso é o primeiro número que aparece na ficha técnica de qualquer raquete. A faixa típica vai de 320 g a 365 g, mas a diferença de 20 gramas no jogo é maior do que parece.
+            O peso é o primeiro número que aparece na ficha técnica de qualquer raquete. A faixa típica vai de 320 g a 355 g, mas a diferença de 20 gramas no jogo é maior do que parece.
           </p>
         </header>
 
