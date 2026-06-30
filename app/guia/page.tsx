@@ -140,53 +140,74 @@ export default function GuiaPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="max-w-4xl mx-auto px-5 md:px-8 py-10 md:py-14 flex flex-col gap-12">
+      <div className="max-w-4xl mx-auto px-5 md:px-8 py-10 md:py-14 flex flex-col gap-14">
 
         {/* Hero */}
-        <header className="flex flex-col gap-4">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] text-tinta/40 flex-wrap">
+        <header className="flex flex-col gap-5">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-tinta/40 flex-wrap">
             <Link href="/" className="hover:text-aqua transition-colors">Início</Link>
-            <span>/</span>
-            <span className="text-tinta/70">Guia da raquete</span>
+            <span aria-hidden="true">/</span>
+            <span className="text-tinta/60 font-medium">Guia da raquete</span>
           </nav>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold text-tinta leading-tight">
-            Guia da raquete de beach tennis
-          </h1>
-          <p className="text-tinta/70 text-lg leading-relaxed">
-            Escolher uma raquete por preço ou por marca é o erro mais comum. Os 10 fatores abaixo explicam o que de fato define como uma raquete se comporta no seu jogo, desde o peso até o formato da cabeça.
+
+          <div className="flex flex-col gap-3">
+            <div className="inline-flex items-center gap-2 bg-aqua/10 text-aqua text-xs font-semibold px-3 py-1.5 rounded-full w-fit">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.4"/>
+                <path d="M6 4v3M6 8.5v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+              10 fatores explicados
+            </div>
+            <h1 className="font-heading text-3xl md:text-[2.6rem] font-bold text-tinta leading-tight">
+              Guia da raquete<br className="hidden sm:block" /> de beach tennis
+            </h1>
+          </div>
+
+          <p className="text-tinta/75 text-base md:text-lg leading-relaxed max-w-2xl">
+            Escolher uma raquete por preço ou por marca é o erro mais comum. Os 10 fatores abaixo explicam o que de fato define como uma raquete se comporta no seu jogo.
           </p>
-          <p className="text-tinta/50 text-sm leading-relaxed">
-            Cada página vai direto ao ponto: o que é, como afeta o jogo, e como identificar o que serve para o seu nível e estilo. Sem enrolação.
+          <p className="text-tinta/50 text-sm leading-relaxed max-w-xl">
+            Cada página vai direto ao ponto: o que é, como afeta o jogo, e como identificar o que serve para o seu nível e estilo.
           </p>
         </header>
 
         {/* Fatores grid */}
         <section>
-          <h2 className="font-heading text-sm font-semibold text-tinta/50 uppercase tracking-widest mb-5">
-            Os 10 fatores
-          </h2>
-          <div className="flex flex-col gap-2.5">
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="font-heading text-xs font-bold text-tinta/40 uppercase tracking-widest">
+              Os 10 fatores
+            </h2>
+            <div className="flex-1 h-px bg-tinta/8" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {FATORES.map(f => (
               <Link
                 key={f.slug}
                 href={`/guia/${f.slug}`}
-                className="group bg-white rounded-2xl px-5 py-4 border border-[rgba(14,58,64,0.06)] shadow-sm hover:border-aqua/30 hover:shadow-md transition-all duration-150 flex items-center gap-4"
+                className="group bg-white rounded-2xl p-5 border border-[rgba(14,58,64,0.07)] shadow-sm hover:border-aqua/35 hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 flex gap-4"
               >
-                <span className="font-heading font-bold text-aqua text-sm w-6 shrink-0 tabular-nums">
-                  {f.n}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-heading font-semibold text-tinta text-sm leading-snug group-hover:text-aqua transition-colors">
+                {/* Número */}
+                <div className="shrink-0 w-9 h-9 rounded-xl bg-aqua/10 flex items-center justify-center group-hover:bg-aqua/18 transition-colors">
+                  <span className="font-heading font-bold text-aqua text-sm tabular-nums leading-none">
+                    {f.n}
+                  </span>
+                </div>
+
+                {/* Conteúdo */}
+                <div className="flex-1 min-w-0 flex flex-col gap-1">
+                  <p className="font-heading font-bold text-tinta text-sm leading-snug group-hover:text-aqua transition-colors">
                     {f.titulo}
                   </p>
-                  <p className="text-tinta/50 text-xs mt-0.5 leading-snug line-clamp-1">
+                  <p className="text-tinta/55 text-xs leading-relaxed line-clamp-2">
                     {f.resumo}
                   </p>
+                  <span className="mt-1.5 text-[10px] font-semibold text-aqua/70 bg-aqua/8 px-2 py-0.5 rounded-full w-fit">
+                    {f.tag}
+                  </span>
                 </div>
-                <span className="text-[10px] font-medium text-tinta/40 bg-[#EAF7F6] px-2.5 py-1 rounded-full shrink-0 hidden sm:block">
-                  {f.tag}
-                </span>
-                <svg className="w-4 h-4 text-tinta/20 group-hover:text-aqua transition-colors shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+
+                <svg className="w-4 h-4 text-tinta/15 group-hover:text-aqua shrink-0 self-center transition-colors mt-0.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </Link>
@@ -195,16 +216,16 @@ export default function GuiaPage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-tinta rounded-2xl p-7 md:p-9 flex flex-col gap-4 text-center">
-          <p className="font-heading font-bold text-white text-xl leading-snug">
+        <section className="bg-tinta rounded-2xl p-7 md:p-10 flex flex-col gap-4 text-center">
+          <p className="font-heading font-bold text-white text-xl md:text-2xl leading-snug">
             Prefere receber a indicação direta?
           </p>
-          <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
-            Nosso especialista analisa o seu nível, estilo e orçamento e indica a raquete certa, de graça, explicando o porquê de cada escolha.
+          <p className="text-white/65 text-sm leading-relaxed max-w-sm mx-auto">
+            O especialista analisa o seu nível, estilo e orçamento e indica a raquete certa, de graça, com explicação do porquê de cada escolha.
           </p>
           <Link
             href="/"
-            className="inline-block bg-coral text-white font-heading font-bold text-sm px-6 py-3 rounded-xl hover:bg-coral/90 transition-colors self-center"
+            className="inline-block bg-coral text-white font-heading font-bold text-sm px-7 py-3 rounded-xl hover:bg-coral/90 hover:shadow-[0_4px_16px_rgba(255,94,58,0.35)] active:scale-[0.98] transition-all self-center"
           >
             Falar com o especialista grátis →
           </Link>
