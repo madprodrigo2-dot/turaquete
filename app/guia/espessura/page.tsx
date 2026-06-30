@@ -93,7 +93,7 @@ export default function EspessuraPage() {
               Quanto mais espessa a moldura, maior a seção transversal de material rígido. Isso aumenta a resistência à deformação no impacto: a raquete "não cede" tanto, e devolve mais energia para a bola. Molduras mais finas, por outro lado, flexionam levemente no golpe, absorvendo parte da vibração e entregando mais sensação tátil.
             </p>
             <p className="text-sm text-tinta/60">
-              A faixa típica em raquetes de beach tennis fica entre 30 mm e 46 mm. Modelos de entrada e controle costumam ficar abaixo de 38 mm; modelos de potência, acima disso. Esses valores são indicativos e variam entre fabricantes.
+              A faixa típica em raquetes de beach tennis fica entre 20 mm e 22 mm. É uma variação pequena em milímetros, mas perceptível na rigidez e na sensação do golpe.
             </p>
           </section>
 

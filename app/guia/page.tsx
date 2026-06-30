@@ -96,7 +96,7 @@ const FATORES = [
     slug: 'espessura',
     titulo: 'Espessura',
     resumo: 'Molduras mais grossas ou finas: como a rigidez afeta potência e conforto.',
-    tag: '30 a 46 mm',
+    tag: '20 a 22 mm',
   },
   {
     n: 6,
