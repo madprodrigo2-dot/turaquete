@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import { Suspense } from 'react'
-import AdminPeriodFilter from '../intencoes/AdminPeriodFilter'
+import AdminPeriodFilter from '../AdminPeriodFilter'
 import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
