@@ -7,7 +7,8 @@ export default async function AdminLoginPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
-  const session = await auth()
+  let session = null
+  try { session = await auth() } catch {}
   if (session) redirect('/admin/intencoes')
 
   const { error } = await searchParams
