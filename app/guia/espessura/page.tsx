@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/espessura`
 
 export const metadata: Metadata = {
-  title: 'Espessura da raquete de beach tennis: grossa ou fina?',
+  title: { absolute: 'Espessura da raquete de beach tennis: grossa ou fina?' },
   description: 'Como a espessura da moldura da raquete de beach tennis afeta potência, conforto e sensação. Saiba qual espessura combina com o seu estilo de jogo.',
   openGraph: {
     title: 'Espessura da raquete de beach tennis: grossa ou fina?',
@@ -29,6 +29,7 @@ const jsonLd = {
     {
       '@type': 'Article',
       headline: 'Espessura da raquete de beach tennis: grossa ou fina?',
+      description: 'Como a espessura da moldura da raquete de beach tennis afeta potência, conforto e sensação. Saiba qual espessura combina com o seu estilo de jogo.',
       url: PAGE_URL,
       author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
       publisher: { '@type': 'Organization', name: 'Turaquete', url: BASE },

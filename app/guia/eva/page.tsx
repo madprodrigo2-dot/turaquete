@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/eva`
 
 export const metadata: Metadata = {
-  title: 'EVA na raquete de beach tennis: macio, médio ou duro?',
+  title: { absolute: 'EVA na raquete de beach tennis: macio, médio ou duro?' },
   description: 'O EVA é a espuma do núcleo da raquete de beach tennis. Entenda como a densidade do EVA afeta o conforto, a potência e a proteção do braço, e qual escolher.',
   openGraph: {
     title: 'EVA da raquete de beach tennis: macio, médio ou duro?',
@@ -29,6 +29,7 @@ const jsonLd = {
     {
       '@type': 'Article',
       headline: 'EVA na raquete de beach tennis: macio, médio ou duro?',
+      description: 'O EVA é a espuma do núcleo da raquete de beach tennis. Entenda como a densidade do EVA afeta o conforto, a potência e a proteção do braço, e qual escolher.',
       url: PAGE_URL,
       author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
       publisher: { '@type': 'Organization', name: 'Turaquete', url: BASE },

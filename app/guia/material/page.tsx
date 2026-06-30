@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/material`
 
 export const metadata: Metadata = {
-  title: 'Carbono 3K, 12K e 18K na raquete de beach tennis: qual a diferença?',
+  title: { absolute: 'Carbono 3K, 12K e 18K na raquete de beach tennis' },
   description: 'Entenda o que significa carbono 3K, 12K e 18K em raquetes de beach tennis e como a fibra de quartzo se compara. Descubra qual material combina com o seu jogo.',
   openGraph: {
     title: 'Carbono 3K, 12K, 18K e quartzo: o guia dos materiais de beach tennis',
@@ -29,6 +29,7 @@ const jsonLd = {
     {
       '@type': 'Article',
       headline: 'Carbono 3K, 12K e 18K na raquete de beach tennis: qual a diferença?',
+      description: 'Entenda o que significa carbono 3K, 12K e 18K em raquetes de beach tennis e como a fibra de quartzo se compara. Descubra qual material combina com o seu jogo.',
       url: PAGE_URL,
       author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
       publisher: { '@type': 'Organization', name: 'Turaquete', url: BASE },

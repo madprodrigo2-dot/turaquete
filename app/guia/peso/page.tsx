@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/peso`
 
 export const metadata: Metadata = {
-  title: 'Peso da raquete de beach tennis: qual o ideal para o seu jogo?',
+  title: { absolute: 'Peso da raquete de beach tennis: qual o ideal?' },
   description: 'Entenda como o peso da raquete afeta potência, manuseio e conforto no beach tennis. Veja qual faixa combina com o seu nível, estilo e condicionamento físico.',
   openGraph: {
     title: 'Peso da raquete de beach tennis: qual o ideal?',

@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/balance`
 
 export const metadata: Metadata = {
-  title: 'Balance da raquete de beach tennis: controle ou potência?',
+  title: { absolute: 'Balance da raquete de beach tennis: controle ou potência?' },
   description: 'O que é o balance (ponto de equilíbrio) da raquete de beach tennis e como ele define se a raquete favorece o controle, o manuseio ou a potência no smash.',
   openGraph: {
     title: 'Balance da raquete de beach tennis: controle ou potência?',

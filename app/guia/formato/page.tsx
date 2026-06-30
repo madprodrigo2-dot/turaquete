@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/formato`
 
 export const metadata: Metadata = {
-  title: 'Raquete redonda, gota ou diamante: qual escolher no beach tennis?',
+  title: { absolute: 'Raquete redonda, gota ou diamante: qual escolher?' },
   description: 'Diferença entre raquete redonda, gota (lágrima) e diamante no beach tennis. Entenda como o formato da cabeça define o sweet spot, a potência e para quem serve cada um.',
   openGraph: {
     title: 'Raquete redonda, gota ou diamante: qual escolher no beach tennis?',

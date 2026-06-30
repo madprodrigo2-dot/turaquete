@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/sweet-spot`
 
 export const metadata: Metadata = {
-  title: 'Sweet spot na raquete de beach tennis: o que é e por que importa',
+  title: { absolute: 'Sweet spot na raquete de beach tennis' },
   description: 'O que é o sweet spot na raquete de beach tennis, como o formato da cabeça define seu tamanho e posição, e por que iniciantes precisam de um sweet spot maior.',
   openGraph: {
     title: 'Sweet spot na raquete de beach tennis: o que é e por que importa',
@@ -29,6 +29,7 @@ const jsonLd = {
     {
       '@type': 'Article',
       headline: 'Sweet spot na raquete de beach tennis: o que é e por que importa',
+      description: 'O que é o sweet spot na raquete de beach tennis, como o formato da cabeça define seu tamanho e posição, e por que iniciantes precisam de um sweet spot maior.',
       url: PAGE_URL,
       author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
       publisher: { '@type': 'Organization', name: 'Turaquete', url: BASE },

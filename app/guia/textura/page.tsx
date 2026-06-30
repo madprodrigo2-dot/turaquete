@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/textura`
 
 export const metadata: Metadata = {
-  title: 'Textura da face da raquete de beach tennis: spin e efeito',
+  title: { absolute: 'Textura da face da raquete de beach tennis: spin e efeito' },
   description: 'Entenda como a textura da face (lisa, areada ou rugosa) da raquete de beach tennis afeta o spin, o efeito na bola e quando vale a pena escolher cada acabamento.',
   openGraph: {
     title: 'Textura da face da raquete de beach tennis: spin e efeito',
@@ -29,6 +29,7 @@ const jsonLd = {
     {
       '@type': 'Article',
       headline: 'Textura da face da raquete de beach tennis: spin e efeito',
+      description: 'Entenda como a textura da face (lisa, areada ou rugosa) da raquete de beach tennis afeta o spin, o efeito na bola e quando vale a pena escolher cada acabamento.',
       url: PAGE_URL,
       author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
       publisher: { '@type': 'Organization', name: 'Turaquete', url: BASE },

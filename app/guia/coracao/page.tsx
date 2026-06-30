@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/coracao`
 
 export const metadata: Metadata = {
-  title: 'Coração da raquete de beach tennis: a região que define o golpe',
+  title: { absolute: 'Coração da raquete de beach tennis' },
   description: 'O coração é a região central da face da raquete de beach tennis. Entenda por que golpear no coração faz diferença e como o formato da raquete define essa área.',
   openGraph: {
     title: 'Coração da raquete de beach tennis: a região que define o golpe',
@@ -29,6 +29,7 @@ const jsonLd = {
     {
       '@type': 'Article',
       headline: 'Coração da raquete de beach tennis: a região que define o golpe',
+      description: 'O coração é a região central da face da raquete de beach tennis. Entenda por que golpear no coração faz diferença e como o formato da raquete define essa área.',
       url: PAGE_URL,
       author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
       publisher: { '@type': 'Organization', name: 'Turaquete', url: BASE },

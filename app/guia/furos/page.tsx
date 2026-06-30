@@ -7,7 +7,7 @@ const BASE = 'https://www.turaquete.com.br'
 const PAGE_URL = `${BASE}/guia/furos`
 
 export const metadata: Metadata = {
-  title: 'Furos e trama da raquete de beach tennis: spin e controle',
+  title: { absolute: 'Furos e trama da raquete de beach tennis: spin e controle' },
   description: 'Como o padrão de furos (trama aberta ou fechada) na face da raquete de beach tennis afeta o spin, a saída de bola e o controle. Entenda antes de comprar.',
   openGraph: {
     title: 'Furos e trama da raquete de beach tennis: spin e controle',
@@ -29,6 +29,7 @@ const jsonLd = {
     {
       '@type': 'Article',
       headline: 'Furos e trama da raquete de beach tennis: spin e controle',
+      description: 'Como o padrão de furos (trama aberta ou fechada) na face da raquete de beach tennis afeta o spin, a saída de bola e o controle. Entenda antes de comprar.',
       url: PAGE_URL,
       author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
       publisher: { '@type': 'Organization', name: 'Turaquete', url: BASE },

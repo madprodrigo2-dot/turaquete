@@ -4,7 +4,7 @@ import Link from 'next/link'
 const BASE = 'https://www.turaquete.com.br'
 
 export const metadata: Metadata = {
-  title: 'Guia da raquete de beach tennis: tudo que você precisa saber',
+  title: { absolute: 'Guia da raquete de beach tennis: tudo que você precisa saber' },
   description: 'Entenda os 10 fatores que definem uma raquete de beach tennis: peso, balance, EVA, carbono, espessura, furos, coração, textura, sweet spot e formato. Escolha com conhecimento.',
   openGraph: {
     title: 'Guia completo da raquete de beach tennis',
@@ -33,6 +33,13 @@ const jsonLd = {
       description: 'Os 10 fatores que definem uma raquete de beach tennis: peso, balance, EVA, carbono, espessura, furos, coração, textura, sweet spot e formato.',
       inLanguage: 'pt-BR',
       isPartOf: { '@id': `${BASE}/#website` },
+      author: { '@type': 'Organization', name: 'Turaquete', url: BASE },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Turaquete',
+        url: BASE,
+        logo: { '@type': 'ImageObject', url: `${BASE}/turaquete-logo.png` },
+      },
     },
     {
       '@type': 'BreadcrumbList',
@@ -47,16 +54,16 @@ const jsonLd = {
       url: `${BASE}/guia`,
       numberOfItems: 10,
       itemListElement: [
-        { '@type': 'ListItem', position: 1,  name: 'Peso',             url: `${BASE}/guia/peso` },
-        { '@type': 'ListItem', position: 2,  name: 'Balance',          url: `${BASE}/guia/balance` },
-        { '@type': 'ListItem', position: 3,  name: 'Material e carbono', url: `${BASE}/guia/material` },
-        { '@type': 'ListItem', position: 4,  name: 'EVA (núcleo)',     url: `${BASE}/guia/eva` },
-        { '@type': 'ListItem', position: 5,  name: 'Espessura',        url: `${BASE}/guia/espessura` },
-        { '@type': 'ListItem', position: 6,  name: 'Furos e trama',    url: `${BASE}/guia/furos` },
-        { '@type': 'ListItem', position: 7,  name: 'Coração',          url: `${BASE}/guia/coracao` },
-        { '@type': 'ListItem', position: 8,  name: 'Textura da face',  url: `${BASE}/guia/textura` },
-        { '@type': 'ListItem', position: 9,  name: 'Sweet spot',       url: `${BASE}/guia/sweet-spot` },
-        { '@type': 'ListItem', position: 10, name: 'Formato da cabeça', url: `${BASE}/guia/formato` },
+        { '@type': 'ListItem', position: 1,  name: 'Peso',             item: `${BASE}/guia/peso` },
+        { '@type': 'ListItem', position: 2,  name: 'Balance',          item: `${BASE}/guia/balance` },
+        { '@type': 'ListItem', position: 3,  name: 'Material e carbono', item: `${BASE}/guia/material` },
+        { '@type': 'ListItem', position: 4,  name: 'EVA (núcleo)',     item: `${BASE}/guia/eva` },
+        { '@type': 'ListItem', position: 5,  name: 'Espessura',        item: `${BASE}/guia/espessura` },
+        { '@type': 'ListItem', position: 6,  name: 'Furos e trama',    item: `${BASE}/guia/furos` },
+        { '@type': 'ListItem', position: 7,  name: 'Coração',          item: `${BASE}/guia/coracao` },
+        { '@type': 'ListItem', position: 8,  name: 'Textura da face',  item: `${BASE}/guia/textura` },
+        { '@type': 'ListItem', position: 9,  name: 'Sweet spot',       item: `${BASE}/guia/sweet-spot` },
+        { '@type': 'ListItem', position: 10, name: 'Formato da cabeça', item: `${BASE}/guia/formato` },
       ],
     },
   ],
