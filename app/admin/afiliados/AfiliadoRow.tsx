@@ -16,8 +16,10 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
   const [url, setUrl] = useState(affiliateUrl ?? '')
   const [status, setStatus] = useState<null | 'saving' | 'ok' | string>(null)
   const [hasAffiliate, setHasAffiliate] = useState(!!affiliateUrl)
+  const [hasTag, setHasTag] = useState(affiliateUrl?.includes('matt_word') ?? false)
 
   const dirty = url.trim() !== (affiliateUrl ?? '')
+  const mlSemTag = url.trim().includes('mercadolivre') && !url.trim().includes('matt_word')
 
   async function save() {
     const trimmed = url.trim()
@@ -37,6 +39,7 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
         setStatus(data.error ?? 'Erro ao salvar')
       } else {
         setHasAffiliate(!!trimmed)
+        setHasTag(trimmed.includes('matt_word'))
         setStatus('ok')
         setTimeout(() => setStatus(null), 3000)
       }
@@ -45,11 +48,13 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
     }
   }
 
-  const badge = hasAffiliate
-    ? <span className="text-green-500 text-base" title="Afiliado ML">✓</span>
-    : sourceUrl
+  const badge = !hasAffiliate
+    ? sourceUrl
       ? <span className="text-teal-500 text-xs font-semibold" title="Source only">src</span>
       : <span className="text-amber-500 text-base" title="Sem link">⚠</span>
+    : !hasTag
+      ? <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-orange-500 leading-none" title="ML sem tag de afiliado">⚠ tag</span>
+      : <span className="text-green-500 text-base" title="Afiliado ML com tag ✓">✓</span>
 
   return (
     <tr className="border-t border-gray-100 hover:bg-gray-50/60">
@@ -94,6 +99,9 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
             {status === 'saving' ? '...' : 'Salvar'}
           </button>
         </div>
+        {mlSemTag && (
+          <p className="text-[10px] text-orange-500 mt-1 font-medium">⚠ Link ML sem tag de afiliado — comissão não rastreada</p>
+        )}
         {affiliateUrl && (
           <p className="text-[10px] text-gray-400 mt-1 truncate font-mono" title={affiliateUrl}>
             afiliado: <a href={affiliateUrl} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 underline">{affiliateUrl}</a>

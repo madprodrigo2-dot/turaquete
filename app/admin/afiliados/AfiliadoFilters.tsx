@@ -7,9 +7,10 @@ interface Props {
   brands: { slug: string; name: string }[]
   currentFilter?: string
   currentBrand?: string
+  semTag?: number
 }
 
-function Filters({ brands, currentFilter, currentBrand }: Props) {
+function Filters({ brands, currentFilter, currentBrand, semTag }: Props) {
   const router = useRouter()
   const params = useSearchParams()
 
@@ -40,6 +41,18 @@ function Filters({ brands, currentFilter, currentBrand }: Props) {
       >
         ✓ Com afiliado
       </button>
+      {(semTag ?? 0) > 0 && (
+        <button
+          onClick={() => update('filter', currentFilter === 'sem_tag' ? null : 'sem_tag')}
+          className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+            currentFilter === 'sem_tag'
+              ? 'bg-orange-500 text-white'
+              : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+          }`}
+        >
+          ⚠ ML sem tag ({semTag})
+        </button>
+      )}
       <button
         onClick={() => update('filter', currentFilter === 'sem_afiliado' ? null : 'sem_afiliado')}
         className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${

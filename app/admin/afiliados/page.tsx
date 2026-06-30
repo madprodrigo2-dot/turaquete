@@ -65,10 +65,13 @@ export default async function AfiliadosPage({
     filtered = filtered.filter(r => !r.affiliate_url)
   } else if (filter === 'com_afiliado') {
     filtered = filtered.filter(r => !!r.affiliate_url)
+  } else if (filter === 'sem_tag') {
+    filtered = filtered.filter(r => r.affiliate_url?.includes('mercadolivre') && !r.affiliate_url?.includes('matt_word'))
   }
 
   const total = rows.length
   const comAfiliado = rows.filter(r => !!r.affiliate_url).length
+  const semTag = rows.filter(r => r.affiliate_url?.includes('mercadolivre') && !r.affiliate_url?.includes('matt_word')).length
   const soSource = rows.filter(r => !r.affiliate_url && !!r.source_url).length
   const semLink = rows.filter(r => !r.affiliate_url && !r.source_url).length
   const pct = total > 0 ? Math.round((comAfiliado / total) * 100) : 0
@@ -92,6 +95,9 @@ export default async function AfiliadosPage({
               {comAfiliado} <span className="text-gray-400 font-normal">de</span> {total} com afiliado ML
             </span>
             <span className="flex gap-3 text-xs font-medium">
+              {semTag > 0 && (
+                <span className="text-orange-500">{semTag} sem tag</span>
+              )}
               <span className="text-teal-600">{soSource} só source</span>
               <span className={semLink > 0 ? 'text-amber-500' : 'text-green-600'}>
                 {semLink > 0 ? `${semLink} sem link` : 'Sem link ✓'}
@@ -113,6 +119,7 @@ export default async function AfiliadosPage({
         brands={brandOptions}
         currentFilter={filter}
         currentBrand={brand}
+        semTag={semTag}
       />
 
       {/* Table */}
