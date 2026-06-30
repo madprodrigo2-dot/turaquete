@@ -110,7 +110,7 @@ export default function PesoPage() {
             Peso da raquete de beach tennis
           </h1>
           <p className="text-tinta/70 text-lg leading-relaxed">
-            O peso é o primeiro número que aparece na ficha técnica de qualquer raquete. A faixa típica vai de 320 g a 355 g, mas a diferença de 20 gramas no jogo é maior do que parece.
+            O peso é o primeiro número que aparece na ficha técnica de qualquer raquete. A faixa típica vai de 320 g a 355 g, mas a diferença de 35 gramas no jogo é maior do que parece.
           </p>
         </header>
 
