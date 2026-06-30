@@ -84,10 +84,10 @@ export default function SweetSpotPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">Por que o tamanho do sweet spot muda tudo</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">Por que o tamanho do sweet spot muda tudo</h2>
             <p className="mb-4">
               Um sweet spot grande perdoa mais os erros de timing. O jogador não precisa acertar exatamente o ponto certo para ter um golpe útil. Isso é essencial para iniciantes e intermediários, que ainda estão desenvolvendo a consistência.
             </p>
@@ -97,7 +97,7 @@ export default function SweetSpotPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-5">Como o formato define o sweet spot</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">Como o formato define o sweet spot</h2>
             <div className="flex flex-col gap-3">
               {[
                 {
@@ -127,7 +127,7 @@ export default function SweetSpotPage() {
                     <p className="font-heading font-bold text-tinta text-sm">{formato}</p>
                     <span className="text-[10px] font-medium text-tinta/40 bg-white/70 border border-tinta/10 px-2.5 py-1 rounded-full whitespace-nowrap">{spot}</span>
                   </div>
-                  <p className="text-sm leading-relaxed text-tinta/70 mb-2">{descricao}</p>
+                  <p className="text-[15px] leading-relaxed text-tinta/70 mb-2">{descricao}</p>
                   <p className="text-xs text-tinta/50">
                     <span className="font-semibold text-tinta/70">Nível: </span>{level}
                   </p>
@@ -137,7 +137,7 @@ export default function SweetSpotPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">Sweet spot e coração: a relação</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">Sweet spot e coração: a relação</h2>
             <p>
               O{' '}
               <TermoGlossario entry={entCoracao}>coração</TermoGlossario>
@@ -145,7 +145,7 @@ export default function SweetSpotPage() {
             </p>
           </section>
 
-          <aside className="bg-[#FFC42E]/10 border border-[#FFC42E]/25 rounded-2xl px-5 py-4">
+          <aside className="bg-[#FFFAEB] rounded-2xl px-5 py-5 border-l-4 border-l-[#FFC42E]">
             <p className="font-semibold text-tinta text-sm mb-1">Sweet spot não aparece na ficha técnica</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               As marcas raramente publicam dados precisos sobre o sweet spot. O formato da cabeça é o indicador mais confiável: redonda = maior, diamante = menor. Avaliações de jogadores com perfil similar ao seu são a melhor referência prática.

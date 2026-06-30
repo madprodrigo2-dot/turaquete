@@ -106,10 +106,10 @@ export default function EvaPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">Como o EVA funciona</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">Como o EVA funciona</h2>
             <p className="mb-4">
               Quando a bola bate na face da raquete, a energia do impacto se propaga pela face e chega ao EVA. Uma espuma macia absorve mais dessa energia, entregando sensação suave e protegendo o braço da vibração. Uma espuma dura devolve mais energia para a bola, o que aumenta a potência, mas transmite mais impacto para a mão e o braço.
             </p>
@@ -119,15 +119,15 @@ export default function EvaPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-5">As três densidades de EVA</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">As três densidades de EVA</h2>
             <div className="flex flex-col gap-3">
               {DENSIDADES.map(({ tipo, efeito, para, cor }) => (
                 <div key={tipo} className={`rounded-2xl p-5 border shadow-sm ${cor}`}>
                   <p className="font-heading font-bold text-tinta text-sm mb-3">{tipo}</p>
                   <ul className="space-y-1 mb-3">
                     {efeito.map(e => (
-                      <li key={e} className="flex items-start gap-2 text-sm text-tinta/70">
-                        <span className="text-aqua mt-0.5 shrink-0">–</span>
+                      <li key={e} className="flex items-start gap-2 text-[15px] text-tinta/70">
+                        <span className="w-1.5 h-1.5 rounded-full bg-aqua/70 mt-[0.45rem] shrink-0 flex-shrink-0" aria-hidden="true" />
                         {e}
                       </li>
                     ))}
@@ -140,14 +140,14 @@ export default function EvaPage() {
             </div>
           </section>
 
-          <aside className="bg-[#FFC42E]/10 border border-[#FFC42E]/25 rounded-2xl px-5 py-4">
+          <aside className="bg-[#FFFAEB] rounded-2xl px-5 py-5 border-l-4 border-l-[#FFC42E]">
             <p className="font-semibold text-tinta text-sm mb-1">Cotovelo sensível: o EVA é o fator mais importante</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               Se você tem ou já teve epicondilite (cotovelo de tenista) ou qualquer sensibilidade no braço, o EVA do núcleo tem mais impacto na proteção do que qualquer outro fator, incluindo o peso. Sempre prefira EVA macio nesse caso, e consulte um profissional de saúde antes de voltar ao jogo após uma lesão.
             </p>
           </aside>
 
-          <aside className="bg-[#EAF7F6] border border-aqua/20 rounded-2xl px-5 py-4">
+          <aside className="bg-[#EAF7F6] rounded-2xl px-5 py-5 border-l-4 border-l-aqua/60">
             <p className="font-semibold text-tinta text-sm mb-1">Por que as marcas nem sempre informam o EVA</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               Muitas fichas técnicas não mencionam o EVA explicitamente, ou usam termos proprietários como "Soft Eva", "Pro Eva" ou "Premium Foam". Na dúvida, o nível de conforto indicado pelo fabricante e as avaliações de jogadores com o perfil similar ao seu são os melhores guias.

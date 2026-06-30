@@ -85,10 +85,10 @@ export default function EspessuraPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">O que a espessura muda na prática</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">O que a espessura muda na prática</h2>
             <p className="mb-4">
               Quanto mais espessa a moldura, maior a seção transversal de material rígido. Isso aumenta a resistência à deformação no impacto: a raquete "não cede" tanto, e devolve mais energia para a bola. Molduras mais finas, por outro lado, flexionam levemente no golpe, absorvendo parte da vibração e entregando mais sensação tátil.
             </p>
@@ -98,7 +98,7 @@ export default function EspessuraPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-5">Grossa vs. fina: resumo</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">Grossa vs. fina: resumo</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
                 {
@@ -118,8 +118,8 @@ export default function EspessuraPage() {
                   <p className="font-heading font-bold text-tinta text-sm mb-3">{titulo}</p>
                   <ul className="space-y-1 mb-3">
                     {itens.map(i => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-tinta/70">
-                        <span className="text-aqua mt-0.5 shrink-0">–</span>
+                      <li key={i} className="flex items-start gap-2 text-[15px] text-tinta/70">
+                        <span className="w-1.5 h-1.5 rounded-full bg-aqua/70 mt-[0.45rem] shrink-0 flex-shrink-0" aria-hidden="true" />
                         {i}
                       </li>
                     ))}
@@ -132,7 +132,7 @@ export default function EspessuraPage() {
             </div>
           </section>
 
-          <aside className="bg-[#EAF7F6] border border-aqua/20 rounded-2xl px-5 py-4">
+          <aside className="bg-[#EAF7F6] rounded-2xl px-5 py-5 border-l-4 border-l-aqua/60">
             <p className="font-semibold text-tinta text-sm mb-1">Espessura, EVA e material interagem</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               Uma raquete espessa com EVA macio pode ser mais confortável do que uma fina com EVA duro. Os fatores não funcionam isolados. A espessura define o potencial de rigidez; o EVA e o material da face determinam o quanto desse potencial se transforma em potência ou em absorção.

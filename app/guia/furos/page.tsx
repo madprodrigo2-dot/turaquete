@@ -85,10 +85,10 @@ export default function FurosPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">Por que os furos importam</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">Por que os furos importam</h2>
             <p className="mb-4">
               No momento do impacto, a bola deforma levemente a superfície da face. A disposição dos furos define quanto a bola "afunda" na face e qual é o atrito entre os dois. Mais atrito gera mais efeito (spin); menos atrito resulta em saída de bola mais limpa e direta.
             </p>
@@ -98,7 +98,7 @@ export default function FurosPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-5">Trama aberta vs. trama densa</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">Trama aberta vs. trama densa</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
                 {
@@ -129,8 +129,8 @@ export default function FurosPage() {
                   <p className="text-tinta/40 text-xs mb-3">{subtitulo}</p>
                   <ul className="space-y-1">
                     {itens.map(i => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-tinta/70">
-                        <span className="text-aqua mt-0.5 shrink-0">–</span>
+                      <li key={i} className="flex items-start gap-2 text-[15px] text-tinta/70">
+                        <span className="w-1.5 h-1.5 rounded-full bg-aqua/70 mt-[0.45rem] shrink-0 flex-shrink-0" aria-hidden="true" />
                         {i}
                       </li>
                     ))}
@@ -141,7 +141,7 @@ export default function FurosPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">Trama e nível de jogo</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">Trama e nível de jogo</h2>
             <p className="mb-4">
               Para iniciantes e intermediários, uma trama mais densa costuma ser mais fácil de jogar: o golpe sai mais previsível, e erros de ângulo são menos punidos. Jogadores avançados que querem gerar spin de forma intencional se beneficiam de tramas abertas, mas precisam ter técnica para não perder o controle.
             </p>
@@ -150,7 +150,7 @@ export default function FurosPage() {
             </p>
           </section>
 
-          <aside className="bg-[#EAF7F6] border border-aqua/20 rounded-2xl px-5 py-4">
+          <aside className="bg-[#EAF7F6] rounded-2xl px-5 py-5 border-l-4 border-l-aqua/60">
             <p className="font-semibold text-tinta text-sm mb-1">Trama e textura: dois fatores que se somam</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               O padrão de furos e o acabamento da superfície atuam juntos no spin. Veja o próximo fator para entender como a textura complementa (ou compensa) o efeito da trama.

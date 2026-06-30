@@ -61,24 +61,24 @@ const balance   = GLOSSARIO.find(e => e.termo === 'balance')!
 
 const PROFILES = [
   {
-    label: 'Iniciante ou jogador casual',
-    range: '320 a 330 g',
-    tip:   'Reação mais rápida, menor cansaço. Mais tolerante a erros de tempo no golpe.',
+    label: 'Defesa e controle',
+    range: '320 a 335 g',
+    tip:   'Reação mais rápida, menor cansaço ao longo do jogo. Mais tolerante a erros de tempo no golpe.',
   },
   {
-    label: 'Intermediário',
+    label: 'Jogo equilibrado',
     range: '330 a 345 g',
-    tip:   'Equilibra potência e manuseio. Boa base para a maioria dos jogos.',
+    tip:   'Equilibra potência e manuseio. Funciona bem em qualquer situação de jogo.',
   },
   {
-    label: 'Avançado / ofensivo',
-    range: '345 a 355 g',
+    label: 'Ataque e potência',
+    range: '340 a 355 g',
     tip:   'Mais momentum no smash. Exige braço condicionado para manter a qualidade do gesto ao longo do jogo.',
   },
   {
     label: 'Cotovelo, ombro ou pulso sensível',
     range: 'menor da faixa',
-    tip:   'Prefira sempre o peso mais baixo dentro do nível indicado, independentemente do estilo de jogo.',
+    tip:   'Prefira sempre o peso mais baixo dentro do estilo indicado, independentemente do nível de jogo.',
   },
 ]
 
@@ -114,11 +114,11 @@ export default function PesoPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           {/* — Como afeta o jogo — */}
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">
               Como o peso muda o seu jogo
             </h2>
             <p className="mb-5">
@@ -156,11 +156,11 @@ export default function PesoPage() {
 
           {/* — Qual peso combina — */}
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-2">
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">
               Qual peso combina com você?
             </h2>
             <p className="mb-5 text-sm">
-              Não existe um peso universalmente melhor. Existe o peso certo para o seu nível, estilo e condicionamento físico.
+              Não existe um peso universalmente melhor. O peso ideal depende do estilo de jogo e do condicionamento — não do nível. Um avançado defensivo pode preferir uma raquete leve; um iniciante com estilo ofensivo pode se beneficiar de algo mais pesado.
             </p>
             <div className="flex flex-col gap-2.5">
               {PROFILES.map(({ label, range, tip }) => (
@@ -181,7 +181,7 @@ export default function PesoPage() {
           </section>
 
           {/* — Aviso peso anunciado — */}
-          <aside className="bg-[#FFC42E]/10 border border-[#FFC42E]/25 rounded-2xl px-5 py-4">
+          <aside className="bg-[#FFFAEB] rounded-2xl px-5 py-5 border-l-4 border-l-[#FFC42E]">
             <p className="font-semibold text-tinta text-sm mb-1">Cuidado com o peso anunciado</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               A maioria das marcas informa o peso sem grip, overgrip ou fita protetora. O conjunto pode adicionar entre 10 g e 25 g ao peso total. Quando comparar dois modelos, verifique se as especificações estão na mesma base antes de decidir.
@@ -189,7 +189,7 @@ export default function PesoPage() {
           </aside>
 
           {/* — Peso e balance — */}
-          <aside className="bg-[#EAF7F6] border border-aqua/20 rounded-2xl px-5 py-4">
+          <aside className="bg-[#EAF7F6] rounded-2xl px-5 py-5 border-l-4 border-l-aqua/60">
             <p className="font-semibold text-tinta text-sm mb-1">Peso e balance andam juntos</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               O{' '}

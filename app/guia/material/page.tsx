@@ -113,10 +113,10 @@ export default function MaterialPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">
               O que significa 3K, 12K e 18K
             </h2>
             <p className="mb-4">
@@ -130,7 +130,7 @@ export default function MaterialPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-5">Os materiais mais comuns</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">Os materiais mais comuns</h2>
             <div className="flex flex-col gap-3">
               {MATERIAIS.map(({ nome, subtitulo, descricao, perfil, tag }) => (
                 <div key={nome} className="bg-white rounded-2xl p-5 border border-[rgba(14,58,64,0.06)] shadow-sm">
@@ -143,7 +143,7 @@ export default function MaterialPage() {
                       {tag}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed text-tinta/70 mb-2">{descricao}</p>
+                  <p className="text-[15px] leading-relaxed text-tinta/70 mb-2">{descricao}</p>
                   <p className="text-xs text-tinta/50">
                     <span className="font-semibold text-tinta/70">Para quem: </span>{perfil}
                   </p>
@@ -153,7 +153,7 @@ export default function MaterialPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">
               Moldura vs. face: onde o material está
             </h2>
             <p className="mb-4">
@@ -168,7 +168,7 @@ export default function MaterialPage() {
             </p>
           </section>
 
-          <aside className="bg-[#FFC42E]/10 border border-[#FFC42E]/25 rounded-2xl px-5 py-4">
+          <aside className="bg-[#FFFAEB] rounded-2xl px-5 py-5 border-l-4 border-l-[#FFC42E]">
             <p className="font-semibold text-tinta text-sm mb-1">O marketing pode exagerar</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               "Carbono 18K ultra premium" em uma raquete de entrada pode indicar apenas que a moldura usa esse material em pequena espessura, sem entregar a rigidez de um modelo de alto padrão. O material é um fator, não o único fator. Considere sempre o conjunto: EVA, espessura, balance e peso.

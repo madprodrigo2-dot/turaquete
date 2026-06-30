@@ -108,10 +108,10 @@ export default function BalancePage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">
               Por que o balance importa tanto quanto o peso
             </h2>
             <p className="mb-4">
@@ -127,7 +127,7 @@ export default function BalancePage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-5">
+            <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">
               Os três tipos de balance
             </h2>
             <div className="flex flex-col gap-3">
@@ -137,7 +137,7 @@ export default function BalancePage() {
                     <p className="font-heading font-bold text-tinta text-sm">{tipo}</p>
                     <span className={`text-[10px] font-semibold uppercase tracking-wide ${cor}`}>{tag}</span>
                   </div>
-                  <p className="text-sm leading-relaxed text-tinta/70 mb-2">{descricao}</p>
+                  <p className="text-[15px] leading-relaxed text-tinta/70 mb-2">{descricao}</p>
                   <p className="text-xs text-tinta/50 leading-snug">
                     <span className="font-semibold text-tinta/70">Para quem: </span>{para}
                   </p>
@@ -147,7 +147,7 @@ export default function BalancePage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">
               Como identificar o balance de uma raquete
             </h2>
             <p className="mb-4">
@@ -158,7 +158,7 @@ export default function BalancePage() {
             </p>
           </section>
 
-          <aside className="bg-[#EAF7F6] border border-aqua/20 rounded-2xl px-5 py-4">
+          <aside className="bg-[#EAF7F6] rounded-2xl px-5 py-5 border-l-4 border-l-aqua/60">
             <p className="font-semibold text-tinta text-sm mb-1">
               <TermoGlossario entry={entControle}>Controle</TermoGlossario>
               {' '}ou potência: balance define mais do que o peso

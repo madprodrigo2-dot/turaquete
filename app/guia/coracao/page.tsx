@@ -87,10 +87,10 @@ export default function CoracaoPage() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10 text-tinta/80 leading-relaxed">
+        <div className="flex flex-col gap-12 text-tinta/80 leading-relaxed">
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-4">O que acontece no golpe</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-4 pl-4 border-l-4 border-l-aqua/40">O que acontece no golpe</h2>
             <p className="mb-4">
               Quando a bola bate no coração da raquete, a face deforma de forma simétrica e controlada. A energia se distribui bem pelo núcleo e a resposta é previsível: mais potência, mais controle e menos vibração transmitida para o braço.
             </p>
@@ -102,7 +102,7 @@ export default function CoracaoPage() {
           </section>
 
           <section>
-            <h2 className="font-heading text-xl font-bold text-tinta mb-5">Coração e formato da cabeça</h2>
+            <h2 className="font-heading text-xl font-bold text-tinta mb-5 pl-4 border-l-4 border-l-aqua/40">Coração e formato da cabeça</h2>
             <p className="mb-4">
               O tamanho e a posição do coração dependem do formato da raquete:
             </p>
@@ -132,7 +132,7 @@ export default function CoracaoPage() {
                     <p className="font-heading font-bold text-tinta text-sm">{formato}</p>
                     <span className="text-[10px] text-tinta/40 bg-[#EAF7F6] px-2.5 py-1 rounded-full font-medium">{coracao}</span>
                   </div>
-                  <p className="text-sm leading-relaxed text-tinta/70 mb-1">{detalhe}</p>
+                  <p className="text-[15px] leading-relaxed text-tinta/70 mb-1">{detalhe}</p>
                   <p className="text-xs text-tinta/50">
                     <span className="font-semibold text-tinta/70">Para quem: </span>{para}
                   </p>
@@ -141,7 +141,7 @@ export default function CoracaoPage() {
             </div>
           </section>
 
-          <aside className="bg-[#EAF7F6] border border-aqua/20 rounded-2xl px-5 py-4">
+          <aside className="bg-[#EAF7F6] rounded-2xl px-5 py-5 border-l-4 border-l-aqua/60">
             <p className="font-semibold text-tinta text-sm mb-1">Coração e sweet spot: não são a mesma coisa</p>
             <p className="text-tinta/70 text-sm leading-relaxed">
               O coração é a região geográfica central da face. O sweet spot é a área física onde o golpe sai com mais eficiência. Em raquetes bem projetadas, o sweet spot fica dentro do coração, mas pode ser deslocado dependendo do design interno.
