@@ -1,5 +1,6 @@
 import { auth, signOut } from '@/auth'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
 import AdminTestToggle from '@/components/AdminTestToggle'
@@ -7,6 +8,14 @@ import AdminTestToggle from '@/components/AdminTestToggle'
 const buildLabel = process.env.NEXT_PUBLIC_BUILD_LABEL ?? null
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const h = await headers()
+  const pathname = h.get('x-pathname') ?? ''
+
+  // Login e reset não precisam de auth — evita redirect loop
+  if (pathname === '/admin/login' || pathname.startsWith('/admin/reset')) {
+    return <>{children}</>
+  }
+
   const session = await auth()
   const isAdmin = !!session?.user?.email && session.user.email === process.env.ADMIN_EMAIL
 

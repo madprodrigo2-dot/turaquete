@@ -46,12 +46,16 @@ export function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // Passa pathname para o layout poder pular auth em login/reset
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('x-pathname', pathname)
+
   if (!hasSession(req)) {
     return NextResponse.redirect(new URL('/admin/login', req.url))
   }
-  return NextResponse.next()
+  return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
 export const config = {
-  matcher: ['/admin/((?!login|reset).+)', '/raquetes/:path*'],
+  matcher: ['/admin/:path*', '/raquetes/:path*'],
 }
