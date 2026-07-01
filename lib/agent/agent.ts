@@ -841,7 +841,12 @@ async function executeTool(
     const budgetKnown = isNameSearch || !!(input as RacketFilters).presupuesto_max
       || (input as RacketFilters).presupuesto_min !== undefined
       || budgetAnsweredRef.value
-    const priceDecision = computePrecoDecision(budgetKnown)
+    const isTantoFazBudget = budgetKnown && chatHistory.some(m => m.role === 'user' && m.content.trim() === 'Tanto faz / me mostra opções')
+    const priceDecision: PrecoDecision = !budgetKnown
+      ? { status: 'disparo', note: 'orçamento desconhecido → perguntar faixa obrigatoriamente' }
+      : isTantoFazBudget
+      ? { status: 'tanto_faz', note: 'sem filtro de preço — priorizar custo-benefício' }
+      : { status: 'budget_known', note: 'usuário informou faixa de preço' }
     debugRef.value.decisionTrace!.precoDecision = priceDecision
     priceAskPendingRef.value = priceDecision.status === 'disparo'
     if (priceDecision.status === 'disparo') {
@@ -985,31 +990,88 @@ async function executeTool(
       }
     }
 
-    // Pref técnica: informa o modelo sobre a preferência e se o top encaixa
+    // Pref técnica: compute match count for presented candidates — prevents false claims
+    // (e.g. narrating "carbono 18K" for rackets that aren't 18K).
     const hasTechPref = effectiveFilters.pref_carbono || effectiveFilters.pref_eva || effectiveFilters.pref_espessura
-    if (hasTechPref && ranked.length > 0) {
+    if (hasTechPref) {
       const prefDesc = effectiveFilters.pref_carbono
         ? `carbono ${effectiveFilters.pref_carbono.toUpperCase()}`
         : effectiveFilters.pref_eva
         ? `EVA ${effectiveFilters.pref_eva}`
         : `espessura ${effectiveFilters.pref_espessura}`
-      payload.PREF_TECNICA = {
-        pref_solicitada: prefDesc,
-        instrucao_OBRIGATORIA:
-          `Usuário declarou preferência por ${prefDesc}. ` +
-          `OBRIGATÓRIO: mencione a preferência na narração. ` +
-          `Se a principal recomendação atende a preferência, confirme. ` +
-          `Se não atende (ex: pediu 18K mas a melhor é 3K), diga honestamente: ` +
-          `"embora você prefira ${prefDesc}, a raquete que melhor encaixa no seu perfil é [nome]" ` +
-          `e aponte qual opção está mais próxima da preferência.`,
-      }
-    }
-    if (hasTechPref && ranked.length === 0) {
-      payload.PREF_TECNICA_SEM_MATCH = {
-        status: 'ZERO_COM_PREF',
-        instrucao_OBRIGATORIA:
-          `Não há raquetes com a preferência técnica solicitada para esse perfil e orçamento. ` +
-          `OBRIGATÓRIO: diga honestamente que não tem opções com a preferência e mostre as mais próximas disponíveis.`,
+
+      if (ranked.length === 0) {
+        payload.PREF_TECNICA_SEM_MATCH = {
+          status: 'ZERO_COM_PREF',
+          instrucao_OBRIGATORIA:
+            `Não há raquetes com a preferência técnica solicitada para esse perfil e orçamento. ` +
+            `OBRIGATÓRIO: diga honestamente que não tem opções com a preferência e mostre as mais próximas disponíveis.`,
+        }
+      } else {
+        // Mirror exact classify logic from recommend.ts buscarRaquetas scorer
+        const presented = filteredPool.slice(0, MAX_CANDIDATES)
+        const cumprem = presented.filter(r => {
+          if (effectiveFilters.pref_carbono) {
+            const face = (r.face_material || '').toLowerCase()
+            const m3k = (face.includes('carbono') || face.includes('carbon')) &&
+              !face.includes('18k') && !face.includes('21k') && !face.includes('24k') && !face.includes('triaxial') &&
+              !face.includes('12k') && !face.includes('15k') && !face.includes('16k') && !face.includes('6k') &&
+              !face.includes('forjad') && !face.includes('forged') &&
+              !face.includes('titanio') && !face.includes('titânio') && !face.includes('metal fusion') &&
+              !face.includes('silver') && !face.includes('mft') && !face.includes('aluminizado')
+            const m12k = face.includes('12k') || face.includes('15k') || face.includes('16k') || face.includes('6k')
+            const m18k = face.includes('18k') || face.includes('21k') || face.includes('24k') || face.includes('triaxial') || face.includes('forjad') || face.includes('forged')
+            return effectiveFilters.pref_carbono === '3k' ? m3k : effectiveFilters.pref_carbono === '12k' ? m12k : m18k
+          }
+          if (effectiveFilters.pref_eva) {
+            const core = (r.core || '').toLowerCase()
+            const isSS = core.includes('supersoft') || core.includes('extra soft') || core.includes('extrasoft') || core.includes('branco') || core.includes('white') || core === 'eva 10' || core === 'eva 13'
+            const isSoft = !isSS && core.includes('soft')
+            const isHard = core.includes('hard') || core.includes('duro') || core.includes('high density') || core.includes('alta densidade') || core.includes('black pro')
+            return effectiveFilters.pref_eva === 'soft' ? (isSS || isSoft) : effectiveFilters.pref_eva === 'medium' ? (!isSS && !isSoft && !isHard) : isHard
+          }
+          if (effectiveFilters.pref_espessura) {
+            const esp = (r.specs_extra?.espessura_mm as number | null | undefined) ?? null
+            return esp != null && (
+              effectiveFilters.pref_espessura === 'fina' ? esp <= 20 : effectiveFilters.pref_espessura === 'media' ? (esp === 21 || esp === 22) : esp >= 23
+            )
+          }
+          return false
+        }).length
+        const total = presented.length
+        const hasLesaoFilter = !!(effectiveFilters.cotovelo_sensivel || effectiveFilters.ombro_sensivel || effectiveFilters.punho_sensivel)
+        const motivoLesao = hasLesaoFilter
+          ? `Filtro de proteção ao braço (comfort ≥ 8 + saída de bola fácil) excluiu opções ${prefDesc} mais rígidas — REGRA: lesão > preferência técnica.`
+          : ''
+
+        if (cumprem === 0) {
+          payload.PREF_TECNICA = {
+            pref_solicitada: prefDesc,
+            cumprem: 0,
+            total_apresentadas: total,
+            motivo: motivoLesao || `Nenhuma das ${total} apresentadas é ${prefDesc} para esse perfil.`,
+            instrucao_OBRIGATORIA:
+              `PROIBIDO afirmar que as raquetes apresentadas são ${prefDesc}. ` +
+              (motivoLesao ? motivoLesao + ' ' : '') +
+              `Reconheça honestamente a preferência do usuário e explique por que foram apresentadas outras opções.`,
+          }
+        } else if (cumprem < total) {
+          payload.PREF_TECNICA = {
+            pref_solicitada: prefDesc,
+            cumprem,
+            total_apresentadas: total,
+            instrucao_OBRIGATORIA:
+              `${cumprem} de ${total} raquetes apresentadas são ${prefDesc}. ` +
+              `Mencione quais correspondem à preferência e quais não — PROIBIDO dizer que todas são ${prefDesc}.`,
+          }
+        } else {
+          payload.PREF_TECNICA = {
+            pref_solicitada: prefDesc,
+            cumprem,
+            total_apresentadas: total,
+            instrucao_OBRIGATORIA: `Todas as ${total} raquetes apresentadas são ${prefDesc}. Pode confirmar isso na narração.`,
+          }
+        }
       }
     }
 
@@ -1260,7 +1322,11 @@ export async function runAgentTurn(
     }
     return Math.min(ctx, 2)  // cap: at most 2 context turns subtracted
   })()
-  const profileQuestionsAsked = Math.max(0, history.filter(m => m.role === 'user').length - 1 - trocaContextOffset)
+  const prefQIdx = history.findIndex(m => m.role === 'assistant' && m.content.includes(PREF_QUESTION_TEXT))
+  const profileUserTurns = prefQIdx === -1
+    ? history.filter(m => m.role === 'user').length
+    : history.slice(0, prefQIdx).filter(m => m.role === 'user').length
+  const profileQuestionsAsked = Math.max(0, profileUserTurns - 1 - trocaContextOffset)
   // Profile state derived from chip answers in history — immune to model omission between turns.
   // Lesão fields are also stripped from model input and re-injected from here (prevents inference).
   const confirmedProfile = extractConfirmedProfileFromHistory(history)

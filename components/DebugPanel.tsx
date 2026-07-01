@@ -108,11 +108,11 @@ function DecisionTreeSection({ trace }: { trace: DecisionTrace }) {
             const color =
               pd.status === 'disparo'      ? 'text-orange-300' :
               pd.status === 'budget_known' ? 'text-green-400'  :
-              pd.status === 'similar'      ? 'text-cyan-400'   : 'text-gray-400'
+              pd.status === 'tanto_faz'    ? 'text-cyan-400'   : 'text-gray-400'
             const label =
-              pd.status === 'disparo'      ? '⚠ spread amplo — pergunta preço' :
+              pd.status === 'disparo'      ? '⚠ sem budget — pergunta preço'   :
               pd.status === 'budget_known' ? '✓ budget conhecido'               :
-              pd.status === 'similar'      ? '~ spread estreito — recomenda direto' : '— sem dados'
+              pd.status === 'tanto_faz'    ? '~ budget aberto / custo-benefício' : '— sem dados'
             return (
               <>
                 <div className={`text-[11px] font-semibold ${color} mb-0.5`}>{label}</div>

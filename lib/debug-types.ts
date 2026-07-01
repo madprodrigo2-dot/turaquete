@@ -21,7 +21,7 @@ export type FilterStep = {
   note?: string
 }
 
-export type PrecoDecisionStatus = 'disparo' | 'budget_known'
+export type PrecoDecisionStatus = 'disparo' | 'budget_known' | 'tanto_faz'
 
 export type PrecoDecision = {
   status: PrecoDecisionStatus
