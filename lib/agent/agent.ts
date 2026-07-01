@@ -620,10 +620,22 @@ async function executeTool(
     // Inject confirmed brand preference when the model forgot to include it in the call.
     // confirmedMarca is derived from history (user's response after brand question text) so
     // the brand boost is applied even if the model omits marca_preferida on subsequent turns.
-    const effectiveFilters: RacketFilters =
+    const filtersWithBrand: RacketFilters =
       confirmedMarca !== undefined && (input as RacketFilters).marca_preferida === undefined
         ? { ...(input as RacketFilters), marca_preferida: confirmedMarca }
         : (input as RacketFilters)
+    // Auto-inject prioridade from confirmed estilo when the model omits it.
+    // estilo='defensivo' → prioridade='defesa', 'ofensivo' → 'potencia', 'misto' → 'equilibrio'.
+    // Skipped for lookup calls (nome/atleta) — those rank by name match, not profile priority.
+    const ESTILO_TO_PRIORIDADE: Record<string, 'potencia' | 'controle' | 'equilibrio' | 'defesa'> = {
+      ofensivo: 'potencia', defensivo: 'defesa', misto: 'equilibrio',
+    }
+    const confirmedEstilo = confirmedProfile.estilo as string | undefined
+    const mappedPrioridade = confirmedEstilo ? ESTILO_TO_PRIORIDADE[confirmedEstilo] : undefined
+    const effectiveFilters: RacketFilters =
+      !isLookupCall && !filtersWithBrand.prioridade && mappedPrioridade
+        ? { ...filtersWithBrand, prioridade: mappedPrioridade }
+        : filtersWithBrand
     // Strip presupuesto_max from DB query — budget ceiling is soft-applied below
     // so rackets above budget are flagged (fora_da_faixa_preco), never silently excluded.
     const presupuestoMaxBudget = effectiveFilters.presupuesto_max
@@ -678,7 +690,7 @@ async function executeTool(
       })
     }
     debugRef.value.decisionTrace.filterSteps = extendedTrace
-    debugRef.value.decisionTrace.scorerWeights = computeScorerWeights(input as RacketFilters)
+    debugRef.value.decisionTrace.scorerWeights = computeScorerWeights(effectiveFilters)
 
     // Trim the payload sent to the model: top 8 candidates (scorer already ranked them)
     // + strip fields the model doesn't use for narration, reducing token cost ~85%.
