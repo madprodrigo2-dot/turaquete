@@ -133,11 +133,12 @@ export function calcularMotor(input: MotorInput): MotorResult {
   power += CORE_POWER[coreClass]
   power = Math.min(10, Math.max(1, power))
 
-  // Control — firme = preciso, suave = disperso (invertido em relação a forgiveness)
-  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
+  // Control — núcleo macio = mais dwell time/perdão (mais controle); rígido = rebote rápido (menos controle)
+  // Face flexível (3K, 6K) = mais controle; face rígida (18K/24K) = potência, não controle
+  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
   const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
-    CARBON_18K: +2, CARBON_24K: +2, CARBON_6K_15K: +1,
-    KEVLAR_PURE: -1, KEVLAR_CARBON: -1, HYBRID_VIDRO: -1, VIDRO: -1,
+    CARBON_3K: +1, CARBON_6K: +1, CARBON_6K_15K: +1,
+    // CARBON_18K/24K, KEVLAR, VIDRO, CARBON_3K_METAL: 0 (omitidos = neutro)
   }
   let control = 4
   control += CORE_CTRL[coreClass]
@@ -242,10 +243,9 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
   const powerRaw = FACE_POWER[faceGrade] + balBonus + CORE_POWER[coreClass]
   const powerFinal = Math.min(10, Math.max(1, powerRaw))
 
-  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: -2, SOFT: -1, MEDIUM: 0, HARD: +1 }
+  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
   const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
-    CARBON_18K: +2, CARBON_24K: +2, CARBON_6K_15K: +1,
-    KEVLAR_PURE: -1, KEVLAR_CARBON: -1, HYBRID_VIDRO: -1, VIDRO: -1,
+    CARBON_3K: +1, CARBON_6K: +1, CARBON_6K_15K: +1,
   }
   const ctrlEsp = esp == null ? 0 : esp <= 20 ? 2 : esp === 21 ? 1 : esp >= 23 ? -2 : 0
   const ctrlFuros = furos != null && furos >= 42 ? -1 : furos != null && furos <= 20 ? 1 : 0
