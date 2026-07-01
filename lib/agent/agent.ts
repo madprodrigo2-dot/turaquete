@@ -9,6 +9,15 @@ import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getC
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+const PREF_QUESTION_TEXT  = 'Alguma preferência? Pode escolher ou pular.'
+const PREF_CHIPS          = ['Marca', 'Carbono', 'EVA', 'Espessura', 'Sem preferência']
+const CARBONO_QUESTION_TEXT = 'Qual tipo de carbono você prefere?'
+const CARBONO_CHIPS       = ['3K', '12K', '18K', 'Tanto faz']
+const EVA_QUESTION_TEXT   = 'Qual tipo de EVA?'
+const EVA_CHIPS           = ['Soft', 'Médio', 'Hard', 'Tanto faz']
+const ESP_QUESTION_TEXT   = 'Qual espessura prefere?'
+const ESP_CHIPS           = ['Fina (até 20mm)', 'Média (21-22mm)', 'Grossa (23mm+)', 'Tanto faz']
+
 const MODEL = PRICING.model
 const MAX_TOKENS = 1200  // 1024 was tight for tool call JSON; 1200 fits full rec text with brevity prompt
 const MAX_TOOL_ROUNDS = 4  // normal flows need ≤4 rounds (troca+marca-filtro worst case)
@@ -173,6 +182,23 @@ const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
   'Ombro':                      { ombro_sensivel: true },
   'Punho ou outro lugar':       { punho_sensivel: true },
   'Não tenho dor':              { sem_lesao: true },
+  // ── Pref step — nível 1 (meta-chips, sem campo de perfil) ───────────────────
+  'Marca':            {},
+  'Carbono':          {},
+  'EVA':              {},
+  'Espessura':        {},
+  'Sem preferência':  {},
+  'Tanto faz':        {},
+  // ── Pref step — nível 2 (sub-chips, setam preferência técnica) ──────────────
+  '3K':              { pref_carbono: '3k' },
+  '12K':             { pref_carbono: '12k' },
+  '18K':             { pref_carbono: '18k' },
+  'Soft':            { pref_eva: 'soft' },
+  'Médio':           { pref_eva: 'medium' },
+  'Hard':            { pref_eva: 'hard' },
+  'Fina (até 20mm)': { pref_espessura: 'fina' },
+  'Média (21-22mm)': { pref_espessura: 'media' },
+  'Grossa (23mm+)':  { pref_espessura: 'grossa' },
 }
 
 // Fixed reactions for chip turns — short, warm, no emoji, no em-dash.
@@ -195,8 +221,71 @@ const CHIP_REACTIONS: Record<string, string> = {
   'Sim, ombro':                 'Ombro no radar, certo.',
   'Punho ou outro lugar':       'Anotado, vou levar isso em conta.',
   'Não tenho dor':              'Sem dor, ótimo.',
+  // Pref step — nível 1
+  'Marca':            '',
+  'Carbono':          '',
+  'EVA':              '',
+  'Espessura':        '',
+  'Sem preferência':  'Tá bom.',
+  'Tanto faz':        'Tá bom.',
+  // Pref step — nível 2
+  '3K':              'Carbono 3K, entendido.',
+  '12K':             'Carbono 12K, anotado.',
+  '18K':             'Carbono 18K, anotado.',
+  'Soft':            'EVA Soft, entendido.',
+  'Médio':           'EVA Médio, anotado.',
+  'Hard':            'EVA Hard, entendido.',
+  'Fina (até 20mm)': 'Espessura fina, entendido.',
+  'Média (21-22mm)': 'Espessura média, anotado.',
+  'Grossa (23mm+)':  'Espessura grossa, entendido.',
 }
 const CHIP_REACTION_FALLBACK = 'Tá bom.'
+
+// Detecta estado do passo de preferências técnicas (derivado do histórico).
+// Retorna 'not_shown' | 'pending_level1' | 'pending_level2' | 'done' e o metaType se pendente.
+function getPrefState(history: ChatMessage[]): { state: 'not_shown' | 'pending_level1' | 'pending_level2' | 'done'; metaType?: string } {
+  const TERMINAL = new Set(['Sem preferência', 'Tanto faz',
+    '3K', '12K', '18K', 'Soft', 'Médio', 'Hard',
+    'Fina (até 20mm)', 'Média (21-22mm)', 'Grossa (23mm+)'])
+  const META_TO_Q: Record<string, string> = {
+    'Carbono':   CARBONO_QUESTION_TEXT,
+    'EVA':       EVA_QUESTION_TEXT,
+    'Espessura': ESP_QUESTION_TEXT,
+    'Marca':     MARCA_QUESTION_TEXT,
+  }
+
+  let prefIdx = -1
+  for (let i = 0; i < history.length; i++) {
+    if (history[i].role === 'assistant' && history[i].content.includes(PREF_QUESTION_TEXT)) prefIdx = i
+  }
+  if (prefIdx === -1) return { state: 'not_shown' }
+
+  let u1Idx = -1
+  for (let i = prefIdx + 1; i < history.length; i++) {
+    if (history[i].role === 'user') { u1Idx = i; break }
+  }
+  if (u1Idx === -1) return { state: 'pending_level1' }
+
+  const answer1 = history[u1Idx].content.trim()
+  if (TERMINAL.has(answer1)) return { state: 'done' }
+
+  const l2Q = META_TO_Q[answer1]
+  if (!l2Q) return { state: 'done' }
+
+  let l2Idx = -1
+  for (let i = u1Idx + 1; i < history.length; i++) {
+    if (history[i].role === 'assistant' && history[i].content.includes(l2Q)) { l2Idx = i }
+  }
+  if (l2Idx === -1) return { state: 'pending_level2', metaType: answer1 }
+
+  let u2Idx = -1
+  for (let i = l2Idx + 1; i < history.length; i++) {
+    if (history[i].role === 'user') { u2Idx = i; break }
+  }
+  if (u2Idx === -1) return { state: 'pending_level2', metaType: answer1 }
+
+  return { state: 'done' }
+}
 
 // Scan user chip messages in history → build confirmed profile.
 // Chip-answered fields are immune to model omission or re-inference between turns.
@@ -206,36 +295,6 @@ function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<stri
     if (m.role !== 'user') continue
     const update = CHIP_TO_PROFILE[m.content.trim()]
     if (update) Object.assign(confirmed, update)
-  }
-  // Free-text extraction: nivel and estilo from explicit declarations in any user message.
-  // Court position ("esquerda"/"direita") intentionally excluded — it is not a profile field.
-  // Negation guard: "não/nao/nem" within 20 chars before the match → skip.
-  const notNegated = (text: string, pat: RegExp): boolean => {
-    const m = pat.exec(text)
-    if (!m) return false
-    const before = text.slice(Math.max(0, m.index - 20), m.index)
-    return !/\bnão\b|\bnao\b|\bnem\b/.test(before)
-  }
-  for (const m of history) {
-    if (m.role !== 'user') continue
-    if (confirmed.nivel != null && confirmed.estilo != null) break
-    const t = m.content.toLowerCase()
-    if (confirmed.nivel == null) {
-      if      (notNegated(t, /\bsou iniciante\b|\bestou começando\b|\bsou novato\b/))
-        confirmed.nivel = 'iniciante'
-      else if (notNegated(t, /\bsou intermediári[oa]\b/))
-        confirmed.nivel = 'intermediario'
-      else if (notNegated(t, /\bsou avançad[oa]\b|\bsou\s+(?:jogador?\s+)?profissional\b|\bjogo\s+(?:em\s+)?torneios?\b|\bcategoria\s+(?:a|pro)\b/))
-        confirmed.nivel = 'avancado'
-    }
-    if (confirmed.estilo == null) {
-      if      (notNegated(t, /\bjogo\s+(?:no\s+)?(?:ataque|ofensiv[oa])\b|\bsou\s+(?:jogador?\s+)?ofensiv[oa]\b|\bgosto\s+de\s+(?:finalizar|atacar)\b/))
-        confirmed.estilo = 'ofensivo'
-      else if (notNegated(t, /\bjogo\s+(?:no\s+)?(?:defesa|defensiv[oa])\b|\bsou\s+(?:jogador?\s+)?defensiv[oa]\b|\bgosto\s+de\s+defender\b/))
-        confirmed.estilo = 'defensivo'
-      else if (notNegated(t, /\bjogo\s+(?:equilibrad[oa]|misto)\b|\bsou\s+(?:equilibrad[oa]|mist[oa])\b/))
-        confirmed.estilo = 'misto'
-    }
   }
   return confirmed
 }
@@ -625,6 +684,16 @@ async function executeTool(
       confirmedMarca !== undefined && (input as RacketFilters).marca_preferida === undefined
         ? { ...(input as RacketFilters), marca_preferida: confirmedMarca }
         : (input as RacketFilters)
+    // Inject tech prefs from confirmedProfile (not passed by model — code-driven)
+    const filtersWithPrefs: RacketFilters = {
+      ...filtersWithBrand,
+      ...(confirmedProfile.pref_carbono != null && filtersWithBrand.pref_carbono == null
+        ? { pref_carbono: confirmedProfile.pref_carbono as RacketFilters['pref_carbono'] } : {}),
+      ...(confirmedProfile.pref_eva != null && filtersWithBrand.pref_eva == null
+        ? { pref_eva: confirmedProfile.pref_eva as RacketFilters['pref_eva'] } : {}),
+      ...(confirmedProfile.pref_espessura != null && filtersWithBrand.pref_espessura == null
+        ? { pref_espessura: confirmedProfile.pref_espessura as RacketFilters['pref_espessura'] } : {}),
+    }
     // Auto-inject prioridade from confirmed estilo when the model omits it.
     // estilo='defensivo' → prioridade='defesa', 'ofensivo' → 'potencia', 'misto' → 'equilibrio'.
     // Skipped for lookup calls (nome/atleta) — those rank by name match, not profile priority.
@@ -634,9 +703,9 @@ async function executeTool(
     const confirmedEstilo = confirmedProfile.estilo as string | undefined
     const mappedPrioridade = confirmedEstilo ? ESTILO_TO_PRIORIDADE[confirmedEstilo] : undefined
     const effectiveFilters: RacketFilters =
-      !isLookupCall && !filtersWithBrand.prioridade && mappedPrioridade
-        ? { ...filtersWithBrand, prioridade: mappedPrioridade }
-        : filtersWithBrand
+      !isLookupCall && !filtersWithPrefs.prioridade && mappedPrioridade
+        ? { ...filtersWithPrefs, prioridade: mappedPrioridade }
+        : filtersWithPrefs
     // Strip presupuesto_max from DB query — budget ceiling is soft-applied below
     // so rackets above budget are flagged (fora_da_faixa_preco), never silently excluded.
     const presupuestoMaxBudget = effectiveFilters.presupuesto_max
@@ -913,6 +982,34 @@ async function executeTool(
               ? `${overBudgetCount} raquete(s) acima do orçamento (fora_da_faixa_preco=true) — mostre-as honestamente como "acima do seu orçamento", NUNCA as omita. Se for a melhor opção de encaixe, mencione UMA vez: "tem opção acima do orçamento que encaixa melhor, se quiser ver."`
               : ''),
         } : {}),
+      }
+    }
+
+    // Pref técnica: informa o modelo sobre a preferência e se o top encaixa
+    const hasTechPref = effectiveFilters.pref_carbono || effectiveFilters.pref_eva || effectiveFilters.pref_espessura
+    if (hasTechPref && ranked.length > 0) {
+      const prefDesc = effectiveFilters.pref_carbono
+        ? `carbono ${effectiveFilters.pref_carbono.toUpperCase()}`
+        : effectiveFilters.pref_eva
+        ? `EVA ${effectiveFilters.pref_eva}`
+        : `espessura ${effectiveFilters.pref_espessura}`
+      payload.PREF_TECNICA = {
+        pref_solicitada: prefDesc,
+        instrucao_OBRIGATORIA:
+          `Usuário declarou preferência por ${prefDesc}. ` +
+          `OBRIGATÓRIO: mencione a preferência na narração. ` +
+          `Se a principal recomendação atende a preferência, confirme. ` +
+          `Se não atende (ex: pediu 18K mas a melhor é 3K), diga honestamente: ` +
+          `"embora você prefira ${prefDesc}, a raquete que melhor encaixa no seu perfil é [nome]" ` +
+          `e aponte qual opção está mais próxima da preferência.`,
+      }
+    }
+    if (hasTechPref && ranked.length === 0) {
+      payload.PREF_TECNICA_SEM_MATCH = {
+        status: 'ZERO_COM_PREF',
+        instrucao_OBRIGATORIA:
+          `Não há raquetes com a preferência técnica solicitada para esse perfil e orçamento. ` +
+          `OBRIGATÓRIO: diga honestamente que não tem opções com a preferência e mostre as mais próximas disponíveis.`,
       }
     }
 
@@ -1438,15 +1535,50 @@ export async function runAgentTurn(
       return { text, suggestions: [...q.chips], diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
     }
 
-    // CASE 2: profile chip reaches confidence, budget still unknown → price question
+    // CASE 2: profile chip reaches confidence, budget still unknown → pref step → price question
     if (isProfileChip && confidence.willRecommend && !budgetAnsweredRef.value) {
+      const prefSt = getPrefState(history)
+
+      if (prefSt.state === 'not_shown' || prefSt.state === 'pending_level1') {
+        // First time: show pref question
+        const txt = reaction ? reaction + '\n\n' + PREF_QUESTION_TEXT : PREF_QUESTION_TEXT
+        if (onToken) onToken(txt)
+        const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
+        return { text: txt, suggestions: PREF_CHIPS, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
+      }
+
+      if (prefSt.state === 'pending_level2') {
+        // User tapped a meta-chip — show sub-chips
+        let levelText: string
+        let levelChips: string[]
+        if (prefSt.metaType === 'Carbono') {
+          levelText = CARBONO_QUESTION_TEXT; levelChips = CARBONO_CHIPS
+        } else if (prefSt.metaType === 'EVA') {
+          levelText = EVA_QUESTION_TEXT; levelChips = EVA_CHIPS
+        } else if (prefSt.metaType === 'Espessura') {
+          levelText = ESP_QUESTION_TEXT; levelChips = ESP_CHIPS
+        } else if (prefSt.metaType === 'Marca') {
+          levelText = MARCA_QUESTION_TEXT
+          levelChips = marcaChipsRef.value.length > 0 ? marcaChipsRef.value : MARCA_CHIPS
+        } else {
+          // Unknown meta → skip to budget
+          levelText = PRECO_QUESTION_TEXT; levelChips = computePrecoChips([])
+          pendingQuestionFieldRef.value = 'preco'
+        }
+        if (onToken) onToken(levelText)
+        pendingSuggestions.splice(0, pendingSuggestions.length, ...levelChips)
+        const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
+        return { text: levelText, suggestions: levelChips, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
+      }
+
+      // prefSt.state === 'done' → proceed to budget
       const chips = computePrecoChips([])
       pendingQuestionFieldRef.value = 'preco'
       pendingSuggestions.splice(0, pendingSuggestions.length, ...chips)
-      const text = reaction + '\n\n' + PRECO_QUESTION_TEXT
-      if (onToken) onToken(text)
+      const txt = reaction ? reaction + '\n\n' + PRECO_QUESTION_TEXT : PRECO_QUESTION_TEXT
+      if (onToken) onToken(txt)
       const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
-      return { text, suggestions: chips, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
+      return { text: txt, suggestions: chips, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
     }
 
     // CASE 3: price chip (or profile chip with confidence+budget known) →

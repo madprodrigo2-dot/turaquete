@@ -15,6 +15,9 @@ export interface RacketFilters {
   frequencia_alta?: boolean
   contexto_vento?: boolean
   marca_preferida?: string | null  // undefined = not asked yet; null = "tanto faz"; string = brand name
+  pref_carbono?: '3k' | '12k' | '18k'    // carbono preferido (boost apenas)
+  pref_eva?: 'soft' | 'medium' | 'hard'   // EVA preferido (boost apenas)
+  pref_espessura?: 'fina' | 'media' | 'grossa'  // espessura preferida (boost apenas)
 }
 
 // ── FIELD SEMANTICS — do not mix these up ─────────────────────────────────────
@@ -330,13 +333,43 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
 
   // Deterministic scorer — ranks by profile weights (turaquete-matriz-pesos.md Level 2)
   const BRAND_BOOST = 1.5
+  const TECH_PREF_BOOST = 1.5
   const scored = results
     .map(r => {
       const base = scoreRacket(r, filtros)
       const preferred = filtros.marca_preferida
         ? r.brands?.name?.toLowerCase() === filtros.marca_preferida.toLowerCase()
         : false
-      return { ...r, match_score: base + (preferred ? BRAND_BOOST : 0) }
+      let techBoost = 0
+      if (filtros.pref_carbono) {
+        const face = (r.face_material || '').toLowerCase()
+        const m3k = (face.includes('carbono') || face.includes('carbon')) &&
+          !face.includes('18k') && !face.includes('21k') && !face.includes('24k') && !face.includes('triaxial') &&
+          !face.includes('12k') && !face.includes('15k') && !face.includes('16k') && !face.includes('6k') &&
+          !face.includes('forjad') && !face.includes('forged') &&
+          !face.includes('titanio') && !face.includes('titânio') && !face.includes('metal fusion') &&
+          !face.includes('silver') && !face.includes('mft') && !face.includes('aluminizado')
+        const m12k = face.includes('12k') || face.includes('15k') || face.includes('16k') || face.includes('6k')
+        const m18k = face.includes('18k') || face.includes('21k') || face.includes('24k') || face.includes('triaxial') || face.includes('forjad') || face.includes('forged')
+        const matches = filtros.pref_carbono === '3k' ? m3k : filtros.pref_carbono === '12k' ? m12k : m18k
+        if (matches) techBoost += TECH_PREF_BOOST
+      }
+      if (filtros.pref_eva) {
+        const core = (r.core || '').toLowerCase()
+        const isSS = core.includes('supersoft') || core.includes('extra soft') || core.includes('extrasoft') || core.includes('branco') || core.includes('white') || core === 'eva 10' || core === 'eva 13'
+        const isSoft = !isSS && core.includes('soft')
+        const isHard = core.includes('hard') || core.includes('duro') || core.includes('high density') || core.includes('alta densidade') || core.includes('black pro')
+        const matches = filtros.pref_eva === 'soft' ? (isSS || isSoft) : filtros.pref_eva === 'medium' ? (!isSS && !isSoft && !isHard) : isHard
+        if (matches) techBoost += TECH_PREF_BOOST
+      }
+      if (filtros.pref_espessura) {
+        const esp = (r.specs_extra?.espessura_mm as number | null | undefined) ?? null
+        const matches = esp != null && (
+          filtros.pref_espessura === 'fina' ? esp <= 20 : filtros.pref_espessura === 'media' ? (esp === 21 || esp === 22) : esp >= 23
+        )
+        if (matches) techBoost += TECH_PREF_BOOST
+      }
+      return { ...r, match_score: base + (preferred ? BRAND_BOOST : 0) + techBoost }
     })
     .sort((a, b) => b.match_score - a.match_score)
   filterTrace.push({ filtro: 'scorer (ranking por pesos)', antes: results.length, depois: scored.length, relaxado: false, note: 'sem eliminação, apenas ordenação' })
@@ -349,6 +382,10 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
       relaxado: false,
       note: `${ndaMarca} raquete(s) da marca no pool; top candidata ${topNaoE ? 'NÃO é' : 'é'} da marca preferida`,
     })
+  }
+  if (filtros.pref_carbono || filtros.pref_eva || filtros.pref_espessura) {
+    const pk = filtros.pref_carbono ? `carbono=${filtros.pref_carbono}` : filtros.pref_eva ? `eva=${filtros.pref_eva}` : `espessura=${filtros.pref_espessura}`
+    filterTrace.push({ filtro: `pref técnica "${pk}" (+${TECH_PREF_BOOST} pts boost)`, depois: scored.length, relaxado: false, note: 'sem eliminação, apenas boost de ranking' })
   }
 
   return { raquetes: scored, criteriosRelaxados, filterTrace, yearMatchInfo }

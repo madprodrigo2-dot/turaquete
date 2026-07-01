@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { sendGAEvent } from '@next/third-parties/google'
 import LandingScreen from '@/components/LandingScreen'
 import ChatMessage from '@/components/ChatMessage'
-import StartChips from '@/components/StartChips'
 import ChatInput from '@/components/ChatInput'
 import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
@@ -14,8 +13,9 @@ import DebugPanel, { DebugData } from '@/components/DebugPanel'
 import FeedbackWidget from '@/components/FeedbackWidget'
 
 const OPENING_MESSAGE =
-  'Oi! Conta pra mim: há quanto tempo você joga, como costuma jogar na quadra, se algo incomoda ' +
-  '— braço, controle, potência... Do seu jeito, sem formulário.'
+  'Oi! Eu sou a Tury. Em menos de um minuto te digo qual raquete combina com você. Como você mais gosta de jogar?'
+
+const ESTILO_CHIPS = ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado']
 
 const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
 const MESSAGE_LIMIT = 25
@@ -73,7 +73,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const [confirmReset, setConfirmReset] = useState(false)
 
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: OPENING_MESSAGE },
+    { role: 'assistant', content: OPENING_MESSAGE, suggestions: ESTILO_CHIPS },
   ])
   const [loading, setLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
@@ -213,7 +213,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     intencaoConvRef.current = undefined
     turnosAteRecRef.current = 0
     setFeedbackDone(false)
-    setMessages([{ role: 'assistant', content: OPENING_MESSAGE }])
+    setMessages([{ role: 'assistant', content: OPENING_MESSAGE, suggestions: ESTILO_CHIPS }])
     setSessionId(generateId())
     try { sessionStorage.removeItem(CHAT_STORAGE_KEY) } catch {}
     sendGAEvent({ event: 'conversa_reiniciada' })
@@ -562,6 +562,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                                 fireEvent({ session_id: sessionId, event_type: 'timeout_retry', motivo: `turno_${turnos + 1}` })
                                 sendMessage(m._retryText)
                               } else {
+                                if (!hasUserMessages) starterUsadoRef.current = s
                                 sendMessage(s)
                               }
                             }
@@ -649,13 +650,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
 
               <div ref={bottomRef} />
             </div>
-
-            {!hasUserMessages && !loading && !isAnimating && (
-              <StartChips onSelect={(chip) => {
-                starterUsadoRef.current = chip
-                sendMessage(chip)
-              }} />
-            )}
 
             {contextChips && (
               <div className="flex flex-wrap gap-2 px-4 md:px-6 py-2 border-t border-gray-100">
