@@ -1409,7 +1409,7 @@ export async function runAgentTurn(
   // Price chip (or confidence+budget known): run buscar+rec without tool-call round-trips,
   //   then call streamResponse for narration only (1 API call, no tool_use).
   const isProfileChip = Object.prototype.hasOwnProperty.call(CHIP_TO_PROFILE, lastUserContent)
-  const isPriceChipMsg = PRICE_ANSWERS.has(lastUserContent) && !postRecContext  // post-rec price handled separately
+  const isPriceChipMsg = PRICE_ANSWERS.has(lastUserContent) && (postRecContext == null || postRecContext.shownIds.length === 0)  // post-rec price handled separately
   if ((isProfileChip || isPriceChipMsg) && postRecMode === null) {
     const { faixa, trace } = calcular_faixa_ideal_traced(confirmedProfile as FittingProfile)
     diagnosticoRef.value = faixa
