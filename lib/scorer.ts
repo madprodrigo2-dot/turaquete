@@ -174,6 +174,18 @@ function baseWeights(profile: ScorerProfile): Weights {
     maneuverability: 15, spin: 0, stability: 16, forgiveness: 22,
   }
 
+  // intermediário com prioridade: menos extremo que avançado, mais conforto/forgiveness
+  if (profile.nivel === 'intermediario' && profile.prioridade === 'potencia') return {
+    power: 26, control: 12, comfort: 14,
+    maneuverability: 15, spin: 0, stability: 20, forgiveness: 13,
+  }
+
+  if (profile.nivel === 'intermediario' && (profile.prioridade === 'controle' || profile.prioridade === 'defesa')) return {
+    power: 5, control: 25, comfort: 20,
+    maneuverability: 15, spin: 0, stability: 20, forgiveness: 15,
+  }
+
+  // avançado com prioridade
   if (profile.prioridade === 'potencia') return {
     power: 32, control: 15, comfort: 10,
     maneuverability: 15, spin: 0, stability: 23, forgiveness: 5,

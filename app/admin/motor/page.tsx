@@ -66,6 +66,8 @@ export type MotorRow = {
   scoreIni: number | null
   scoreInt: number | null
   scoreAva: number | null
+  scoreIntPot: number | null
+  scoreIntDef: number | null
   scorePot: number | null
   scoreDef: number | null
   scoreLesao: number | null
@@ -145,6 +147,8 @@ export default async function AdminMotorPage() {
       scoreIni: scoreForNivel(ins ?? null, 'iniciante'),
       scoreInt: scoreForNivel(ins ?? null, 'intermediario'),
       scoreAva: scoreForNivel(ins ?? null, 'avancado'),
+      scoreIntPot: scoreForProfile(ins ?? null, { nivel: 'intermediario', prioridade: 'potencia' }),
+      scoreIntDef: scoreForProfile(ins ?? null, { nivel: 'intermediario', prioridade: 'defesa' }),
       scorePot: scoreForProfile(ins ?? null, { nivel: 'avancado', prioridade: 'potencia' }),
       scoreDef: scoreForProfile(ins ?? null, { nivel: 'avancado', prioridade: 'defesa' }),
       scoreLesao: scoreForProfile(ins ?? null, { cotovelo_sensivel: true }),
