@@ -7,7 +7,7 @@ import type { MotorRow } from './page'
 const DIMS = ['spin', 'comfort', 'stability', 'power', 'control', 'maneuverability', 'forgiveness'] as const
 type Dim = (typeof DIMS)[number]
 
-type SortCol = 'name' | 'brand' | 'nivel' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'price' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | 'antivib' | 'estrutural' | Dim
+type SortCol = 'name' | 'brand' | 'nivel' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'price' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | 'scorePot' | 'scoreDef' | 'scoreLesao' | 'antivib' | 'estrutural' | Dim
 type SortDir = 'asc' | 'desc'
 
 function ScoreCell({ value, dim, overrides }: { value: number | null; dim: Dim; overrides: string[] }) {
@@ -127,6 +127,9 @@ function sortVal(row: MotorRow, col: SortCol): string | number {
   if (col === 'scoreIni') return row.scoreIni ?? -1
   if (col === 'scoreInt') return row.scoreInt ?? -1
   if (col === 'scoreAva') return row.scoreAva ?? -1
+  if (col === 'scorePot') return row.scorePot ?? -1
+  if (col === 'scoreDef') return row.scoreDef ?? -1
+  if (col === 'scoreLesao') return row.scoreLesao ?? -1
   return row[col] ?? -1
 }
 
@@ -232,6 +235,9 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
               <Th col="scoreIni" active={sortCol} dir={sortDir} onSort={handleSort}>I</Th>
               <Th col="scoreInt" active={sortCol} dir={sortDir} onSort={handleSort}>M</Th>
               <Th col="scoreAva" active={sortCol} dir={sortDir} onSort={handleSort}>A</Th>
+              <Th col="scorePot" active={sortCol} dir={sortDir} onSort={handleSort}><span title="Avançado potência">Pot</span></Th>
+              <Th col="scoreDef" active={sortCol} dir={sortDir} onSort={handleSort}><span title="Avançado defesa/controle">Def</span></Th>
+              <Th col="scoreLesao" active={sortCol} dir={sortDir} onSort={handleSort}><span title="Perfil lesão (cotovelo)">Les</span></Th>
               <Th col="faceGrade" active={sortCol} dir={sortDir} onSort={handleSort}>Face</Th>
               <Th col="coreClass" active={sortCol} dir={sortDir} onSort={handleSort}>Core</Th>
               <Th col="weight_g" active={sortCol} dir={sortDir} onSort={handleSort}>Peso</Th>
@@ -299,6 +305,24 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                 <td className="px-2 py-1 text-center">
                   {r.scoreAva != null
                     ? <span className={`font-mono text-xs font-semibold ${profileScoreColor(r.scoreAva)}`}>{r.scoreAva}</span>
+                    : <span className="text-gray-300">—</span>
+                  }
+                </td>
+                <td className="px-2 py-1 text-center">
+                  {r.scorePot != null
+                    ? <span className={`font-mono text-xs font-semibold ${profileScoreColor(r.scorePot)}`}>{r.scorePot}</span>
+                    : <span className="text-gray-300">—</span>
+                  }
+                </td>
+                <td className="px-2 py-1 text-center">
+                  {r.scoreDef != null
+                    ? <span className={`font-mono text-xs font-semibold ${profileScoreColor(r.scoreDef)}`}>{r.scoreDef}</span>
+                    : <span className="text-gray-300">—</span>
+                  }
+                </td>
+                <td className="px-2 py-1 text-center">
+                  {r.scoreLesao != null
+                    ? <span className={`font-mono text-xs font-semibold ${profileScoreColor(r.scoreLesao)}`}>{r.scoreLesao}</span>
                     : <span className="text-gray-300">—</span>
                   }
                 </td>

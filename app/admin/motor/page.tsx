@@ -2,7 +2,7 @@ import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { getSupabase } from '@/lib/supabase'
 import { classifyFace, classifyCore } from '@/lib/motor'
-import { scoreForNivel } from '@/lib/scorer'
+import { scoreForNivel, scoreForProfile } from '@/lib/scorer'
 import MotorTable from './MotorTable'
 
 type RawRacket = {
@@ -66,6 +66,9 @@ export type MotorRow = {
   scoreIni: number | null
   scoreInt: number | null
   scoreAva: number | null
+  scorePot: number | null
+  scoreDef: number | null
+  scoreLesao: number | null
   nivel: 'iniciante' | 'intermediario' | 'avancado' | null
   price: number | null
   overrides: string[]
@@ -142,6 +145,9 @@ export default async function AdminMotorPage() {
       scoreIni: scoreForNivel(ins ?? null, 'iniciante'),
       scoreInt: scoreForNivel(ins ?? null, 'intermediario'),
       scoreAva: scoreForNivel(ins ?? null, 'avancado'),
+      scorePot: scoreForProfile(ins ?? null, { nivel: 'avancado', prioridade: 'potencia' }),
+      scoreDef: scoreForProfile(ins ?? null, { nivel: 'avancado', prioridade: 'defesa' }),
+      scoreLesao: scoreForProfile(ins ?? null, { cotovelo_sensivel: true }),
       nivel: (ins?.nivel_sugerido as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null,
       price: r.price ?? null,
       overrides,
