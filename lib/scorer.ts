@@ -202,10 +202,10 @@ function baseWeights(profile: ScorerProfile): Weights {
     maneuverability: 18, spin: 0, stability: 17, forgiveness: 17,
   }
 
-  // avançado misto / default — manuseio sobe; power e comfort recuam
+  // avançado equilíbrio — controle e manuseio lideram, mas conforto/forgiveness não são zero
   return {
-    power: 17, control: 30, comfort: 4,
-    maneuverability: 25, spin: 0, stability: 19, forgiveness: 5,
+    power: 15, control: 25, comfort: 12,
+    maneuverability: 22, spin: 0, stability: 18, forgiveness: 8,
   }
 }
 
