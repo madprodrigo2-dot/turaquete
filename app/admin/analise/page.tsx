@@ -93,6 +93,7 @@ export default async function AnaliseAdmin({
     intentRaw,
     starterRaw,
     starterDetailRows,
+    livreRows,
   ] = await Promise.all([
     sb.rpc('admin_cost_by_session', { days_back: daysBack, p_include_test: includeTest }).then(r => (r.data ?? []) as SessionCostRow[]),
 
@@ -166,6 +167,29 @@ export default async function AnaliseAdmin({
             ? withIsTest.is('starter_usado', null)
             : withIsTest.eq('starter_usado', filterStarter)
           ).then(r => (r.data ?? []) as MensagemRow[])
+        })(),
+
+    // Mensagens livres — sempre carrega, deduplica por texto
+    primeiraMsgColumnMissing
+      ? Promise.resolve([] as MensagemRow[])
+      : (() => {
+          const base = sb.from('conversations')
+            .select('created_at, primeira_mensagem, intencao_detectada, starter_usado')
+            .not('primeira_mensagem', 'is', null)
+            .is('starter_usado', null)
+            .gte('created_at', cutoffDate)
+            .order('created_at', { ascending: false })
+            .limit(200)
+          return (includeTest ? base : base.eq('is_test', false)).then(r => {
+            const seen = new Set<string>()
+            const result: MensagemRow[] = []
+            for (const row of (r.data ?? []) as MensagemRow[]) {
+              if (!row.primeira_mensagem || seen.has(row.primeira_mensagem)) continue
+              seen.add(row.primeira_mensagem)
+              result.push(row)
+            }
+            return result.slice(0, 50)
+          })
         })(),
   ])
 
@@ -548,6 +572,29 @@ export default async function AnaliseAdmin({
             ))}
             {starterDetailRows.length === 0 && <p className="text-teal-600 italic text-sm">Nenhuma mensagem encontrada.</p>}
           </div>
+        </section>
+      )}
+
+      {/* ── Mensagens livres ── */}
+      {!primeiraMsgColumnMissing && (
+        <section>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">Mensagens livres</h2>
+          <p className="text-[11px] text-gray-400 mb-3">{daysLabel} · {livreRows.length} mensagem{livreRows.length !== 1 ? 's' : ''} única{livreRows.length !== 1 ? 's' : ''} — digitaram sem usar starter</p>
+          {livreRows.length === 0 ? (
+            <p className="text-gray-400 italic text-xs">Nenhuma mensagem livre no período.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {livreRows.map((r, i) => (
+                <div key={i} className="bg-white rounded-lg px-4 py-3 border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
+                    <span>{new Date(r.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
+                    {r.intencao_detectada && <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>}
+                  </div>
+                  <p className="text-gray-800 leading-snug text-sm">{r.primeira_mensagem}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
