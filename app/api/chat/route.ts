@@ -259,6 +259,28 @@ export async function POST(req: NextRequest) {
     const cookieStore = await cookies()
     const isTest = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
 
+    // Pre-rec free text guard: in the questions phase (before any recommendation is shown),
+    // any input that isn't a known chip gets a fixed response — zero model calls, zero cost.
+    const isPostRec = ((postRecContext?.shownIds?.length ?? 0) > 0)
+    if (!isPostRec) {
+      const lastSuggestions = (body.lastSuggestions ?? []) as string[]
+      const isKnownChip = body.isKnownChip === true
+      const userMsg = (messages[messages.length - 1].content ?? '') as string
+      const isPriceChip = /^(Até R\$|R\$\s*[\d.,]+|acima de R\$)/i.test(userMsg.trim())
+      if (lastSuggestions.length > 0 && !new Set(lastSuggestions).has(userMsg) && !isPriceChip && !isKnownChip) {
+        const enc = new TextEncoder()
+        const guardText = 'Pra te indicar certinho, escolhe uma das opções acima 🙂'
+        const guardStream = new ReadableStream({
+          start(ctrl) {
+            ctrl.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'token', token: guardText })}\n\n`))
+            ctrl.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'done', recommendations: null, suggestions: lastSuggestions, isComparison: false, diagnostico: null, intencao: null, marcaListPending: false, confirmedProfile: null })}\n\n`))
+            ctrl.close()
+          }
+        })
+        return new Response(guardStream, { headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } })
+      }
+    }
+
     const encoder = new TextEncoder()
     const writeEvent = (controller: ReadableStreamDefaultController, data: object) => {
       try {

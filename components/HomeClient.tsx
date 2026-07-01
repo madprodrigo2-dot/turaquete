@@ -241,7 +241,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
 
   const TIMEOUT_MESSAGE = 'Opa, travei aqui. Pode mandar de novo?'
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, opts?: { isKnownChip?: boolean }) => {
     // Hard guard: reject if a request is already in flight
     if (sendingRef.current) return
     sendingRef.current = true
@@ -293,6 +293,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
           ...(seedProfile ? { confirmedProfile: seedProfile } : {}),
         }
       }
+      // Pre-rec guard: send last suggestions so backend can validate chip-only inputs
+      reqBody.lastSuggestions = lastAssistantMsg?.suggestions ?? []
+      if (opts?.isKnownChip) reqBody.isKnownChip = true
       if (isFirstMessage) {
         reqBody.primeiraMensagem = text
         reqBody.starterUsado = starterUsadoRef.current ?? null
@@ -454,6 +457,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const contextChips = (!loading && !isStreaming && !isAnimating && !atLimit && lastMsg?.role === 'assistant' && !hasAkinatorChips && !lastMsg?.recommendations)
     ? detectContextChips(lastMsg.content)
     : null
+  // Post-rec: at least one assistant message has recommendations → free text enabled
+  const isPostRec = messages.some(m => m.role === 'assistant' && (m.recommendations?.length ?? 0) > 0)
 
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
@@ -666,7 +671,11 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
             )}
 
             {(!hasUserMessages || (!loading && !isStreaming && !isAnimating && !hasAkinatorChips)) && (
-              <ChatInput onSend={sendMessage} disabled={loading || isStreaming || isAnimating || atLimit} />
+              <ChatInput
+                onSend={sendMessage}
+                disabled={loading || isStreaming || isAnimating || atLimit || !isPostRec}
+                placeholder={!isPostRec ? 'Escolha uma opção acima' : undefined}
+              />
             )}
           </div>
         </div>
@@ -702,7 +711,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                 .map(brand => (
                   <button
                     key={brand.id}
-                    onClick={() => { sendMessage(brand.name); setShowBrandPicker(false) }}
+                    onClick={() => { sendMessage(brand.name, { isKnownChip: true }); setShowBrandPicker(false) }}
                     className="w-full text-left px-4 py-3 rounded-xl text-tinta font-medium text-sm hover:bg-aqua/10 active:bg-aqua/20 transition-colors"
                   >
                     {brand.name}

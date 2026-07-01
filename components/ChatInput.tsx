@@ -5,9 +5,10 @@ import { useState, KeyboardEvent, useRef, useEffect } from 'react'
 interface Props {
   onSend: (text: string) => void
   disabled: boolean
+  placeholder?: string
 }
 
-export default function ChatInput({ onSend, disabled }: Props) {
+export default function ChatInput({ onSend, disabled, placeholder }: Props) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -48,7 +49,7 @@ export default function ChatInput({ onSend, disabled }: Props) {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Me conta como você joga..."
+          placeholder={placeholder ?? 'Me conta como você joga...'}
           disabled={disabled}
           maxLength={500}
           rows={1}
