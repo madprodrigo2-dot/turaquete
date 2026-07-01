@@ -9,6 +9,16 @@ function normalize(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 }
 
+function trackSearch(term: string) {
+  const t = term.trim().toLowerCase()
+  if (t.length < 2) return
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any
+    if (typeof w.gtag === 'function') w.gtag('event', 'site_search', { search_term: t })
+  } catch {}
+}
+
 const MAX_RESULTS = 7
 
 export default function SearchBar() {
@@ -43,6 +53,7 @@ export default function SearchBar() {
   }, [router])
 
   const submit = useCallback(() => {
+    trackSearch(query)
     if (active >= 0 && results[active]) {
       navigate(results[active].slug)
     } else if (query.trim()) {
@@ -154,7 +165,7 @@ export default function SearchBar() {
                   key={r.slug}
                   role="option"
                   aria-selected={i === active}
-                  onClick={() => navigate(r.slug)}
+                  onClick={() => { trackSearch(query); navigate(r.slug) }}
                   onMouseEnter={() => setActive(i)}
                   className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors ${
                     i === active ? 'bg-aqua/8' : 'hover:bg-tinta/4'
@@ -172,6 +183,7 @@ export default function SearchBar() {
               {query.trim() && (
                 <button
                   onClick={() => {
+                    trackSearch(query)
                     setOpen(false)
                     setExpanded(false)
                     router.push(`/busca?q=${encodeURIComponent(query.trim())}`)
