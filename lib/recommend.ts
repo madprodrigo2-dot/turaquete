@@ -165,10 +165,10 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     query = query.lte('price', filtros.presupuesto_max)
   }
 
-  // Profile searches only show current models (≥2025).
+  // Profile searches only show current models (≥2024).
   // Name/athlete lookups are exempt — user asked for a specific racket.
   if (!filtros.nome && !filtros.atleta) {
-    query = query.gte('model_year', 2025)
+    query = query.gte('model_year', 2024)
   }
 
   const { data, error } = await query.limit(500)
