@@ -52,6 +52,7 @@ type Message = {
   intencao?: string      // conversation intencao, stored here for persistence
   turnosAteRec?: number  // user turn count when this first rec was shown
   marcaListPending?: boolean  // true when the last assistant message is a brand-list prompt
+  confirmedProfile?: Record<string, unknown>  // model-inferred profile fields, seeded on next turn
   _isTimeout?: true  // internal flag: stripped from API payloads, triggers history rollback on retry
   _retryText?: string  // original user text to resend when retry chip is tapped
 }
@@ -279,13 +280,18 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
       // Post-rec context: send shown IDs and shown brands across ALL rec turns so
       // "Outra marca" never re-offers a brand that was already shown in any turn.
       const allShownIds = baseMessages.flatMap(m => m.recommendations?.map(r => r.racket.id) ?? [])
-      if (allShownIds.length > 0) {
-        const shownBrands = [...new Set(
-          baseMessages.flatMap(m => m.recommendations?.flatMap(r => r.racket.brands?.name ? [r.racket.brands.name] : []) ?? [])
-        )]
-        const lastAssistantMsg = [...baseMessages].reverse().find(m => m.role === 'assistant')
-        const marcaListPending = lastAssistantMsg?.marcaListPending ?? false
-        reqBody.postRecContext = { shownIds: allShownIds, shownBrands, ...(marcaListPending ? { marcaListPending: true } : {}) }
+      const shownBrands = [...new Set(
+        baseMessages.flatMap(m => m.recommendations?.flatMap(r => r.racket.brands?.name ? [r.racket.brands.name] : []) ?? [])
+      )]
+      const lastAssistantMsg = [...baseMessages].reverse().find(m => m.role === 'assistant')
+      const marcaListPending = lastAssistantMsg?.marcaListPending ?? false
+      const seedProfile = lastAssistantMsg?.confirmedProfile
+      if (allShownIds.length > 0 || seedProfile) {
+        reqBody.postRecContext = {
+          shownIds: allShownIds, shownBrands,
+          ...(marcaListPending ? { marcaListPending: true } : {}),
+          ...(seedProfile ? { confirmedProfile: seedProfile } : {}),
+        }
       }
       if (isFirstMessage) {
         reqBody.primeiraMensagem = text
@@ -323,7 +329,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
         if (!line.startsWith('data: ')) return
         const payload = line.slice(6).trim()
         if (!payload) return
-        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; intencao?: string; marcaListPending?: boolean; message?: string } & Partial<DebugData>
+        let evt: { type: string; token?: string; recommendations?: RecommendedRacket[]; suggestions?: string[]; isComparison?: boolean; diagnostico?: FaixaIdeal; intencao?: string; marcaListPending?: boolean; confirmedProfile?: Record<string, unknown> | null; message?: string } & Partial<DebugData>
         try { evt = JSON.parse(payload) } catch { return }
 
         if (evt.type === 'token' && evt.token !== undefined) {
@@ -363,6 +369,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
             intencao: isFirstRec ? intencaoConvRef.current : undefined,
             turnosAteRec: isFirstRec ? turnosAteRecRef.current : undefined,
             marcaListPending: evt.marcaListPending || undefined,
+            confirmedProfile: evt.confirmedProfile ?? undefined,
           }])
           if (recs && recs.length > 0) {
             sendGAEvent({ event: 'recomendacao_exibida', count: recs.length })

@@ -50,7 +50,7 @@ const PRICE_ANSWERS = new Set([
 // Fixed post-recommendation action chips and types
 const POST_REC_CHIPS = ['Ver mais opções', 'Outra faixa de preço', 'Outra marca'] as const
 const POST_REC_REDIRECT_TEXT = 'Posso te mostrar mais opções, outra faixa de preço ou outra marca. É só tocar.'
-export type PostRecContext = { shownIds: number[]; shownBrands: string[]; marcaListPending?: boolean }
+export type PostRecContext = { shownIds: number[]; shownBrands: string[]; marcaListPending?: boolean; confirmedProfile?: Record<string, unknown> }
 type PostRecMode = 'ver_mais' | 'outra_marca' | 'outra_faixa' | 'escolher_marca' | 'livre'
 type PostRecCtx = { mode: PostRecMode | null; shownIds: Set<number>; shownBrands: Set<string> }
 
@@ -95,6 +95,7 @@ export type AgentResult = {
   diagnostico?: FaixaIdeal
   intencao?: IntencaoTipo
   marcaListPending?: boolean
+  confirmedProfile?: Record<string, unknown>
   usage: TokenUsage
   debug: AgentDebugInfo
 }
@@ -1166,6 +1167,13 @@ export async function runAgentTurn(
   // Profile state derived from chip answers in history — immune to model omission between turns.
   // Lesão fields are also stripped from model input and re-injected from here (prevents inference).
   const confirmedProfile = extractConfirmedProfileFromHistory(history)
+  // Seed model-inferred fields from previous turns (persisted by client via postRecContext).
+  // Chip-answered fields from history always win — they override the seeded values.
+  if (postRecContext?.confirmedProfile) {
+    for (const [k, v] of Object.entries(postRecContext.confirmedProfile)) {
+      if (confirmedProfile[k] == null) confirmedProfile[k] = v
+    }
+  }
   // Current racket IDs from lookup searches (TROCA flow) — excluded from recomendar_raquetas
   const currentRacketIds = new Set<number>()
   // True once a lookup returned 0 results (current racket not in catalog) — blocks re-lookup
@@ -1186,7 +1194,7 @@ export async function runAgentTurn(
   const postRecShownBrands = new Set<string>(postRecContext?.shownBrands ?? [])
   const lastUserContent = history.findLast(m => m.role === 'user')?.content.trim() ?? ''
   const isPriceAnswerMsg = PRICE_ANSWERS.has(lastUserContent)
-  const postRecMode: PostRecMode | null = postRecContext && !isPriceAnswerMsg
+  const postRecMode: PostRecMode | null = postRecContext && postRecContext.shownIds.length > 0 && !isPriceAnswerMsg
     ? (lastUserContent === 'Ver mais opções' ? 'ver_mais'
       : lastUserContent === 'Outra marca' ? 'outra_marca'
       : lastUserContent === 'Outra faixa de preço' ? 'outra_faixa'
@@ -1426,7 +1434,8 @@ export async function runAgentTurn(
         : getFixedQuestionText(q.field)
       const text = reaction + '\n\n' + questionText
       if (onToken) onToken(text)
-      return { text, suggestions: [...q.chips], diagnostico: faixa, usage, debug: debugRef.value }
+      const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
+      return { text, suggestions: [...q.chips], diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
     }
 
     // CASE 2: profile chip reaches confidence, budget still unknown → price question
@@ -1436,7 +1445,8 @@ export async function runAgentTurn(
       pendingSuggestions.splice(0, pendingSuggestions.length, ...chips)
       const text = reaction + '\n\n' + PRECO_QUESTION_TEXT
       if (onToken) onToken(text)
-      return { text, suggestions: chips, diagnostico: faixa, usage, debug: debugRef.value }
+      const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
+      return { text, suggestions: chips, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
     }
 
     // CASE 3: price chip (or profile chip with confidence+budget known) →
@@ -1717,8 +1727,10 @@ export async function runAgentTurn(
     return { text, suggestions: pendingSuggestions.length > 0 ? [...pendingSuggestions] : undefined, usage, debug: debugRef.value }
   }
 
+  const cpFinal = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
   if (onToken) {
-    return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
+    const sr = await streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
+    return { ...sr, confirmedProfile: cpFinal }
   }
   const finalResponse = await anthropic.messages.create({
     model: MODEL,
@@ -1736,6 +1748,7 @@ export async function runAgentTurn(
     isComparison: isComparison || undefined,
     diagnostico: pendingRecommendations.length > 0 ? (diagnosticoRef.value ?? undefined) : undefined,
     intencao: intencaoRef.value ?? undefined,
+    confirmedProfile: cpFinal,
     usage,
     debug: debugRef.value,
   }
