@@ -68,6 +68,12 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
     setModalOpen(true)
     sendGAEvent({ event: 'analise_aberta', racket: racket.slug })
     if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_analise', racket_id: racket.id })
+    try {
+      type W = typeof window & { gtag?: (...args: unknown[]) => void }
+      if (typeof window !== 'undefined' && typeof (window as W).gtag === 'function') {
+        (window as W).gtag!('event', 'ver_analise', { racket_slug: racket.slug, source: 'lista_resultado' })
+      }
+    } catch { /* never block navigation */ }
   }
 
   return (
@@ -176,20 +182,20 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
             </span>
           )}
 
-          {/* Botão de análise */}
+          {/* Link de análise — secundário, abaixo do CTA primário */}
           {ins && (
             <button
               onClick={handleOpenModal}
-              className="flex items-center gap-1.5 text-xs text-tinta/40 hover:text-aqua transition-colors mt-0.5 w-fit"
+              className="flex items-center gap-1.5 text-sm font-medium text-tinta hover:text-aqua hover:underline transition-colors mt-0.5 w-fit"
             >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 13 13" fill="none" aria-hidden="true">
                 <polygon points="6.5,1 11.5,3.8 11.5,9.2 6.5,12 1.5,9.2 1.5,3.8"
                   stroke="currentColor" strokeWidth="1.2" fill="none" />
                 <line x1="6.5" y1="4" x2="6.5" y2="9" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
                 <line x1="3.7" y1="5.5" x2="9.3" y2="7.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
                 <line x1="3.7" y1="7.5" x2="9.3" y2="5.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
               </svg>
-              Ver análise completa
+              Ver o perfil completo no radar
             </button>
           )}
         </div>
