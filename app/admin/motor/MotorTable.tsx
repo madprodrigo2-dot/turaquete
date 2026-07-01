@@ -7,7 +7,7 @@ import type { MotorRow } from './page'
 const DIMS = ['spin', 'comfort', 'stability', 'power', 'control', 'maneuverability', 'forgiveness'] as const
 type Dim = (typeof DIMS)[number]
 
-type SortCol = 'name' | 'brand' | 'nivel' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'price' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | 'scoreIntPot' | 'scoreIntDef' | 'scorePot' | 'scoreDef' | 'scoreLesao' | 'antivib' | 'estrutural' | Dim
+type SortCol = 'name' | 'brand' | 'model_year' | 'nivel' | 'faceGrade' | 'coreClass' | 'weight_g' | 'furos' | 'espessura_mm' | 'price' | 'scoreGeral' | 'scoreIni' | 'scoreInt' | 'scoreAva' | 'scoreIntPot' | 'scoreIntDef' | 'scorePot' | 'scoreDef' | 'scoreLesao' | 'antivib' | 'estrutural' | Dim
 type SortDir = 'asc' | 'desc'
 
 function ScoreCell({ value, dim, overrides }: { value: number | null; dim: Dim; overrides: string[] }) {
@@ -114,6 +114,7 @@ function profileScoreColor(v: number): string {
 function sortVal(row: MotorRow, col: SortCol): string | number {
   if (col === 'name') return row.name.toLowerCase()
   if (col === 'brand') return row.brand.toLowerCase()
+  if (col === 'model_year') return row.model_year ?? 0
   if (col === 'faceGrade') return row.faceGrade
   if (col === 'coreClass') return row.coreClass
   if (col === 'weight_g') return row.weight_g ?? -1
@@ -233,6 +234,7 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
             <tr>
               <Th col="name" active={sortCol} dir={sortDir} onSort={handleSort}>Nome</Th>
               <Th col="brand" active={sortCol} dir={sortDir} onSort={handleSort}>Marca</Th>
+              <Th col="model_year" active={sortCol} dir={sortDir} onSort={handleSort}>Ano</Th>
               <Th col="nivel" active={sortCol} dir={sortDir} onSort={handleSort}>Nv</Th>
               <Th col="scoreIni" active={sortCol} dir={sortDir} onSort={handleSort}>I</Th>
               <Th col="scoreInt" active={sortCol} dir={sortDir} onSort={handleSort}>M</Th>
@@ -288,6 +290,7 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                   </div>
                 </td>
                 <td className="px-2 py-1 text-gray-500 whitespace-nowrap">{r.brand}</td>
+                <td className="px-2 py-1 text-center font-mono text-gray-400">{r.model_year ?? '—'}</td>
                 <td className="px-2 py-1 text-center">
                   {r.nivel === 'avancado'      && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">AVA</span>}
                   {r.nivel === 'intermediario' && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700">INT</span>}

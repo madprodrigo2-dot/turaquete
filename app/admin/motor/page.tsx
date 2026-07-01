@@ -9,6 +9,7 @@ type RawRacket = {
   id: number
   name: string
   slug: string
+  model_year: number | null
   face_material: string | null
   core: string | null
   weight_g: number | null
@@ -48,6 +49,7 @@ export type MotorRow = {
   name: string
   slug: string
   brand: string
+  model_year: number | null
   face_material: string | null
   faceGrade: string
   core: string | null
@@ -87,7 +89,7 @@ export default async function AdminMotorPage() {
   const { data, error } = await sb
     .from('rackets')
     .select(`
-      id, name, slug, face_material, core, weight_g, balance, thickness_mm, price, specs_extra,
+      id, name, slug, model_year, face_material, core, weight_g, balance, thickness_mm, price, specs_extra,
       brands(name),
       racket_insights(power, control, comfort, maneuverability, stability, spin, forgiveness, nivel_sugerido, overrides)
     `)
@@ -126,6 +128,7 @@ export default async function AdminMotorPage() {
       name: r.name,
       slug: r.slug,
       brand: r.brands?.name ?? '—',
+      model_year: r.model_year ?? null,
       face_material: r.face_material,
       faceGrade: classifyFace(r.face_material),
       core: r.core,
