@@ -577,7 +577,7 @@ export async function getBrandChipsForPref(): Promise<string[]> {
     .eq('publicada', true)
 
   const cnt: Record<string, number> = {}
-  for (const r of (data ?? []) as Array<{ brands: { name: string; status: string } }>) {
+  for (const r of (data ?? []) as unknown as Array<{ brands: { name: string; status: string } | null }>) {
     const b = r.brands
     if (!b || b.status !== 'disponivel') continue
     cnt[b.name] = (cnt[b.name] ?? 0) + 1
