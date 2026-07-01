@@ -181,7 +181,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const forgiveness = Math.min(10, Math.max(1, forg))
 
   // Comfort — núcleo é o driver principal; antivib é bônus encima
-  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -2 }
+  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +1, SOFT: +1, MEDIUM: 0, HARD: -2 }
   const FACE_COMFORT: Partial<Record<FaceGrade, number>> = {
     VIDRO: +1, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: +1,
     CARBON_6K_15K: -1, CARBON_18K: -1, CARBON_24K: -1,
@@ -279,7 +279,7 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
   if (forgCapped) forgRaw = 7
   const forgivenessFinal = Math.min(10, Math.max(1, forgRaw))
 
-  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -2 }
+  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +1, SOFT: +1, MEDIUM: 0, HARD: -2 }
   const FACE_COMFORT: Partial<Record<FaceGrade, number>> = {
     VIDRO: +1, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: +1,
     CARBON_6K_15K: -1, CARBON_18K: -1, CARBON_24K: -1,
