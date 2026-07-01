@@ -192,7 +192,7 @@ function baseWeights(profile: ScorerProfile): Weights {
   }
 
   if (profile.prioridade === 'controle' || profile.prioridade === 'defesa') return {
-    power: 5, control: 28, comfort: 15,
+    power: 11, control: 27, comfort: 10,
     maneuverability: 19, spin: 0, stability: 23, forgiveness: 10,
   }
 
