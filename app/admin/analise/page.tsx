@@ -169,10 +169,11 @@ export default async function AnaliseAdmin({
           ).then(r => (r.data ?? []) as MensagemRow[])
         })(),
 
-    // Mensagens livres — sempre carrega, deduplica por texto
+    // Mensagens livres — sempre carrega, deduplica por texto, exclui starters conhecidos
     primeiraMsgColumnMissing
       ? Promise.resolve([] as MensagemRow[])
       : (() => {
+          const STARTERS_CONHECIDOS = new Set(['Sou iniciante', 'Quero trocar minha raquete'])
           const base = sb.from('conversations')
             .select('created_at, primeira_mensagem, intencao_detectada, starter_usado')
             .not('primeira_mensagem', 'is', null)
@@ -184,8 +185,9 @@ export default async function AnaliseAdmin({
             const seen = new Set<string>()
             const result: MensagemRow[] = []
             for (const row of (r.data ?? []) as MensagemRow[]) {
-              if (!row.primeira_mensagem || seen.has(row.primeira_mensagem)) continue
-              seen.add(row.primeira_mensagem)
+              const msg = row.primeira_mensagem
+              if (!msg || seen.has(msg) || STARTERS_CONHECIDOS.has(msg)) continue
+              seen.add(msg)
               result.push(row)
             }
             return result.slice(0, 50)
