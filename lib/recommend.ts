@@ -564,6 +564,34 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   return { rackets: finalRackets, source: 'real' }
 }
 
+// Brand chips for pref step — top N by model count, independent of fitting profile.
+// 5-min TTL so new rackets appear without a redeploy.
+let _brandChipsCache: { chips: string[]; at: number } | null = null
+export async function getBrandChipsForPref(): Promise<string[]> {
+  const now = Date.now()
+  if (_brandChipsCache && now - _brandChipsCache.at < 5 * 60_000) return _brandChipsCache.chips
+
+  const { data } = await getSupabase()
+    .from('rackets')
+    .select('brands!inner(name, status)')
+    .eq('publicada', true)
+
+  const cnt: Record<string, number> = {}
+  for (const r of (data ?? []) as Array<{ brands: { name: string; status: string } }>) {
+    const b = r.brands
+    if (!b || b.status !== 'disponivel') continue
+    cnt[b.name] = (cnt[b.name] ?? 0) + 1
+  }
+
+  const sorted = Object.entries(cnt)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name]) => name)
+
+  const chips = [...sorted.slice(0, 7), 'Ver todas as marcas', 'Tanto faz']
+  _brandChipsCache = { chips, at: now }
+  return chips
+}
+
 export async function listarMarcas(): Promise<Brand[]> {
   const { data, error } = await getSupabase()
     .from('brands')

@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { agentTools } from './tools'
 import { SYSTEM_PROMPT } from './prompt'
 import { PRICING, TokenUsage } from './pricing'
-import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, RacketFilters, RecommendedRacket, RacketWithInsights, Insights } from '../recommend'
+import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, getBrandChipsForPref, RacketFilters, RecommendedRacket, RacketWithInsights, Insights } from '../recommend'
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, LESAO_LOCAL_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
@@ -1507,7 +1507,10 @@ export async function runAgentTurn(
   //   then call streamResponse for narration only (1 API call, no tool_use).
   const isProfileChip = Object.prototype.hasOwnProperty.call(CHIP_TO_PROFILE, lastUserContent)
   const isPriceChipMsg = PRICE_ANSWERS.has(lastUserContent) && (postRecContext == null || postRecContext.shownIds.length === 0)  // post-rec price handled separately
-  if ((isProfileChip || isPriceChipMsg) && postRecMode === null) {
+  // Brand answer in pref step: confirmedMarca set (brand Q was shown+answered) but the brand
+  // name itself isn't in CHIP_TO_PROFILE — needs the same chip-SC path to advance to budget.
+  const isBrandAnswerInPref = confirmedMarca !== undefined && !isProfileChip && !isPriceChipMsg
+  if ((isProfileChip || isPriceChipMsg || isBrandAnswerInPref) && postRecMode === null) {
     const { faixa, trace } = calcular_faixa_ideal_traced(confirmedProfile as FittingProfile)
     diagnosticoRef.value = faixa
     debugRef.value.perfilInput = confirmedProfile
@@ -1535,8 +1538,8 @@ export async function runAgentTurn(
       return { text, suggestions: [...q.chips], diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
     }
 
-    // CASE 2: profile chip reaches confidence, budget still unknown → pref step → price question
-    if (isProfileChip && confidence.willRecommend && !budgetAnsweredRef.value) {
+    // CASE 2: profile/brand chip reaches confidence, budget still unknown → pref step → price question
+    if ((isProfileChip || isBrandAnswerInPref) && confidence.willRecommend && !budgetAnsweredRef.value) {
       const prefSt = getPrefState(history)
 
       if (prefSt.state === 'not_shown' || prefSt.state === 'pending_level1') {
@@ -1559,7 +1562,7 @@ export async function runAgentTurn(
           levelText = ESP_QUESTION_TEXT; levelChips = ESP_CHIPS
         } else if (prefSt.metaType === 'Marca') {
           levelText = MARCA_QUESTION_TEXT
-          levelChips = marcaChipsRef.value.length > 0 ? marcaChipsRef.value : MARCA_CHIPS
+          levelChips = await getBrandChipsForPref()
         } else {
           // Unknown meta → skip to budget
           levelText = PRECO_QUESTION_TEXT; levelChips = computePrecoChips([])
