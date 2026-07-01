@@ -192,8 +192,8 @@ function baseWeights(profile: ScorerProfile): Weights {
   }
 
   if (profile.prioridade === 'controle' || profile.prioridade === 'defesa') return {
-    power: 11, control: 27, comfort: 10,
-    maneuverability: 19, spin: 0, stability: 23, forgiveness: 10,
+    power: 14, control: 27, comfort: 10,
+    maneuverability: 17, spin: 0, stability: 23, forgiveness: 9,
   }
 
   // intermediario sem prioridade declarada
