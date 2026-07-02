@@ -234,6 +234,8 @@ export default async function ConversasPage({
     }
   }
 
+  const KNOWN_STARTERS = ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado']
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
@@ -274,15 +276,18 @@ export default async function ConversasPage({
                   )}
                 </td>
                 <td className="px-3 py-2 max-w-[220px]">
-                  {s.starter_usado ? (
-                    <span className="bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-medium">
-                      {s.starter_usado}
-                    </span>
-                  ) : (
-                    <span className="text-gray-600 truncate block">
-                      {s.primeira_mensagem ?? <span className="text-gray-300 italic">—</span>}
-                    </span>
-                  )}
+                  {(() => {
+                    const chipText = s.starter_usado ?? (KNOWN_STARTERS.includes(s.primeira_mensagem ?? '') ? s.primeira_mensagem : null)
+                    return chipText ? (
+                      <span className="bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-medium">
+                        {chipText}
+                      </span>
+                    ) : (
+                      <span className="text-gray-600 truncate block">
+                        {s.primeira_mensagem ?? <span className="text-gray-300 italic">—</span>}
+                      </span>
+                    )
+                  })()}
                 </td>
                 <td className="px-3 py-2 text-gray-500">
                   {s.intencao_detectada ?? <span className="text-gray-300">—</span>}
