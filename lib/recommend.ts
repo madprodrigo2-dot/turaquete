@@ -236,7 +236,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     if (!ins) return false
     const f = ins.forgiveness, p = ins.power, c = ins.control, co = ins.comfort
     if (f == null || p == null || c == null || co == null) return ins.nivel_sugerido === 'avancado'
-    return f <= 4 || (f <= 6 && (p >= 8 || c >= 8)) || (f <= 7 && p >= 9)
+    return f <= 4 || (f <= 6 && (p >= 8 || c >= 9)) || (f <= 7 && p >= 9)
   }
 
   if (filtros.nivel && !filtros.nome && !filtros.atleta && results.length > 0) {
