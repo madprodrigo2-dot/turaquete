@@ -196,48 +196,49 @@ function Landing({ onStart }: { onStart: () => void }) {
           background: 'linear-gradient(to bottom, rgba(14,58,64,0.82) 0%, rgba(14,58,64,0.18) 52%, rgba(14,58,64,0.78) 100%)',
         }} />
 
-        {/* Content — absolute overlay para acompanhar o height do container */}
-        <div className="absolute inset-0 z-10 flex flex-col gap-4 px-8" style={{
-          paddingTop: 'max(36px, env(safe-area-inset-top, 0px) + 14px)',
-          paddingBottom: '28px',
+        {/* Content — justify-between: topo (nav+título) e baixo (CTA) */}
+        <div className="absolute inset-0 z-10 flex flex-col justify-between px-8" style={{
+          paddingTop: 'max(32px, env(safe-area-inset-top, 0px) + 14px)',
+          paddingBottom: '32px',
         }}>
-          <Link href="/" className="self-start text-sm font-medium transition-opacity hover:opacity-70" style={{ color: 'rgba(12,192,190,0.7)' }}>
-            ← Voltar
-          </Link>
-
-          <div className="flex flex-col gap-2.5 mt-2">
+          {/* Topo: nav + label + título + descrição */}
+          <div className="flex flex-col gap-3">
+            <Link href="/" className="self-start text-sm font-medium transition-opacity hover:opacity-70" style={{ color: 'rgba(12,192,190,0.7)' }}>
+              ← Voltar
+            </Link>
             <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#0CC0BE' }}>
               Turaquete · Beach Tennis
             </p>
             <h1 className="font-heading font-bold text-white leading-tight" style={{ fontSize: 'clamp(26px, 7.5vw, 46px)' }}>
               Qual é o seu perfil de jogador?
             </h1>
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.62)' }}>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
               Baseado na classificação de estilos do tênis profissional (ATP), adaptada ao beach tennis.
             </p>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {['7 perguntas', '~2 minutos', 'Sem cadastro'].map(b => (
-              <span key={b} className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{
-                border: '1.5px solid rgba(12,192,190,0.28)',
-                color: '#0CC0BE',
-                background: 'rgba(12,192,190,0.1)',
-              }}>{b}</span>
-            ))}
+          {/* Baixo: badges + botão + footnote */}
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2 flex-wrap">
+              {['7 perguntas', '~2 minutos', 'Sem cadastro'].map(b => (
+                <span key={b} className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{
+                  border: '1.5px solid rgba(12,192,190,0.36)',
+                  color: '#0CC0BE',
+                  background: 'rgba(12,192,190,0.12)',
+                }}>{b}</span>
+              ))}
+            </div>
+            <button
+              onClick={onStart}
+              className="font-heading font-bold text-white text-lg py-4 px-8 rounded-2xl w-full max-w-xs transition-all hover:opacity-90 active:scale-[0.97]"
+              style={{ background: '#FF5E3A', boxShadow: '0 8px 32px rgba(255,94,58,0.45)' }}
+            >
+              Descobrir meu perfil
+            </button>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              Resultado na hora · Grátis
+            </p>
           </div>
-
-          <button
-            onClick={onStart}
-            className="font-heading font-bold text-white text-lg py-4 px-8 rounded-2xl w-full max-w-xs transition-all hover:opacity-90 active:scale-[0.97]"
-            style={{ background: '#FF5E3A', boxShadow: '0 8px 32px rgba(255,94,58,0.5)' }}
-          >
-            Descobrir meu perfil
-          </button>
-
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            Resultado na hora · Grátis
-          </p>
         </div>
       </div>
     </div>
