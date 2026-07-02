@@ -168,8 +168,8 @@ function drawJerseyNumber(ctx: CanvasRenderingContext2D, ff: string, numero: str
   ctx.fillStyle     = hexToRgba(ac, 0.12)
   ctx.textAlign     = 'right'
   ctx.textBaseline  = 'alphabetic'
-  // Right-aligned past the canvas edge → partially cropped
-  ctx.fillText(numero, W + 160, H * 0.60)
+  // Right-aligned, positioned behind quote area (mid-right zone)
+  ctx.fillText(numero, W + 160, H * 0.70)
   ctx.restore()
 }
 
@@ -190,7 +190,7 @@ function drawNameBlock(
   ac: string,
   badgeText: string,
 ): void {
-  const PIVOT_Y  = 780
+  const PIVOT_Y  = 570
   const MAX_W    = 960
   const SHADOW_O = 6   // hard shadow offset px
 
@@ -273,7 +273,7 @@ function drawQuote(ctx: CanvasRenderingContext2D, ff: string, quote: string) {
   ctx.textBaseline = 'middle'
   const lines = wrapText(ctx, text, 940)
   const lh    = 56 * 1.28
-  const startY = 1330 - ((lines.length - 1) * lh) / 2
+  const startY = 1055 - ((lines.length - 1) * lh) / 2
   lines.forEach((l, i) => ctx.fillText(l, CX, startY + i * lh))
   ctx.restore()
 }
@@ -287,8 +287,8 @@ function drawSocialHook(ctx: CanvasRenderingContext2D, ff: string) {
   ctx.textBaseline = 'middle'
   const line1 = 'E você, joga como?'
   const line2 = 'Marca teu parceiro de dupla.'
-  ctx.fillText(line1, CX, 1508)
-  ctx.fillText(line2, CX, 1508 + 30 * 1.35)
+  ctx.fillText(line1, CX, 1290)
+  ctx.fillText(line2, CX, 1290 + 30 * 1.35)
   ctx.globalAlpha = 1
   ctx.restore()
 }
@@ -301,7 +301,7 @@ function drawMinhasArmas(
 ) {
   if (!names.length) return
 
-  const Y     = 1622
+  const Y     = 1430
   const MAX_W = W - 160   // 80px padding each side
   const LABEL = 'Minhas armas: '
   const SEP   = ' · '   // ·
@@ -365,9 +365,9 @@ function drawFooter(ctx: CanvasRenderingContext2D, ff: string, ac: string) {
   const raW = ctx.measureText('raquete').width
   const lgX = CX - (tuW + raW) / 2
   ctx.fillStyle = ac
-  ctx.fillText('tu', lgX, 1680)
+  ctx.fillText('tu', lgX, 1590)
   ctx.fillStyle = WHITE
-  ctx.fillText('raquete', lgX + tuW, 1680)
+  ctx.fillText('raquete', lgX + tuW, 1590)
 
   // URL
   ctx.textAlign    = 'center'
@@ -375,7 +375,7 @@ function drawFooter(ctx: CanvasRenderingContext2D, ff: string, ac: string) {
   ctx.font         = `600 36px ${ff}, sans-serif`
   ctx.fillStyle    = WHITE
   ctx.globalAlpha  = 0.88
-  ctx.fillText('turaquete.com.br/perfil', CX, 1760)
+  ctx.fillText('turaquete.com.br/perfil', CX, 1720)
   ctx.globalAlpha = 1
 
   ctx.restore()

@@ -416,9 +416,12 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
     : { background: vis.bg }
 
   const isMulti  = parts.length > 1
-  const nameSize = `clamp(${isMulti ? '38px' : '52px'}, ${isMulti ? '12.5vw' : '17.5vw'}, ${isMulti ? '78px' : '108px'})`
+  const nameSize = `clamp(${isMulti ? '44px' : '62px'}, ${isMulti ? '14vw' : '20vw'}, ${isMulti ? '92px' : '122px'})`
 
   const acLabel = vis.ac === '#FFC42E' ? '#0E3A40' : vis.ac
+
+  const armasCards = QUIZ_RAQUETES[winner] ?? []
+  const armasLine  = armasCards.map(c => c.nome_curto).filter(Boolean).join(' · ')
 
   const getBlob = async (): Promise<Blob> => {
     if (storyBlob) return storyBlob
@@ -474,35 +477,38 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
     <div className="quiz-result">
       {/* ── HERO — screenshot zone ───────────────────────────────────────── */}
       <div className="relative overflow-hidden flex flex-col" style={{ ...bgStyle, minHeight: '100dvh' }}>
-        {/* Jersey number — bottom right, cropped */}
-        <div className="absolute bottom-0 right-0 pointer-events-none select-none" aria-hidden>
+        {/* Jersey number — mid-right, behind quote area */}
+        <div className="absolute pointer-events-none select-none" style={{
+          top: '38%', right: 0, bottom: 0, overflow: 'hidden',
+        }} aria-hidden>
           <span className="font-heading font-bold" style={{
-            fontSize: 'clamp(200px, 58vw, 460px)',
+            fontSize: 'clamp(200px, 60vw, 480px)',
             color: vis.ac,
-            opacity: 0.11,
+            opacity: 0.10,
             lineHeight: 0.82,
             display: 'block',
             marginRight: '-0.07em',
-            marginBottom: '-0.04em',
           }}>{vis.numero}</span>
         </div>
 
         {/* Content */}
         <div className="relative z-10 flex flex-col" style={{ minHeight: '100dvh' }}>
-          {/* Label */}
-          <div className="pt-10 px-7">
+          {/* Header */}
+          <div className="pt-12 px-7">
             <p className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color: vis.ac }}>
               Meu Perfil de Jogo
             </p>
           </div>
 
-          {/* Name block — takes available vertical space */}
-          <div className="flex-1 flex flex-col justify-center px-7 py-6">
+          {/* Name + badge + quote — flows from top, no centering */}
+          <div className="px-7 mt-5">
+            {/* "O" tight above name */}
             <p className="font-heading font-bold quiz-in" style={{
-              fontSize: 'clamp(48px, 15vw, 76px)',
+              fontSize: 'clamp(36px, 10vw, 52px)',
               color: vis.ac,
               opacity: 0.75,
               lineHeight: 1,
+              marginBottom: '-0.08em',
               animationDelay: '0.12s',
             }}>O</p>
 
@@ -510,14 +516,14 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               <p key={word} className="font-heading font-bold quiz-in" style={{
                 fontSize: nameSize,
                 color: 'white',
-                lineHeight: 0.9,
+                lineHeight: 0.88,
                 textShadow: `4px 4px 0px ${vis.ac}`,
                 animationDelay: `${0.2 + i * 0.1}s`,
               }}>{word}</p>
             ))}
 
             {/* Badge */}
-            <div className="mt-4 mb-5 quiz-in" style={{ animationDelay: '0.34s' }}>
+            <div className="mt-5 mb-6 quiz-in" style={{ animationDelay: '0.34s' }}>
               <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold" style={{
                 border: `1.5px solid ${vis.ac}`,
                 color: vis.ac,
@@ -527,19 +533,27 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               </span>
             </div>
 
-            {/* Quote */}
+            {/* Quote — segunda voz, grande */}
             <p className="font-heading font-bold italic quiz-in" style={{
-              fontSize: 'clamp(17px, 4.8vw, 25px)',
+              fontSize: 'clamp(22px, 6.5vw, 36px)',
               color: 'rgba(255,255,255,0.85)',
-              lineHeight: 1.3,
+              lineHeight: 1.25,
               animationDelay: '0.4s',
             }}>"{vis.quote}"</p>
           </div>
 
-          {/* Radar + footer hook */}
-          <div className="px-7 pb-9">
-            <RadarChart scores={scores} winner={winner} ac={vis.ac} />
-            <p className="text-center text-xs mt-3" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Bottom zone: minhas armas + hook + URL */}
+          <div className="px-7 pb-14 flex flex-col gap-2">
+            {armasLine && (
+              <p className="text-xs overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.62)' }}>
+                <span style={{ color: vis.ac, fontWeight: 600 }}>Minhas armas: </span>
+                {armasLine}
+              </p>
+            )}
+            <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.32)' }}>
               E você, joga como? · turaquete.com.br/perfil
             </p>
           </div>
@@ -554,6 +568,14 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(14,58,64,0.72)' }}>
               {arq.descricao}
             </p>
+          </div>
+
+          {/* Radar — detalhe técnico */}
+          <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: '0 2px 16px rgba(14,58,64,0.07)' }}>
+            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: acLabel, opacity: 0.5 }}>
+              Radar do perfil
+            </p>
+            <RadarChart scores={scores} winner={winner} ac={acLabel === '#0E3A40' ? '#0CC0BE' : acLabel} />
           </div>
 
           {/* Strengths */}
