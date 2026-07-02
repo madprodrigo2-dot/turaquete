@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function PerfilPage() {
   return (
-    <main className="min-h-screen bg-fundo flex flex-col">
+    <main className="min-h-screen bg-aqua-light flex flex-col">
       <QuizPerfilClient />
     </main>
   )

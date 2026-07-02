@@ -13,6 +13,7 @@ import {
   type ArquetipoSlug,
   type ScoreMap,
 } from '@/lib/quiz-perfil'
+import { gerarStoryPNG } from '@/lib/quiz-story'
 
 // ── Analytics ────────────────────────────────────────────────────────────────
 
@@ -237,6 +238,9 @@ function Result({ winner, scores, onReset }: ResultProps) {
   const arquetipo = ARQUETIPOS[winner]
   const utmUrl = `/?utm_source=quiz&utm_medium=perfil&utm_campaign=${winner}`
 
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [storyBlob, setStoryBlob] = useState<Blob | null>(null)
+
   const handleShare = () => {
     const url = 'https://www.turaquete.com.br/perfil'
     const title = `Descobri que meu perfil de jogador é ${arquetipo.nome}!`
@@ -245,6 +249,52 @@ function Result({ winner, scores, onReset }: ResultProps) {
     } else {
       navigator.clipboard?.writeText(url).catch(() => {})
     }
+  }
+
+  const getBlob = async (): Promise<Blob> => {
+    if (storyBlob) return storyBlob
+    setIsGenerating(true)
+    try {
+      const blob = await gerarStoryPNG(winner, scores)
+      setStoryBlob(blob)
+      return blob
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const triggerDownload = (blob: Blob) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `meu-perfil-${winner}.png`
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 100)
+  }
+
+  const handleShareStory = async () => {
+    if (isGenerating) return
+    track('quiz_share_image', { arquetipo: winner, metodo: 'share' })
+    try {
+      const blob = await getBlob()
+      const file = new File([blob], `meu-perfil-${winner}.png`, { type: 'image/png' })
+      if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Meu perfil de jogo', text: 'Descubra o seu: turaquete.com.br/perfil' })
+      } else {
+        triggerDownload(blob)
+      }
+    } catch { /* user cancelled or generation failed */ }
+  }
+
+  const handleDownload = async () => {
+    if (isGenerating) return
+    track('quiz_share_image', { arquetipo: winner, metodo: 'download' })
+    try {
+      const blob = await getBlob()
+      triggerDownload(blob)
+    } catch { /* generation failed */ }
   }
 
   return (
@@ -307,6 +357,45 @@ function Result({ winner, scores, onReset }: ResultProps) {
               <path d="M6.3 6.4l2.4-1.4M6.3 8.6l2.4 1.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
             Compartilhar
+          </button>
+        </div>
+
+        {/* Story image — generate on demand, cache blob */}
+        <div className="flex gap-3 pt-1 border-t border-tinta/8">
+          <button
+            onClick={handleShareStory}
+            disabled={isGenerating}
+            className="flex-1 border-2 border-tinta/25 bg-tinta/5 text-tinta font-semibold text-sm py-3 rounded-2xl hover:bg-tinta/10 active:scale-[0.97] transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? (
+              <span className="animate-pulse">Gerando...</span>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <rect x="2.5" y="1" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                  <rect x="4" y="3.5" width="6" height="4.5" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
+                  <line x1="4" y1="9.5" x2="10" y2="9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                Story
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={isGenerating}
+            className="flex-1 border-2 border-tinta/15 text-tinta/60 font-medium text-sm py-3 rounded-2xl hover:border-tinta/30 hover:text-tinta/80 active:scale-[0.97] transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? (
+              <span className="animate-pulse">Gerando...</span>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M7 1.5v7M4.5 6l2.5 2.5L9.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 11.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Baixar
+              </>
+            )}
           </button>
         </div>
       </div>
