@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import QuizPerfilClient from '@/components/QuizPerfilClient'
 
 export const metadata: Metadata = {
@@ -20,14 +19,5 @@ export const metadata: Metadata = {
 }
 
 export default function PerfilPage() {
-  return (
-    <div className="min-h-screen sand-texture">
-      <div className="max-w-md mx-auto px-5 pt-4 pb-1">
-        <Link href="/" className="text-aqua text-sm font-medium hover:underline">
-          ← Voltar
-        </Link>
-      </div>
-      <QuizPerfilClient />
-    </div>
-  )
+  return <QuizPerfilClient />
 }

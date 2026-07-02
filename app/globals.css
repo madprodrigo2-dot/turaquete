@@ -156,13 +156,35 @@ body {
   --color-gray-900: oklch(0.967 0 0);
 }
 
+/* ── Quiz animations ─────────────────────────────────────────────────────── */
+@keyframes quiz-in {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.quiz-in { animation: quiz-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes quiz-slide {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.quiz-slide { animation: quiz-slide 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes quiz-result {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.quiz-result { animation: quiz-result 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
 /* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .bt-ball,
   .msg-enter,
   .ball-settle,
   .typing-cursor,
-  .char-fade {
+  .char-fade,
+  .quiz-in,
+  .quiz-slide,
+  .quiz-result {
     animation: none !important;
   }
   .typing-cursor { display: none; }
