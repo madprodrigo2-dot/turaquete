@@ -173,7 +173,7 @@ export default async function AnaliseAdmin({
     primeiraMsgColumnMissing
       ? Promise.resolve([] as MensagemRow[])
       : (() => {
-          const STARTERS_CONHECIDOS = new Set(['Sou iniciante', 'Quero trocar minha raquete'])
+          const STARTERS_CONHECIDOS = new Set(['Sou iniciante', 'Quero trocar minha raquete', 'Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado'])
           const base = sb.from('conversations')
             .select('session_id, created_at, primeira_mensagem, intencao_detectada, starter_usado')
             .not('primeira_mensagem', 'is', null)
@@ -459,43 +459,6 @@ export default async function AnaliseAdmin({
           </div>
         </section>
       )}
-
-      {/* ── Intenções ── */}
-      <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">Por intenção</h2>
-        <p className="text-[11px] text-gray-400 mb-3">{daysLabel}</p>
-        {intencoes.length === 0 ? (
-          <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
-        ) : (
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden text-xs">
-            <thead className="bg-gray-50 text-gray-400 uppercase">
-              <tr>
-                <th className="text-left px-4 py-2">Intenção</th>
-                <th className="text-right px-4 py-2">Total</th>
-                <th className="text-right px-4 py-2">%</th>
-                <th className="px-4 py-2 w-1/3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {intencoes.map(r => {
-                const total = intencoes.reduce((a, x) => a + x.total, 0)
-                return (
-                  <tr key={r.intencao_detectada} className="border-t border-gray-100">
-                    <td className="px-4 py-2 font-mono text-gray-700">{r.intencao_detectada}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{r.total}</td>
-                    <td className="px-4 py-2 text-right text-gray-400">{pct(r.total, total)}</td>
-                    <td className="px-4 py-2">
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-teal-400 rounded-full" style={{ width: `${Math.round((r.total / intencoes.reduce((a, x) => a + x.total, 0)) * 100)}%` }} />
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-      </section>
 
       {/* ── Starters ── */}
       <section>
