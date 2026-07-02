@@ -30,6 +30,7 @@ type SessionRow = {
   had_rec: boolean
   had_click: boolean
   had_retry: boolean
+  rating: 'positive' | 'negative' | null
   ip_hash: string | null
   ip_session_count: number
   utm_source: string | null
@@ -142,6 +143,7 @@ export default async function ConversasPage({
       had_rec: hadRec,
       had_click: false,
       had_retry: false,
+      rating: null,
       ip_hash: sessionIpMap.get(r.session_id) ?? null,
       ip_session_count: 0,
       utm_source: sessionUtmSource.get(r.session_id) ?? null,
@@ -200,11 +202,12 @@ export default async function ConversasPage({
     }
   }
 
-  // Query: fetch ver_na_loja clicks and timeout_retry events per session
+  // Query: fetch ver_na_loja clicks, timeout_retry and rating events per session
   if (sessionIds.length > 0) {
-    const [{ data: clickRows }, { data: retryRows }] = await Promise.all([
+    const [{ data: clickRows }, { data: retryRows }, { data: ratingRows }] = await Promise.all([
       sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'ver_na_loja'),
       sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'timeout_retry'),
+      sb.from('feedback_events').select('session_id, event_type').in('session_id', sessionIds).in('event_type', ['rating_positive', 'rating_negative']),
     ])
     if (clickRows) {
       const clickSet = new Set(clickRows.map(r => r.session_id))
@@ -216,6 +219,17 @@ export default async function ConversasPage({
       const retrySet = new Set(retryRows.map(r => r.session_id))
       for (const s of sessions) {
         if (retrySet.has(s.session_id)) s.had_retry = true
+      }
+    }
+    if (ratingRows) {
+      const ratingMap = new Map<string, 'positive' | 'negative'>()
+      for (const r of ratingRows) {
+        if (!ratingMap.has(r.session_id)) {
+          ratingMap.set(r.session_id, r.event_type === 'rating_positive' ? 'positive' : 'negative')
+        }
+      }
+      for (const s of sessions) {
+        s.rating = ratingMap.get(s.session_id) ?? null
       }
     }
   }
@@ -244,6 +258,7 @@ export default async function ConversasPage({
               <th className="text-center px-3 py-2">Rec?</th>
               <th className="text-center px-3 py-2">Loja?</th>
               <th className="text-center px-3 py-2" title="Usuário clicou em 'Tentar de novo' após timeout">↻?</th>
+              <th className="text-center px-3 py-2" title="Feedback do usuário">👍👎</th>
               <th className="text-center px-3 py-2">IP</th>
               <th className="text-left px-3 py-2">Origem</th>
               <th className="px-3 py-2"></th>
@@ -289,6 +304,13 @@ export default async function ConversasPage({
                 <td className="px-3 py-2 text-center">
                   {s.had_retry
                     ? <span className="text-amber-500 font-bold" title="Clicou em Tentar de novo">↻</span>
+                    : <span className="text-gray-200">—</span>}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {s.rating === 'positive'
+                    ? <span title="me ajudou">👍</span>
+                    : s.rating === 'negative'
+                    ? <span title="não era isso">👎</span>
                     : <span className="text-gray-200">—</span>}
                 </td>
                 <td className="px-3 py-2 text-center font-mono">
