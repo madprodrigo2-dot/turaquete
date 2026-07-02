@@ -16,7 +16,7 @@ export interface QuizRaqueteCard {
   score:          number
 }
 
-export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
+export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> = 
 {
   "muralha": [
     {
@@ -27,10 +27,16 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 1199,
       "image_url": "/raquetes/vision-pyramid-25.webp",
       "destaques": [
-        { "label": "Controle", "v": 8 },
-        { "label": "Conforto", "v": 8 }
+        {
+          "label": "Controle",
+          "v": 8
+        },
+        {
+          "label": "Conforto",
+          "v": 8
+        }
       ],
-      "custoBeneficio": false,
+      "custoBeneficio": true,
       "score": 7.1
     },
     {
@@ -41,25 +47,97 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 1699,
       "image_url": "/raquetes/ceu.webp",
       "destaques": [
-        { "label": "Conforto", "v": 8 },
-        { "label": "Controle", "v": 7 }
+        {
+          "label": "Conforto",
+          "v": 8
+        },
+        {
+          "label": "Controle",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 7
     },
     {
-      "slug": "forest",
-      "name": "Forest 2025",
-      "nome_curto": "Forest",
-      "marca": "Heroe's",
-      "price": 969.3,
-      "image_url": "/raquetes/forest.webp",
+      "slug": "turquoise-tq-fire-azul",
+      "name": "Turquoise TQ Fire Azul 2025",
+      "nome_curto": "TQ Fire Azul",
+      "marca": "Turquoise",
+      "price": 2299,
+      "image_url": "/raquetes/turquoise-tq-fire-azul.webp",
       "destaques": [
-        { "label": "Controle", "v": 9 },
-        { "label": "Manuseio", "v": 8 }
+        {
+          "label": "Controle",
+          "v": 9
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
       ],
-      "custoBeneficio": true,
-      "score": 6.9
+      "custoBeneficio": false,
+      "score": 6.8
+    },
+    {
+      "slug": "kona-maddox-guga",
+      "name": "Maddox Guga 2024",
+      "nome_curto": "Maddox Guga",
+      "marca": "Kona",
+      "price": 1199,
+      "image_url": "/raquetes/kona-maddox-guga.webp",
+      "destaques": [
+        {
+          "label": "Controle",
+          "v": 9
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.7
+    },
+    {
+      "slug": "dropshot-renegade-comfort-bt",
+      "name": "Renegade Comfort BT 2025",
+      "nome_curto": "Renegade Comfort BT",
+      "marca": "Drop Shot",
+      "price": 799.9,
+      "image_url": "/raquetes/dropshot-renegade-comfort-bt.webp",
+      "destaques": [
+        {
+          "label": "Conforto",
+          "v": 8
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.7
+    },
+    {
+      "slug": "mormaii-vitoria-marchezini-ii",
+      "name": "Vitória Marchezini II 2024",
+      "nome_curto": "Vitória Marchezini II",
+      "marca": "Mormaii",
+      "price": 2499.9,
+      "image_url": "/raquetes/mormaii-vitoria-marchezini-ii.webp",
+      "destaques": [
+        {
+          "label": "Controle",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.7
     }
   ],
   "contra-atacante": [
@@ -71,10 +149,16 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 1199,
       "image_url": "/raquetes/vision-pyramid-25.webp",
       "destaques": [
-        { "label": "Controle", "v": 8 },
-        { "label": "Conforto", "v": 8 }
+        {
+          "label": "Controle",
+          "v": 8
+        },
+        {
+          "label": "Conforto",
+          "v": 8
+        }
       ],
-      "custoBeneficio": false,
+      "custoBeneficio": true,
       "score": 7.1
     },
     {
@@ -85,25 +169,97 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 1699,
       "image_url": "/raquetes/ceu.webp",
       "destaques": [
-        { "label": "Conforto", "v": 8 },
-        { "label": "Controle", "v": 7 }
+        {
+          "label": "Conforto",
+          "v": 8
+        },
+        {
+          "label": "Controle",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 7
     },
     {
-      "slug": "forest",
-      "name": "Forest 2025",
-      "nome_curto": "Forest",
-      "marca": "Heroe's",
-      "price": 969.3,
-      "image_url": "/raquetes/forest.webp",
+      "slug": "turquoise-tq-fire-azul",
+      "name": "Turquoise TQ Fire Azul 2025",
+      "nome_curto": "TQ Fire Azul",
+      "marca": "Turquoise",
+      "price": 2299,
+      "image_url": "/raquetes/turquoise-tq-fire-azul.webp",
       "destaques": [
-        { "label": "Controle", "v": 9 },
-        { "label": "Manuseio", "v": 8 }
+        {
+          "label": "Controle",
+          "v": 9
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
       ],
-      "custoBeneficio": true,
-      "score": 6.9
+      "custoBeneficio": false,
+      "score": 6.8
+    },
+    {
+      "slug": "kona-maddox-guga",
+      "name": "Maddox Guga 2024",
+      "nome_curto": "Maddox Guga",
+      "marca": "Kona",
+      "price": 1199,
+      "image_url": "/raquetes/kona-maddox-guga.webp",
+      "destaques": [
+        {
+          "label": "Controle",
+          "v": 9
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.7
+    },
+    {
+      "slug": "dropshot-renegade-comfort-bt",
+      "name": "Renegade Comfort BT 2025",
+      "nome_curto": "Renegade Comfort BT",
+      "marca": "Drop Shot",
+      "price": 799.9,
+      "image_url": "/raquetes/dropshot-renegade-comfort-bt.webp",
+      "destaques": [
+        {
+          "label": "Conforto",
+          "v": 8
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.7
+    },
+    {
+      "slug": "mormaii-vitoria-marchezini-ii",
+      "name": "Vitória Marchezini II 2024",
+      "nome_curto": "Vitória Marchezini II",
+      "marca": "Mormaii",
+      "price": 2499.9,
+      "image_url": "/raquetes/mormaii-vitoria-marchezini-ii.webp",
+      "destaques": [
+        {
+          "label": "Controle",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.7
     }
   ],
   "canhao": [
@@ -115,10 +271,16 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 2540,
       "image_url": "/raquetes/dropshot-canyon-pro-bt-10-2024.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Conforto", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
       ],
-      "custoBeneficio": true,
+      "custoBeneficio": false,
       "score": 6.6
     },
     {
@@ -129,25 +291,97 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 3100,
       "image_url": "/raquetes/poison-bee-2026.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Conforto", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.6
     },
     {
-      "slug": "dropshot-axion-attack-20-2026",
-      "name": "Axion Attack 2.0 BT 2026",
-      "nome_curto": "Axion Attack 2.0 BT",
-      "marca": "Drop Shot",
-      "price": 2599.9,
-      "image_url": "/raquetes/dropshot-axion-attack-20.webp",
+      "slug": "kona-maverick-black-2025",
+      "name": "Maverick Black 2025",
+      "nome_curto": "Maverick Black",
+      "marca": "Kona",
+      "price": 2520,
+      "image_url": "/raquetes/kona-maverick-black-2025.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Manuseio", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.5
+    },
+    {
+      "slug": "zeiq-brave-rafa-miller-2025",
+      "name": "Brave Rafa Miller 12k 2025",
+      "nome_curto": "Brave Rafa Miller 12k",
+      "marca": "Zeiq",
+      "price": 1640.27,
+      "image_url": "/raquetes/zeiq-brave-rafa-miller-2025.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Spin",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": true,
+      "score": 6.4
+    },
+    {
+      "slug": "fobel-macaw",
+      "name": "Macaw 2025",
+      "nome_curto": "Macaw",
+      "marca": "Fobel",
+      "price": 2346,
+      "image_url": "/raquetes/fobel-macaw.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Estabilidade",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.4
+    },
+    {
+      "slug": "flash-2026",
+      "name": "Minimalist Flash 2026",
+      "nome_curto": "Flash",
+      "marca": "Minimalist",
+      "price": 2158.23,
+      "image_url": "/raquetes/minimalist-flash-2026.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Spin",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.4
     }
   ],
   "dono-da-rede": [
@@ -159,10 +393,16 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 2540,
       "image_url": "/raquetes/dropshot-canyon-pro-bt-10-2024.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Conforto", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
       ],
-      "custoBeneficio": true,
+      "custoBeneficio": false,
       "score": 6.6
     },
     {
@@ -173,25 +413,97 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 3100,
       "image_url": "/raquetes/poison-bee-2026.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Conforto", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.6
     },
     {
-      "slug": "dropshot-axion-attack-20-2026",
-      "name": "Axion Attack 2.0 BT 2026",
-      "nome_curto": "Axion Attack 2.0 BT",
-      "marca": "Drop Shot",
-      "price": 2599.9,
-      "image_url": "/raquetes/dropshot-axion-attack-20.webp",
+      "slug": "kona-maverick-black-2025",
+      "name": "Maverick Black 2025",
+      "nome_curto": "Maverick Black",
+      "marca": "Kona",
+      "price": 2520,
+      "image_url": "/raquetes/kona-maverick-black-2025.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Manuseio", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.5
+    },
+    {
+      "slug": "zeiq-brave-rafa-miller-2025",
+      "name": "Brave Rafa Miller 12k 2025",
+      "nome_curto": "Brave Rafa Miller 12k",
+      "marca": "Zeiq",
+      "price": 1640.27,
+      "image_url": "/raquetes/zeiq-brave-rafa-miller-2025.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Spin",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": true,
+      "score": 6.4
+    },
+    {
+      "slug": "fobel-macaw",
+      "name": "Macaw 2025",
+      "nome_curto": "Macaw",
+      "marca": "Fobel",
+      "price": 2346,
+      "image_url": "/raquetes/fobel-macaw.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Estabilidade",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.4
+    },
+    {
+      "slug": "flash-2026",
+      "name": "Minimalist Flash 2026",
+      "nome_curto": "Flash",
+      "marca": "Minimalist",
+      "price": 2158.23,
+      "image_url": "/raquetes/minimalist-flash-2026.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Spin",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.4
     }
   ],
   "finalizador": [
@@ -203,10 +515,16 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 2540,
       "image_url": "/raquetes/dropshot-canyon-pro-bt-10-2024.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Conforto", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
       ],
-      "custoBeneficio": true,
+      "custoBeneficio": false,
       "score": 6.6
     },
     {
@@ -217,25 +535,97 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 3100,
       "image_url": "/raquetes/poison-bee-2026.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Conforto", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.6
     },
     {
-      "slug": "dropshot-axion-attack-20-2026",
-      "name": "Axion Attack 2.0 BT 2026",
-      "nome_curto": "Axion Attack 2.0 BT",
-      "marca": "Drop Shot",
-      "price": 2599.9,
-      "image_url": "/raquetes/dropshot-axion-attack-20.webp",
+      "slug": "kona-maverick-black-2025",
+      "name": "Maverick Black 2025",
+      "nome_curto": "Maverick Black",
+      "marca": "Kona",
+      "price": 2520,
+      "image_url": "/raquetes/kona-maverick-black-2025.webp",
       "destaques": [
-        { "label": "Potência", "v": 7 },
-        { "label": "Manuseio", "v": 7 }
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.5
+    },
+    {
+      "slug": "zeiq-brave-rafa-miller-2025",
+      "name": "Brave Rafa Miller 12k 2025",
+      "nome_curto": "Brave Rafa Miller 12k",
+      "marca": "Zeiq",
+      "price": 1640.27,
+      "image_url": "/raquetes/zeiq-brave-rafa-miller-2025.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Spin",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": true,
+      "score": 6.4
+    },
+    {
+      "slug": "fobel-macaw",
+      "name": "Macaw 2025",
+      "nome_curto": "Macaw",
+      "marca": "Fobel",
+      "price": 2346,
+      "image_url": "/raquetes/fobel-macaw.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Estabilidade",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.4
+    },
+    {
+      "slug": "flash-2026",
+      "name": "Minimalist Flash 2026",
+      "nome_curto": "Flash",
+      "marca": "Minimalist",
+      "price": 2158.23,
+      "image_url": "/raquetes/minimalist-flash-2026.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Spin",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.4
     }
   ],
   "camaleao": [
@@ -247,8 +637,14 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 1699,
       "image_url": "/raquetes/ceu.webp",
       "destaques": [
-        { "label": "Conforto", "v": 8 },
-        { "label": "Controle", "v": 7 }
+        {
+          "label": "Conforto",
+          "v": 8
+        },
+        {
+          "label": "Controle",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.8
@@ -261,8 +657,14 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 1199,
       "image_url": "/raquetes/vision-pyramid-25.webp",
       "destaques": [
-        { "label": "Controle", "v": 8 },
-        { "label": "Conforto", "v": 8 }
+        {
+          "label": "Controle",
+          "v": 8
+        },
+        {
+          "label": "Conforto",
+          "v": 8
+        }
       ],
       "custoBeneficio": true,
       "score": 6.8
@@ -275,11 +677,77 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "price": 3199.99,
       "image_url": "/raquetes/athena-midnight-26.webp",
       "destaques": [
-        { "label": "Conforto", "v": 8 },
-        { "label": "Manuseio", "v": 7 }
+        {
+          "label": "Conforto",
+          "v": 8
+        },
+        {
+          "label": "Manuseio",
+          "v": 7
+        }
       ],
       "custoBeneficio": false,
       "score": 6.6
+    },
+    {
+      "slug": "mormaii-vitoria-marchezini-ii",
+      "name": "Vitória Marchezini II 2024",
+      "nome_curto": "Vitória Marchezini II",
+      "marca": "Mormaii",
+      "price": 2499.9,
+      "image_url": "/raquetes/mormaii-vitoria-marchezini-ii.webp",
+      "destaques": [
+        {
+          "label": "Controle",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.6
+    },
+    {
+      "slug": "zeiq-brave-rafa-miller-2025",
+      "name": "Brave Rafa Miller 12k 2025",
+      "nome_curto": "Brave Rafa Miller 12k",
+      "marca": "Zeiq",
+      "price": 1640.27,
+      "image_url": "/raquetes/zeiq-brave-rafa-miller-2025.webp",
+      "destaques": [
+        {
+          "label": "Manuseio",
+          "v": 7
+        },
+        {
+          "label": "Spin",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.5
+    },
+    {
+      "slug": "dropshot-canyon-pro-bt-10-2024",
+      "name": "Canyon Pro BT 1.0 2024",
+      "nome_curto": "Canyon Pro BT 1.0",
+      "marca": "Drop Shot",
+      "price": 2540,
+      "image_url": "/raquetes/dropshot-canyon-pro-bt-10-2024.webp",
+      "destaques": [
+        {
+          "label": "Potência",
+          "v": 7
+        },
+        {
+          "label": "Conforto",
+          "v": 7
+        }
+      ],
+      "custoBeneficio": false,
+      "score": 6.5
     }
   ]
 }

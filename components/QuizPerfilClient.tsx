@@ -449,7 +449,7 @@ function RaquetesSection({ winner }: { winner: ArquetipoSlug }) {
         Raquetes que combinam com esse estilo
       </p>
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
         {cards.map(card => (
           <RaquetesMiniCard key={card.slug} card={card} winner={winner} />
         ))}
@@ -579,51 +579,18 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             lineHeight: 1.22,
           }}>"{vis.quote}"</p>
 
-          {/* 5. Share row — 36px de alto, alinhados esquerda */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleShareStory}
-              disabled={isGenerating}
-              className="flex-1 flex items-center justify-center gap-1.5 font-bold text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-40"
-              style={{ height: '36px', background: `${vis.ac}28`, color: vis.ac }}
-            >
-              {isGenerating
-                ? <span className="animate-pulse text-xs">…</span>
-                : <>
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                      <rect x="2.5" y="1" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                      <rect x="4" y="3.5" width="6" height="4.5" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
-                      <line x1="4" y1="9.5" x2="10" y2="9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
-                    Story
-                  </>}
-            </button>
-            <button
-              onClick={handleDownload}
-              disabled={isGenerating}
-              className="flex-1 flex items-center justify-center gap-1.5 font-medium text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-40"
-              style={{ height: '36px', background: 'rgba(255,255,255,0.12)', color: 'white' }}
-            >
-              {isGenerating
-                ? <span className="animate-pulse text-xs">…</span>
-                : <>
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                      <path d="M7 1.5v7M4.5 6l2.5 2.5L9.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M2 11.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                    Baixar
-                  </>}
-            </button>
+          {/* 5. Share — botão único */}
+          <div>
             <button
               onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-1.5 font-medium text-sm rounded-xl transition-all active:scale-[0.97]"
-              style={{ height: '36px', background: 'rgba(255,255,255,0.12)', color: 'white' }}
+              className="flex items-center gap-2 px-4 font-semibold text-sm rounded-xl transition-all active:scale-[0.97]"
+              style={{ height: '36px', background: `${vis.ac}28`, color: vis.ac }}
             >
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
                 <path d="M10 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM4 5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" stroke="currentColor" strokeWidth="1.3"/>
                 <path d="M5.5 6.2l3-1.8M5.5 8l3 1.8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
               </svg>
-              Link
+              Compartilhar
             </button>
           </div>
         </div>

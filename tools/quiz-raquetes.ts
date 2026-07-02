@@ -90,18 +90,18 @@ function getDestaques(r: RacketWithInsights) {
 // Exact replica of custoBeneficioBadge() in ChatMessage.tsx
 // Returns array of booleans — true = this index gets the badge
 function getCustoBeneficio(
-  top3: Array<{ match_score: number; racket: { price: number | null; id: number } }>
+  items: Array<{ match_score: number; racket: { price: number | null; id: number } }>
 ): boolean[] {
-  const scored = top3.filter(r => r.match_score != null && r.racket.price != null && r.racket.price > 0)
-  if (scored.length < 2) return top3.map(() => false)
+  const scored = items.filter(r => r.match_score != null && r.racket.price != null && r.racket.price > 0)
+  if (scored.length < 2) return items.map(() => false)
   const prices = scored.map(r => r.racket.price!)
-  if (Math.max(...prices) - Math.min(...prices) < 300) return top3.map(() => false)
+  if (Math.max(...prices) - Math.min(...prices) < 300) return items.map(() => false)
   const maxScore = Math.max(...scored.map(r => r.match_score))
-  if (maxScore <= 0) return top3.map(() => false)
+  if (maxScore <= 0) return items.map(() => false)
   const nearBest = scored.filter(r => maxScore - r.match_score <= 0.3)
-  if (nearBest.length === 0) return top3.map(() => false)
+  if (nearBest.length === 0) return items.map(() => false)
   const cheapest = nearBest.reduce((prev, curr) => curr.racket.price! < prev.racket.price! ? curr : prev)
-  return top3.map(r => r.racket.id === cheapest.racket.id)
+  return items.map(r => r.racket.id === cheapest.racket.id)
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -136,12 +136,23 @@ async function main() {
     const filtros = PERFIS[slug]
     const { raquetes } = await getRanked(filtros)
 
-    const top3 = raquetes.slice(0, 3).map(r => ({ racket: r, match_score: r.match_score }))
-    const custoBadges = getCustoBeneficio(top3)
+    // Top 6, uma por marca (maior score de cada marca)
+    const seenBrands = new Set<string>()
+    const top6 = raquetes
+      .map(r => ({ racket: r, match_score: r.match_score }))
+      .filter(item => {
+        const marca = item.racket.brands?.name ?? ''
+        if (seenBrands.has(marca)) return false
+        seenBrands.add(marca)
+        return true
+      })
+      .slice(0, 6)
+
+    const custoBadges = getCustoBeneficio(top6)
 
     // Validation log
     console.log(`\n── ${slug.toUpperCase()} (${filtros.nivel}/${filtros.prioridade}) ──`)
-    top3.forEach((item, i) => {
+    top6.forEach((item, i) => {
       const r = item.racket
       const nameDisplay = r.model_year && !r.name.includes(String(r.model_year))
         ? `${r.name} ${r.model_year}`
@@ -154,7 +165,7 @@ async function main() {
       if (dest.length) console.log(`     destaques: ${dest.map(d => `${d.label} ${d.v}`).join(', ')}`)
     })
 
-    OUTPUT[slug] = top3.map((item, i) => {
+    OUTPUT[slug] = top6.map((item, i) => {
       const r = item.racket
       const nameDisplay = r.model_year && !r.name.includes(String(r.model_year))
         ? `${r.name} ${r.model_year}`
