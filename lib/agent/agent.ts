@@ -9,13 +9,13 @@ import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getC
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const PREF_QUESTION_TEXT  = 'Alguma preferência? Pode escolher ou pular.'
+const PREF_QUESTION_TEXT  = 'Algum detalhe que você prefere na raquete? Pode escolher ou pular 😉'
 const PREF_CHIPS          = ['Marca', 'Carbono', 'EVA', 'Espessura', 'Sem preferência']
-const CARBONO_QUESTION_TEXT = 'Qual tipo de carbono você prefere?'
+const CARBONO_QUESTION_TEXT = 'Tem preferência no tipo de carbono?'
 const CARBONO_CHIPS       = ['3K', '12K', '18K', 'Tanto faz']
-const EVA_QUESTION_TEXT   = 'Qual tipo de EVA?'
-const EVA_CHIPS           = ['Soft', 'Médio', 'Hard', 'Tanto faz']
-const ESP_QUESTION_TEXT   = 'Qual espessura prefere?'
+const EVA_QUESTION_TEXT   = 'E o núcleo (EVA)? Mais macio ou mais firme?'
+const EVA_CHIPS           = ['Soft (macio)', 'Médio', 'Hard (firme)', 'Tanto faz']
+const ESP_QUESTION_TEXT   = 'Prefere raquete mais fina ou mais grossa?'
 const ESP_CHIPS           = ['Fina (até 20mm)', 'Média (21-22mm)', 'Grossa (23mm+)', 'Tanto faz']
 
 const MODEL = PRICING.model
@@ -58,7 +58,7 @@ const PRICE_ANSWERS = new Set([
 
 // Fixed post-recommendation action chips and types
 const POST_REC_CHIPS = ['Ver mais opções', 'Outra faixa de preço', 'Outra marca'] as const
-const POST_REC_REDIRECT_TEXT = 'Posso te mostrar mais opções, outra faixa de preço ou outra marca. É só tocar.'
+const POST_REC_REDIRECT_TEXT = 'Posso buscar mais opções, outra faixa de preço ou outra marca. O que prefere?'
 export type PostRecContext = { shownIds: number[]; shownBrands: string[]; marcaListPending?: boolean; confirmedProfile?: Record<string, unknown> }
 type PostRecMode = 'ver_mais' | 'outra_marca' | 'outra_faixa' | 'escolher_marca' | 'livre'
 type PostRecCtx = { mode: PostRecMode | null; shownIds: Set<number>; shownBrands: Set<string> }
@@ -193,9 +193,9 @@ const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
   '3K':              { pref_carbono: '3k' },
   '12K':             { pref_carbono: '12k' },
   '18K':             { pref_carbono: '18k' },
-  'Soft':            { pref_eva: 'soft' },
+  'Soft (macio)':    { pref_eva: 'soft' },
   'Médio':           { pref_eva: 'medium' },
-  'Hard':            { pref_eva: 'hard' },
+  'Hard (firme)':    { pref_eva: 'hard' },
   'Fina (até 20mm)': { pref_espessura: 'fina' },
   'Média (21-22mm)': { pref_espessura: 'media' },
   'Grossa (23mm+)':  { pref_espessura: 'grossa' },
@@ -232,9 +232,9 @@ const CHIP_REACTIONS: Record<string, string> = {
   '3K':              'Carbono 3K, entendido.',
   '12K':             'Carbono 12K, anotado.',
   '18K':             'Carbono 18K, anotado.',
-  'Soft':            'EVA Soft, entendido.',
-  'Médio':           'EVA Médio, anotado.',
-  'Hard':            'EVA Hard, entendido.',
+  'Soft (macio)':    'EVA macio, entendido.',
+  'Médio':           'EVA médio, anotado.',
+  'Hard (firme)':    'EVA firme, entendido.',
   'Fina (até 20mm)': 'Espessura fina, entendido.',
   'Média (21-22mm)': 'Espessura média, anotado.',
   'Grossa (23mm+)':  'Espessura grossa, entendido.',
@@ -245,7 +245,7 @@ const CHIP_REACTION_FALLBACK = 'Tá bom.'
 // Retorna 'not_shown' | 'pending_level1' | 'pending_level2' | 'done' e o metaType se pendente.
 function getPrefState(history: ChatMessage[]): { state: 'not_shown' | 'pending_level1' | 'pending_level2' | 'done'; metaType?: string } {
   const TERMINAL = new Set(['Sem preferência', 'Tanto faz',
-    '3K', '12K', '18K', 'Soft', 'Médio', 'Hard',
+    '3K', '12K', '18K', 'Soft (macio)', 'Médio', 'Hard (firme)',
     'Fina (até 20mm)', 'Média (21-22mm)', 'Grossa (23mm+)'])
   const META_TO_Q: Record<string, string> = {
     'Carbono':   CARBONO_QUESTION_TEXT,
