@@ -670,8 +670,8 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
               </div>
             )}
 
-            {isPostRec && !hasAkinatorChips && (
-              <ChatInput onSend={sendMessage} disabled={loading || isStreaming || isAnimating || atLimit} />
+            {isPostRec && !hasAkinatorChips && !loading && !isStreaming && (
+              <ChatInput onSend={sendMessage} disabled={isAnimating || atLimit} />
             )}
           </div>
         </div>
