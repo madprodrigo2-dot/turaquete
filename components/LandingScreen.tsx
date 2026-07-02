@@ -1219,6 +1219,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             >
               Para lojas
             </Link>
+            <span className="text-tinta/20 text-xs">·</span>
+            <Link
+              href="/perfil"
+              className="text-tinta/40 text-xs hover:text-tinta/70 transition-colors"
+            >
+              Qual é o seu perfil?
+            </Link>
           </div>
         </footer>
 

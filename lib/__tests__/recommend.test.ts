@@ -63,6 +63,7 @@ function makeRacket(
     face_material: 'fibra',
     core: 'eva',
     price: 1500,
+    price_updated_at: null,
     currency: 'BRL',
     affiliate_url: null,
     source_url: null,
