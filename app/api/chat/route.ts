@@ -214,7 +214,14 @@ export async function POST(req: NextRequest) {
       req.headers.get('x-real-ip') ??
       '127.0.0.1'
 
-    if (!checkRateLimit(ip, sessionId || undefined)) {
+    // Admin check — must run before rate limit so admin bypasses it.
+    // Thinking data is NEVER sent to non-admin clients.
+    const session = await auth()
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
+    const cookieStore = await cookies()
+    const isTest = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
+
+    if (!isAdmin && !checkRateLimit(ip, sessionId || undefined)) {
       console.warn(`[rate-limit] blocked ip=${ip} session=${sessionId ?? '-'} ua=${req.headers.get('user-agent')?.slice(0, 80) ?? '-'}`)
       return NextResponse.json(
         { error: 'Opa, muitas mensagens! Tenta de novo em alguns minutos.' },
@@ -252,12 +259,6 @@ export async function POST(req: NextRequest) {
         )
       }
     }
-
-    // Admin check — server-side only. Thinking data is NEVER sent to non-admin clients.
-    const session = await auth()
-    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
-    const cookieStore = await cookies()
-    const isTest = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
 
     // Pre-rec free text guard: in the questions phase (before any recommendation is shown),
     // any input that isn't a known chip gets a fixed response — zero model calls, zero cost.
