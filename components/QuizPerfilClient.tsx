@@ -414,13 +414,12 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
     ? { background: 'linear-gradient(160deg, #0CC0BE 0%, #0E3A40 58%)' }
     : { background: vis.bg }
 
-  const isMulti  = parts.length > 1
-  const nameSize = `clamp(${isMulti ? '50px' : '68px'}, ${isMulti ? '16vw' : '23vw'}, ${isMulti ? '100px' : '132px'})`
+  // nameSize: escala pelo char mais longo para nunca transbordar no mobile
+  const maxWordLen = Math.max(...parts.map(w => w.length))
+  const nameVw     = Math.min(120 / maxWordLen, 22)
+  const nameSize   = `clamp(${Math.max(28, Math.floor(nameVw * 3.6))}px, ${nameVw.toFixed(1)}vw, ${Math.floor(nameVw * 9)}px)`
 
   const acLabel = vis.ac === '#FFC42E' ? '#0E3A40' : vis.ac
-
-  const armasCards = QUIZ_RAQUETES[winner] ?? []
-  const armasLine  = armasCards.map(c => c.nome_curto).filter(Boolean).join(' · ')
 
   const getBlob = async (): Promise<Blob> => {
     if (storyBlob) return storyBlob
@@ -443,6 +442,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
   }
 
   const handleShare = () => {
+    track('quiz_share_image', { arquetipo: winner, metodo: 'link' })
     const url   = 'https://www.turaquete.com.br/perfil'
     const title = `Descobri que meu perfil de jogador é ${arq.nome}!`
     if (typeof navigator !== 'undefined' && navigator.share) {
@@ -454,7 +454,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
 
   const handleShareStory = async () => {
     if (isGenerating) return
-    track('quiz_share_image', { arquetipo: winner, metodo: 'share' })
+    track('quiz_share_image', { arquetipo: winner, metodo: 'story' })
     try {
       const blob = await getBlob()
       const file = new File([blob], `meu-perfil-${winner}.png`, { type: 'image/png' })
@@ -474,43 +474,38 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
 
   return (
     <div className="quiz-result">
-      {/* ── HERO — screenshot zone ───────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ ...bgStyle, minHeight: '100dvh' }}>
-        {/* Jersey number — centrado atrás das filas 2-3 */}
-        <div className="absolute pointer-events-none select-none" style={{
-          top: '12%', right: 0, bottom: 0, overflow: 'hidden',
-        }} aria-hidden>
+      {/* ── HERO — compact (~40-55vh), bloco de cor + share row ─────────── */}
+      <div className="relative overflow-hidden" style={bgStyle}>
+        {/* Jersey number — decorativo, contido no bloco */}
+        <div className="absolute bottom-0 right-0 pointer-events-none select-none" style={{ overflow: 'hidden' }} aria-hidden>
           <span className="font-heading font-bold" style={{
-            fontSize: 'clamp(240px, 65vw, 520px)',
+            fontSize: 'clamp(150px, 50vw, 380px)',
             color: vis.ac,
-            opacity: 0.095,
+            opacity: 0.09,
             lineHeight: 0.82,
             display: 'block',
-            marginRight: '-0.06em',
+            marginRight: '-0.07em',
+            marginBottom: '-0.1em',
           }}>{vis.numero}</span>
         </div>
 
-        {/* 4 filas — justify-between preenche o alto completo */}
-        <div className="relative z-10 flex flex-col justify-between px-7" style={{
-          minHeight: '100dvh',
-          paddingTop: 'max(48px, env(safe-area-inset-top, 0px) + 20px)',
-          paddingBottom: 'max(52px, env(safe-area-inset-bottom, 0px) + 20px)',
+        {/* Conteúdo */}
+        <div className="relative z-10 flex flex-col gap-4 px-7" style={{
+          paddingTop: 'max(44px, env(safe-area-inset-top, 0px) + 14px)',
+          paddingBottom: '8px',
         }}>
-
-          {/* Fila 1 — header */}
           <p className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color: vis.ac }}>
             Meu Perfil de Jogo
           </p>
 
-          {/* Fila 2 — nome + badge */}
           <div>
             <p className="font-heading font-bold quiz-in" style={{
-              fontSize: 'clamp(38px, 12vw, 58px)',
+              fontSize: 'clamp(22px, 7vw, 42px)',
               color: vis.ac,
-              opacity: 0.75,
+              opacity: 0.72,
               lineHeight: 1,
-              marginBottom: '-0.07em',
-              animationDelay: '0.12s',
+              marginBottom: '-0.05em',
+              animationDelay: '0.08s',
             }}>O</p>
 
             {parts.map((word, i) => (
@@ -518,13 +513,13 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
                 fontSize: nameSize,
                 color: 'white',
                 lineHeight: 0.88,
-                textShadow: `4px 4px 0px ${vis.ac}`,
-                animationDelay: `${0.2 + i * 0.1}s`,
+                textShadow: `3px 3px 0px ${vis.ac}`,
+                animationDelay: `${0.16 + i * 0.1}s`,
               }}>{word}</p>
             ))}
 
-            <div className="mt-4 quiz-in" style={{ animationDelay: '0.34s' }}>
-              <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold" style={{
+            <div className="mt-3 quiz-in" style={{ animationDelay: '0.3s' }}>
+              <span className="inline-block px-3.5 py-1.5 rounded-full text-xs font-semibold" style={{
                 border: `1.5px solid ${vis.ac}`,
                 color: vis.ac,
                 background: `${vis.ac}18`,
@@ -534,34 +529,67 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             </div>
           </div>
 
-          {/* Fila 3 — quote GRANDE (segunda voz da peça) */}
           <p className="font-heading font-bold italic quiz-in" style={{
-            fontSize: 'clamp(30px, 9.5vw, 60px)',
+            fontSize: 'clamp(20px, 6.2vw, 36px)',
             color: 'rgba(255,255,255,0.88)',
-            lineHeight: 1.18,
-            animationDelay: '0.4s',
+            lineHeight: 1.22,
+            animationDelay: '0.34s',
           }}>"{vis.quote}"</p>
+        </div>
 
-          {/* Fila 4 — armas + gancho + URL */}
-          <div className="flex flex-col gap-2">
-            {armasLine && (
-              <p className="text-xs overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.60)' }}>
-                <span style={{ color: vis.ac, fontWeight: 600 }}>Minhas armas: </span>
-                {armasLine}
-              </p>
-            )}
-            <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>
-              E você, joga como? · turaquete.com.br/perfil
-            </p>
-          </div>
-
+        {/* Share row — visível na primeira tela */}
+        <div className="relative z-10 flex gap-2 px-6 pb-6 pt-4">
+          <button
+            onClick={handleShareStory}
+            disabled={isGenerating}
+            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-[0.97] disabled:opacity-40 flex items-center justify-center gap-1.5"
+            style={{ background: `${vis.ac}28`, color: vis.ac }}
+          >
+            {isGenerating
+              ? <span className="animate-pulse text-xs">Gerando…</span>
+              : <>
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
+                    <rect x="2.5" y="1" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                    <rect x="4" y="3.5" width="6" height="4.5" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
+                    <line x1="4" y1="9.5" x2="10" y2="9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                  Story
+                </>}
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={isGenerating}
+            className="flex-1 py-2.5 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-40 flex items-center justify-center gap-1.5"
+            style={{ background: 'rgba(255,255,255,0.12)', color: 'white' }}
+          >
+            {isGenerating
+              ? <span className="animate-pulse text-xs">…</span>
+              : <>
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
+                    <path d="M7 1.5v7M4.5 6l2.5 2.5L9.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 11.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  Baixar
+                </>}
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex-1 py-2.5 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-1.5"
+            style={{ background: 'rgba(255,255,255,0.12)', color: 'white' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <path d="M10 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM4 5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M5.5 6.2l3-1.8M5.5 8l3 1.8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            Link
+          </button>
         </div>
       </div>
 
-      {/* ── SECOND SECTION — detail + CTAs ──────────────────────────────── */}
+      {/* ── DETALHES — descrição → barras → pontos → raquetes → CTA ──────── */}
       <div style={{ background: '#FBF6EF' }}>
         <div className="max-w-md mx-auto px-6 py-8 flex flex-col gap-5">
-          {/* Description */}
+          {/* Descrição */}
           <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: '0 2px 16px rgba(14,58,64,0.07)' }}>
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(14,58,64,0.72)' }}>
               {arq.descricao}
@@ -573,7 +601,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             <BarrasPerfil scores={scores} winner={winner} />
           </div>
 
-          {/* Strengths */}
+          {/* Pontos Fortes */}
           <div>
             <p className="text-xs font-bold tracking-widest uppercase mb-2.5" style={{ color: acLabel, opacity: 0.6 }}>
               Pontos Fortes
@@ -595,7 +623,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
           {/* Raquetes que combinam */}
           <RaquetesSection winner={winner} />
 
-          {/* CTAs */}
+          {/* CTA + Refazer */}
           <div className="flex flex-col gap-3 pt-1">
             <Link
               href={utmUrl}
@@ -605,49 +633,6 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             >
               Qual raquete combina com esse perfil?
             </Link>
-
-            <div className="flex gap-2.5">
-              <button
-                onClick={handleShareStory}
-                disabled={isGenerating}
-                className="flex-1 py-3 rounded-2xl font-semibold text-sm transition-all active:scale-[0.97] disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: vis.bg, color: vis.ac }}
-              >
-                {isGenerating ? <span className="animate-pulse text-xs">Gerando...</span> : <>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                    <rect x="2.5" y="1" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                    <rect x="4" y="3.5" width="6" height="4.5" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
-                    <line x1="4" y1="9.5" x2="10" y2="9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                  </svg>
-                  Story
-                </>}
-              </button>
-              <button
-                onClick={handleDownload}
-                disabled={isGenerating}
-                className="flex-1 py-3 rounded-2xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ background: 'white', border: '1.5px solid rgba(14,58,64,0.1)', color: '#0E3A40' }}
-              >
-                {isGenerating ? <span className="animate-pulse text-xs">...</span> : <>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                    <path d="M7 1.5v7M4.5 6l2.5 2.5L9.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 11.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                  Baixar
-                </>}
-              </button>
-              <button
-                onClick={handleShare}
-                className="flex-1 py-3 rounded-2xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
-                style={{ background: 'white', border: '1.5px solid rgba(14,58,64,0.1)', color: '#0E3A40' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                  <path d="M10 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM4 5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" stroke="currentColor" strokeWidth="1.3"/>
-                  <path d="M5.5 6.2l3-1.8M5.5 8l3 1.8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                </svg>
-                Link
-              </button>
-            </div>
 
             <button
               onClick={onReset}
