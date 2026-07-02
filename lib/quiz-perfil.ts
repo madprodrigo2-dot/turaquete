@@ -122,7 +122,7 @@ export const PERGUNTAS: Pergunta[] = [
     opcoes: [
       { label: 'Um winner que ninguém alcança',             primario: 'canhao',         secundario: 'finalizador'   },
       { label: 'Devolver uma bola impossível',              primario: 'contra-atacante', secundario: 'muralha'       },
-      { label: 'Um ponto construído, cada bola com intenção', primario: 'camaleao',     secundario: 'dono-da-rede'  },
+      { label: 'Um ponto construído, cada bola com intenção', primario: 'dono-da-rede', secundario: 'camaleao'      },
     ],
   },
   {
@@ -138,23 +138,23 @@ export const PERGUNTAS: Pergunta[] = [
     opcoes: [
       { label: 'Em casa. A rede é minha', primario: 'dono-da-rede', secundario: 'finalizador'   },
       { label: 'Vou quando o jogo pede',  primario: 'camaleao',     secundario: 'dono-da-rede'  },
-      { label: 'Prefiro o fundo',         primario: 'muralha',      secundario: 'canhao'         },
+      { label: 'Prefiro o fundo',         primario: 'canhao',       secundario: 'muralha'        },
     ],
   },
   {
     texto: 'Seu parceiro errou três bolas seguidas. Você...',
     opcoes: [
-      { label: 'Assumo mais quadra e defino eu',      primario: 'dono-da-rede', secundario: 'canhao'          },
-      { label: 'Mantenho meu jogo, uma bola de cada vez', primario: 'muralha', secundario: 'contra-atacante'  },
-      { label: 'Converso e ajusto a tática',          primario: 'camaleao',    secundario: 'muralha'          },
+      { label: 'Assumo mais quadra e defino eu',      primario: 'dono-da-rede',    secundario: 'canhao'      },
+      { label: 'Mantenho meu jogo, uma bola de cada vez', primario: 'contra-atacante', secundario: 'muralha' },
+      { label: 'Converso e ajusto a tática',          primario: 'camaleao',        secundario: 'muralha'     },
     ],
   },
   {
     texto: 'Sua vitória ideal termina...',
     opcoes: [
-      { label: '6-1 rápido, pontos curtos',   primario: 'finalizador',     secundario: 'dono-da-rede'   },
-      { label: '7-6 numa batalha épica',      primario: 'muralha',         secundario: 'contra-atacante' },
-      { label: 'De virada, porque li o jogo', primario: 'contra-atacante', secundario: 'camaleao'       },
+      { label: '6-1 rápido, pontos curtos',   primario: 'finalizador',     secundario: 'dono-da-rede'    },
+      { label: '7-6 numa batalha épica',      primario: 'contra-atacante', secundario: 'muralha'         },
+      { label: 'De virada, porque li o jogo', primario: 'camaleao',        secundario: 'contra-atacante' },
     ],
   },
 ]

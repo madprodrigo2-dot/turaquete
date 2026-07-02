@@ -635,7 +635,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
           <RaquetesSection winner={winner} />
 
           {/* CTA + Refazer */}
-          <div className="flex flex-col gap-3" style={{ maxWidth: '480px' }}>
+          <div className="flex flex-col gap-3 mx-auto w-full" style={{ maxWidth: '480px' }}>
             <Link
               href={utmUrl}
               onClick={() => track('quiz_cta_tury', { arquetipo: winner })}
