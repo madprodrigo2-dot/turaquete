@@ -47,7 +47,8 @@ describe('calcularPerfil: desempate', () => {
   })
 })
 
-describe('calcularScores: parcial (radar ao vivo)', () => {
+// radar removido de /perfil — calcularScores é usado pelo bloco "Seu jogo em números"
+describe('calcularScores: parcial', () => {
   test('apos 1 resposta a na Q1 acumula finalizador+2 e canhao+1', () => {
     const scores = calcularScores([0])
     expect(scores['finalizador']).toBe(2)

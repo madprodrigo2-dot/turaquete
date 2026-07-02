@@ -1,12 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import {
   PERGUNTAS,
   ARQUETIPOS,
-  RADAR_AXIS_ORDER,
-  MAX_SCORE_PER_AXIS,
   calcularScores,
   calcularPerfil,
   type Resposta,
@@ -52,67 +50,68 @@ const NAME_PARTS: Record<ArquetipoSlug, string[]> = {
   camaleao:          ['CAMALEÃO'],
 }
 
-// ── Radar SVG ─────────────────────────────────────────────────────────────────
+// ── Barras de perfil — "Seu jogo em números" ──────────────────────────────────
 
-const CX = 110, CY = 110, R_MAX = 88, LABEL_R = R_MAX + 18
-const R_GRID = [0.25, 0.5, 0.75, 1]
-const AXIS_LABELS: Record<ArquetipoSlug, string> = {
-  muralha: 'Muralha', canhao: 'Canhão', finalizador: 'Finalizador',
-  'dono-da-rede': 'Rede', 'contra-atacante': 'C-Atacante', camaleao: 'Camaleão',
-}
+const CORES_BARRAS = ['#0CC0BE', '#FF5E3A', 'rgba(14,58,64,0.3)']
 
-function axisAngle(i: number) { return ((-90 + i * 60) * Math.PI) / 180 }
-function radarPt(i: number, r: number) {
-  const a = axisAngle(i)
-  return { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a) }
-}
+function BarrasPerfil({ scores, winner }: { scores: ScoreMap; winner: ArquetipoSlug }) {
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
-function RadarChart({ scores, winner, ac }: { scores: ScoreMap; winner?: ArquetipoSlug; ac: string }) {
-  const hexPts = (r: number) =>
-    RADAR_AXIS_ORDER.map((_, i) => {
-      const a = axisAngle(i)
-      return `${CX + r * Math.cos(a)},${CY + r * Math.sin(a)}`
-    }).join(' ')
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true) },
+      { threshold: 0.25 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
-  const dataPts = RADAR_AXIS_ORDER.map((slug, i) => {
-    const ratio = Math.min(scores[slug] / MAX_SCORE_PER_AXIS, 1)
-    const p = radarPt(i, ratio * R_MAX)
-    return `${p.x},${p.y}`
-  }).join(' ')
+  const top3 = (Object.entries(scores) as [ArquetipoSlug, number][])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+
+  const maxScore = top3[0]?.[1] ?? 1
 
   return (
-    <svg viewBox="0 0 220 220" className="w-full max-w-[200px] mx-auto" aria-label="Radar do perfil" role="img">
-      {R_GRID.map((f, i) => (
-        <polygon key={i} points={hexPts(R_MAX * f)} fill="none" stroke={ac} strokeOpacity={0.2} strokeWidth={1} />
-      ))}
-      {RADAR_AXIS_ORDER.map((_, i) => {
-        const p = radarPt(i, R_MAX)
-        return <line key={i} x1={CX} y1={CY} x2={p.x} y2={p.y} stroke={ac} strokeOpacity={0.25} strokeWidth={1} />
-      })}
-      <polygon
-        points={dataPts}
-        fill={ac} fillOpacity={0.3}
-        stroke={ac} strokeWidth={2}
-        style={{ transition: 'all 0.4s ease' }}
-      />
-      {winner && (() => {
-        const idx = RADAR_AXIS_ORDER.indexOf(winner)
-        const ratio = Math.min(scores[winner] / MAX_SCORE_PER_AXIS, 1)
-        const p = radarPt(idx, ratio * R_MAX)
-        return <circle cx={p.x} cy={p.y} r={6} fill="white" fillOpacity={0.9} />
-      })()}
-      {RADAR_AXIS_ORDER.map((slug, i) => {
-        const a = axisAngle(i), x = CX + LABEL_R * Math.cos(a), y = CY + LABEL_R * Math.sin(a)
-        const isW = slug === winner
-        return (
-          <text key={slug} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-            fontSize={isW ? 9.5 : 8} fontWeight={isW ? '700' : '400'}
-            fill="white" fillOpacity={isW ? 1 : 0.55}>
-            {AXIS_LABELS[slug]}
-          </text>
-        )
-      })}
-    </svg>
+    <div ref={ref}>
+      <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'rgba(14,58,64,0.5)' }}>
+        Seu jogo em números
+      </p>
+      <div className="flex flex-col gap-3.5">
+        {top3.map(([slug, score], i) => {
+          const pct   = Math.round((score / maxScore) * 100)
+          const nome  = ARQUETIPOS[slug].nome
+          const cor   = CORES_BARRAS[i]
+          const isW   = slug === winner
+          const textC = i < 2 ? cor : 'rgba(14,58,64,0.38)'
+          return (
+            <div key={slug}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span style={{ fontSize: '12px', fontWeight: isW ? 700 : 500, color: isW ? '#0E3A40' : 'rgba(14,58,64,0.6)' }}>
+                  {nome}
+                  {isW && (
+                    <span className="ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(12,192,190,0.12)', color: '#0CC0BE' }}>
+                      seu perfil
+                    </span>
+                  )}
+                </span>
+                <span className="font-mono font-bold text-xs" style={{ color: textC }}>{pct}%</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: i < 2 ? `${cor}1A` : 'rgba(14,58,64,0.07)' }}>
+                <div className="h-full rounded-full" style={{
+                  width: visible ? `${pct}%` : '0%',
+                  background: i < 2 ? cor : 'rgba(14,58,64,0.22)',
+                  transition: `width ${0.5 + i * 0.12}s cubic-bezier(0.22, 1, 0.36, 1) ${i * 0.1}s`,
+                }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -416,7 +415,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
     : { background: vis.bg }
 
   const isMulti  = parts.length > 1
-  const nameSize = `clamp(${isMulti ? '44px' : '62px'}, ${isMulti ? '14vw' : '20vw'}, ${isMulti ? '92px' : '122px'})`
+  const nameSize = `clamp(${isMulti ? '50px' : '68px'}, ${isMulti ? '16vw' : '23vw'}, ${isMulti ? '100px' : '132px'})`
 
   const acLabel = vis.ac === '#FFC42E' ? '#0E3A40' : vis.ac
 
@@ -476,39 +475,41 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
   return (
     <div className="quiz-result">
       {/* ── HERO — screenshot zone ───────────────────────────────────────── */}
-      <div className="relative overflow-hidden flex flex-col" style={{ ...bgStyle, minHeight: '100dvh' }}>
-        {/* Jersey number — mid-right, behind quote area */}
+      <div className="relative overflow-hidden" style={{ ...bgStyle, minHeight: '100dvh' }}>
+        {/* Jersey number — centrado atrás das filas 2-3 */}
         <div className="absolute pointer-events-none select-none" style={{
-          top: '38%', right: 0, bottom: 0, overflow: 'hidden',
+          top: '12%', right: 0, bottom: 0, overflow: 'hidden',
         }} aria-hidden>
           <span className="font-heading font-bold" style={{
-            fontSize: 'clamp(200px, 60vw, 480px)',
+            fontSize: 'clamp(240px, 65vw, 520px)',
             color: vis.ac,
-            opacity: 0.10,
+            opacity: 0.095,
             lineHeight: 0.82,
             display: 'block',
-            marginRight: '-0.07em',
+            marginRight: '-0.06em',
           }}>{vis.numero}</span>
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col" style={{ minHeight: '100dvh' }}>
-          {/* Header */}
-          <div className="pt-12 px-7">
-            <p className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color: vis.ac }}>
-              Meu Perfil de Jogo
-            </p>
-          </div>
+        {/* 4 filas — justify-between preenche o alto completo */}
+        <div className="relative z-10 flex flex-col justify-between px-7" style={{
+          minHeight: '100dvh',
+          paddingTop: 'max(48px, env(safe-area-inset-top, 0px) + 20px)',
+          paddingBottom: 'max(52px, env(safe-area-inset-bottom, 0px) + 20px)',
+        }}>
 
-          {/* Name + badge + quote — flows from top, no centering */}
-          <div className="px-7 mt-5">
-            {/* "O" tight above name */}
+          {/* Fila 1 — header */}
+          <p className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color: vis.ac }}>
+            Meu Perfil de Jogo
+          </p>
+
+          {/* Fila 2 — nome + badge */}
+          <div>
             <p className="font-heading font-bold quiz-in" style={{
-              fontSize: 'clamp(36px, 10vw, 52px)',
+              fontSize: 'clamp(38px, 12vw, 58px)',
               color: vis.ac,
               opacity: 0.75,
               lineHeight: 1,
-              marginBottom: '-0.08em',
+              marginBottom: '-0.07em',
               animationDelay: '0.12s',
             }}>O</p>
 
@@ -522,8 +523,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               }}>{word}</p>
             ))}
 
-            {/* Badge */}
-            <div className="mt-5 mb-6 quiz-in" style={{ animationDelay: '0.34s' }}>
+            <div className="mt-4 quiz-in" style={{ animationDelay: '0.34s' }}>
               <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold" style={{
                 border: `1.5px solid ${vis.ac}`,
                 color: vis.ac,
@@ -532,31 +532,29 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
                 {arq.equivalente} · estilo do tênis pro
               </span>
             </div>
-
-            {/* Quote — segunda voz, grande */}
-            <p className="font-heading font-bold italic quiz-in" style={{
-              fontSize: 'clamp(22px, 6.5vw, 36px)',
-              color: 'rgba(255,255,255,0.85)',
-              lineHeight: 1.25,
-              animationDelay: '0.4s',
-            }}>"{vis.quote}"</p>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1" />
+          {/* Fila 3 — quote GRANDE (segunda voz da peça) */}
+          <p className="font-heading font-bold italic quiz-in" style={{
+            fontSize: 'clamp(30px, 9.5vw, 60px)',
+            color: 'rgba(255,255,255,0.88)',
+            lineHeight: 1.18,
+            animationDelay: '0.4s',
+          }}>"{vis.quote}"</p>
 
-          {/* Bottom zone: minhas armas + hook + URL */}
-          <div className="px-7 pb-14 flex flex-col gap-2">
+          {/* Fila 4 — armas + gancho + URL */}
+          <div className="flex flex-col gap-2">
             {armasLine && (
-              <p className="text-xs overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.62)' }}>
+              <p className="text-xs overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.60)' }}>
                 <span style={{ color: vis.ac, fontWeight: 600 }}>Minhas armas: </span>
                 {armasLine}
               </p>
             )}
-            <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.32)' }}>
+            <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>
               E você, joga como? · turaquete.com.br/perfil
             </p>
           </div>
+
         </div>
       </div>
 
@@ -570,12 +568,9 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             </p>
           </div>
 
-          {/* Radar — detalhe técnico */}
+          {/* Barras de perfil */}
           <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: '0 2px 16px rgba(14,58,64,0.07)' }}>
-            <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: acLabel, opacity: 0.5 }}>
-              Radar do perfil
-            </p>
-            <RadarChart scores={scores} winner={winner} ac={acLabel === '#0E3A40' ? '#0CC0BE' : acLabel} />
+            <BarrasPerfil scores={scores} winner={winner} />
           </div>
 
           {/* Strengths */}
