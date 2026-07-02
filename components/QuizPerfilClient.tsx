@@ -238,9 +238,6 @@ function Landing({ onStart }: { onStart: () => void }) {
         >
           Descobrir meu perfil
         </button>
-        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
-          Resultado na hora · Grátis
-        </p>
       </div>
     </div>
   )
