@@ -181,7 +181,7 @@ describe('INVARIANTE #4: marca preferida boost (+1.5) não esconde alternativas 
 // ── INVARIANTE #5: Teto de nível ─────────────────────────────────────────────
 
 describe('INVARIANTE #5: teto de nível protege iniciantes e intermediários', () => {
-  // isNivelAvancado: (f <= 6 && (p >= 8 || c >= 8)) || (f <= 7 && p >= 9)
+  // isNivelAvancado: f <= 4 || (f <= 6 && (p >= 8 || c >= 9)) || (f <= 7 && p >= 9)
 
   const avancadaRacket = makeRacket.bind(null, 'Avancada Pro')
   const iniciante = () => makeRacket('Amiga Iniciante', {}, {
