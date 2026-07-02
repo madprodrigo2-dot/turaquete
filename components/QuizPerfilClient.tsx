@@ -14,6 +14,7 @@ import {
   type ScoreMap,
 } from '@/lib/quiz-perfil'
 import { gerarStoryPNG } from '@/lib/quiz-story'
+import { QUIZ_RAQUETES, type QuizRaqueteCard } from '@/lib/quiz-raquetes'
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
 
@@ -299,6 +300,106 @@ function Question({
   )
 }
 
+// ── Raquetes Section ──────────────────────────────────────────────────────────
+
+function RaquetesMiniCard({ card, winner }: { card: QuizRaqueteCard; winner: ArquetipoSlug }) {
+  const price = card.price
+    ? `R$ ${card.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
+    : null
+
+  const handleClick = () => {
+    track('quiz_raquete_click', { arquetipo: winner, racket_slug: card.slug })
+  }
+
+  return (
+    <div className="rounded-2xl overflow-hidden flex flex-col" style={{
+      background: 'white',
+      border: '1px solid rgba(14,58,64,0.07)',
+      boxShadow: '0 2px 10px rgba(14,58,64,0.06)',
+    }}>
+      {/* Image */}
+      <div className="relative h-28 flex items-center justify-center bg-white px-2 pt-2">
+        {card.custoBeneficio && (
+          <div className="absolute top-2 right-2 z-10">
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full leading-none" style={{
+              background: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A',
+            }}>
+              Custo-benefício
+            </span>
+          </div>
+        )}
+        {card.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={card.image_url} alt={card.name} className="w-full h-full object-contain" />
+        ) : (
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="#0CC0BE" opacity="0.3" />
+            <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" opacity="0.3" />
+          </svg>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-3 flex flex-col gap-1.5 flex-1">
+        <div>
+          <p className="font-heading font-semibold text-xs leading-tight" style={{ color: '#0E3A40' }}>{card.name}</p>
+          <p className="text-xs" style={{ color: 'rgba(14,58,64,0.45)' }}>{card.marca}</p>
+        </div>
+
+        {price && (
+          <p className="font-heading font-bold text-xs" style={{ color: '#FF5E3A' }}>{price}</p>
+        )}
+
+        {card.destaques.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {card.destaques.map(d => (
+              <span key={d.label} className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{
+                background: '#FBF6EF', color: '#0E3A40', border: '1px solid rgba(12,192,190,0.2)',
+              }}>
+                {d.label} {d.v}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <a
+          href={`/ir/${card.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleClick}
+          className="mt-auto block text-center rounded-xl text-xs font-heading font-semibold py-2 transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{ background: '#FF5E3A', color: 'white' }}
+        >
+          Ver na loja →
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function RaquetesSection({ winner }: { winner: ArquetipoSlug }) {
+  const cards = QUIZ_RAQUETES[winner] ?? []
+  if (cards.length === 0) return null
+
+  return (
+    <div>
+      <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'rgba(14,58,64,0.5)' }}>
+        Raquetes que combinam com esse estilo
+      </p>
+
+      <div className="grid grid-cols-3 gap-2.5">
+        {cards.map(card => (
+          <RaquetesMiniCard key={card.slug} card={card} winner={winner} />
+        ))}
+      </div>
+
+      <p className="text-xs mt-3 leading-relaxed text-center" style={{ color: 'rgba(14,58,64,0.45)' }}>
+        Essas combinam com o estilo. Pra uma recomendação exata pro seu nível e pro seu braço, fala com a Tury.
+      </p>
+    </div>
+  )
+}
+
 // ── Result ────────────────────────────────────────────────────────────────────
 
 function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: ScoreMap; onReset: () => void }) {
@@ -473,6 +574,9 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               ))}
             </div>
           </div>
+
+          {/* Raquetes que combinam */}
+          <RaquetesSection winner={winner} />
 
           {/* CTAs */}
           <div className="flex flex-col gap-3 pt-1">
