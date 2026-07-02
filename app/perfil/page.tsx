@@ -19,5 +19,11 @@ export const metadata: Metadata = {
 }
 
 export default function PerfilPage() {
-  return <QuizPerfilClient />
+  return (
+    <div className="min-h-screen sand-texture">
+      <div className="max-w-md mx-auto min-h-screen">
+        <QuizPerfilClient />
+      </div>
+    </div>
+  )
 }
