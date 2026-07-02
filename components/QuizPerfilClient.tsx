@@ -181,8 +181,8 @@ function AutoFitName({
 function Landing({ onStart }: { onStart: () => void }) {
   return (
     <div className="relative" style={{ background: '#0E3A40', minHeight: '100dvh' }}>
-      {/* Image hero — fills a container sized by the content */}
-      <div className="relative" style={{ minHeight: 'clamp(360px, 70vh, 580px)' }}>
+      {/* Image hero — height explícito necessário para next/image fill */}
+      <div className="relative" style={{ height: 'clamp(360px, 70vh, 580px)' }}>
         <Image
           src="/landingperfil.png"
           alt="Beach tennis"
@@ -197,11 +197,10 @@ function Landing({ onStart }: { onStart: () => void }) {
           background: 'linear-gradient(to bottom, rgba(14,58,64,0.82) 0%, rgba(14,58,64,0.18) 52%, rgba(14,58,64,0.78) 100%)',
         }} />
 
-        {/* Content — upper-left zone (sky area) */}
-        <div className="relative z-10 flex flex-col gap-4 px-8" style={{
+        {/* Content — absolute overlay para acompanhar o height do container */}
+        <div className="absolute inset-0 z-10 flex flex-col gap-4 px-8" style={{
           paddingTop: 'max(36px, env(safe-area-inset-top, 0px) + 14px)',
           paddingBottom: '28px',
-          minHeight: 'clamp(360px, 70vh, 580px)',
         }}>
           <Link href="/" className="self-start text-sm font-medium transition-opacity hover:opacity-70" style={{ color: 'rgba(12,192,190,0.7)' }}>
             ← Voltar
