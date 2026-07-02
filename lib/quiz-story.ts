@@ -3,6 +3,7 @@ import {
   type ArquetipoSlug,
   type ScoreMap,
 } from './quiz-perfil'
+import { QUIZ_RAQUETES } from './quiz-raquetes'
 
 // ── Canvas ────────────────────────────────────────────────────────────────────
 
@@ -292,6 +293,67 @@ function drawSocialHook(ctx: CanvasRenderingContext2D, ff: string) {
   ctx.restore()
 }
 
+function drawMinhasArmas(
+  ctx: CanvasRenderingContext2D,
+  ff: string,
+  ac: string,
+  names: string[],
+) {
+  if (!names.length) return
+
+  const Y     = 1622
+  const MAX_W = W - 160   // 80px padding each side
+  const LABEL = 'Minhas armas: '
+  const SEP   = ' · '   // ·
+
+  // Shrink from 34px down to 22px until the full line fits
+  let sz = 34
+  while (sz > 22) {
+    ctx.font = `600 ${sz}px ${ff}, sans-serif`
+    if (ctx.measureText(LABEL + names.join(SEP)).width <= MAX_W) break
+    sz -= 2
+  }
+
+  // If still too wide at min size, truncate the longest name with …
+  ctx.font = `600 ${sz}px ${ff}, sans-serif`
+  let display = [...names]
+  if (ctx.measureText(LABEL + display.join(SEP)).width > MAX_W) {
+    let longestIdx = display.reduce((best, n, i) =>
+      ctx.measureText(n).width > ctx.measureText(display[best]).width ? i : best, 0)
+    let trunc = display[longestIdx]
+    while (trunc.length > 2) {
+      trunc = trunc.slice(0, -1)
+      const trial = [...display]
+      trial[longestIdx] = trunc + '…'
+      if (ctx.measureText(LABEL + trial.join(SEP)).width <= MAX_W) {
+        display = trial
+        break
+      }
+    }
+  }
+
+  const labelW  = ctx.measureText(LABEL).width
+  const namesStr = display.join(SEP)
+  const totalW  = labelW + ctx.measureText(namesStr).width
+  const startX  = CX - totalW / 2
+
+  ctx.save()
+  ctx.textAlign    = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.font = `600 ${sz}px ${ff}, sans-serif`
+
+  ctx.fillStyle   = ac
+  ctx.globalAlpha = 0.90
+  ctx.fillText(LABEL, startX, Y)
+
+  ctx.fillStyle   = WHITE
+  ctx.globalAlpha = 0.80
+  ctx.fillText(namesStr, startX + labelW, Y)
+
+  ctx.globalAlpha = 1
+  ctx.restore()
+}
+
 function drawFooter(ctx: CanvasRenderingContext2D, ff: string, ac: string) {
   ctx.save()
 
@@ -338,6 +400,8 @@ export async function gerarStoryPNG(
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
+  const armasNames = (QUIZ_RAQUETES[winner] ?? []).map(c => c.nome_curto).filter(Boolean)
+
   drawBackground(ctx, id.bg)
   drawJerseyNumber(ctx, ff, id.numero, id.ac)
   drawGrain(ctx, id.ac)
@@ -345,6 +409,7 @@ export async function gerarStoryPNG(
   drawNameBlock(ctx, ff, pLines, id.ac, badgeText)
   drawQuote(ctx, ff, id.quote)
   drawSocialHook(ctx, ff)
+  drawMinhasArmas(ctx, ff, id.ac, armasNames)
   drawFooter(ctx, ff, id.ac)
 
   return new Promise<Blob>((resolve, reject) => {

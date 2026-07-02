@@ -59,6 +59,17 @@ const ARQUETIPOS = Object.keys(PERFIS) as ArquetipoSlug[]
 
 // ── Helpers (mirror exact logic from ChatMessage.tsx / RacketCard.tsx) ─────────
 
+// Short display name: strip brand prefix + trailing year (no marca/ano for player card)
+function getNomeCurto(r: RacketWithInsights): string {
+  const brand = r.brands?.name ?? ''
+  let nome = r.name
+  if (brand && nome.toLowerCase().startsWith(brand.toLowerCase())) {
+    nome = nome.slice(brand.length).trim()
+  }
+  nome = nome.replace(/\s+\d{4}$/, '').trim()
+  return nome || r.name
+}
+
 function getDestaques(r: RacketWithInsights) {
   const ins = r.racket_insights
   if (!ins) return []
@@ -98,6 +109,7 @@ function getCustoBeneficio(
 type RaqueteCard = {
   slug:           string
   name:           string
+  nome_curto:     string
   marca:          string
   price:          number | null
   image_url:      string | null
@@ -150,6 +162,7 @@ async function main() {
       return {
         slug:           r.slug,
         name:           nameDisplay,
+        nome_curto:     getNomeCurto(r),
         marca:          r.brands?.name ?? '',
         price:          r.price,
         image_url:      r.image_url,
@@ -174,6 +187,7 @@ async function main() {
     `export interface QuizRaqueteCard {`,
     `  slug:           string`,
     `  name:           string`,
+    `  nome_curto:     string`,
     `  marca:          string`,
     `  price:          number | null`,
     `  image_url:      string | null`,
