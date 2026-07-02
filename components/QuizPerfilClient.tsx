@@ -182,15 +182,14 @@ function Landing({ onStart }: { onStart: () => void }) {
   return (
     <div className="relative" style={{ background: '#0E3A40', minHeight: '100dvh' }}>
       {/* Image hero — height explícito necessário para next/image fill */}
-      <div className="relative" style={{ height: 'clamp(360px, 70vh, 580px)' }}>
+      <div className="relative overflow-hidden" style={{ height: 'clamp(360px, 70vh, 580px)' }}>
         <Image
           src="/landingperfil.png"
           alt="Beach tennis"
           fill
           priority
           sizes="100vw"
-          className="object-cover"
-          style={{ objectPosition: 'center 20%' }}
+          style={{ objectFit: 'cover', objectPosition: 'center 20%' }}
         />
         {/* Dark top band for text contrast + bottom fade for transition */}
         <div className="absolute inset-0 pointer-events-none" style={{
