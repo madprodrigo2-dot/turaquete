@@ -221,7 +221,7 @@ function Landing({ onStart }: { onStart: () => void }) {
       </div>
 
       {/* CTA — abaixo do hero, no fundo escuro */}
-      <div className="px-8 py-8 flex flex-col gap-4">
+      <div className="px-8 py-8 flex flex-col gap-4 max-w-sm mx-auto w-full">
         <div className="flex gap-2 flex-wrap">
           {['7 perguntas', '~2 minutos', 'Sem cadastro'].map(b => (
             <span key={b} className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{
