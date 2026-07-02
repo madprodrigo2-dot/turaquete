@@ -318,7 +318,7 @@ function drawMinhasArmas(
   ctx.font = `600 ${sz}px ${ff}, sans-serif`
   let display = [...names]
   if (ctx.measureText(LABEL + display.join(SEP)).width > MAX_W) {
-    let longestIdx = display.reduce((best, n, i) =>
+    const longestIdx = display.reduce((best, n, i) =>
       ctx.measureText(n).width > ctx.measureText(display[best]).width ? i : best, 0)
     let trunc = display[longestIdx]
     while (trunc.length > 2) {
