@@ -133,6 +133,14 @@ function drawBackground(ctx: CanvasRenderingContext2D, bg: string | [string, str
     ctx.fillStyle = bg
   }
   ctx.fillRect(0, 0, W, H)
+
+  // Overlay arena quente — suaviza o escuro e neutraliza o tom muito masculino
+  const warm = ctx.createLinearGradient(0, 0, 0, H)
+  warm.addColorStop(0,   'rgba(247,237,220,0.10)')
+  warm.addColorStop(0.5, 'rgba(247,237,220,0.06)')
+  warm.addColorStop(1,   'rgba(247,237,220,0.14)')
+  ctx.fillStyle = warm
+  ctx.fillRect(0, 0, W, H)
 }
 
 function drawGrain(ctx: CanvasRenderingContext2D) {
@@ -362,11 +370,17 @@ function drawPontosFortres(
 async function loadImage(imageUrl: string): Promise<HTMLImageElement | null> {
   return new Promise(resolve => {
     const img = new Image()
-    img.crossOrigin = 'anonymous'
     const timer = setTimeout(() => resolve(null), 6000)
     img.onload  = () => { clearTimeout(timer); resolve(img) }
     img.onerror = () => { clearTimeout(timer); resolve(null) }
-    img.src = `/api/img-proxy?url=${encodeURIComponent(imageUrl)}`
+    // URLs locais (/raquetes/...) carregam direto — mesmo domínio, sem CORS
+    // URLs externas passam pelo proxy para evitar canvas tainted
+    if (imageUrl.startsWith('/')) {
+      img.src = imageUrl
+    } else {
+      img.crossOrigin = 'anonymous'
+      img.src = `/api/img-proxy?url=${encodeURIComponent(imageUrl)}`
+    }
   })
 }
 
@@ -509,7 +523,7 @@ export async function gerarStoryPNG(
   let y = drawHeader(ctx, ff, id.ac)
   y += 40
 
-  y = drawNameBlock(ctx, ff, POSTER_LINES[winner], id.ac, `${arq.equivalente} · estilo do tênis pro`, y)
+  y = drawNameBlock(ctx, ff, POSTER_LINES[winner], id.ac, `Baseado na ATP · ${arq.equivalente}`, y)
   y += 44
 
   y = drawQuote(ctx, ff, id.quote, y)
