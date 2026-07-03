@@ -6,6 +6,7 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from './RacketImageTile'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
+import NaoAcheiWidget from './NaoAcheiWidget'
 
 function normalize(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -217,11 +218,16 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
 
       {/* Grid or empty state */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {filtered.map(r => (
-            <RacketCard key={r.id} racket={r} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {filtered.map(r => (
+              <RacketCard key={r.id} racket={r} />
+            ))}
+          </div>
+          {showTextSearch && query.trim() && (
+            <NaoAcheiWidget key={query.trim()} termoInicial={query.trim()} origem="lista" />
+          )}
+        </>
       ) : (
         <div className="py-12 text-center flex flex-col items-center gap-2">
           {showTextSearch && query.trim() ? (
@@ -241,6 +247,9 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
           >
             Limpar filtros
           </button>
+          {showTextSearch && query.trim() && (
+            <NaoAcheiWidget key={query.trim()} termoInicial={query.trim()} origem="zero_results" />
+          )}
         </div>
       )}
     </div>

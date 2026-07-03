@@ -10,6 +10,7 @@ const VALID_TYPES = new Set([
   'ver_na_loja',
   'ver_analise',
   'nova_conversa_pos_rec',
+  'busca_sem_resultado',
 ])
 
 export async function POST(req: NextRequest) {

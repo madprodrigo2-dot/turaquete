@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, KeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import NaoAcheiWidget from './NaoAcheiWidget'
 
 type Item = { name: string; slug: string; brand: string | null; price: number | null }
 
@@ -155,9 +156,12 @@ export default function SearchBar() {
           className="absolute top-full right-0 mt-1.5 w-72 bg-white rounded-xl shadow-lg border border-tinta/8 z-50 overflow-hidden py-1"
         >
           {results.length === 0 ? (
-            <p className="px-4 py-3 text-xs text-tinta/40">
-              Nenhuma raquete encontrada para &ldquo;{query.trim()}&rdquo;
-            </p>
+            <>
+              <p className="px-4 py-3 text-xs text-tinta/40">
+                Nenhuma raquete encontrada para &ldquo;{query.trim()}&rdquo;
+              </p>
+              <NaoAcheiWidget key={query.trim()} termoInicial={query.trim()} origem="zero_results" compact />
+            </>
           ) : (
             <>
               {results.map((r, i) => (
@@ -197,6 +201,7 @@ export default function SearchBar() {
                   Ver todos os resultados para &ldquo;{query.trim()}&rdquo;
                 </button>
               )}
+              <NaoAcheiWidget key={query.trim()} termoInicial={query.trim()} origem="lista" compact />
             </>
           )}
         </div>
