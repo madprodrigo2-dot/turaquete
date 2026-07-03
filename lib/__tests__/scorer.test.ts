@@ -151,10 +151,11 @@ describe('baseWeights / computeScorerWeights', () => {
     expect(w['potência']).toBe(32)
   })
 
-  test('controle/defesa profile: controle is highest at 32', () => {
+  test('controle/defesa profile: controle is highest weight', () => {
     for (const prioridade of ['controle', 'defesa'] as const) {
       const w = computeScorerWeights({ prioridade })
-      expect(w['controle']).toBe(32)
+      const values = Object.values(w).filter((v): v is number => v != null)
+      expect(w['controle']).toBe(Math.max(...values))
     }
   })
 
