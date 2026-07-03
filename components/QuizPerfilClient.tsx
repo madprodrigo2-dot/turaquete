@@ -472,8 +472,10 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
   const parts = NAME_PARTS[winner]
   const utmUrl = `/?utm_source=quiz&utm_medium=perfil&utm_campaign=${winner}`
 
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [storyBlob, setStoryBlob]       = useState<Blob | null>(null)
+  const [isSharing, setIsSharing] = useState(false)
+  const [toast, setToast]         = useState<string | null>(null)
+  const blobRef                   = useRef<Blob | null>(null)
+  const [blobReady, setBlobReady] = useState(false)
 
   const bgStyle = vis.grad
     ? { background: 'linear-gradient(160deg, #0CC0BE 0%, #0E3A40 58%)' }
@@ -481,17 +483,14 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
 
   const acLabel = vis.ac === '#FFC42E' ? '#0E3A40' : vis.ac
 
-  const getBlob = async (): Promise<Blob> => {
-    if (storyBlob) return storyBlob
-    setIsGenerating(true)
-    try {
-      const blob = await gerarStoryPNG(winner, scores)
-      setStoryBlob(blob)
-      return blob
-    } finally {
-      setIsGenerating(false)
-    }
-  }
+  // Pré-gera o PNG ao montar — garante que o blob existe ANTES do click (req. Android)
+  useEffect(() => {
+    let cancelled = false
+    gerarStoryPNG(winner, scores)
+      .then(blob => { if (!cancelled) { blobRef.current = blob; setBlobReady(true) } })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [winner]) // scores é derivado de winner — não precisa no dep array
 
   const triggerDownload = (blob: Blob) => {
     const url = URL.createObjectURL(blob)
@@ -501,35 +500,63 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
     setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 100)
   }
 
-  const handleShare = () => {
-    track('quiz_share_image', { arquetipo: winner, metodo: 'link' })
-    const url   = 'https://www.turaquete.com.br/perfil'
-    const title = `Descobri que meu perfil de jogador é ${arq.nome}!`
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      navigator.share({ title, url }).catch(() => {})
-    } else {
-      navigator.clipboard?.writeText(url).catch(() => {})
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const handleStory = async () => {
+    if (isSharing) return
+    setIsSharing(true)
+    try {
+      // Blob deve estar pronto (pré-gerado); edge case: aguarda até 4s
+      let blob = blobRef.current
+      if (!blob) {
+        blob = await Promise.race<Blob>([
+          gerarStoryPNG(winner, scores),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000)),
+        ])
+        blobRef.current = blob
+        setBlobReady(true)
+      }
+      const file = new File([blob], `meu-perfil-${winner}.png`, { type: 'image/png' })
+      if (navigator.canShare?.({ files: [file] })) {
+        // Sem text/url — alguns targets Android descartam o arquivo quando ambos viajam juntos
+        await navigator.share({ files: [file] })
+        track('quiz_share_image', { arquetipo: winner, metodo: 'story' })
+      } else {
+        // Fallback: salva na galeria + toast
+        triggerDownload(blob)
+        showToast('Imagem salva! Poste nos seus stories 📲')
+        track('quiz_share_image', { arquetipo: winner, metodo: 'fallback_download' })
+      }
+    } catch (err) {
+      const isCancel = err instanceof Error && err.name === 'AbortError'
+      if (!isCancel && blobRef.current) {
+        triggerDownload(blobRef.current)
+        showToast('Imagem salva! Poste nos seus stories 📲')
+        track('quiz_share_image', { arquetipo: winner, metodo: 'fallback_download' })
+      }
+    } finally {
+      setIsSharing(false)
     }
   }
 
-  const handleShareStory = async () => {
-    if (isGenerating) return
-    track('quiz_share_image', { arquetipo: winner, metodo: 'story' })
-    try {
-      const blob = await getBlob()
-      const file = new File([blob], `meu-perfil-${winner}.png`, { type: 'image/png' })
-      if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Meu perfil de jogo', text: 'Descubra o seu: turaquete.com.br/perfil' })
-      } else {
-        triggerDownload(blob)
-      }
-    } catch { /* cancelled or unsupported */ }
-  }
-
   const handleDownload = async () => {
-    if (isGenerating) return
-    track('quiz_share_image', { arquetipo: winner, metodo: 'download' })
-    try { const blob = await getBlob(); triggerDownload(blob) } catch { /* failed */ }
+    if (isSharing) return
+    setIsSharing(true)
+    try {
+      let blob = blobRef.current
+      if (!blob) {
+        blob = await gerarStoryPNG(winner, scores)
+        blobRef.current = blob
+        setBlobReady(true)
+      }
+      triggerDownload(blob)
+      track('quiz_share_image', { arquetipo: winner, metodo: 'download' })
+    } catch { /* silent */ } finally {
+      setIsSharing(false)
+    }
   }
 
   return (
@@ -581,18 +608,40 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             lineHeight: 1.22,
           }}>"{vis.quote}"</p>
 
-          {/* 5. Share — botão único */}
-          <div>
+          {/* 5. Story + Baixar */}
+          <div className="flex gap-2">
             <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-4 font-semibold text-sm rounded-xl transition-all active:scale-[0.97]"
+              onClick={handleStory}
+              disabled={isSharing}
+              className="flex-1 flex items-center justify-center gap-1.5 font-bold text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-60"
               style={{ height: '36px', background: `${vis.ac}28`, color: vis.ac }}
             >
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path d="M10 2a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM4 5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM10 9a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" stroke="currentColor" strokeWidth="1.3"/>
-                <path d="M5.5 6.2l3-1.8M5.5 8l3 1.8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              </svg>
-              Compartilhar
+              {isSharing
+                ? <span className="animate-pulse text-xs">…</span>
+                : <>
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
+                      <rect x="2.5" y="1" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                      <rect x="4" y="3.5" width="6" height="4.5" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
+                      <line x1="4" y1="9.5" x2="10" y2="9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    Story
+                  </>}
+            </button>
+            <button
+              onClick={handleDownload}
+              disabled={isSharing}
+              className="flex items-center justify-center gap-1.5 font-medium text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-60 px-4"
+              style={{ height: '36px', background: 'rgba(255,255,255,0.12)', color: 'white' }}
+            >
+              {isSharing
+                ? <span className="animate-pulse text-xs">…</span>
+                : <>
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
+                      <path d="M7 1.5v7M4.5 6l2.5 2.5L9.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 11.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    Baixar
+                  </>}
             </button>
           </div>
         </div>
@@ -654,6 +703,19 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
           </div>
         </div>
       </div>
+
+      {/* Toast fallback */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 px-4 py-2.5 rounded-xl text-sm font-medium shadow-lg" style={{
+          transform: 'translateX(-50%)',
+          background: '#0E3A40',
+          color: 'white',
+          border: '1px solid rgba(12,192,190,0.3)',
+          whiteSpace: 'nowrap',
+        }}>
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
