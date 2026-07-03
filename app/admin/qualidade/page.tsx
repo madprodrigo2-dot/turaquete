@@ -72,16 +72,6 @@ export default async function QualidadeAdmin() {
   }
   const motivoEntries = Object.entries(motivoCounts).sort((a, b) => b[1] - a[1])
 
-  // By-intencao cross table
-  const intencaoMap: Record<string, { pos: number; neg: number }> = {}
-  for (const e of ratings) {
-    const key = e.intencao ?? '(não registrada)'
-    if (!intencaoMap[key]) intencaoMap[key] = { pos: 0, neg: 0 }
-    if (e.event_type === 'rating_positive') intencaoMap[key].pos++
-    else intencaoMap[key].neg++
-  }
-  const intencaoEntries = Object.entries(intencaoMap).sort((a, b) => (b[1].pos + b[1].neg) - (a[1].pos + a[1].neg))
-
   // Average turnos to recommendation
   const turnosValues = ratings.map(e => e.turnos_ate_recomendacao).filter((v): v is number => v !== null)
   const avgTurnos = turnosValues.length > 0
@@ -109,6 +99,17 @@ export default async function QualidadeAdmin() {
       if (!convMap.has(r.session_id)) convMap.set(r.session_id, r)
     }
   }
+
+  // By-intencao cross table — fallback to starter_usado when intencao not captured
+  const intencaoMap: Record<string, { pos: number; neg: number }> = {}
+  for (const e of ratings) {
+    const starter = convMap.get(e.session_id)?.starter_usado
+    const key = e.intencao ?? starter ?? '(não registrada)'
+    if (!intencaoMap[key]) intencaoMap[key] = { pos: 0, neg: 0 }
+    if (e.event_type === 'rating_positive') intencaoMap[key].pos++
+    else intencaoMap[key].neg++
+  }
+  const intencaoEntries = Object.entries(intencaoMap).sort((a, b) => (b[1].pos + b[1].neg) - (a[1].pos + a[1].neg))
 
   return (
     <div className="flex flex-col gap-8">
