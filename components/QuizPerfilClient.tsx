@@ -184,7 +184,7 @@ function Landing({ onStart }: { onStart: () => void }) {
       {/* Image hero — height explícito necessário para next/image fill */}
       <style>{`
         .landing-hero-img { object-position: center 20%; }
-        @media (max-width: 767px) { .landing-hero-img { object-position: 5% center; } }
+        @media (max-width: 767px) { .landing-hero-img { object-position: 12% center; } }
       `}</style>
       <div className="relative overflow-hidden" style={{ height: 'clamp(360px, 70vh, 580px)' }}>
         <Image
