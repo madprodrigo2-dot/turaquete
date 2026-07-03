@@ -7,13 +7,14 @@ import { QUIZ_RAQUETES } from './quiz-raquetes'
 
 // ── Canvas dims ───────────────────────────────────────────────────────────────
 
-const W  = 1080
-const H  = 1920
-const CX = W / 2
-const MX = 80          // horizontal margin
-const CW = W - MX * 2  // content width = 920
+const W    = 1080
+const H    = 1920
+const CX   = W / 2
+const MX   = 80
+const CW   = W - MX * 2
 
 const WHITE = '#FFFFFF'
+const ARENA = '#F7EDDC'   // cor areia — usada em texto/elementos quentes
 
 // ── Identidades ───────────────────────────────────────────────────────────────
 
@@ -37,7 +38,7 @@ const POSTER_LINES: Record<ArquetipoSlug, string[]> = {
   muralha:           ['MURALHA'],
   'contra-atacante': ['CONTRA-', 'ATACANTE'],
   canhao:            ['CANHÃO'],
-  'dono-da-rede':    ['DONO', 'DA REDE'],
+  'dono-da-rede':    ['DONO/A', 'DA REDE'],
   finalizador:       ['FINALIZADOR'],
   camaleao:          ['CAMALEÃO'],
 }
@@ -86,7 +87,6 @@ function drawRoundRect(
   ctx.closePath()
 }
 
-// Binary search: largest integer sz where text fits maxW (textBaseline irrelevant here)
 function fitSz(ctx: CanvasRenderingContext2D, ff: string, text: string, maxW: number, lo = 40, hi = 220): number {
   while (hi - lo > 1) {
     const mid = (lo + hi) >> 1
@@ -111,9 +111,9 @@ function letterSpaced(
   }
 }
 
-function divider(ctx: CanvasRenderingContext2D, ac: string, y: number) {
+function divider(ctx: CanvasRenderingContext2D, y: number) {
   ctx.save()
-  ctx.strokeStyle = hexToRgba(ac, 0.22)
+  ctx.strokeStyle = hexToRgba(ARENA, 0.20)
   ctx.lineWidth   = 1
   ctx.beginPath()
   ctx.moveTo(MX, y); ctx.lineTo(W - MX, y)
@@ -121,7 +121,7 @@ function divider(ctx: CanvasRenderingContext2D, ac: string, y: number) {
   ctx.restore()
 }
 
-// ── Drawing routines — each returns bottom Y of drawn element ─────────────────
+// ── Background / grain ────────────────────────────────────────────────────────
 
 function drawBackground(ctx: CanvasRenderingContext2D, bg: string | [string, string]) {
   if (Array.isArray(bg)) {
@@ -135,8 +135,8 @@ function drawBackground(ctx: CanvasRenderingContext2D, bg: string | [string, str
   ctx.fillRect(0, 0, W, H)
 }
 
-function drawGrain(ctx: CanvasRenderingContext2D, ac: string) {
-  ctx.fillStyle = hexToRgba(ac, 0.07)
+function drawGrain(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = hexToRgba(ARENA, 0.06)
   const step = 45
   for (let x = step / 2; x < W; x += step)
     for (let y = step / 2; y < H; y += step) {
@@ -144,7 +144,6 @@ function drawGrain(ctx: CanvasRenderingContext2D, ac: string) {
     }
 }
 
-// Jersey number — behind zones 2-4 (y≈175-850), right side, clipped
 function drawJerseyBg(ctx: CanvasRenderingContext2D, ff: string, numero: string, ac: string) {
   ctx.save()
   ctx.font         = `800 650px '${ff}', sans-serif`
@@ -155,7 +154,8 @@ function drawJerseyBg(ctx: CanvasRenderingContext2D, ff: string, numero: string,
   ctx.restore()
 }
 
-// 1. Header → returns bottom Y
+// ── 1. Header ─────────────────────────────────────────────────────────────────
+
 function drawHeader(ctx: CanvasRenderingContext2D, ff: string, ac: string): number {
   ctx.save()
   ctx.font         = `600 34px '${ff}', sans-serif`
@@ -163,10 +163,11 @@ function drawHeader(ctx: CanvasRenderingContext2D, ff: string, ac: string): numb
   ctx.textBaseline = 'middle'
   letterSpaced(ctx, 'MEU PERFIL DE JOGO', CX, 110, 7)
   ctx.restore()
-  return 127  // 110 + 17 (half line-height)
+  return 127
 }
 
-// 2. Name block — left-aligned, returns bottom Y
+// ── 2. Name block — sem artigo "O", left-aligned ──────────────────────────────
+
 function drawNameBlock(
   ctx: CanvasRenderingContext2D,
   ff: string,
@@ -175,34 +176,24 @@ function drawNameBlock(
   badgeText: string,
   topY: number,
 ): number {
-  // Auto-fit: longest word in 90% of W
   const longest = words.reduce((a, b) => a.length > b.length ? a : b)
-  const sz      = fitSz(ctx, ff, longest, W * 0.90)
-  const oSz     = Math.round(sz * 0.35)
+  const sz      = fitSz(ctx, ff, longest, W * 0.92)
 
   ctx.save()
   ctx.textBaseline = 'top'
+  ctx.font         = `800 ${sz}px '${ff}', sans-serif`
+  ctx.textAlign    = 'left'
 
-  // "O" prefix
-  ctx.font      = `800 ${oSz}px '${ff}', sans-serif`
-  ctx.fillStyle = hexToRgba(ac, 0.78)
-  ctx.textAlign = 'left'
-  const oW = ctx.measureText('O ').width
-
-  // First line: O + words[0]
-  ctx.fillText('O', MX, topY)
-  ctx.font = `800 ${sz}px '${ff}', sans-serif`
-  // shadow
-  ctx.fillStyle = hexToRgba(ac, 0.90)
-  ctx.fillText(words[0], MX + oW + 4, topY + 4)
-  // text
+  // First line
+  ctx.fillStyle = hexToRgba(ac, 0.88)
+  ctx.fillText(words[0], MX + 4, topY + 4)
   ctx.fillStyle = WHITE
-  ctx.fillText(words[0], MX + oW, topY)
+  ctx.fillText(words[0], MX, topY)
 
   let lineBottom = topY + sz
   for (let i = 1; i < words.length; i++) {
     const ly = lineBottom + 6
-    ctx.fillStyle = hexToRgba(ac, 0.90)
+    ctx.fillStyle = hexToRgba(ac, 0.88)
     ctx.fillText(words[i], MX + 4, ly + 4)
     ctx.fillStyle = WHITE
     ctx.fillText(words[i], MX, ly)
@@ -210,35 +201,33 @@ function drawNameBlock(
   }
 
   // Badge pill
-  const badgeTopY = lineBottom + 20
+  const badgeTopY = lineBottom + 18
   ctx.font = `500 26px '${ff}', sans-serif`
   const bTw = ctx.measureText(badgeText).width
   const bPx = 28, bPy = 13
   const bW  = bTw + bPx * 2
   const bH  = 26 + bPy * 2
-  const bX  = MX
-  const bY  = badgeTopY
-
   ctx.strokeStyle = ac
   ctx.lineWidth   = 2
-  ctx.globalAlpha = 0.85
-  drawRoundRect(ctx, bX, bY, bW, bH, bH / 2)
+  ctx.globalAlpha = 0.80
+  drawRoundRect(ctx, MX, badgeTopY, bW, bH, bH / 2)
   ctx.stroke()
   ctx.globalAlpha = 1
   ctx.fillStyle   = ac
   ctx.textAlign   = 'left'
   ctx.textBaseline = 'middle'
-  ctx.fillText(badgeText, bX + bPx, bY + bH / 2)
+  ctx.fillText(badgeText, MX + bPx, badgeTopY + bH / 2)
 
   ctx.restore()
-  return bY + bH
+  return badgeTopY + bH
 }
 
-// 3. Quote — centered, max 2 lines, returns bottom Y
+// ── 3. Quote ──────────────────────────────────────────────────────────────────
+
 function drawQuote(ctx: CanvasRenderingContext2D, ff: string, quote: string, topY: number): number {
   ctx.save()
   ctx.font         = `italic 800 48px '${ff}', sans-serif`
-  ctx.fillStyle    = 'rgba(255,255,255,0.92)'
+  ctx.fillStyle    = hexToRgba(ARENA, 0.94)
   ctx.textAlign    = 'center'
   ctx.textBaseline = 'top'
   const lines = wrapText(ctx, `"${quote}"`, 960)
@@ -248,11 +237,12 @@ function drawQuote(ctx: CanvasRenderingContext2D, ff: string, quote: string, top
   return topY + Math.min(lines.length, 2) * lh
 }
 
-// 4. Description — centered, max 5 lines, returns bottom Y
+// ── 4. Description ────────────────────────────────────────────────────────────
+
 function drawDescription(ctx: CanvasRenderingContext2D, ff: string, text: string, topY: number): number {
   ctx.save()
   ctx.font         = `400 29px '${ff}', sans-serif`
-  ctx.fillStyle    = 'rgba(255,255,255,0.86)'
+  ctx.fillStyle    = hexToRgba(ARENA, 0.80)
   ctx.textAlign    = 'center'
   ctx.textBaseline = 'top'
   const lines = wrapText(ctx, text, 880)
@@ -262,7 +252,8 @@ function drawDescription(ctx: CanvasRenderingContext2D, ff: string, text: string
   return topY + Math.min(lines.length, 5) * lh
 }
 
-// 5. Bars — returns bottom Y
+// ── 5. Bars ───────────────────────────────────────────────────────────────────
+
 function drawBars(
   ctx: CanvasRenderingContext2D,
   ff: string,
@@ -276,19 +267,17 @@ function drawBars(
     .slice(0, 3)
   const maxScore = top3[0]?.[1] ?? 1
 
-  // Section label
   ctx.save()
   ctx.font         = `700 26px '${ff}', sans-serif`
-  ctx.fillStyle    = ac
-  ctx.globalAlpha  = 0.78
-  ctx.textAlign    = 'left'
+  ctx.fillStyle    = ARENA
+  ctx.globalAlpha  = 0.72
   ctx.textBaseline = 'middle'
   letterSpaced(ctx, 'SEU JOGO EM NÚMEROS', CX, topY + 13, 4)
-  ctx.globalAlpha = 1
+  ctx.globalAlpha  = 1
   ctx.restore()
 
-  const ROW_H  = 64
-  const BAR_H  = 12
+  const ROW_H      = 64
+  const BAR_H      = 12
   const barAreaTop = topY + 34
 
   top3.forEach(([slug, score], i) => {
@@ -299,27 +288,24 @@ function drawBars(
 
     ctx.save()
 
-    // Label + percentage on same row
-    ctx.font         = `${isW ? 700 : 500} 27px '${ff}', sans-serif`
+    ctx.font         = `${isW ? 700 : 400} 27px '${ff}', sans-serif`
     ctx.textBaseline = 'top'
-    ctx.fillStyle    = isW ? WHITE : 'rgba(255,255,255,0.60)'
+    ctx.fillStyle    = isW ? WHITE : hexToRgba(ARENA, 0.52)
     ctx.textAlign    = 'left'
     ctx.fillText(nome, MX, rowY)
 
     ctx.font      = `700 27px '${ff}', sans-serif`
-    ctx.fillStyle = isW ? ac : 'rgba(255,255,255,0.45)'
+    ctx.fillStyle = isW ? ac : hexToRgba(ARENA, 0.40)
     ctx.textAlign = 'right'
     ctx.fillText(`${pct}%`, W - MX, rowY)
 
-    // Bar track
     const barY = rowY + 37
-    ctx.fillStyle = isW ? hexToRgba(ac, 0.18) : 'rgba(255,255,255,0.10)'
+    ctx.fillStyle = isW ? hexToRgba(ac, 0.18) : hexToRgba(ARENA, 0.10)
     drawRoundRect(ctx, MX, barY, CW, BAR_H, BAR_H / 2)
     ctx.fill()
 
-    // Bar fill
     const fillW = Math.max((pct / 100) * CW, BAR_H)
-    ctx.fillStyle = isW ? ac : 'rgba(255,255,255,0.38)'
+    ctx.fillStyle = isW ? ac : hexToRgba(ARENA, 0.32)
     drawRoundRect(ctx, MX, barY, fillW, BAR_H, BAR_H / 2)
     ctx.fill()
 
@@ -329,7 +315,8 @@ function drawBars(
   return barAreaTop + top3.length * ROW_H
 }
 
-// 6. Pontos Fortes — returns bottom Y
+// ── 6. Pontos Fortes ──────────────────────────────────────────────────────────
+
 function drawPontosFortres(
   ctx: CanvasRenderingContext2D,
   ff: string,
@@ -339,8 +326,8 @@ function drawPontosFortres(
 ): number {
   ctx.save()
   ctx.font         = `700 26px '${ff}', sans-serif`
-  ctx.fillStyle    = ac
-  ctx.globalAlpha  = 0.78
+  ctx.fillStyle    = ARENA
+  ctx.globalAlpha  = 0.72
   ctx.textBaseline = 'middle'
   letterSpaced(ctx, 'PONTOS FORTES', CX, topY + 13, 4)
   ctx.globalAlpha  = 1
@@ -360,7 +347,7 @@ function drawPontosFortres(
     ctx.fillStyle = ac
     ctx.fill()
     ctx.font         = `500 28px '${ff}', sans-serif`
-    ctx.fillStyle    = 'rgba(255,255,255,0.86)'
+    ctx.fillStyle    = hexToRgba(ARENA, 0.88)
     ctx.textAlign    = 'left'
     ctx.textBaseline = 'middle'
     ctx.fillText(pf, TEXT_X, fy)
@@ -370,21 +357,20 @@ function drawPontosFortres(
   return firstY + pontos.length * PF_LH
 }
 
-// 7. Load single image via proxy (avoids canvas taint)
+// ── 7. Minhas raquetes — chips com miniaturas ─────────────────────────────────
+
 async function loadImage(imageUrl: string): Promise<HTMLImageElement | null> {
-  try {
+  return new Promise(resolve => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
+    const timer = setTimeout(() => resolve(null), 6000)
+    img.onload  = () => { clearTimeout(timer); resolve(img) }
+    img.onerror = () => { clearTimeout(timer); resolve(null) }
     img.src = `/api/img-proxy?url=${encodeURIComponent(imageUrl)}`
-    await img.decode()
-    return img
-  } catch {
-    return null
-  }
+  })
 }
 
-// 7. Minhas armas — 3 chips com miniaturas — async, returns bottom Y
-async function drawMinhasArmasChips(
+async function drawMinhasRaquetes(
   ctx: CanvasRenderingContext2D,
   ff: string,
   winner: ArquetipoSlug,
@@ -394,27 +380,25 @@ async function drawMinhasArmasChips(
   const raquetes = (QUIZ_RAQUETES[winner] ?? []).slice(0, 3)
   if (!raquetes.length) return topY
 
-  // Load all images in parallel, tolerating individual failures
   const imgs = await Promise.all(
     raquetes.map(r => (r.image_url ? loadImage(r.image_url) : Promise.resolve(null))),
   )
   const allFailed = imgs.every(img => img === null)
   if (allFailed && raquetes.every(r => !r.nome_curto)) return topY
 
-  // Section title
+  // Section label
   ctx.save()
   ctx.font         = `700 26px '${ff}', sans-serif`
-  ctx.fillStyle    = ac
-  ctx.globalAlpha  = 0.78
+  ctx.fillStyle    = ARENA
+  ctx.globalAlpha  = 0.72
   ctx.textBaseline = 'middle'
-  letterSpaced(ctx, 'MINHAS ARMAS', CX, topY + 13, 4)
+  letterSpaced(ctx, 'MINHAS RAQUETES', CX, topY + 13, 4)
   ctx.globalAlpha  = 1
   ctx.restore()
 
   const CHIP_W   = 280
   const CHIP_H   = 180
   const GAP      = 24
-  const CREAM    = '#F5FBFA'
   const TINTA    = '#0E3A40'
   const n        = raquetes.length
   const totalW   = n * CHIP_W + (n - 1) * GAP
@@ -422,17 +406,17 @@ async function drawMinhasArmasChips(
   const chipTopY = topY + 34
 
   raquetes.forEach((r, i) => {
-    const img  = imgs[i]
+    const img   = imgs[i]
     const chipX = startX + i * (CHIP_W + GAP)
 
     ctx.save()
 
-    // Chip background
-    ctx.fillStyle = CREAM
+    // Chip — fundo arena
+    ctx.fillStyle = ARENA
     drawRoundRect(ctx, chipX, chipTopY, CHIP_W, CHIP_H, 20)
     ctx.fill()
 
-    // Image (contain within upper portion)
+    // Imagem (contain na parte superior do chip)
     if (img && img.width > 0 && img.height > 0) {
       const maxW  = CHIP_W - 20
       const maxH  = 118
@@ -444,8 +428,8 @@ async function drawMinhasArmasChips(
       ctx.drawImage(img, dx, dy, dw, dh)
     }
 
-    // Name — truncate to fit chip width
-    ctx.font = `500 23px '${ff}', sans-serif`
+    // Nome curto
+    ctx.font = `600 22px '${ff}', sans-serif`
     const maxNomeW = CHIP_W - 16
     let nome = r.nome_curto || r.name
     while (ctx.measureText(nome).width > maxNomeW && nome.length > 3) {
@@ -456,7 +440,7 @@ async function drawMinhasArmasChips(
     ctx.fillStyle    = TINTA
     ctx.textAlign    = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(nome, chipX + CHIP_W / 2, chipTopY + 148)
+    ctx.fillText(nome, chipX + CHIP_W / 2, chipTopY + 152)
 
     ctx.restore()
   })
@@ -464,11 +448,12 @@ async function drawMinhasArmasChips(
   return chipTopY + CHIP_H
 }
 
-// 8. Social hook — returns bottom Y
+// ── 8. Social hook ────────────────────────────────────────────────────────────
+
 function drawHook(ctx: CanvasRenderingContext2D, ff: string, centerY: number): number {
   ctx.save()
   ctx.font         = `500 26px '${ff}', sans-serif`
-  ctx.fillStyle    = 'rgba(255,255,255,0.70)'
+  ctx.fillStyle    = hexToRgba(ARENA, 0.68)
   ctx.textAlign    = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('E você, joga como?', CX, centerY)
@@ -476,7 +461,8 @@ function drawHook(ctx: CanvasRenderingContext2D, ff: string, centerY: number): n
   return centerY + 13
 }
 
-// 9. Footer — always at bottom, ignores Y input
+// ── 9. Footer ─────────────────────────────────────────────────────────────────
+
 function drawFooter(ctx: CanvasRenderingContext2D, ff: string, ac: string) {
   ctx.save()
   const logoY = H - 132
@@ -485,15 +471,16 @@ function drawFooter(ctx: CanvasRenderingContext2D, ff: string, ac: string) {
   ctx.font         = `800 50px '${ff}', sans-serif`
   ctx.textBaseline = 'middle'
   const tuW = ctx.measureText('tu').width
-  const raW = ctx.measureText('raquete').width
-  const lgX = CX - (tuW + raW) / 2
-  ctx.fillStyle = ac;  ctx.textAlign = 'left'
+  const lgX = CX - (tuW + ctx.measureText('raquete').width) / 2
+  ctx.fillStyle = ac;   ctx.textAlign = 'left'
   ctx.fillText('tu', lgX, logoY)
   ctx.fillStyle = WHITE
   ctx.fillText('raquete', lgX + tuW, logoY)
 
   ctx.font      = `600 36px '${ff}', sans-serif`
-  ctx.fillStyle = WHITE; ctx.globalAlpha = 0.88; ctx.textAlign = 'center'
+  ctx.fillStyle = hexToRgba(ARENA, 0.80)
+  ctx.globalAlpha = 1
+  ctx.textAlign = 'center'
   ctx.fillText('turaquete.com.br/perfil', CX, urlY)
   ctx.restore()
 }
@@ -515,52 +502,38 @@ export async function gerarStoryPNG(
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  // ── Background + jersey number (decorativo) + grain ──────────────────────
   drawBackground(ctx, id.bg)
   drawJerseyBg(ctx, ff, id.numero, id.ac)
-  drawGrain(ctx, id.ac)
+  drawGrain(ctx)
 
-  // ── Content — Y tracking ──────────────────────────────────────────────────
-
-  let y = drawHeader(ctx, ff, id.ac)   // → ~127
+  let y = drawHeader(ctx, ff, id.ac)
   y += 40
 
-  // 2. Name block
   y = drawNameBlock(ctx, ff, POSTER_LINES[winner], id.ac, `${arq.equivalente} · estilo do tênis pro`, y)
   y += 44
 
-  // 3. Quote
   y = drawQuote(ctx, ff, id.quote, y)
   y += 36
 
-  // 4. Description
   y = drawDescription(ctx, ff, arq.descricao, y)
   y += 42
 
-  // ── Divider 1 ─────────────────────────────────────────────────────────────
-  divider(ctx, id.ac, y)
+  divider(ctx, y)
   y += 42
 
-  // 5. Bars
   y = drawBars(ctx, ff, scores, winner, id.ac, y)
   y += 34
 
-  // ── Divider 2 ─────────────────────────────────────────────────────────────
-  divider(ctx, id.ac, y)
+  divider(ctx, y)
   y += 40
 
-  // 6. Pontos Fortes
   y = drawPontosFortres(ctx, ff, arq.pontosFortres, id.ac, y)
   y += 44
 
-  // 7. Minhas armas (chips com miniaturas)
-  y = await drawMinhasArmasChips(ctx, ff, winner, id.ac, y)
+  y = await drawMinhasRaquetes(ctx, ff, winner, id.ac, y)
   y += 44
 
-  // 8. Social hook
   drawHook(ctx, ff, y)
-
-  // 9. Footer (fixed at bottom)
   drawFooter(ctx, ff, id.ac)
 
   return new Promise<Blob>((resolve, reject) => {

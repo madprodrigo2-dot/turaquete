@@ -17,7 +17,7 @@ export interface Arquetipo {
 export const ARQUETIPOS: Record<ArquetipoSlug, Arquetipo> = {
   muralha: {
     slug: 'muralha',
-    nome: 'O Muralha',
+    nome: 'Muralha',
     equivalente: 'Solid Baseliner',
     descricao:
       'Você é a base que não cede. Bola atrás de bola, sempre de volta, sempre no lugar. Enquanto o rival se desespera, você mantém o plano e deixa o erro vir do outro lado. Paciência é a sua forma de pressão.',
@@ -29,7 +29,7 @@ export const ARQUETIPOS: Record<ArquetipoSlug, Arquetipo> = {
   },
   'contra-atacante': {
     slug: 'contra-atacante',
-    nome: 'O Contra-Atacante',
+    nome: 'Contra-Atacante',
     equivalente: 'Counterpuncher',
     descricao:
       'Você defende com propósito. Absorve a pressão, devolve a bola impossível e, quando o rival se abre, vira o ponto num piscar. Sua defesa não é recuo: é armadilha.',
@@ -41,7 +41,7 @@ export const ARQUETIPOS: Record<ArquetipoSlug, Arquetipo> = {
   },
   canhao: {
     slug: 'canhao',
-    nome: 'O Canhão',
+    nome: 'Canhão',
     equivalente: 'Attacking Baseliner',
     descricao:
       'Você dita o ritmo do fundo da quadra. Potência no golpe, profundidade na bola e o rival sempre correndo atrás. Quando a bola sobe, todo mundo na areia já sabe o que vem.',
@@ -53,7 +53,7 @@ export const ARQUETIPOS: Record<ArquetipoSlug, Arquetipo> = {
   },
   'dono-da-rede': {
     slug: 'dono-da-rede',
-    nome: 'O Dono da Rede',
+    nome: 'Dono/a da Rede',
     equivalente: 'Serve and Volleyer',
     descricao:
       'Seu jogo acontece perto da rede. Voleio firme, smash pronto e reflexo rápido: você encurta o ponto e sufoca o rival antes que ele arme a jogada. A areia do fundo quase não conhece seus pés.',
@@ -65,7 +65,7 @@ export const ARQUETIPOS: Record<ArquetipoSlug, Arquetipo> = {
   },
   finalizador: {
     slug: 'finalizador',
-    nome: 'O Finalizador',
+    nome: 'Finalizador/a',
     equivalente: 'Big Server',
     descricao:
       'Você joga pra resolver. Saque forte, definição rápida e pontos curtos: quanto menos bolas, melhor. Seu jogo é eficiência pura, e o rival mal tem tempo de entrar no ponto.',
@@ -77,7 +77,7 @@ export const ARQUETIPOS: Record<ArquetipoSlug, Arquetipo> = {
   },
   camaleao: {
     slug: 'camaleao',
-    nome: 'O Camaleão',
+    nome: 'Camaleão',
     equivalente: 'All-Court Player',
     descricao:
       'Você não tem um jogo só: tem o jogo que o ponto pede. Muda ritmo, altura e posição, lê o parceiro e o rival, e se adapta antes de todo mundo. Sua maior arma é não ter padrão.',

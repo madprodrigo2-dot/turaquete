@@ -46,7 +46,7 @@ const NAME_PARTS: Record<ArquetipoSlug, string[]> = {
   muralha:           ['MURALHA'],
   'contra-atacante': ['CONTRA-', 'ATACANTE'],
   canhao:            ['CANHÃO'],
-  'dono-da-rede':    ['DONO', 'DA REDE'],
+  'dono-da-rede':    ['DONO/A', 'DA REDE'],
   finalizador:       ['FINALIZADOR'],
   camaleao:          ['CAMALEÃO'],
 }
@@ -139,8 +139,8 @@ function AutoFitName({
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')!
     const longest = parts.reduce((a, b) => a.length > b.length ? a : b)
-    const testStr = parts.length === 1 ? `O ${longest}` : longest
-    const maxW    = parts.length === 1 ? avail : avail * 0.94
+    const testStr = longest
+    const maxW    = avail * 0.96
     let lo = 18, hi = 120
     while (hi - lo > 1) {
       const mid = (lo + hi) >> 1
@@ -167,7 +167,7 @@ function AutoFitName({
       {parts.map((word, i) => (
         <div key={i}>
           {i === 0 && (
-            <span style={{ fontSize: `${oSz}px`, color: accentColor, opacity: 0.72, marginRight: '0.18em' }}>O</span>
+            <span style={{ fontSize: `${oSz}px`, color: accentColor, opacity: 0.72, marginRight: '0.14em' }}>O/A</span>
           )}
           <span style={{ fontSize: `${sz}px`, color: textColor, textShadow: `2px 2px 0 ${accentColor}` }}>{word}</span>
         </div>
