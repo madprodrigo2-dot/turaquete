@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
-import type { DecisionTrace } from '@/lib/debug-types'
 import { InfoTooltip } from '../InfoTooltip'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +14,6 @@ interface FeedbackRow {
   event_type: string
   motivo: string | null
   comentario: string | null
-  decision_trace: DecisionTrace | null
   intencao: string | null
   turnos_ate_recomendacao: number | null
   racket_id: number | null
@@ -48,10 +46,10 @@ export default async function QualidadeAdmin() {
   // Graceful fallback if table doesn't exist yet
   const q = sb
     .from('feedback_events')
-    .select('id, created_at, session_id, event_type, motivo, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id')
-    .in('event_type', ['rating_positive', 'rating_negative', 'ver_na_loja', 'ver_analise', 'nova_conversa_pos_rec'])
+    .select('id, created_at, session_id, event_type, motivo, comentario, intencao, turnos_ate_recomendacao, racket_id')
+    .in('event_type', ['rating_positive', 'rating_negative', 'ver_na_loja', 'ver_analise', 'nova_conversa_pos_rec', 'busca_sem_resultado'])
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(500)
   const { data: rows, error } = await (includeTest ? q : q.eq('is_test', false))
 
   const tableExists = !error
@@ -83,8 +81,14 @@ export default async function QualidadeAdmin() {
     .filter(e => e.motivo === 'Outro' && e.comentario)
     .slice(0, 50)
 
-  // Recent negatives with trace
-  const recentNegatives = negatives.slice(0, 20)
+  // Termos de busca não encontrados
+  const buscaEvents = events.filter(e => e.event_type === 'busca_sem_resultado')
+  const buscaTermosMap: Record<string, number> = {}
+  for (const e of buscaEvents) {
+    const t = e.comentario?.trim() ?? '(sem termo)'
+    buscaTermosMap[t] = (buscaTermosMap[t] ?? 0) + 1
+  }
+  const buscaTermos = Object.entries(buscaTermosMap).sort((a, b) => b[1] - a[1])
 
   // Enrich ratings with conversation context (starter_usado + primeira_mensagem)
   const ratingSessionIds = [...new Set(ratings.map(e => e.session_id))]
@@ -223,6 +227,31 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
           </section>
         )}
 
+        {/* ── Termos não encontrados ── */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-700 mb-3">Termos não encontrados na busca</h2>
+          {buscaTermos.length === 0 ? (
+            <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
+          ) : (
+            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-2">Termo buscado</th>
+                  <th className="text-right px-4 py-2">Buscas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {buscaTermos.map(([termo, count]) => (
+                  <tr key={termo} className="border-t border-gray-100">
+                    <td className="px-4 py-2 font-mono text-sm">{termo}</td>
+                    <td className="px-4 py-2 text-right font-semibold">{count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
         {/* ── Por intenção ── */}
         <section>
           <h2 className="text-base font-semibold text-gray-700 mb-3">Por intenção</h2>
@@ -306,56 +335,6 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
             </div>
           </section>
         )}
-
-        {/* ── Últimos 👎 ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Últimos 👎</h2>
-          {recentNegatives.length === 0 ? (
-            <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {recentNegatives.map(e => (
-                <div key={e.id} className="bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-3">
-                  {/* Meta */}
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-2 flex-wrap">
-                    <span>{new Date(e.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
-                    {e.intencao && (
-                      <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{e.intencao}</span>
-                    )}
-                    {e.motivo && (
-                      <span className="bg-red-100 text-red-700 rounded-full px-2 py-0.5 font-medium">{e.motivo}</span>
-                    )}
-                    {e.turnos_ate_recomendacao != null && (
-                      <span className="text-gray-300">{e.turnos_ate_recomendacao} turnos</span>
-                    )}
-                    <Link href={`/admin/conversas/${e.session_id}`} className="text-teal-600 hover:underline ml-auto">
-                      Ver conversa →
-                    </Link>
-                  </div>
-                  {/* Comentário livre */}
-                  {e.comentario && (
-                    <blockquote className="border-l-2 border-red-300 pl-3 text-sm text-gray-700 italic leading-relaxed mb-2">
-                      {e.comentario}
-                    </blockquote>
-                  )}
-                  {/* Trace */}
-                  {e.decision_trace ? (
-                    <details className="mt-1">
-                      <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 select-none">
-                        Ver trace de decisão
-                      </summary>
-                      <pre className="mt-2 bg-gray-50 rounded p-2 text-[11px] font-mono overflow-x-auto whitespace-pre-wrap text-gray-600">
-                        {JSON.stringify(e.decision_trace, null, 2)}
-                      </pre>
-                    </details>
-                  ) : (
-                    <p className="text-xs text-gray-300 italic">Sem trace (conversa sem diagnóstico)</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
       <div className="pt-2 border-t border-gray-100">
         <a href="/admin/revisao" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver revisão de raquetes →</a>
