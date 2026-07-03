@@ -261,15 +261,6 @@ export default async function AnaliseAdmin({
     if (topIntent && totalInt > 0) {
       insights.push({ level: 'info', text: `"${topIntent.intencao_detectada}" é a intenção #1 (${pct(topIntent.total, totalInt)} das conversas). Vale priorizar esse fluxo no copy e starters.` })
     }
-    const totalMsg   = starters.reduce((a, r) => a + r.total, 0)
-    const livreCount = starters.find(r => r.starter === null)?.total ?? 0
-    if (totalMsg >= MIN_DATA) {
-      if (livreCount / totalMsg > 0.4) {
-        insights.push({ level: 'info', text: `${pct(livreCount, totalMsg)} escrevem livremente — chegam com casos específicos. Analise as mensagens livres para descobrir padrões.` })
-      } else {
-        insights.push({ level: 'ok', text: `${pct(livreCount, totalMsg)} digitam livremente; maioria usa starters. Starters estão guiando bem.` })
-      }
-    }
     if (taxaRec !== null) {
       insights.push({ level: taxaRec >= 0.5 ? 'ok' : 'warn', text: `${pct(sessionsWithRec.length, totalConv)} das conversas chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — verificar abandono ou dificuldade de qualificação.' : ''}` })
     }
