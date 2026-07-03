@@ -179,7 +179,6 @@ function drawNameBlock(
   const longest = words.reduce((a, b) => a.length > b.length ? a : b)
   const sz      = fitSz(ctx, ff, longest, W * 0.90)
   const oSz     = Math.round(sz * 0.35)
-  const lh      = Math.round(sz * 1.10)
 
   ctx.save()
   ctx.textBaseline = 'top'
@@ -389,7 +388,7 @@ function drawMinhasArmas(
   ctx.save()
   ctx.font = `600 28px '${ff}', sans-serif`
 
-  let display = [...names]
+  const display = [...names]
   // Truncate excess names until fits
   while (display.length > 1 && ctx.measureText(LABEL + display.join(SEP)).width > MAX_W) {
     display.pop()
