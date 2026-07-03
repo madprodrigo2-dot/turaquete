@@ -370,50 +370,98 @@ function drawPontosFortres(
   return firstY + pontos.length * PF_LH
 }
 
-// 7. Minhas armas — 3 primeiros nomes curtos, 1 linha — returns bottom Y
-function drawMinhasArmas(
+// 7. Load single image via proxy (avoids canvas taint)
+async function loadImage(imageUrl: string): Promise<HTMLImageElement | null> {
+  try {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.src = `/api/img-proxy?url=${encodeURIComponent(imageUrl)}`
+    await img.decode()
+    return img
+  } catch {
+    return null
+  }
+}
+
+// 7. Minhas armas — 3 chips com miniaturas — async, returns bottom Y
+async function drawMinhasArmasChips(
   ctx: CanvasRenderingContext2D,
   ff: string,
   winner: ArquetipoSlug,
   ac: string,
-  centerY: number,
-): number {
-  const names = (QUIZ_RAQUETES[winner] ?? []).slice(0, 3).map(c => c.nome_curto).filter(Boolean)
-  if (!names.length) return centerY + 14
+  topY: number,
+): Promise<number> {
+  const raquetes = (QUIZ_RAQUETES[winner] ?? []).slice(0, 3)
+  if (!raquetes.length) return topY
 
-  const SEP   = ' · '
-  const LABEL = 'Minhas armas: '
-  const MAX_W = CW
+  // Load all images in parallel, tolerating individual failures
+  const imgs = await Promise.all(
+    raquetes.map(r => (r.image_url ? loadImage(r.image_url) : Promise.resolve(null))),
+  )
+  const allFailed = imgs.every(img => img === null)
+  if (allFailed && raquetes.every(r => !r.nome_curto)) return topY
 
+  // Section title
   ctx.save()
-  ctx.font = `600 28px '${ff}', sans-serif`
-
-  const display = [...names]
-  // Truncate excess names until fits
-  while (display.length > 1 && ctx.measureText(LABEL + display.join(SEP)).width > MAX_W) {
-    display.pop()
-    if (ctx.measureText(LABEL + [...display, '…'].join(SEP)).width <= MAX_W) {
-      display.push('…')
-      break
-    }
-  }
-
-  const labelW  = ctx.measureText(LABEL).width
-  const nameStr = display.join(SEP)
-  const totalW  = labelW + ctx.measureText(nameStr).width
-  const startX  = CX - totalW / 2
-
-  ctx.textAlign    = 'left'
-  ctx.textBaseline = 'middle'
-  ctx.globalAlpha  = 0.90
+  ctx.font         = `700 26px '${ff}', sans-serif`
   ctx.fillStyle    = ac
-  ctx.fillText(LABEL, startX, centerY)
+  ctx.globalAlpha  = 0.78
+  ctx.textBaseline = 'middle'
+  letterSpaced(ctx, 'MINHAS ARMAS', CX, topY + 13, 4)
   ctx.globalAlpha  = 1
-  ctx.fillStyle    = 'rgba(255,255,255,0.78)'
-  ctx.fillText(nameStr, startX + labelW, centerY)
   ctx.restore()
 
-  return centerY + 14
+  const CHIP_W   = 280
+  const CHIP_H   = 180
+  const GAP      = 24
+  const CREAM    = '#F5FBFA'
+  const TINTA    = '#0E3A40'
+  const n        = raquetes.length
+  const totalW   = n * CHIP_W + (n - 1) * GAP
+  const startX   = CX - totalW / 2
+  const chipTopY = topY + 34
+
+  raquetes.forEach((r, i) => {
+    const img  = imgs[i]
+    const chipX = startX + i * (CHIP_W + GAP)
+
+    ctx.save()
+
+    // Chip background
+    ctx.fillStyle = CREAM
+    drawRoundRect(ctx, chipX, chipTopY, CHIP_W, CHIP_H, 20)
+    ctx.fill()
+
+    // Image (contain within upper portion)
+    if (img && img.width > 0 && img.height > 0) {
+      const maxW  = CHIP_W - 20
+      const maxH  = 118
+      const scale = Math.min(maxW / img.width, maxH / img.height)
+      const dw    = img.width  * scale
+      const dh    = img.height * scale
+      const dx    = chipX + (CHIP_W - dw) / 2
+      const dy    = chipTopY + 10 + (maxH - dh) / 2
+      ctx.drawImage(img, dx, dy, dw, dh)
+    }
+
+    // Name — truncate to fit chip width
+    ctx.font = `500 23px '${ff}', sans-serif`
+    const maxNomeW = CHIP_W - 16
+    let nome = r.nome_curto || r.name
+    while (ctx.measureText(nome).width > maxNomeW && nome.length > 3) {
+      nome = nome.slice(0, -1)
+    }
+    if (nome !== (r.nome_curto || r.name)) nome = nome.trimEnd() + '…'
+
+    ctx.fillStyle    = TINTA
+    ctx.textAlign    = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(nome, chipX + CHIP_W / 2, chipTopY + 148)
+
+    ctx.restore()
+  })
+
+  return chipTopY + CHIP_H
 }
 
 // 8. Social hook — returns bottom Y
@@ -423,7 +471,7 @@ function drawHook(ctx: CanvasRenderingContext2D, ff: string, centerY: number): n
   ctx.fillStyle    = 'rgba(255,255,255,0.70)'
   ctx.textAlign    = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText('E você, joga como? Marca teu parceiro de dupla.', CX, centerY)
+  ctx.fillText('E você, joga como?', CX, centerY)
   ctx.restore()
   return centerY + 13
 }
@@ -505,9 +553,9 @@ export async function gerarStoryPNG(
   y = drawPontosFortres(ctx, ff, arq.pontosFortres, id.ac, y)
   y += 44
 
-  // 7. Minhas armas (3 primeiros)
-  y = drawMinhasArmas(ctx, ff, winner, id.ac, y)
-  y += 52
+  // 7. Minhas armas (chips com miniaturas)
+  y = await drawMinhasArmasChips(ctx, ff, winner, id.ac, y)
+  y += 44
 
   // 8. Social hook
   drawHook(ctx, ff, y)
