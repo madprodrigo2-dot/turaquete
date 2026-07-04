@@ -28,8 +28,8 @@ const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']  // kept 
 const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
 
 const PRECO_BUCKETS: Array<{ label: string; instrucao: string; min: number; max: number | null }> = [
-  { label: 'Até R$1.000',       instrucao: 'presupuesto_max=1000',                        min: 0,    max: 1000 },
-  { label: 'R$1.000 a R$2.000', instrucao: 'presupuesto_min=1001 + presupuesto_max=2000', min: 1001, max: 2000 },
+  { label: 'Até R$1.200',       instrucao: 'presupuesto_max=1200',                        min: 0,    max: 1200 },
+  { label: 'R$1.200 a R$2.000', instrucao: 'presupuesto_min=1201 + presupuesto_max=2000', min: 1201, max: 2000 },
   { label: 'R$2.000 a R$3.000', instrucao: 'presupuesto_min=2001 + presupuesto_max=3000', min: 2001, max: 3000 },
   { label: 'Mais de R$3.000',   instrucao: 'presupuesto_min=3001 (sem teto)',              min: 3001, max: null },
 ]

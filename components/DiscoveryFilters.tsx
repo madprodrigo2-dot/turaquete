@@ -14,8 +14,8 @@ function normalize(s: string) {
 
 // Same canonical buckets as the chat (lib/agent/agent.ts PRECO_BUCKETS)
 const PRECO_BUCKETS = [
-  { label: 'Até R$1.000',       min: 0,    max: 1000 },
-  { label: 'R$1.000 a R$2.000', min: 1001, max: 2000 },
+  { label: 'Até R$1.200',       min: 0,    max: 1200 },
+  { label: 'R$1.200 a R$2.000', min: 1201, max: 2000 },
   { label: 'R$2.000 a R$3.000', min: 2001, max: 3000 },
   { label: 'Mais de R$3.000',   min: 3001, max: null  },
 ] as const
