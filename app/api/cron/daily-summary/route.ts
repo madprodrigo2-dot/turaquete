@@ -11,7 +11,8 @@ function brtRange() {
   const brtYesterday = new Date(brtToday.getTime() - 86400_000)
   const from = new Date(brtYesterday.getTime() + 3 * 60 * 60 * 1000).toISOString()
   const to = new Date(brtToday.getTime() + 3 * 60 * 60 * 1000).toISOString()
-  const label = brtYesterday.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })
+  // from = meia-noite BRT em UTC → exibe corretamente como dia anterior
+  const label = new Date(from).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })
   return { from, to, label }
 }
 
