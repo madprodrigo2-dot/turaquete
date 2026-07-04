@@ -1,6 +1,6 @@
 {
   "name": "turaquete",
-  "version": "0.3.782",
+  "version": "0.3.783",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "quiz:raquetes": "tsx tools/quiz-raquetes.ts"
+    "quiz:raquetes": "tsx tools/quiz-raquetes.ts",
+    "motor:recalc": "tsx scripts/recalc-motor-v4.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.0",
