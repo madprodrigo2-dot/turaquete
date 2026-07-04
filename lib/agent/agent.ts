@@ -51,7 +51,8 @@ function computePrecoDecision(budgetKnown: boolean): PrecoDecision {
 
 // Known price-range answers — module-level so post-rec state detection can reference them
 const PRICE_ANSWERS = new Set([
-  'Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000',
+  'Até R$1.200', 'R$1.200 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000',
+  'Até R$1.000', 'R$1.000 a R$2.000',
   'Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500', 'Acima de R$2.500', 'Acima de R$3.000',
   'Tanto faz / me mostra opções',
 ])
