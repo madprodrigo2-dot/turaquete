@@ -1424,8 +1424,11 @@ export async function runAgentTurn(
     messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeRecId, content: JSON.stringify({ confirmado: true }) } as Anthropic.ToolResultBlockParam] })
     compactOldToolResults(messages)
 
-    // Only offer "Ver mais" if more candidates remain beyond this batch
-    const hasMoreVM = (buscarParsed.raquetes?.length ?? 0) > REC_BATCH
+    // Only offer "Ver mais" if more candidates remain beyond this batch.
+    // buscar_raquetas caps at MAX_CANDIDATES (3) so raquetes.length always == REC_BATCH —
+    // use filteredPoolSize (full unseen pool count) minus this batch instead.
+    const filteredPoolSizeVM = debugRef.value.filteredPoolSize ?? 0
+    const hasMoreVM = filteredPoolSizeVM > REC_BATCH
     const vmChips = hasMoreVM
       ? [...POST_REC_CHIPS]
       : POST_REC_CHIPS.filter(c => c !== 'Ver mais opções')
