@@ -1,5 +1,5 @@
 import { signOut } from '@/auth'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
 import AdminTestToggle from '@/components/AdminTestToggle'
@@ -14,8 +14,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     return <>{children}</>
   }
 
+  const cookieStore = await cookies()
+  const initialDark = cookieStore.get('admin-theme')?.value === 'dark'
+
   return (
-    <AdminShell>
+    <AdminShell initialDark={initialDark}>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-11 flex items-center gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
