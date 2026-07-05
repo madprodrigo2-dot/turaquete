@@ -5,6 +5,7 @@ import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import AdminPeriodFilter from '../AdminPeriodFilter'
 import { InfoTooltip } from '../InfoTooltip'
+import { CostSection } from './CostSection'
 import { Suspense } from 'react'
 import { brtCutoff } from '@/lib/brt'
 
@@ -342,53 +343,25 @@ export default async function AnaliseAdmin({
         </div>
       </section>
 
-      {/* ── Custos ── */}
-      <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-          Custos (API Anthropic) <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
-        </h2>
-        {sessions.length === 0 ? (
-          <p className="text-gray-400 italic text-xs">Sem dados de custo para o período.</p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: 'Custo médio/conversa', value: avgBrl != null ? fmtBrl(avgBrl) : '—', sub: avgUsd != null ? fmtUsd(avgUsd) : '', highlight: true, tip: 'Média de custo da API Anthropic por sessão no período. Calculado sobre sessões com custo registrado (sessões sem resposta do modelo ficam de fora).' },
-              { label: 'Total no período',      value: fmtBrl(totalBrl, 2), sub: fmtUsd(totalUsd), tip: 'Soma de todos os custos de API no período selecionado, convertido ao câmbio do momento de cada sessão.' },
-              { label: 'Conversa mais cara',    value: maxCost != null ? fmtBrl(maxCost) : '—', sub: 'anomalia', tip: 'Sessão com maior custo individual no período. Valores muito acima da média indicam conversas longas ou mensagens muito grandes enviadas ao modelo.' },
-              { label: 'Custo médio / turno',   value: avgCostTurn != null ? fmtBrl(avgCostTurn) : '—', sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/conv` : '', tip: 'Custo médio por par pergunta/resposta (turno). Útil para estimar o custo de conversas mais longas: multiplica pelo número de turnos esperado.' },
-            ].map(({ label, value, sub, highlight, tip }) => (
-              <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${highlight ? 'border-teal-200' : 'border-gray-100'}`}>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
-                <p className={`font-bold ${highlight ? 'text-xl text-gray-900' : 'text-base text-gray-800'}`}>{value}</p>
-                {sub && <p className="text-[10px] text-gray-300">{sub}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── Rentabilidade ── */}
-      {sessions.length > 0 && (custoPorClique != null || taxaConversao > 0) && (
-        <section>
-          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">Rentabilidade</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {custoPorClique != null && (
-              <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">Custo / clique afiliado<InfoTooltip text="Custo total de API no período ÷ número de cliques em afiliado. Indica quanto custa gerar cada visita rastreável ao Mercado Livre." /></p>
-                <p className="text-base font-bold text-gray-800">{fmtBrl(custoPorClique)}</p>
-                <p className="text-[10px] text-gray-300">{affiliateClicks.length} cliques &ldquo;Ver na loja&rdquo;</p>
-              </div>
-            )}
-            {taxaConversao > 0 && (
-              <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">Taxa rec. → clique<InfoTooltip text="Sessões com clique ÷ sessões que receberam recomendação. Mede quantos usuários que viram uma recomendação de fato clicaram para ver na loja." /></p>
-                <p className="text-base font-bold text-gray-800">{pct(sessionsWithClick.length, sessionsWithRec.length)}</p>
-                <p className="text-[10px] text-gray-300">entre conversas c/ recomendação</p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+      {/* ── Custos + Rentabilidade ── */}
+      <CostSection
+        avgBrl={avgBrl}
+        avgUsd={avgUsd}
+        totalBrl={totalBrl}
+        totalUsd={totalUsd}
+        maxCostBrl={maxCost}
+        maxCostUsd={sessions.length > 0 ? Math.max(...sessions.map(r => r.total_usd)) : null}
+        avgCostTurnBrl={avgCostTurn}
+        avgCostTurnUsd={avgUsd != null && avgTurns != null && avgTurns > 0 ? avgUsd / avgTurns : null}
+        custoPorCliqueBrl={custoPorClique}
+        custoPorCliqueUsd={affiliateClicks.length > 0 ? totalUsd / affiliateClicks.length : null}
+        affiliateClicksCount={affiliateClicks.length}
+        sessionsCount={sessions.length}
+        sessionsWithRecCount={sessionsWithRec.length}
+        sessionsWithClickCount={sessionsWithClick.length}
+        avgTurns={avgTurns}
+        taxaConversao={taxaConversao}
+      />
 
       {/* ── Top raquetes recomendadas ── */}
       {topRaquetes.length > 0 && (
