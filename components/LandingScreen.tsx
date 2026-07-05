@@ -3,9 +3,10 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShieldCheck, ChartBar, Target, Lightning } from '@phosphor-icons/react' // MIT license
+import { ShieldCheck, ChartBar, Target, Lightning, ChatText } from '@phosphor-icons/react' // MIT license
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
+import { derivarNivel } from '@/lib/nivel'
 import InsightsModal from './InsightsModal'
 import RacketImageTile from './RacketImageTile'
 import AthleteBadge from './AthleteBadge'
@@ -37,10 +38,11 @@ const CURATED_QUESTIONS = [
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
-const STEPS: { label: string; desc?: string }[] = [
-  { label: 'Conte como você joga, do seu jeito' },
-  { label: 'O especialista entende seu perfil' },
+const STEPS: { label: string; desc?: string; Icon: React.ComponentType<{ size?: number; weight?: string; className?: string }> }[] = [
+  { Icon: ChatText,   label: 'Conte como você joga, do seu jeito' },
+  { Icon: Target,     label: 'O especialista entende seu perfil' },
   {
+    Icon: Lightning,
     label: 'Receba seu perfil e as raquetes certas',
     desc: 'O especialista te diz o peso e balance ideais pro seu jogo, e indica as raquetes que batem exatamente com esse perfil.',
   },
@@ -250,6 +252,16 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
               {racket.name}
             </p>
           </Link>
+          {(() => {
+            const nivel = derivarNivel(racket)
+            if (!nivel) return null
+            const label: Record<string, string> = { iniciante: 'Iniciante', intermediario: 'Intermediário', avancado: 'Avançado' }
+            return (
+              <span className="w-fit text-[9px] font-semibold px-2 py-0.5 rounded-full bg-aqua/[0.08] text-aqua border border-aqua/20 leading-none">
+                {label[nivel] ?? nivel}
+              </span>
+            )
+          })()}
           {perfil && (
             <p className="text-tinta/55 text-[10px] leading-snug line-clamp-2">{perfil}</p>
           )}
@@ -783,16 +795,22 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
             {/* CTA hero — IntersectionObserver target */}
             <div className="flex items-end gap-2 md:gap-3">
-              {/* Tury: alinhada pela base com o botão, levemente acima por marginBottom */}
-              <Image
-                src="/tury-explicando.png"
-                alt="Tury apontando para o botão Começar agora"
-                width={296}
-                height={376}
-                priority
-                className="max-[359px]:hidden shrink-0 select-none pointer-events-none"
-                style={{ height: '72px', width: 'auto', marginBottom: '-4px' }}
-              />
+              {/* Tury + bolha de fala */}
+              <div className="max-[359px]:hidden relative shrink-0 flex flex-col items-center" style={{ marginBottom: '-4px' }}>
+                <div className="mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-2.5 py-1.5 shadow-sm whitespace-nowrap">
+                  <p className="text-[10px] font-semibold text-tinta leading-none">Encontrei 3 raquetes pra você</p>
+                  <p className="text-[9px] text-tinta/50 leading-none mt-0.5">baseado no seu perfil →</p>
+                </div>
+                <Image
+                  src="/tury-explicando.png"
+                  alt="Tury apontando para o botão Começar agora"
+                  width={296}
+                  height={376}
+                  priority
+                  className="select-none pointer-events-none"
+                  style={{ height: '72px', width: 'auto' }}
+                />
+              </div>
               <button
                 ref={heroCtaRef}
                 onClick={onStart}
@@ -897,7 +915,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                     )}
                   </div>
                   <div className={`flex flex-col pt-1${i < STEPS.length - 1 ? ' pb-5' : ''}`}>
-                    <p className="text-tinta text-sm md:text-base leading-relaxed">{step.label}</p>
+                    <p className="text-tinta text-sm md:text-base leading-relaxed flex items-center gap-2">
+                      <step.Icon size={16} weight="duotone" className="shrink-0 text-aqua" />
+                      {step.label}
+                    </p>
                     {step.desc && (
                       <p className="text-tinta/60 text-xs md:text-sm leading-relaxed mt-1">{step.desc}</p>
                     )}
