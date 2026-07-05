@@ -182,6 +182,8 @@ const STARTER_TO_INTENCAO: Record<string, string> = {
   'Quero trocar minha raquete': 'troca',
   'Tenho dor no braço':         'lesao_dor',
 }
+// Estilo chips shown with the opening message — treated as starters even when typed manually
+const ESTILO_STARTERS = ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado']
 
 export async function POST(req: NextRequest) {
   try {
@@ -347,7 +349,7 @@ export async function POST(req: NextRequest) {
               custo_brl:          brl,
               is_test:            isTest,
               primeira_mensagem: primeiraMensagem ?? (messages.find(m => m.role === 'user')?.content as string | undefined) ?? null,
-              starter_usado: starterUsado ?? null,
+              starter_usado: starterUsado ?? (primeiraMensagem && ESTILO_STARTERS.includes(primeiraMensagem) ? primeiraMensagem : null),
               intencao_detectada: intencao ?? (starterUsado ? (STARTER_TO_INTENCAO[starterUsado] ?? null) : null),
               ip_hash: ipHash,
               referrer:   origemReferrer  ? new URL(origemReferrer).hostname.replace(/^www\./, '') : null,

@@ -107,7 +107,8 @@ export default async function QualidadeAdmin() {
   // By-intencao cross table — fallback to starter_usado when intencao not captured
   const intencaoMap: Record<string, { pos: number; neg: number }> = {}
   for (const e of ratings) {
-    const starter = convMap.get(e.session_id)?.starter_usado
+    const conv = convMap.get(e.session_id)
+    const starter = conv?.starter_usado ?? conv?.primeira_mensagem
     const key = e.intencao ?? starter ?? '(não registrada)'
     if (!intencaoMap[key]) intencaoMap[key] = { pos: 0, neg: 0 }
     if (e.event_type === 'rating_positive') intencaoMap[key].pos++
