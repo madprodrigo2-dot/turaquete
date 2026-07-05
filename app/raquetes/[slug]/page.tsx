@@ -264,27 +264,41 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               </div>
 
               {/* Comparar */}
-              <div className="bg-white rounded-2xl px-5 py-4 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-3">
+              <div className="bg-white rounded-2xl px-5 py-4 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">
                 <Link
                   href={`/comparar?a=${racket.slug}`}
-                  className="flex items-center justify-between gap-3 w-full border border-aqua/35 text-aqua font-semibold text-sm py-3 px-4 rounded-xl hover:bg-aqua/5 active:scale-[0.98] transition-all"
+                  className="flex items-center gap-2.5 w-full bg-white border-[1.5px] border-aqua text-tinta font-semibold text-sm py-3 px-4 rounded-xl hover:bg-aqua/8 active:scale-[0.98] transition-all"
                 >
-                  <span>Comparar a {racket.name} com outra</span>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
-                    <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#0CC0BE]">
+                    <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                    <path d="M8 4.5L11 6.25V9.75L8 11.5L5 9.75V6.25L8 4.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" strokeOpacity="0.4"/>
+                    <line x1="8" y1="1" x2="8" y2="4.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                    <line x1="14" y1="4.5" x2="11" y2="6.25" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                    <line x1="14" y1="11.5" x2="11" y2="9.75" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                    <line x1="8" y1="15" x2="8" y2="11.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                    <line x1="2" y1="11.5" x2="5" y2="9.75" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                    <line x1="2" y1="4.5" x2="5" y2="6.25" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
                   </svg>
+                  <span>Comparar lado a lado no radar</span>
                 </Link>
                 {sugestoes.length > 0 && (
-                  <div className="flex flex-col gap-1.5">
-                    <p className="text-xs text-tinta/40 font-medium">Comparações sugeridas</p>
-                    <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-tinta/40 font-medium">Comparações populares</p>
+                    <div className="flex flex-col gap-2">
                       {sugestoes.map(s => (
                         <Link
                           key={s.slug}
                           href={`/comparar/${racket.slug}-vs-${s.slug}`}
-                          className="text-xs text-aqua/70 hover:text-aqua transition-colors hover:underline leading-relaxed"
+                          className="flex items-center gap-3 bg-[#F3FAFA] border border-aqua/10 rounded-2xl px-4 py-3 hover:border-aqua/30 hover:bg-aqua/6 active:scale-[0.98] transition-all"
                         >
-                          {racket.name} vs {s.name} →
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-aqua/50">
+                            <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                            <path d="M8 4.5L11 6.25V9.75L8 11.5L5 9.75V6.25L8 4.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" strokeOpacity="0.4"/>
+                          </svg>
+                          <span className="flex-1 text-sm font-semibold text-tinta">vs {s.name}</span>
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-tinta/25">
+                            <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
                         </Link>
                       ))}
                     </div>
