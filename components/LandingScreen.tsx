@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShieldCheck, ChartBar, Target, Lightning, ChatText } from '@phosphor-icons/react' // MIT license
+import { ShieldCheck, ChartBar, Target, Lightning, ChatText, type Icon as PhosphorIcon } from '@phosphor-icons/react' // MIT license
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 import { derivarNivel } from '@/lib/nivel'
@@ -38,7 +38,7 @@ const CURATED_QUESTIONS = [
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
-const STEPS: { label: string; desc?: string; Icon: React.ComponentType<{ size?: number; weight?: string; className?: string }> }[] = [
+const STEPS: { label: string; desc?: string; Icon: PhosphorIcon }[] = [
   { Icon: ChatText,   label: 'Conte como você joga, do seu jeito' },
   { Icon: Target,     label: 'O especialista entende seu perfil' },
   {
