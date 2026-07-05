@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { MotorRow } from './page'
+import { InfoTooltip } from '../InfoTooltip'
 
 const DIMS = ['spin', 'comfort', 'stability', 'power', 'control', 'maneuverability', 'forgiveness'] as const
 type Dim = (typeof DIMS)[number]
@@ -236,6 +237,9 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
               <Th col="brand" active={sortCol} dir={sortDir} onSort={handleSort}>Marca</Th>
               <Th col="model_year" active={sortCol} dir={sortDir} onSort={handleSort}>Ano</Th>
               <Th col="nivel" active={sortCol} dir={sortDir} onSort={handleSort}>Nv</Th>
+              <Th col="scoreGeral" active={sortCol} dir={sortDir} onSort={handleSort}>
+                <span className="flex items-center gap-0.5">Grl<InfoTooltip text="Média de power + control + maneuverability + stability. Indicador geral de performance técnica — não considera perfil do jogador (use os scores I/M/A para comparar por nível)." /></span>
+              </Th>
               <Th col="scoreIni" active={sortCol} dir={sortDir} onSort={handleSort}>I</Th>
               <Th col="scoreInt" active={sortCol} dir={sortDir} onSort={handleSort}>M</Th>
               <Th col="scoreAva" active={sortCol} dir={sortDir} onSort={handleSort}>A</Th>
@@ -296,6 +300,12 @@ export default function MotorTable({ rows }: { rows: MotorRow[] }) {
                   {r.nivel === 'intermediario' && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700">INT</span>}
                   {r.nivel === 'iniciante'     && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-700">INI</span>}
                   {r.nivel == null             && <span className="text-gray-300">—</span>}
+                </td>
+                <td className="px-2 py-1 text-center">
+                  {r.scoreGeral != null
+                    ? <span className={`font-mono text-xs font-semibold ${profileScoreColor(r.scoreGeral)}`}>{r.scoreGeral}</span>
+                    : <span className="text-gray-300">—</span>
+                  }
                 </td>
                 <td className="px-2 py-1 text-center">
                   {r.scoreIni != null
