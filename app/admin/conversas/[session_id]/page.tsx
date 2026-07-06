@@ -73,18 +73,23 @@ export default async function ConversaDetailPage({
 
   const sb = getAdmin()
 
-  // Fetch all snapshots for this session, ordered by time
+  // Fetch all rows for this session to aggregate recs + pick latest metadata
   const { data: rows } = await sb
     .from('conversations')
     .select('*')
     .eq('session_id', session_id)
     .order('created_at', { ascending: false })
-    .limit(1)
 
   if (!rows || rows.length === 0) notFound()
 
   const row = rows[0]
   const messages: Msg[] = Array.isArray(row.messages) ? row.messages as Msg[] : []
+
+  // Collect all unique recommended racket IDs across all rows
+  const allRecIds = [...new Set(
+    rows.flatMap(r => Array.isArray(r.recommended_racket_ids) ? (r.recommended_racket_ids as (string | number)[]).map(Number) : [])
+      .filter(id => id > 0)
+  )]
 
   return (
     <div className="max-w-2xl">
@@ -149,8 +154,8 @@ export default async function ConversaDetailPage({
         </div>
       )}
 
-      {row.recommended_racket_ids && (row.recommended_racket_ids as number[]).length > 0 && (
-        <RecsBlock ids={row.recommended_racket_ids as number[]} />
+      {allRecIds.length > 0 && (
+        <RecsBlock ids={allRecIds} />
       )}
     </div>
   )
