@@ -36,6 +36,7 @@ type SessionRow = {
   utm_source: string | null
   utm_medium: string | null
   referrer: string | null
+  rec_racket_names: string[]
 }
 
 function fmtBrl(v: number) {
@@ -103,10 +104,14 @@ export default async function ConversasPage({
   const sessionUtmSource = new Map<string, string>()
   const sessionUtmMedium = new Map<string, string>()
   const sessionReferrer = new Map<string, string>()
+  const sessionRecIds = new Map<string, Set<number>>()
   for (const r of raw) {
     sessionCostMap.set(r.session_id, (sessionCostMap.get(r.session_id) ?? 0) + (Number(r.custo_brl) || 0))
     if (Array.isArray(r.recommended_racket_ids) && r.recommended_racket_ids.length > 0) {
       sessionHadRecMap.set(r.session_id, true)
+      const ids = sessionRecIds.get(r.session_id) ?? new Set<number>()
+      for (const id of r.recommended_racket_ids) ids.add(Number(id))
+      sessionRecIds.set(r.session_id, ids)
     }
     if (!sessionIpMap.has(r.session_id) && r.ip_hash) {
       sessionIpMap.set(r.session_id, r.ip_hash)
@@ -149,6 +154,7 @@ export default async function ConversasPage({
       utm_source: sessionUtmSource.get(r.session_id) ?? null,
       utm_medium: sessionUtmMedium.get(r.session_id) ?? null,
       referrer: sessionReferrer.get(r.session_id) ?? null,
+      rec_racket_names: [],
     })
     if (sessions.length >= 50) break
   }
@@ -199,6 +205,17 @@ export default async function ConversasPage({
         const intencao = intencaoMap.get(s.session_id)
         if (intencao) s.intencao_detectada = intencao
       }
+    }
+  }
+
+  // Fetch racket names for all recommended rackets across sessions
+  const allRecIds = [...new Set([...sessionRecIds.values()].flatMap(s => [...s]))]
+  if (allRecIds.length > 0) {
+    const { data: racketRows } = await sb.from('rackets').select('id, name').in('id', allRecIds)
+    const racketNameMap = new Map<number, string>((racketRows ?? []).map(r => [r.id, r.name]))
+    for (const s of sessions) {
+      const ids = sessionRecIds.get(s.session_id)
+      if (ids) s.rec_racket_names = [...ids].map(id => racketNameMap.get(id) ?? `#${id}`)
     }
   }
 
@@ -258,6 +275,7 @@ export default async function ConversasPage({
               <th className="text-center px-3 py-2">Turnos</th>
               <th className="text-right px-3 py-2">Custo</th>
               <th className="text-center px-3 py-2">Rec?</th>
+              <th className="text-left px-3 py-2">Raquetes rec.</th>
               <th className="text-center px-3 py-2">Loja?</th>
               <th className="text-center px-3 py-2" title="Usuário clicou em 'Tentar de novo' após timeout">↻?</th>
               <th className="text-center px-3 py-2" title="Feedback do usuário">👍👎</th>
@@ -300,6 +318,13 @@ export default async function ConversasPage({
                   {s.had_rec
                     ? <span className="text-teal-600 font-bold">✓</span>
                     : <span className="text-gray-200">—</span>}
+                </td>
+                <td className="px-3 py-2 max-w-[200px]">
+                  {s.rec_racket_names.length > 0 ? (
+                    <span className="text-gray-600 text-[10px] leading-relaxed">
+                      {s.rec_racket_names.join(', ')}
+                    </span>
+                  ) : <span className="text-gray-200">—</span>}
                 </td>
                 <td className="px-3 py-2 text-center">
                   {s.had_click
