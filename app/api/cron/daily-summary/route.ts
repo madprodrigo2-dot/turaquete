@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
   const { from, to, label } = brtRange()
 
   const [convsRes, recsRes, clicksRes, afiliRes] = await Promise.all([
-    sb.from('conversations').select('custo_brl').gte('created_at', from).lt('created_at', to).eq('is_test', false),
+    sb.from('conversations').select('session_id, custo_brl').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('recommendation_events').select('racket_id').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).eq('tipo', 'afiliado'),
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
   const recs = recsRes.data ?? []
   const totalClicks = clicksRes.count ?? 0
   const totalAfiliado = afiliRes.count ?? 0
-  const totalSessoes = convs.length
+  const totalSessoes = new Set(convs.map(c => c.session_id)).size
   const totalRecs = recs.length
   const custoBRL = convs.reduce((s, c) => s + (c.custo_brl ?? 0), 0)
 
