@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
     `🎾 <b>Turaquete — ${label}</b>`,
     '',
     hasDados ? [
-      `💬 Sessões: <b>${totalSessoes}</b>`,
+      `💬 Conversas: <b>${totalSessoes}</b>`,
       `🎯 Recomendações: <b>${totalRecs}</b>`,
       `🔗 Cliques totais: <b>${totalClicks}</b>`,
       `🛒 Cliques afiliado: <b>${totalAfiliado}</b>`,
