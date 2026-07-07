@@ -1,6 +1,6 @@
 {
   "name": "turaquete",
-  "version": "0.3.798",
+  "version": "0.3.799",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -36,6 +36,7 @@
     "eslint-config-next": "15.5.19",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
+    "to-ico": "^1.1.5",
     "tsx": "4.22.5",
     "typescript": "^5",
     "vitest": "^4.1.9"
