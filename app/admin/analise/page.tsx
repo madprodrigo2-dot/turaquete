@@ -65,10 +65,18 @@ export default async function AnaliseAdmin({
     : daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
 
   let cutoffDate: string
+  let toDate: string | null = null
   let daysLabel: string
   if (fromParam) {
-    cutoffDate = new Date(fromParam + 'T00:00:00').toISOString()
-    daysLabel  = `${fromParam} → ${toParam ?? 'hoje'}`
+    // Meia-noite BRT do dia inicial = 03:00 UTC
+    const [fy, fm, fd] = fromParam.split('-').map(Number)
+    cutoffDate = new Date(Date.UTC(fy, fm - 1, fd, 3, 0, 0, 0)).toISOString()
+    if (toParam) {
+      // Fim do dia BRT = meia-noite BRT do dia seguinte = 03:00 UTC do dia seguinte
+      const [ty, tm, td] = toParam.split('-').map(Number)
+      toDate = new Date(Date.UTC(ty, tm - 1, td + 1, 3, 0, 0, 0)).toISOString()
+    }
+    daysLabel = `${fromParam} → ${toParam ?? 'hoje'}`
   } else {
     cutoffDate = brtCutoff(daysBack)
     daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
@@ -95,7 +103,11 @@ export default async function AnaliseAdmin({
     starterRaw,
     starterDetailRows,
   ] = await Promise.all([
-    sb.rpc('admin_cost_by_session', { days_back: daysBack, p_include_test: includeTest }).then(r => (r.data ?? []) as SessionCostRow[]),
+    sb.rpc('admin_cost_by_session', {
+      cutoff_at: cutoffDate,
+      p_include_test: includeTest,
+      ...(toDate ? { to_at: toDate } : {}),
+    }).then(r => (r.data ?? []) as SessionCostRow[]),
 
     (() => {
       const q = sb.from('feedback_events')
