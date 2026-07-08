@@ -27,6 +27,7 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
 
   const [price, setPrice] = useState<string>(racket.price?.toString() ?? '')
   const [publicada, setPublicada] = useState(racket.publicada)
+  const [isActive, setIsActive] = useState(racket.is_active ?? true)
   const [destaqueAtleta, setDestaqueAtleta] = useState(racket.destaque_atleta ?? false)
   const [atleta, setAtleta] = useState<string>((se.atleta as string | null) ?? '')
   const [saidaDeBola, setSaidaDeBola] = useState<string>((se.saida_de_bola as string | null) ?? '')
@@ -50,6 +51,7 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
         await salvarEditorial(slug, {
           price: price !== '' ? Number(price) : null,
           publicada,
+          is_active: isActive,
           destaque_atleta: destaqueAtleta,
           atleta,
           saida_de_bola: saidaDeBola,
@@ -139,6 +141,15 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
                   className="accent-teal-600 w-3.5 h-3.5"
                 />
                 Publicada
+              </label>
+              <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={e => setIsActive(e.target.checked)}
+                  className="accent-teal-600 w-3.5 h-3.5"
+                />
+                Afiliado ativo
               </label>
               <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
                 <input

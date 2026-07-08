@@ -69,6 +69,7 @@ export interface RacketWithInsights {
   technologies: string[] | null
   specs_extra: Record<string, unknown> | null
   publicada: boolean
+  is_active: boolean | null
   racket_insights: Insights | null
   brands?: { name: string; slug?: string } | null
 }
@@ -93,7 +94,7 @@ function normalizeRacket(raw: unknown): RacketWithInsights {
 const SELECT_FIELDS = `
   id, name, slug, model_year, weight_g, balance, format,
   face_material, core, price, price_updated_at, currency, affiliate_url, source_url, image_url, technologies,
-  specs_extra, publicada,
+  specs_extra, publicada, is_active,
   brands ( name, slug ),
   racket_insights (
     power, control, comfort, maneuverability, stability, spin, forgiveness,

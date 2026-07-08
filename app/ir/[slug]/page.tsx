@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { getRaquetaPorSlug } from '@/lib/recommend'
+import { buildMlSearchUrl, SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { headers } from 'next/headers'
 import { auth } from '@/auth'
@@ -34,7 +35,7 @@ function summarizeReferrer(ref: string | null): string {
 // Sends a Telegram notification to the owner on every real buy click.
 async function sendTelegramNotification(opts: {
   racketName: string
-  tipo: 'afiliado' | 'oficial'
+  tipo: 'afiliado' | 'oficial' | 'busca'
   price: number | null
   nivel: string | null
   utmSource: string | null
@@ -47,12 +48,13 @@ async function sendTelegramNotification(opts: {
   if (!token || !chatId) return
 
   const isBot = !opts.hasSession || (opts.referrer?.includes('/ir/') ?? false)
-  const emoji  = isBot ? '🤖' : (opts.tipo === 'afiliado' ? '💰' : '🔗')
+  const emoji  = isBot ? '🤖' : (opts.tipo === 'afiliado' ? '💰' : opts.tipo === 'busca' ? '🔍' : '🔗')
   const preco  = opts.price
     ? `R$${opts.price.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
     : 'sem preço'
   const nivelMap: Record<string, string> = { iniciante: 'iniciante', intermediario: 'intermediário', avancado: 'avançado' }
   const nivel  = opts.nivel ? (nivelMap[opts.nivel] ?? opts.nivel) : '—'
+  const tipoLabel = opts.tipo === 'busca' ? 'busca ML (fallback)' : opts.tipo
 
   let via = 'direto'
   if (opts.utmSource) {
@@ -62,7 +64,7 @@ async function sendTelegramNotification(opts: {
   }
 
   const label  = isBot ? 'Clique suspeito (bot?)' : 'Clique em Comprar'
-  const text   = `${emoji} ${label}\n${opts.racketName}\n${opts.tipo} · ${preco} · ${nivel}\nvia ${via}`
+  const text   = `${emoji} ${label}\n${opts.racketName}\n${tipoLabel} · ${preco} · ${nivel}\nvia ${via}`
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method:  'POST',
@@ -78,7 +80,7 @@ async function sendGa4ClickEvent(opts: {
   clientId: string
   slug: string
   racketName: string
-  tipo: 'afiliado' | 'oficial'
+  tipo: 'afiliado' | 'oficial' | 'busca'
   price: number | null
   currency: string | null
 }) {
@@ -141,15 +143,36 @@ export default async function IrPage({
 
   if (!racket) notFound()
 
-  const ctaUrl = racket.affiliate_url ?? racket.source_url ?? null
-  if (!ctaUrl) notFound()
+  // Priority:
+  // a. affiliate_url + is_active !== false → afiliado ML
+  // b. affiliate_url + is_active === false → busca ML (fallback search)
+  // c. no affiliate_url + SEARCH_FALLBACK_UNCOVERED → busca ML
+  // d. source_url → oficial
+  // e. nothing → 404
+  let ctaUrl: string
+  let tipo: 'afiliado' | 'oficial' | 'busca'
+  let destination_type: string
 
-  const tipo: 'afiliado' | 'oficial' = racket.affiliate_url ? 'afiliado' : 'oficial'
-  const destination_type = racket.affiliate_url
-    ? 'ml'
-    : ctaUrl.includes('mercadolivre.com.br')
-      ? 'ml'
-      : 'oficial'
+  if (racket.affiliate_url && racket.is_active !== false) {
+    ctaUrl = racket.affiliate_url
+    tipo = 'afiliado'
+    destination_type = 'ml'
+  } else if (racket.affiliate_url && racket.is_active === false) {
+    ctaUrl = buildMlSearchUrl(racket)
+    tipo = 'busca'
+    destination_type = 'ml'
+  } else if (!racket.affiliate_url && SEARCH_FALLBACK_UNCOVERED) {
+    ctaUrl = buildMlSearchUrl(racket)
+    tipo = 'busca'
+    destination_type = 'ml'
+  } else if (racket.source_url) {
+    ctaUrl = racket.source_url
+    tipo = 'oficial'
+    destination_type = ctaUrl.includes('mercadolivre.com.br') ? 'ml' : 'oficial'
+  } else {
+    notFound()
+    return
+  }
 
   const clientId = gaClientId(cookieStore.get('_ga')?.value)
 

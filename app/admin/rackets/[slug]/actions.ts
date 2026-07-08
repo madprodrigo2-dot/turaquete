@@ -42,6 +42,7 @@ export interface NotaChange {
 export interface EditorialData {
   price: number | null
   publicada: boolean
+  is_active: boolean
   destaque_atleta: boolean
   atleta: string
   saida_de_bola: string
@@ -241,6 +242,7 @@ export async function salvarEditorial(slug: string, data: EditorialData) {
   await sb.from('rackets').update({
     price: data.price,
     publicada: data.publicada,
+    is_active: data.is_active,
     destaque_atleta: data.destaque_atleta,
     specs_extra: newExtra,
   }).eq('slug', slug)

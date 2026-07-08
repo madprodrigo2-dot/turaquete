@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
+import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import BuyButton from '@/components/BuyButton'
 import SiteNav from '@/components/SiteNav'
 import AthleteBadge from '@/components/AthleteBadge'
@@ -104,7 +105,8 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
   const buyUrl   = racket.affiliate_url ?? racket.source_url
-  const irUrl    = buyUrl ? `/ir/${racket.slug}` : null
+  const hasLink  = !!(buyUrl || SEARCH_FALLBACK_UNCOVERED)
+  const irUrl    = hasLink ? `/ir/${racket.slug}` : null
   const linkTipo: 'afiliado' | 'oficial' = racket.affiliate_url ? 'afiliado' : 'oficial'
 
   const product = {
