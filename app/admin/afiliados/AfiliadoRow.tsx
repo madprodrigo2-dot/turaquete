@@ -8,11 +8,13 @@ interface Props {
   brandName: string
   price: number | null
   publicada: boolean
+  isActive: boolean | null
   affiliateUrl: string | null
   sourceUrl: string | null
+  fallbackUrl: string | null
 }
 
-export default function AfiliadoRow({ id, name, brandName, price, publicada, affiliateUrl, sourceUrl }: Props) {
+export default function AfiliadoRow({ id, name, brandName, price, publicada, isActive, affiliateUrl, sourceUrl, fallbackUrl }: Props) {
   const [url, setUrl] = useState(affiliateUrl ?? '')
   const [status, setStatus] = useState<null | 'saving' | 'ok' | string>(null)
   const [hasAffiliate, setHasAffiliate] = useState(!!affiliateUrl)
@@ -20,6 +22,7 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
 
   const dirty = url.trim() !== (affiliateUrl ?? '')
   const mlSemTag = url.trim().includes('mercadolivre') && !url.trim().includes('matt_word')
+  const isInativo = isActive === false && hasAffiliate
 
   async function save() {
     const trimmed = url.trim()
@@ -48,16 +51,18 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
     }
   }
 
-  const badge = !hasAffiliate
-    ? sourceUrl
-      ? <span className="text-teal-500 text-xs font-semibold" title="Source only">src</span>
-      : <span className="text-amber-500 text-base" title="Sem link">⚠</span>
-    : !hasTag
-      ? <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-orange-500 leading-none" title="ML sem tag de afiliado">⚠ tag</span>
-      : <span className="text-green-500 text-base" title="Afiliado ML com tag ✓">✓</span>
+  const badge = isInativo
+    ? <span className="text-red-500 text-base" title="Anúncio indisponível — fallback busca ML">🔴</span>
+    : !hasAffiliate
+      ? sourceUrl
+        ? <span className="text-teal-500 text-xs font-semibold" title="Source only">src</span>
+        : <span className="text-amber-500 text-base" title="Sem link">⚠</span>
+      : !hasTag
+        ? <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-orange-500 leading-none" title="ML sem tag de afiliado">⚠ tag</span>
+        : <span className="text-green-500 text-base" title="Afiliado ML com tag ✓">✓</span>
 
   return (
-    <tr className="border-t border-gray-100 hover:bg-gray-50/60">
+    <tr className={`border-t border-gray-100 ${isInativo ? 'bg-red-50/60 hover:bg-red-50' : 'hover:bg-gray-50/60'}`}>
       <td className="px-4 py-2.5">
         <div className="font-medium text-gray-800 text-sm leading-tight">{name}</div>
         <div className="text-[11px] text-gray-400 mt-0.5">{brandName}</div>
@@ -66,11 +71,18 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
         {price != null ? `R$ ${price.toLocaleString('pt-BR')}` : '—'}
       </td>
       <td className="px-4 py-2.5">
-        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-          publicada ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
-        }`}>
-          {publicada ? 'publicada' : 'rascunho'}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full w-fit ${
+            publicada ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
+          }`}>
+            {publicada ? 'publicada' : 'rascunho'}
+          </span>
+          {isInativo && (
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full w-fit bg-red-100 text-red-600">
+              indisponível
+            </span>
+          )}
+        </div>
       </td>
       <td className="px-4 py-2.5 text-center leading-none">
         {badge}
@@ -83,7 +95,9 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
             onChange={e => { setUrl(e.target.value); setStatus(null) }}
             onKeyDown={e => { if (e.key === 'Enter' && dirty) save() }}
             placeholder="https://mercadolivre.com.br/..."
-            className="flex-1 min-w-0 text-[11px] border border-gray-200 rounded-lg px-2.5 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent"
+            className={`flex-1 min-w-0 text-[11px] border rounded-lg px-2.5 py-1.5 font-mono focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent ${
+              isInativo ? 'border-red-200 bg-red-50' : 'border-gray-200'
+            }`}
           />
           <button
             onClick={save}
@@ -99,6 +113,12 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, aff
             {status === 'saving' ? '...' : 'Salvar'}
           </button>
         </div>
+        {isInativo && fallbackUrl && (
+          <p className="text-[10px] text-red-500 mt-1 font-medium">
+            🔴 Anúncio indisponível — cliques vão para:{' '}
+            <a href={fallbackUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-red-700 break-all">{fallbackUrl}</a>
+          </p>
+        )}
         {mlSemTag && (
           <p className="text-[10px] text-orange-500 mt-1 font-medium">⚠ Link ML sem tag de afiliado — comissão não rastreada</p>
         )}

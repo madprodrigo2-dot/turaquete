@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getSupabase } from '@/lib/supabase'
+import { buildMlSearchUrl } from '@/lib/ml-search'
 import AfiliadoRow from './AfiliadoRow'
 import AfiliadoFilters from './AfiliadoFilters'
 
@@ -12,6 +13,7 @@ interface RacketRow {
   price: number | null
   currency: string
   publicada: boolean
+  is_active: boolean | null
   affiliate_url: string | null
   source_url: string | null
   brand_id: number | null
@@ -26,20 +28,20 @@ interface BrandRow {
 export default async function AfiliadosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; brand?: string }>
+  searchParams: Promise<{ filter?: string; brand?: string; q?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
     redirect('/admin/login')
   }
 
-  const { filter, brand } = await searchParams
+  const { filter, brand, q } = await searchParams
   const sb = getSupabase()
 
   const [{ data: rackets }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, price, currency, publicada, affiliate_url, source_url, brand_id')
+      .select('id, name, price, currency, publicada, is_active, affiliate_url, source_url, brand_id')
       .order('name'),
     sb
       .from('brands')
@@ -67,14 +69,21 @@ export default async function AfiliadosPage({
     filtered = filtered.filter(r => !!r.affiliate_url)
   } else if (filter === 'sem_tag') {
     filtered = filtered.filter(r => r.affiliate_url?.includes('mercadolivre') && !r.affiliate_url?.includes('matt_word'))
+  } else if (filter === 'inativos') {
+    filtered = filtered.filter(r => r.is_active === false && !!r.affiliate_url)
+  }
+  if (q) {
+    const ql = q.toLowerCase()
+    filtered = filtered.filter(r => r.name.toLowerCase().includes(ql))
   }
 
-  const total = rows.length
+  const total       = rows.length
   const comAfiliado = rows.filter(r => !!r.affiliate_url).length
-  const semTag = rows.filter(r => r.affiliate_url?.includes('mercadolivre') && !r.affiliate_url?.includes('matt_word')).length
-  const soSource = rows.filter(r => !r.affiliate_url && !!r.source_url).length
-  const semLink = rows.filter(r => !r.affiliate_url && !r.source_url).length
-  const pct = total > 0 ? Math.round((comAfiliado / total) * 100) : 0
+  const semTag      = rows.filter(r => r.affiliate_url?.includes('mercadolivre') && !r.affiliate_url?.includes('matt_word')).length
+  const soSource    = rows.filter(r => !r.affiliate_url && !!r.source_url).length
+  const semLink     = rows.filter(r => !r.affiliate_url && !r.source_url).length
+  const inativos    = rows.filter(r => r.is_active === false && !!r.affiliate_url).length
+  const pct         = total > 0 ? Math.round((comAfiliado / total) * 100) : 0
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,6 +104,9 @@ export default async function AfiliadosPage({
               {comAfiliado} <span className="text-gray-400 font-normal">de</span> {total} com afiliado ML
             </span>
             <span className="flex gap-3 text-xs font-medium">
+              {inativos > 0 && (
+                <span className="text-red-500">🔴 {inativos} inativo{inativos > 1 ? 's' : ''}</span>
+              )}
               {semTag > 0 && (
                 <span className="text-orange-500">{semTag} sem tag</span>
               )}
@@ -114,12 +126,14 @@ export default async function AfiliadosPage({
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters + Search */}
       <AfiliadoFilters
         brands={brandOptions}
         currentFilter={filter}
         currentBrand={brand}
+        currentQ={q}
         semTag={semTag}
+        inativos={inativos}
       />
 
       {/* Table */}
@@ -135,25 +149,37 @@ export default async function AfiliadosPage({
             </tr>
           </thead>
           <tbody>
-            {filtered.map(r => (
-              <AfiliadoRow
-                key={r.id}
-                id={r.id}
-                name={r.name}
-                brandName={brandById.get(r.brand_id ?? -1)?.name ?? '—'}
-                price={r.price}
-                publicada={r.publicada}
-                affiliateUrl={r.affiliate_url}
-                sourceUrl={r.source_url}
-              />
-            ))}
+            {filtered.map(r => {
+              const brand = brandById.get(r.brand_id ?? -1)
+              const fallbackUrl = r.is_active === false && r.affiliate_url
+                ? buildMlSearchUrl({ name: r.name, brands: brand ? { name: brand.name } : null })
+                : null
+              return (
+                <AfiliadoRow
+                  key={r.id}
+                  id={r.id}
+                  name={r.name}
+                  brandName={brand?.name ?? '—'}
+                  price={r.price}
+                  publicada={r.publicada}
+                  isActive={r.is_active}
+                  affiliateUrl={r.affiliate_url}
+                  sourceUrl={r.source_url}
+                  fallbackUrl={fallbackUrl}
+                />
+              )
+            })}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic text-sm">
-                  {filter === 'sem_afiliado'
+                  {q
+                    ? `Nenhuma raquete encontrada para "${q}".`
+                    : filter === 'sem_afiliado'
                     ? 'Todas as raquetes já têm link de afiliado. ✓'
                     : filter === 'com_afiliado'
                     ? 'Nenhuma raquete com afiliado ainda.'
+                    : filter === 'inativos'
+                    ? 'Nenhum anúncio inativo no momento. ✓'
                     : 'Nenhuma raquete encontrada.'}
                 </td>
               </tr>
@@ -162,7 +188,7 @@ export default async function AfiliadosPage({
         </table>
         <div className="px-4 py-2 border-t border-gray-100 text-[11px] text-gray-400">
           {filtered.length} raquete{filtered.length !== 1 ? 's' : ''}
-          {(filter || brand) ? ' (filtradas)' : ''}
+          {(filter || brand || q) ? ' (filtradas)' : ''}
         </div>
       </div>
 
