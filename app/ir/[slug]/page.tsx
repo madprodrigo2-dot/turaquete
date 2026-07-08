@@ -47,23 +47,25 @@ async function sendTelegramNotification(opts: {
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return
 
-  const isBot = !opts.hasSession || (opts.referrer?.includes('/ir/') ?? false)
-  const emoji  = isBot ? '🤖' : (opts.tipo === 'afiliado' ? '💰' : opts.tipo === 'busca' ? '🔍' : '🔗')
+  // Only flag as suspicious if referrer is /ir/ itself (redirect loop)
+  const isSuspicious = opts.referrer?.includes('/ir/') ?? false
+  const emoji  = isSuspicious ? '🤖' : (opts.tipo === 'afiliado' ? '💰' : opts.tipo === 'busca' ? '🔍' : '🔗')
   const preco  = opts.price
     ? `R$${opts.price.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
     : 'sem preço'
   const nivelMap: Record<string, string> = { iniciante: 'iniciante', intermediario: 'intermediário', avancado: 'avançado' }
   const nivel  = opts.nivel ? (nivelMap[opts.nivel] ?? opts.nivel) : '—'
   const tipoLabel = opts.tipo === 'busca' ? 'busca ML (fallback)' : opts.tipo
+  const origem = opts.hasSession ? 'conversa' : 'direto'
 
-  let via = 'direto'
+  let via = origem
   if (opts.utmSource) {
     via = opts.utmMedium ? `${opts.utmSource}/${opts.utmMedium}` : opts.utmSource
   } else if (opts.referrer) {
     via = opts.referrer
   }
 
-  const label  = isBot ? 'Clique suspeito (bot?)' : 'Clique em Comprar'
+  const label  = isSuspicious ? 'Clique suspeito (loop)' : 'Clique em Comprar'
   const text   = `${emoji} ${label}\n${opts.racketName}\n${tipoLabel} · ${preco} · ${nivel}\nvia ${via}`
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
