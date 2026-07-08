@@ -144,7 +144,7 @@ export default async function AfiliadosPage({
               <th className="text-left px-4 py-2.5 font-semibold">Raquete</th>
               <th className="text-left px-4 py-2.5 font-semibold">Preço</th>
               <th className="text-left px-4 py-2.5 font-semibold">Status</th>
-              <th className="text-center px-4 py-2.5 font-semibold">Link</th>
+              <th className="text-left px-4 py-2.5 font-semibold">Tipo</th>
               <th className="text-left px-4 py-2.5 font-semibold">URL de afiliado</th>
             </tr>
           </thead>

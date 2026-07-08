@@ -51,15 +51,15 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
     }
   }
 
-  const badge = isInativo
-    ? <span className="text-red-500 text-base" title="Anúncio indisponível — fallback busca ML">🔴</span>
+  const tipoPill = isInativo
+    ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">🔍 busca ML</span>
     : !hasAffiliate
       ? sourceUrl
-        ? <span className="text-teal-500 text-xs font-semibold" title="Source only">src</span>
-        : <span className="text-amber-500 text-base" title="Sem link">⚠</span>
+        ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">🔗 oficial</span>
+        : <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-500">⚠ sem link</span>
       : !hasTag
-        ? <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-orange-500 leading-none" title="ML sem tag de afiliado">⚠ tag</span>
-        : <span className="text-green-500 text-base" title="Afiliado ML com tag ✓">✓</span>
+        ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">⚠ sem tag</span>
+        : <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-teal-50 text-teal-700">💰 afiliado</span>
 
   return (
     <tr className={`border-t border-gray-100 ${isInativo ? 'bg-red-50/60 hover:bg-red-50' : 'hover:bg-gray-50/60'}`}>
@@ -84,8 +84,8 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
           )}
         </div>
       </td>
-      <td className="px-4 py-2.5 text-center leading-none">
-        {badge}
+      <td className="px-4 py-2.5 whitespace-nowrap">
+        {tipoPill}
       </td>
       <td className="px-4 py-2.5 w-full">
         <div className="flex items-center gap-2">
