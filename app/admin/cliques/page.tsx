@@ -8,7 +8,7 @@ import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
 
-interface TotalsRow  { total: number; afiliado: number; oficial: number }
+interface TotalsRow  { total: number; afiliado: number; oficial: number; busca: number }
 interface SlugRow    { slug: string; nome: string | null; total: number }
 interface DayRow     { day: string; total: number }
 interface ReferrerRow{ referrer: string; total: number }
@@ -67,7 +67,7 @@ export default async function CliquesAdmin({
     sb.rpc('admin_click_top_referrers',{ p_cutoff: cutoffDate, p_include_test: includeTest }),
   ])
 
-  const totals    = (totalsRes.data?.[0]   ?? { total: 0, afiliado: 0, oficial: 0 }) as TotalsRow
+  const totals    = (totalsRes.data?.[0]   ?? { total: 0, afiliado: 0, oficial: 0, busca: 0 }) as TotalsRow
   const slugs     = (slugsRes.data         ?? []) as SlugRow[]
   const days      = (daysRes.data          ?? []) as DayRow[]
   const referrers = (referrersRes.data     ?? []) as ReferrerRow[]
@@ -90,7 +90,7 @@ export default async function CliquesAdmin({
 
       {/* Cards principais */}
       <section>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
             {
               label: 'Total de cliques',
@@ -103,6 +103,12 @@ export default async function CliquesAdmin({
               value: String(totals.afiliado),
               sub: pct(totals.afiliado, totals.total) + ' do total',
               accent: true,
+            },
+            {
+              label: 'Busca ML (fallback)',
+              value: String(totals.busca),
+              sub: pct(totals.busca, totals.total) + ' do total',
+              accent: false,
             },
             {
               label: 'Links oficiais',
@@ -132,7 +138,7 @@ export default async function CliquesAdmin({
       {/* Afiliado vs Oficial */}
       <section>
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-          Afiliado vs oficial <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+          Distribuição por tipo <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
         </h2>
         {totals.total === 0 ? (
           <p className="text-gray-400 italic text-xs">Ainda nao ha cliques registrados neste periodo.</p>
@@ -140,7 +146,8 @@ export default async function CliquesAdmin({
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
             {[
               { label: 'Afiliado (gera comissao)', count: totals.afiliado, color: 'bg-[#0CC0BE]' },
-              { label: 'Oficial (sem comissao)',   count: totals.oficial,  color: 'bg-gray-300'   },
+              { label: 'Busca ML (fallback)',       count: totals.busca,   color: 'bg-amber-400'  },
+              { label: 'Oficial (sem comissao)',    count: totals.oficial,  color: 'bg-gray-300'   },
             ].map(({ label, count, color }) => (
               <div key={label} className="flex items-center gap-3">
                 <span className="text-xs text-gray-600 w-44 shrink-0">{label}</span>
