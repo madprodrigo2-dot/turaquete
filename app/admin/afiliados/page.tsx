@@ -2,8 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getSupabase } from '@/lib/supabase'
 import { buildMlSearchUrl } from '@/lib/ml-search'
-import AfiliadoRow from './AfiliadoRow'
-import AfiliadoFilters from './AfiliadoFilters'
+import AfiliadoTable, { type RowData } from './AfiliadoTable'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,17 +24,12 @@ interface BrandRow {
   slug: string
 }
 
-export default async function AfiliadosPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ filter?: string; brand?: string; q?: string }>
-}) {
+export default async function AfiliadosPage() {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
     redirect('/admin/login')
   }
 
-  const { filter, brand, q } = await searchParams
   const sb = getSupabase()
 
   const [{ data: rackets }, { data: brandsData }] = await Promise.all([
@@ -49,148 +43,71 @@ export default async function AfiliadosPage({
       .order('name'),
   ])
 
-  const rows = (rackets as RacketRow[] | null) ?? []
-  const brands = (brandsData as BrandRow[] | null) ?? []
+  const rawRows  = (rackets as RacketRow[] | null) ?? []
+  const brands   = (brandsData as BrandRow[] | null) ?? []
   const brandById = new Map(brands.map(b => [b.id, b]))
 
-  const brandOptions = brands
-    .filter(b => rows.some(r => r.brand_id === b.id))
-    .map(b => ({ slug: b.slug, name: b.name }))
-
-  // Apply filters
-  let filtered = rows
-  if (brand) {
-    const matchId = brands.find(b => b.slug === brand)?.id
-    if (matchId) filtered = filtered.filter(r => r.brand_id === matchId)
-  }
-  if (filter === 'sem_afiliado') {
-    filtered = filtered.filter(r => !r.affiliate_url)
-  } else if (filter === 'com_afiliado') {
-    filtered = filtered.filter(r => !!r.affiliate_url)
-  } else if (filter === 'sem_tag') {
-    filtered = filtered.filter(r => r.affiliate_url?.includes('mercadolivre') && !r.affiliate_url?.includes('matt_word'))
-  } else if (filter === 'inativos') {
-    filtered = filtered.filter(r => r.is_active === false && !!r.affiliate_url)
-  }
-  if (q) {
-    const ql = q.toLowerCase()
-    filtered = filtered.filter(r => r.name.toLowerCase().includes(ql))
-  }
-
-  const total       = rows.length
-  const comAfiliado = rows.filter(r => !!r.affiliate_url).length
-  const semTag      = rows.filter(r => r.affiliate_url?.includes('mercadolivre') && !r.affiliate_url?.includes('matt_word')).length
-  const soSource    = rows.filter(r => !r.affiliate_url && !!r.source_url).length
-  const semLink     = rows.filter(r => !r.affiliate_url && !r.source_url).length
-  const inativos    = rows.filter(r => r.is_active === false && !!r.affiliate_url).length
+  const total       = rawRows.length
+  const comAfiliado = rawRows.filter(r => !!r.affiliate_url).length
+  const inativos    = rawRows.filter(r => r.is_active === false && !!r.affiliate_url).length
+  const semLink     = rawRows.filter(r => !r.affiliate_url && !r.source_url).length
   const pct         = total > 0 ? Math.round((comAfiliado / total) * 100) : 0
+
+  const rows: RowData[] = rawRows.map(r => {
+    const brand = brandById.get(r.brand_id ?? -1)
+    return {
+      id:            r.id,
+      name:          r.name,
+      brandName:     brand?.name ?? '—',
+      price:         r.price,
+      publicada:     r.publicada,
+      is_active:     r.is_active,
+      affiliate_url: r.affiliate_url,
+      source_url:    r.source_url,
+      fallbackUrl:   r.is_active === false && r.affiliate_url
+        ? buildMlSearchUrl({ name: r.name, brands: brand ? { name: brand.name } : null })
+        : null,
+    }
+  })
+
+  const brandOptions = brands
+    .filter(b => rawRows.some(r => r.brand_id === b.id))
+    .map(b => ({ slug: b.slug, name: b.name }))
 
   return (
     <div className="flex flex-col gap-6">
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Links de afiliado</h1>
-        <p className="text-gray-400 text-xs mt-0.5">
-          Cole ou edite o link de afiliado de cada raquete · clique Salvar para atualizar
-        </p>
-      </div>
-
-      {/* Counter + progress */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 flex items-center gap-6">
-        <div className="flex-1">
-          <div className="flex justify-between items-baseline mb-1.5">
-            <span className="text-sm font-semibold text-gray-800">
-              {comAfiliado} <span className="text-gray-400 font-normal">de</span> {total} com afiliado ML
-            </span>
-            <span className="flex gap-3 text-xs font-medium">
-              {inativos > 0 && (
-                <span className="text-red-500">🔴 {inativos} inativo{inativos > 1 ? 's' : ''}</span>
-              )}
-              {semTag > 0 && (
-                <span className="text-orange-500">{semTag} sem tag</span>
-              )}
-              <span className="text-teal-600">{soSource} só source</span>
-              <span className={semLink > 0 ? 'text-amber-500' : 'text-green-600'}>
-                {semLink > 0 ? `${semLink} sem link` : 'Sem link ✓'}
-              </span>
-            </span>
-          </div>
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-green-500' : 'bg-teal-500'}`}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-          <div className="text-[10px] text-gray-400 mt-1">{pct}% do catálogo</div>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Links de afiliado</h1>
+          <p className="text-gray-400 text-xs mt-0.5">
+            Cole ou edite o link de afiliado · clique Salvar para atualizar
+          </p>
+        </div>
+        <div className="text-right text-xs text-gray-500 space-y-0.5 pt-1">
+          <div className="font-semibold text-gray-800">{comAfiliado}/{total} com afiliado ({pct}%)</div>
+          {inativos > 0 && <div className="text-amber-600">🔍 {inativos} em fallback busca ML</div>}
+          {semLink > 0  && <div className="text-red-500">❌ {semLink} sem nenhum link</div>}
         </div>
       </div>
 
-      {/* Filters + Search */}
-      <AfiliadoFilters
-        brands={brandOptions}
-        currentFilter={filter}
-        currentBrand={brand}
-        currentQ={q}
-        semTag={semTag}
-        inativos={inativos}
-      />
-
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-50">
-            <tr className="text-[11px] text-gray-500 uppercase tracking-wide">
-              <th className="text-left px-4 py-2.5 font-semibold">Raquete</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Preço</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Status</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Tipo</th>
-              <th className="text-left px-4 py-2.5 font-semibold">URL de afiliado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(r => {
-              const brand = brandById.get(r.brand_id ?? -1)
-              const fallbackUrl = r.is_active === false && r.affiliate_url
-                ? buildMlSearchUrl({ name: r.name, brands: brand ? { name: brand.name } : null })
-                : null
-              return (
-                <AfiliadoRow
-                  key={r.id}
-                  id={r.id}
-                  name={r.name}
-                  brandName={brand?.name ?? '—'}
-                  price={r.price}
-                  publicada={r.publicada}
-                  isActive={r.is_active}
-                  affiliateUrl={r.affiliate_url}
-                  sourceUrl={r.source_url}
-                  fallbackUrl={fallbackUrl}
-                />
-              )
-            })}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic text-sm">
-                  {q
-                    ? `Nenhuma raquete encontrada para "${q}".`
-                    : filter === 'sem_afiliado'
-                    ? 'Todas as raquetes já têm link de afiliado. ✓'
-                    : filter === 'com_afiliado'
-                    ? 'Nenhuma raquete com afiliado ainda.'
-                    : filter === 'inativos'
-                    ? 'Nenhum anúncio inativo no momento. ✓'
-                    : 'Nenhuma raquete encontrada.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-        <div className="px-4 py-2 border-t border-gray-100 text-[11px] text-gray-400">
-          {filtered.length} raquete{filtered.length !== 1 ? 's' : ''}
-          {(filter || brand || q) ? ' (filtradas)' : ''}
+      {/* Progress bar */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-3">
+        <div className="flex justify-between text-[10px] text-gray-400 mb-1.5">
+          <span>Cobertura afiliado ML</span>
+          <span>{pct}%</span>
+        </div>
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${pct === 100 ? 'bg-green-500' : 'bg-teal-500'}`}
+            style={{ width: `${pct}%` }}
+          />
         </div>
       </div>
+
+      {/* Table with filters + sort — all client-side */}
+      <AfiliadoTable rows={rows} brands={brandOptions} />
 
     </div>
   )
