@@ -19,6 +19,12 @@ export function buildMlSearchUrl(racket: {
   brands?: { name: string; slug?: string } | null
 }): string {
   const brand = racket.brands?.name ?? ''
-  const term = slugify(`raquete beach tennis ${brand} ${racket.name}`)
+  // Skip brand prefix if the racket name already starts with it
+  const nameNorm = racket.name.toLowerCase()
+  const brandNorm = brand.toLowerCase()
+  const racketPart = brandNorm && nameNorm.startsWith(brandNorm)
+    ? racket.name.slice(brand.length).trim()
+    : racket.name
+  const term = slugify(`raquete beach tennis ${brand} ${racketPart}`)
   return `https://lista.mercadolivre.com.br/${term}?${AFFILIATE_TAG}`
 }
