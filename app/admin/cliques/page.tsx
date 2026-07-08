@@ -9,7 +9,7 @@ import { brtCutoff } from '@/lib/brt'
 export const dynamic = 'force-dynamic'
 
 interface TotalsRow  { total: number; afiliado: number; oficial: number; busca: number }
-interface SlugRow    { slug: string; nome: string | null; total: number }
+interface SlugRow    { slug: string; nome: string | null; total: number; ultimo_tipo: string | null; ultimo_url: string | null }
 interface DayRow     { day: string; total: number }
 interface ReferrerRow{ referrer: string; total: number }
 
@@ -179,23 +179,53 @@ export default async function CliquesAdmin({
                 <tr>
                   <th className="text-left px-4 py-2">#</th>
                   <th className="text-left px-4 py-2">Raquete</th>
-                  <th className="text-left px-4 py-2 hidden md:table-cell">Slug</th>
+                  <th className="text-left px-4 py-2">Tipo</th>
+                  <th className="text-left px-4 py-2">Destino</th>
                   <th className="text-right px-4 py-2">Cliques</th>
                   <th className="text-right px-4 py-2">%</th>
                 </tr>
               </thead>
               <tbody>
-                {slugs.map((r, i) => (
-                  <tr key={r.slug} className="border-t border-gray-100 hover:bg-gray-50/50">
-                    <td className="px-4 py-2.5 text-gray-400 font-mono">{i + 1}</td>
-                    <td className="px-4 py-2.5 font-medium text-gray-800">
-                      {r.nome ?? <span className="italic text-gray-400">{r.slug}</span>}
-                    </td>
-                    <td className="px-4 py-2.5 text-gray-400 font-mono hidden md:table-cell">{r.slug}</td>
-                    <td className="px-4 py-2.5 text-right font-semibold text-gray-900">{r.total}</td>
-                    <td className="px-4 py-2.5 text-right text-gray-400">{pct(r.total, totals.total)}</td>
-                  </tr>
-                ))}
+                {slugs.map((r, i) => {
+                  const tipoEmoji = r.ultimo_tipo === 'afiliado' ? '💰' : r.ultimo_tipo === 'busca' ? '🔍' : r.ultimo_tipo === 'oficial' ? '🔗' : '—'
+                  const tipoLabel = r.ultimo_tipo ?? '—'
+                  const urlShort = r.ultimo_url
+                    ? (() => { try { const u = new URL(r.ultimo_url); return u.hostname.replace('www.','') + (u.pathname.length > 30 ? u.pathname.slice(0,30)+'…' : u.pathname) } catch { return r.ultimo_url.slice(0,40) } })()
+                    : '—'
+                  return (
+                    <tr key={r.slug} className="border-t border-gray-100 hover:bg-gray-50/50">
+                      <td className="px-4 py-2.5 text-gray-400 font-mono">{i + 1}</td>
+                      <td className="px-4 py-2.5 font-medium text-gray-800">
+                        <div>{r.nome ?? <span className="italic text-gray-400">{r.slug}</span>}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{r.slug}</div>
+                      </td>
+                      <td className="px-4 py-2.5 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                          r.ultimo_tipo === 'afiliado' ? 'bg-teal-50 text-teal-700' :
+                          r.ultimo_tipo === 'busca'    ? 'bg-amber-50 text-amber-700' :
+                          r.ultimo_tipo === 'oficial'  ? 'bg-gray-100 text-gray-500' : 'bg-gray-50 text-gray-400'
+                        }`}>
+                          {tipoEmoji} {tipoLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 max-w-[220px]">
+                        {r.ultimo_url ? (
+                          <a
+                            href={r.ultimo_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-teal-600 hover:text-teal-800 hover:underline font-mono truncate block"
+                            title={r.ultimo_url}
+                          >
+                            {urlShort}
+                          </a>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-gray-900">{r.total}</td>
+                      <td className="px-4 py-2.5 text-right text-gray-400">{pct(r.total, totals.total)}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
             <p className="text-[10px] text-gray-300 px-4 py-2">{totals.total} cliques totais no periodo</p>
