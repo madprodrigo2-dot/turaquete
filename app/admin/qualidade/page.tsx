@@ -3,7 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { InfoTooltip } from '../InfoTooltip'
+import AdminPeriodFilter from '../AdminPeriodFilter'
+import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,35 +35,59 @@ function pct(num: number, den: number): string {
   return `${Math.round((num / den) * 100)}%`
 }
 
-export default async function QualidadeAdmin() {
+export default async function QualidadeAdmin({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string; from?: string; to?: string }>
+}) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
     redirect('/admin/login')
   }
 
+  const { days: daysParam = '1', from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
+
+  let cutoffDate: string
+  let toDate: string | null = null
+  let daysLabel: string
+  if (fromParam) {
+    const [fy, fm, fd] = fromParam.split('-').map(Number)
+    cutoffDate = new Date(Date.UTC(fy, fm - 1, fd, 3, 0, 0, 0)).toISOString()
+    if (toParam) {
+      const [ty, tm, td] = toParam.split('-').map(Number)
+      toDate = new Date(Date.UTC(ty, tm - 1, td + 1, 3, 0, 0, 0)).toISOString()
+    }
+    daysLabel = `${fromParam} → ${toParam ?? 'hoje'}`
+  } else {
+    const daysBack = daysParam === 'all' ? 3650 : Math.max(1, parseInt(daysParam) || 30)
+    cutoffDate = brtCutoff(daysBack)
+    daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
+  }
 
   const sb = getAdmin()
 
   // Graceful fallback if table doesn't exist yet
-  const q = sb
+  let q = sb
     .from('feedback_events')
     .select('id, created_at, session_id, event_type, motivo, comentario, intencao, turnos_ate_recomendacao, racket_id')
     .in('event_type', ['rating_positive', 'rating_negative', 'ver_na_loja', 'ver_analise', 'nova_conversa_pos_rec', 'busca_sem_resultado'])
+    .gte('created_at', cutoffDate)
     .order('created_at', { ascending: false })
-    .limit(500)
+    .limit(1000)
+  if (toDate) q = q.lte('created_at', toDate)
   const { data: rows, error } = await (includeTest ? q : q.eq('is_test', false))
 
   const tableExists = !error
   const events: FeedbackRow[] = tableExists ? ((rows ?? []) as FeedbackRow[]) : []
 
-  const ratings = events.filter(e => e.event_type === 'rating_positive' || e.event_type === 'rating_negative')
-  const positives = ratings.filter(e => e.event_type === 'rating_positive')
-  const negatives = ratings.filter(e => e.event_type === 'rating_negative')
-  const verLoja   = events.filter(e => e.event_type === 'ver_na_loja')
+  const ratings    = events.filter(e => e.event_type === 'rating_positive' || e.event_type === 'rating_negative')
+  const positives  = ratings.filter(e => e.event_type === 'rating_positive')
+  const negatives  = ratings.filter(e => e.event_type === 'rating_negative')
+  const verLoja    = events.filter(e => e.event_type === 'ver_na_loja')
   const verAnalise = events.filter(e => e.event_type === 'ver_analise')
-  const novaConv  = events.filter(e => e.event_type === 'nova_conversa_pos_rec')
+  const novaConv   = events.filter(e => e.event_type === 'nova_conversa_pos_rec')
 
   // Motivos breakdown
   const motivoCounts: Record<string, number> = {}
@@ -120,17 +147,20 @@ export default async function QualidadeAdmin() {
     <div className="flex flex-col gap-8">
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Qualidade das respostas</h1>
-          <p className="text-gray-400 text-xs mt-0.5">{session.user?.email}</p>
+          <h1 className="text-sm font-semibold text-gray-800">Qualidade das respostas</h1>
+          <p className="text-[11px] text-gray-400 mt-0.5">{daysLabel}</p>
         </div>
+        <Suspense fallback={null}>
+          <AdminPeriodFilter current={fromParam ? '' : daysParam} currentFrom={fromParam} currentTo={toParam} />
+        </Suspense>
       </div>
 
-        {!tableExists && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 text-xs">
-            <strong>Tabela não encontrada.</strong> Execute a migration SQL no Supabase antes de usar esta página.
-            <pre className="mt-2 bg-amber-100 rounded p-2 overflow-x-auto text-[11px] font-mono whitespace-pre-wrap">{`create table if not exists feedback_events (
+      {!tableExists && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-800 text-xs">
+          <strong>Tabela não encontrada.</strong> Execute a migration SQL no Supabase antes de usar esta página.
+          <pre className="mt-2 bg-amber-100 rounded p-2 overflow-x-auto text-[11px] font-mono whitespace-pre-wrap">{`create table if not exists feedback_events (
   id          bigserial primary key,
   created_at  timestamptz not null default now(),
   session_id  text not null,
@@ -144,166 +174,178 @@ export default async function QualidadeAdmin() {
 create index if not exists idx_feedback_events_session_id on feedback_events(session_id);
 create index if not exists idx_feedback_events_event_type on feedback_events(event_type);
 create index if not exists idx_feedback_events_created_at on feedback_events(created_at desc);`}</pre>
-          </div>
-        )}
+        </div>
+      )}
 
-        {/* ── Resumo ── */}
+      {/* ── Resumo ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Resumo <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {([
+            { label: 'Ratings recebidos', value: String(ratings.length), sub: `${positives.length} 👍 · ${negatives.length} 👎`, tip: 'Total de avaliações 👍/👎 recebidas pelos usuários após uma recomendação.' },
+            { label: '% positivos', value: pct(positives.length, ratings.length), sub: 'de quem avaliou', tip: 'Satisfação: proporção de 👍 sobre o total de ratings recebidos.' },
+            { label: 'Cliques "Ver na loja"', value: String(verLoja.length), sub: 'sinais implícitos', tip: 'Cliques em "Ver na loja" registrados como feedback implícito de interesse — mesmo sem rating explícito.' },
+            { label: 'Média de turnos até rec.', value: avgTurnos ?? '—', sub: `${turnosValues.length} amostras`, tip: 'Quantas mensagens do usuário foram necessárias em média até o assistente fazer uma recomendação. Menos é mais eficiente.' },
+          ] as { label: string; value: string; sub: string; tip: string }[]).map(({ label, value, sub, tip }) => (
+            <div key={label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
+                {label}<InfoTooltip text={tip} />
+              </p>
+              <p className="text-base font-bold text-gray-800">{value}</p>
+              <p className="text-[10px] text-gray-300">{sub}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
+              Ver análise completa
+              <InfoTooltip text='Usuários que clicaram em "Ver análise completa" na recomendação — sinal de engajamento aprofundado.' />
+            </p>
+            <p className="text-base font-bold text-gray-800">{verAnalise.length}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
+              Nova conversa pós-rec
+              <InfoTooltip text="Usuários que iniciaram uma nova conversa logo após receber uma recomendação — indica que não ficaram satisfeitos ou querem explorar mais." />
+            </p>
+            <p className="text-base font-bold text-gray-800">{novaConv.length}</p>
+            <p className="text-[10px] text-gray-300">usuário reiniciou após ver rec</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Motivos do 👎 ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Motivos do 👎 <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        {motivoEntries.length === 0 ? (
+          <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
+        ) : (
+          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+              <tr>
+                <th className="text-left px-4 py-2">Motivo</th>
+                <th className="text-right px-4 py-2">Qtd</th>
+                <th className="text-right px-4 py-2">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {motivoEntries.map(([motivo, count]) => (
+                <tr key={motivo} className="border-t border-gray-100">
+                  <td className="px-4 py-2">{motivo}</td>
+                  <td className="px-4 py-2 text-right font-semibold">{count}</td>
+                  <td className="px-4 py-2 text-right text-gray-400">{pct(count, negatives.length)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* ── Comentários livres (Outro) ── */}
+      {outroComentarios.length > 0 && (
         <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Resumo</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {([
-              { label: 'Ratings recebidos', value: String(ratings.length), sub: `${positives.length} 👍 · ${negatives.length} 👎`, tip: 'Total de avaliações 👍/👎 recebidas pelos usuários após uma recomendação.' },
-              { label: '% positivos', value: pct(positives.length, ratings.length), sub: 'de quem avaliou', tip: 'Satisfação: proporção de 👍 sobre o total de ratings recebidos.' },
-              { label: 'Cliques "Ver na loja"', value: String(verLoja.length), sub: 'sinais implícitos', tip: 'Cliques em "Ver na loja" registrados como feedback implícito de interesse — mesmo sem rating explícito.' },
-              { label: 'Média de turnos até rec.', value: avgTurnos ?? '—', sub: `${turnosValues.length} amostras`, tip: 'Quantas mensagens do usuário foram necessárias em média até o assistente fazer uma recomendação. Menos é mais eficiente.' },
-            ] as { label: string; value: string; sub: string; tip: string }[]).map(({ label, value, sub, tip }) => (
-              <div key={label} className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
-                  {label}<InfoTooltip text={tip} />
-                </p>
-                <p className="text-base font-bold text-gray-800">{value}</p>
-                <p className="text-[10px] text-gray-300">{sub}</p>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+            Comentários livres (Outro)
+          </h2>
+          <div className="flex flex-col gap-1.5">
+            {outroComentarios.map(e => (
+              <div key={e.id} className="flex gap-3 items-start text-xs text-gray-600 bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-2.5">
+                <span className="text-gray-300 shrink-0 pt-0.5">{new Date(e.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
+                <p className="leading-relaxed">{e.comentario}</p>
               </div>
             ))}
           </div>
-
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
-                Ver análise completa
-                <InfoTooltip text='Usuários que clicaram em "Ver análise completa" na recomendação — sinal de engajamento aprofundado.' />
-              </p>
-              <p className="text-base font-bold text-gray-800">{verAnalise.length}</p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center">
-                Nova conversa pós-rec
-                <InfoTooltip text="Usuários que iniciaram uma nova conversa logo após receber uma recomendação — indica que não ficaram satisfeitos ou querem explorar mais." />
-              </p>
-              <p className="text-base font-bold text-gray-800">{novaConv.length}</p>
-              <p className="text-[10px] text-gray-300">usuário reiniciou após ver rec</p>
-            </div>
-          </div>
         </section>
+      )}
 
-        {/* ── Motivos do 👎 ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Motivos do 👎</h2>
-          {motivoEntries.length === 0 ? (
-            <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
-          ) : (
-            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-                <tr>
-                  <th className="text-left px-4 py-2">Motivo</th>
-                  <th className="text-right px-4 py-2">Qtd</th>
-                  <th className="text-right px-4 py-2">%</th>
+      {/* ── Termos não encontrados ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Termos não encontrados na busca <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        {buscaTermos.length === 0 ? (
+          <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
+        ) : (
+          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+              <tr>
+                <th className="text-left px-4 py-2">Termo buscado</th>
+                <th className="text-right px-4 py-2">Buscas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {buscaTermos.map(([termo, count]) => (
+                <tr key={termo} className="border-t border-gray-100">
+                  <td className="px-4 py-2 font-mono text-sm">{termo}</td>
+                  <td className="px-4 py-2 text-right font-semibold">{count}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {motivoEntries.map(([motivo, count]) => (
-                  <tr key={motivo} className="border-t border-gray-100">
-                    <td className="px-4 py-2">{motivo}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{count}</td>
-                    <td className="px-4 py-2 text-right text-gray-400">{pct(count, negatives.length)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-
-        {/* ── Comentários livres (Outro) ── */}
-        {outroComentarios.length > 0 && (
-          <section>
-            <h2 className="text-base font-semibold text-gray-700 mb-3">Comentários livres (Outro)</h2>
-            <div className="flex flex-col gap-1.5">
-              {outroComentarios.map(e => (
-                <div key={e.id} className="flex gap-3 items-start text-xs text-gray-600 bg-white rounded-lg border border-gray-100 shadow-sm px-4 py-2.5">
-                  <span className="text-gray-300 shrink-0 pt-0.5">{new Date(e.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
-                  <p className="leading-relaxed">{e.comentario}</p>
-                </div>
               ))}
-            </div>
-          </section>
+            </tbody>
+          </table>
         )}
+      </section>
 
-        {/* ── Termos não encontrados ── */}
+      {/* ── Por intenção ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Por intenção <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        {intencaoEntries.length === 0 ? (
+          <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
+        ) : (
+          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+              <tr>
+                <th className="text-left px-4 py-2">Intenção</th>
+                <th className="text-right px-4 py-2">Total</th>
+                <th className="text-right px-4 py-2">👍</th>
+                <th className="text-right px-4 py-2">👎</th>
+                <th className="text-right px-4 py-2">% positivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {intencaoEntries.map(([intencao, { pos, neg }]) => (
+                <tr key={intencao} className="border-t border-gray-100">
+                  <td className="px-4 py-2 font-mono">{intencao}</td>
+                  <td className="px-4 py-2 text-right font-semibold">{pos + neg}</td>
+                  <td className="px-4 py-2 text-right text-emerald-600">{pos}</td>
+                  <td className="px-4 py-2 text-right text-red-400">{neg}</td>
+                  <td className="px-4 py-2 text-right">{pct(pos, pos + neg)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* ── Todos os ratings ── */}
+      {ratings.length > 0 && (
         <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Termos não encontrados na busca</h2>
-          {buscaTermos.length === 0 ? (
-            <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
-          ) : (
-            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-                <tr>
-                  <th className="text-left px-4 py-2">Termo buscado</th>
-                  <th className="text-right px-4 py-2">Buscas</th>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+            Todos os ratings <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+          </h2>
+          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase tracking-wide text-gray-400">
+                  <th className="text-left px-3 py-2">Data</th>
+                  <th className="text-center px-3 py-2">Rating</th>
+                  <th className="text-left px-3 py-2">Conversa</th>
+                  <th className="text-left px-3 py-2">Motivo / Comentário</th>
+                  <th className="px-3 py-2"></th>
                 </tr>
               </thead>
-              <tbody>
-                {buscaTermos.map(([termo, count]) => (
-                  <tr key={termo} className="border-t border-gray-100">
-                    <td className="px-4 py-2 font-mono text-sm">{termo}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-
-        {/* ── Por intenção ── */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">Por intenção</h2>
-          {intencaoEntries.length === 0 ? (
-            <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
-          ) : (
-            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-                <tr>
-                  <th className="text-left px-4 py-2">Intenção</th>
-                  <th className="text-right px-4 py-2">Total</th>
-                  <th className="text-right px-4 py-2">👍</th>
-                  <th className="text-right px-4 py-2">👎</th>
-                  <th className="text-right px-4 py-2">% positivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {intencaoEntries.map(([intencao, { pos, neg }]) => (
-                  <tr key={intencao} className="border-t border-gray-100">
-                    <td className="px-4 py-2 font-mono">{intencao}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{pos + neg}</td>
-                    <td className="px-4 py-2 text-right text-emerald-600">{pos}</td>
-                    <td className="px-4 py-2 text-right text-red-400">{neg}</td>
-                    <td className="px-4 py-2 text-right">{pct(pos, pos + neg)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-
-        {/* ── Todos os ratings ── */}
-        {ratings.length > 0 && (
-          <section>
-            <h2 className="text-base font-semibold text-gray-700 mb-3">Todos os ratings</h2>
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase tracking-wide text-gray-400">
-                    <th className="text-left px-3 py-2">Data</th>
-                    <th className="text-center px-3 py-2">Rating</th>
-                    <th className="text-left px-3 py-2">Conversa</th>
-                    <th className="text-left px-3 py-2">Motivo / Comentário</th>
-                    <th className="px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {ratings.map(e => {
-                    const conv = convMap.get(e.session_id)
-                    const label = conv?.starter_usado ?? conv?.primeira_mensagem?.slice(0, 60) ?? null
-                    return (
+              <tbody className="divide-y divide-gray-50">
+                {ratings.map(e => {
+                  const conv = convMap.get(e.session_id)
+                  const label = conv?.starter_usado ?? conv?.primeira_mensagem?.slice(0, 60) ?? null
+                  return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
                       <td className="px-3 py-2 whitespace-nowrap text-gray-400 font-mono">
                         {new Date(e.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
@@ -329,13 +371,13 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                         </Link>
                       </td>
                     </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <div className="pt-2 border-t border-gray-100">
         <a href="/admin/revisao" className="text-[11px] text-gray-400 hover:text-teal-600 transition-colors">Ver revisão de raquetes →</a>
