@@ -273,7 +273,8 @@ export default async function AnaliseAdmin({
       name: racketNames.find(r => r.id === id)?.name ?? `ID ${id}`,
       slug: racketNames.find(r => r.id === id)?.slug ?? null,
       count: racketCounts[id] ?? 0,
-      pctClicou: recSessions.size > 0 ? pct(intersect, recSessions.size) : '—',
+      pctEngajou: recSessions.size > 0 ? pct(intersect, recSessions.size) : '—',
+      smallSample: (racketCounts[id] ?? 0) < 5,
     }
   })
 
@@ -306,7 +307,7 @@ export default async function AnaliseAdmin({
       })
     }
     if (lcTotal > 0) {
-      insights.push({ level: lcMonetizavel > 0 ? 'ok' : 'warn', text: `${lcMonetizavel} clique${lcMonetizavel !== 1 ? 's' : ''} monetizável${lcMonetizavel !== 1 ? 'is' : ''} (afiliado + busca) de ${lcTotal} total (${daysLabel}).${custoPorClique != null ? ` Custo/clique ${fmtBrl(custoPorClique, 4)}.` : ''}` })
+      insights.push({ level: lcMonetizavel > 0 ? 'ok' : 'warn', text: `${lcMonetizavel} clique${lcMonetizavel !== 1 ? 's' : ''} monetizáve${lcMonetizavel !== 1 ? 'is' : 'l'} (afiliado + busca) de ${lcTotal} total (${daysLabel}).${custoPorClique != null ? ` Custo/clique ${fmtBrl(custoPorClique, 4)}.` : ''}` })
     }
     if (avgBrl != null && avgTurns != null) {
       insights.push({ level: 'neutral', text: `Custo médio ${fmtBrl(avgBrl, 4)}/sessão · ${avgTurns.toFixed(1)} turnos (${daysLabel}).${avgTurns > 6 ? ' Muitos turnos — agente pode estar demorando para qualificar.' : ''}` })
@@ -566,7 +567,13 @@ export default async function AnaliseAdmin({
                       </td>
                       <td className="px-4 py-2 text-right font-semibold">{r.count}</td>
                       <td className="px-4 py-2 text-right text-gray-400">{pct(r.count, recEventRows.length)}</td>
-                      <td className="px-4 py-2 text-right font-medium text-teal-700">{r.pctClicou}</td>
+                      <td className="px-4 py-2 text-right">
+                        {r.smallSample ? (
+                          <span className="text-gray-300" title="amostra pequena (n<5)">{r.pctEngajou}</span>
+                        ) : (
+                          <span className="font-medium text-teal-700">{r.pctEngajou}</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

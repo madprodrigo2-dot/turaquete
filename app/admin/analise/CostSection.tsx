@@ -94,7 +94,7 @@ export function CostSection({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 {
-                  label: 'Custo médio/conversa',
+                  label: 'Custo médio/sessão',
                   value: fmt(avgV, cur, d),
                   sub: cur === 'BRL' ? fmtUsd(avgUsd) : cur === 'USD' ? `R$ ${avgBrl?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) ?? '—'}` : fmtUsd(avgUsd),
                   highlight: true,
@@ -115,7 +115,7 @@ export function CostSection({
                 {
                   label: 'Custo médio / turno',
                   value: fmt(avgTurnV, cur, d),
-                  sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/conv` : '',
+                  sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/sessão` : '',
                   tip: 'Custo médio por par pergunta/resposta.',
                 },
               ].map(({ label, value, sub, highlight, tip }) => (
