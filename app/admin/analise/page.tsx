@@ -491,7 +491,69 @@ export default async function AnaliseAdmin({
         </section>
       )}
 
+      {/* ── Glossário de dados ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Mapa de dados
+        </h2>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50 text-xs">
 
+          {/* Session */}
+          <div className="px-5 py-4 flex gap-4">
+            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Sessão</span>
+            <div className="flex flex-col gap-1 text-gray-500">
+              <p>Identificador de browser (<code className="bg-gray-100 px-1 rounded text-[11px]">session_id</code>). Criado quando o usuário abre o site pela primeira vez — <strong>não depende de iniciar o quiz</strong>. Quem acessa <code>/raquetes/athena</code> diretamente já tem uma sessão.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>conversations.session_id</code>, <code>link_clicks.session_id</code>, <code>feedback_events.session_id</code></p>
+            </div>
+          </div>
+
+          {/* Conversa */}
+          <div className="px-5 py-4 flex gap-4">
+            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Conversa</span>
+            <div className="flex flex-col gap-1 text-gray-500">
+              <p>Uma chamada de API ao Claude (<code>custo_brl &gt; 0</code>). Uma sessão de quiz pode gerar 1–N conversas conforme o usuário continua interagindo. O contador de <strong>Turnos</strong> no painel = total de linhas com custo &gt; 0 por sessão.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>conversations</code> · hoje a média foi de 1,2 turnos/sessão (maioria resolve em 1 chamada).</p>
+            </div>
+          </div>
+
+          {/* Recomendação */}
+          <div className="px-5 py-4 flex gap-4">
+            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Recomendação</span>
+            <div className="flex flex-col gap-1 text-gray-500">
+              <p>Quando o modelo retorna raquetes sugeridas (<code>recommended_racket_ids</code> não-vazio). Uma sessão tem <code>had_rec = true</code> se qualquer turno gerou recomendações. A <strong>taxa de recomendação</strong> mede sessões com quiz que chegaram a ter pelo menos 1 recomendação.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>recommendation_events</code> (1 linha por raquete recomendada)</p>
+            </div>
+          </div>
+
+          {/* Clique via quiz */}
+          <div className="px-5 py-4 flex gap-4">
+            <span className="shrink-0 w-28 font-semibold text-teal-700 pt-0.5">Clique quiz</span>
+            <div className="flex flex-col gap-1 text-gray-500">
+              <p>Evento registrado pelo <strong>frontend</strong> quando o usuário clica em um botão dentro da interface do quiz. Tipos: <code className="bg-teal-50 text-teal-700 px-1 rounded">ver_na_loja</code> (afiliado), <code className="bg-blue-50 text-blue-700 px-1 rounded">ver_analise</code> (página da raquete), <code className="bg-gray-100 px-1 rounded">nova_conversa_pos_rec</code>.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>feedback_events</code> · usado para calcular "Cliques Ver na loja" e "sessões que clicaram" no painel.</p>
+            </div>
+          </div>
+
+          {/* Clique no link */}
+          <div className="px-5 py-4 flex gap-4">
+            <span className="shrink-0 w-28 font-semibold text-amber-700 pt-0.5">Clique link</span>
+            <div className="flex flex-col gap-1 text-gray-500">
+              <p>Registrado <strong>server-side</strong> ao passar pelo redirect <code>/ir/[slug]</code>. Captura <em>todos</em> os cliques — com ou sem sessão de quiz. Inclui cliques diretos de quem acessa a página da raquete sem ter feito o quiz. Tem <code>tipo</code> (afiliado / busca ML / oficial) e URL de destino.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>link_clicks</code> · usado no painel <strong>Cliques</strong>. Ver aba Cliques para breakdown por raquete.</p>
+            </div>
+          </div>
+
+          {/* Diferença */}
+          <div className="px-5 py-4 bg-amber-50/50 rounded-b-xl">
+            <p className="font-semibold text-gray-700 mb-1.5">Diferença entre as duas fontes de clique</p>
+            <div className="text-gray-500 flex flex-col gap-1">
+              <p>Um clique vindo do quiz aparece em <strong>ambas</strong> as tabelas: <code>feedback_events</code> (botão pressionado) + <code>link_clicks</code> (passou pelo redirect). Um clique direto (usuário vai à página da raquete sem quiz) aparece <strong>só em <code>link_clicks</code></strong> — sem <code>session_id</code> na conversa.</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">Por isso o painel Dados mostra 3 "Ver na loja" (só quiz) enquanto o painel Cliques mostra 7 (todos, incluindo 3 sem sessão de hoje).</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
 
     </div>
   )
