@@ -8,26 +8,17 @@ import { InfoTooltip } from '../InfoTooltip'
 import { CostSection } from './CostSection'
 import { Suspense } from 'react'
 import { brtCutoff } from '@/lib/brt'
+import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 
 export const dynamic = 'force-dynamic'
 
-interface IntencaoRow   { intencao_detectada: string | null; total: number }
-interface StarterRow    { starter: string | null; total: number }
-interface MensagemRow   { created_at: string; starter_usado: string | null; intencao_detectada: string | null; primeira_mensagem: string | null; session_id?: string | null }
-interface SessionCostRow {
-  session_id:    string
-  total_brl:     number
-  total_usd:     number
-  turns:         number
-  had_rec:       boolean
-  first_turn_at: string
-}
-interface ClickRow  { session_id: string; event_type: string }
-interface RacketRow { id: number; name: string; slug: string }
-interface RecEventRow { racket_id: number }
-
-const COMISSAO_ESTIMADA_BRL: number | null = null
-const TAXA_CLIQUE_TO_VENDA:  number | null = null
+interface IntencaoRow    { intencao_detectada: string | null; total: number }
+interface StarterRow     { starter: string | null; total: number }
+interface MensagemRow    { created_at: string; starter_usado: string | null; intencao_detectada: string | null; primeira_mensagem: string | null; session_id?: string | null }
+interface SessionCostRow { session_id: string; total_brl: number; total_usd: number; turns: number; had_rec: boolean; first_turn_at: string }
+interface ClickRow       { session_id: string; event_type: string; racket_id: number | null }
+interface RecEventRow    { racket_id: number; conversation_id: string }
+interface RacketRow      { id: number; name: string; slug: string }
 
 function getAdmin() {
   return createClient(
@@ -43,7 +34,6 @@ function pct(num: number, den: number): string {
 function fmtBrl(v: number, decimals = 4) {
   return `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`
 }
-function fmtUsd(v: number) { return `US$ ${v.toFixed(4)}` }
 function avg(arr: number[]): number | null {
   return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
 }
@@ -68,11 +58,9 @@ export default async function AnaliseAdmin({
   let toDate: string | null = null
   let daysLabel: string
   if (fromParam) {
-    // Meia-noite BRT do dia inicial = 03:00 UTC
     const [fy, fm, fd] = fromParam.split('-').map(Number)
     cutoffDate = new Date(Date.UTC(fy, fm - 1, fd, 3, 0, 0, 0)).toISOString()
     if (toParam) {
-      // Fim do dia BRT = meia-noite BRT do dia seguinte = 03:00 UTC do dia seguinte
       const [ty, tm, td] = toParam.split('-').map(Number)
       toDate = new Date(Date.UTC(ty, tm - 1, td + 1, 3, 0, 0, 0)).toISOString()
     }
@@ -86,7 +74,6 @@ export default async function AnaliseAdmin({
   const sb  = getAdmin()
   const now = Date.now()
   const ago7 = new Date(now -  7 * 24 * 60 * 60 * 1000).toISOString()
-  const ago1 = new Date(now -  1 * 24 * 60 * 60 * 1000).toISOString()
 
   const supabaseUrl    = process.env.SUPABASE_URL ?? ''
   const supabaseDomain = supabaseUrl.replace('https://', '').replace(/\/$/, '')
@@ -102,7 +89,11 @@ export default async function AnaliseAdmin({
     intentRaw,
     starterRaw,
     starterDetailRows,
+    linkClickCounts,
+    fallbackRows,
+    opsStats,
   ] = await Promise.all([
+
     sb.rpc('admin_cost_by_session', {
       cutoff_at: cutoffDate,
       p_include_test: includeTest,
@@ -111,7 +102,7 @@ export default async function AnaliseAdmin({
 
     (() => {
       const q = sb.from('feedback_events')
-        .select('session_id, event_type')
+        .select('session_id, event_type, racket_id')
         .in('event_type', ['ver_na_loja', 'ver_analise'])
         .gte('created_at', cutoffDate)
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as ClickRow[])
@@ -119,12 +110,11 @@ export default async function AnaliseAdmin({
 
     (() => {
       const q = sb.from('recommendation_events')
-        .select('racket_id')
+        .select('racket_id, conversation_id')
         .gte('created_at', cutoffDate)
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as RecEventRow[])
     })(),
 
-    // Intenções filtradas pelo período — 1 contagem por session_id
     (() => {
       const q = sb.from('conversations')
         .select('session_id, intencao_detectada')
@@ -142,14 +132,12 @@ export default async function AnaliseAdmin({
       })
     })(),
 
-    // Starters filtrados pelo período — 1 contagem por session_id
     (() => {
       const q = sb.from('conversations')
         .select('session_id, starter_usado')
         .not('primeira_mensagem', 'is', null)
         .gte('created_at', cutoffDate)
       return (includeTest ? q : q.eq('is_test', false)).then(r => {
-        // Deduplica: 1 entrada por sessão, priorizando a row com starter_usado preenchido
         const sessionMap = new Map<string, string | null>()
         for (const row of (r.data ?? []) as { session_id: string; starter_usado: string | null }[]) {
           const prev = sessionMap.get(row.session_id)
@@ -181,6 +169,45 @@ export default async function AnaliseAdmin({
           ).then(r => (r.data ?? []) as MensagemRow[])
         })(),
 
+    // link_clicks por tipo no período
+    (() => {
+      let q = sb.from('link_clicks')
+        .select('tipo')
+        .gte('created_at', cutoffDate)
+      if (toDate) q = q.lte('created_at', toDate)
+      return q.then(r => {
+        const rows = (r.data ?? []) as { tipo: string }[]
+        const c: Record<string, number> = { afiliado: 0, busca: 0, oficial: 0 }
+        for (const row of rows) c[row.tipo] = (c[row.tipo] ?? 0) + 1
+        return c
+      })
+    })(),
+
+    // Raquetes publicadas em fallback (is_active=false + tem affiliate_url)
+    sb.from('rackets')
+      .select('name')
+      .eq('publicada', true)
+      .not('affiliate_url', 'is', null)
+      .eq('is_active', false)
+      .order('name')
+      .then(r => (r.data ?? []) as { name: string }[]),
+
+    // Sem cobertura + última sync
+    Promise.all([
+      sb.from('rackets')
+        .select('id', { count: 'exact', head: true })
+        .eq('publicada', true)
+        .is('affiliate_url', null),
+      sb.from('rackets')
+        .select('price_updated_at')
+        .not('affiliate_url', 'is', null)
+        .order('price_updated_at', { ascending: false })
+        .limit(1),
+    ]).then(([semRes, syncRes]) => ({
+      sem_cobertura: semRes.count ?? 0,
+      ultima_sync: (syncRes.data?.[0]?.price_updated_at as string | null) ?? null,
+    })),
+
   ])
 
   const intencoes: IntencaoRow[] = intentRaw
@@ -189,34 +216,43 @@ export default async function AnaliseAdmin({
   // ── Cost stats ────────────────────────────────────────────────────────────
   const sessions          = sessionCostRows.filter(r => r.total_brl > 0)
   const sessions7         = sessions.filter(r => r.first_turn_at >= ago7)
-  const sessions1         = sessions.filter(r => r.first_turn_at >= ago1)
-  const sessionsWithRec   = sessions.filter(r => r.had_rec)
   const clickSessionIds   = new Set(clickRows.map(r => r.session_id))
   const affiliateClicks   = clickRows.filter(r => r.event_type === 'ver_na_loja')
+  const sessionsWithRec   = sessions.filter(r => r.had_rec)
   const sessionsWithClick = sessions.filter(r => clickSessionIds.has(r.session_id))
 
   const avgBrl      = avg(sessions.map(r => r.total_brl))
   const avg7Brl     = avg(sessions7.map(r => r.total_brl))
-  const avg1Brl     = avg(sessions1.map(r => r.total_brl))
   const avgUsd      = avg(sessions.map(r => r.total_usd))
-  const avg7Usd     = avg(sessions7.map(r => r.total_usd))
-  const avg1Usd     = avg(sessions1.map(r => r.total_usd))
   const totalBrl    = sessions.reduce((a, r) => a + r.total_brl, 0)
-  const total7Brl   = sessions7.reduce((a, r) => a + r.total_brl, 0)
   const totalUsd    = sessions.reduce((a, r) => a + r.total_usd, 0)
-  const total7Usd   = sessions7.reduce((a, r) => a + r.total_usd, 0)
   const maxCost     = sessions.length > 0 ? Math.max(...sessions.map(r => r.total_brl)) : null
   const avgTurns    = avg(sessions.map(r => r.turns))
   const avgCostTurn = avgBrl != null && avgTurns != null && avgTurns > 0 ? avgBrl / avgTurns : null
-  const taxaConversao     = sessions.length > 0 ? sessionsWithClick.length / sessions.length : 0
-  const taxaRec           = sessions.length > 0 ? sessionsWithRec.length / sessions.length : null
-  const custoPorClique    = affiliateClicks.length > 0 ? totalBrl / affiliateClicks.length : null
-  const pontoEquilibrio   = COMISSAO_ESTIMADA_BRL != null && avgBrl != null && avgBrl > 0
-    ? Math.round(COMISSAO_ESTIMADA_BRL / avgBrl) : null
-  const receitaEstimadaConv = COMISSAO_ESTIMADA_BRL != null && TAXA_CLIQUE_TO_VENDA != null
-    ? COMISSAO_ESTIMADA_BRL * taxaConversao * TAXA_CLIQUE_TO_VENDA : null
-  const isAboveEquilibrio = receitaEstimadaConv != null && avgBrl != null
-    ? receitaEstimadaConv >= avgBrl : null
+  const taxaConversao = sessions.length > 0 ? sessionsWithClick.length / sessions.length : 0
+  const taxaRec       = sessions.length > 0 ? sessionsWithRec.length / sessions.length : null
+
+  // ── link_clicks (fonte de verdade para dinheiro) ──────────────────────────
+  const lcAfiliado = linkClickCounts['afiliado'] ?? 0
+  const lcBusca    = linkClickCounts['busca']    ?? 0
+  const lcOficial  = linkClickCounts['oficial']  ?? 0
+  const lcTotal    = lcAfiliado + lcBusca + lcOficial
+  const lcMonetizavel = lcAfiliado + lcBusca
+  const custoPorClique = lcMonetizavel > 0 ? totalBrl / lcMonetizavel : null
+  const custoPorCliqueUsd = lcMonetizavel > 0 ? totalUsd / lcMonetizavel : null
+
+  // ── % clicou por raquete (join rec_events ↔ feedback_events por session+racket) ──
+  const recByRacket: Record<number, Set<string>> = {}
+  for (const e of recEventRows) {
+    if (!recByRacket[e.racket_id]) recByRacket[e.racket_id] = new Set()
+    recByRacket[e.racket_id].add(e.conversation_id)
+  }
+  const clickByRacket: Record<number, Set<string>> = {}
+  for (const e of clickRows) {
+    if (e.racket_id == null) continue
+    if (!clickByRacket[e.racket_id]) clickByRacket[e.racket_id] = new Set()
+    clickByRacket[e.racket_id].add(e.session_id)
+  }
 
   // ── Top raquetes recomendadas ─────────────────────────────────────────────
   const racketCounts: Record<number, number> = {}
@@ -225,12 +261,18 @@ export default async function AnaliseAdmin({
   const racketNames: RacketRow[] = topRacketIds.length
     ? await sb.from('rackets').select('id, name, slug').in('id', topRacketIds).then(r => (r.data ?? []) as RacketRow[])
     : []
-  const topRaquetes = topRacketIds.map(id => ({
-    id,
-    name: racketNames.find(r => r.id === id)?.name ?? `ID ${id}`,
-    slug: racketNames.find(r => r.id === id)?.slug ?? null,
-    count: racketCounts[id] ?? 0,
-  }))
+  const topRaquetes = topRacketIds.map(id => {
+    const recSessions = recByRacket[id] ?? new Set<string>()
+    const clickSessions = clickByRacket[id] ?? new Set<string>()
+    const intersect = [...recSessions].filter(sid => clickSessions.has(sid)).length
+    return {
+      id,
+      name: racketNames.find(r => r.id === id)?.name ?? `ID ${id}`,
+      slug: racketNames.find(r => r.id === id)?.slug ?? null,
+      count: racketCounts[id] ?? 0,
+      pctClicou: recSessions.size > 0 ? pct(intersect, recSessions.size) : '—',
+    }
+  })
 
   // ── Insights ──────────────────────────────────────────────────────────────
   type Insight = { level: 'ok' | 'warn' | 'info' | 'neutral'; text: string }
@@ -242,27 +284,30 @@ export default async function AnaliseAdmin({
     insights.push({ level: 'warn', text: `Coluna primeira_mensagem ausente (${supabaseDomain}). Execute a migration abaixo para habilitar análise de mensagens.` })
   }
   if (totalConv < MIN_DATA) {
-    insights.push({ level: 'neutral', text: `Apenas ${totalConv} conversa${totalConv !== 1 ? 's' : ''} com custo no período — ainda poucos dados para tendências.` })
+    insights.push({ level: 'neutral', text: `Apenas ${totalConv} sessão${totalConv !== 1 ? 'ões' : ''} com quiz no período — ainda poucos dados para tendências.` })
   } else {
     const totalInt = intencoes.reduce((a, r) => a + r.total, 0)
     const topIntent = intencoes[0] ?? null
     if (topIntent && totalInt > 0) {
-      insights.push({ level: 'info', text: `"${topIntent.intencao_detectada}" é a intenção #1 (${pct(topIntent.total, totalInt)} das conversas). Vale priorizar esse fluxo no copy e starters.` })
+      insights.push({ level: 'info', text: `"${topIntent.intencao_detectada}" é a intenção #1 (${pct(topIntent.total, totalInt)} das sessões). Vale priorizar esse fluxo no copy e starters.` })
     }
     if (taxaRec !== null) {
-      insights.push({ level: taxaRec >= 0.5 ? 'ok' : 'warn', text: `${pct(sessionsWithRec.length, totalConv)} das sessões chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — verificar abandono ou dificuldade de qualificação.' : ''}` })
+      insights.push({ level: taxaRec >= 0.5 ? 'ok' : 'warn', text: `${pct(sessionsWithRec.length, totalConv)} das sessões chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — verificar abandono.' : ''}` })
     }
-    if (sessions.length >= MIN_DATA) {
-      insights.push({ level: taxaConversao >= 0.08 ? 'ok' : 'warn', text: `${pct(sessionsWithClick.length, totalConv)} das sessões clicaram em loja ou análise (${daysLabel}).${taxaConversao < 0.08 ? ' Abaixo de 8% — verificar links de afiliado.' : ''}` })
+    if (lcTotal > 0) {
+      insights.push({ level: lcMonetizavel > 0 ? 'ok' : 'warn', text: `${lcMonetizavel} clique${lcMonetizavel !== 1 ? 's' : ''} monetizável${lcMonetizavel !== 1 ? 'is' : ''} (afiliado + busca) de ${lcTotal} total (${daysLabel}).${custoPorClique != null ? ` Custo/clique ${fmtBrl(custoPorClique, 4)}.` : ''}` })
     }
     if (avgBrl != null && avgTurns != null) {
-      insights.push({ level: 'neutral', text: `Custo médio ${fmtBrl(avgBrl, 4)}/conversa · ${avgTurns.toFixed(1)} turnos/sessão (${daysLabel}).${avgTurns > 6 ? ' Muitos turnos — agente pode estar demorando para qualificar.' : ''}` })
+      insights.push({ level: 'neutral', text: `Custo médio ${fmtBrl(avgBrl, 4)}/sessão · ${avgTurns.toFixed(1)} turnos (${daysLabel}).${avgTurns > 6 ? ' Muitos turnos — agente pode estar demorando para qualificar.' : ''}` })
     }
     if (avg7Brl != null && avgBrl != null && sessions7.length >= 3 && sessions.length >= 10) {
       const diff = avg7Brl - avgBrl
       if (Math.abs(diff) / avgBrl > 0.2) {
         insights.push({ level: diff > 0 ? 'warn' : 'ok', text: `Custo médio nos últimos 7 dias (${fmtBrl(avg7Brl, 4)}) está ${diff > 0 ? '+' : ''}${Math.round((diff / avgBrl) * 100)}% vs o período.${diff > 0 ? ' Verificar mudança no fluxo.' : ' Tendência de redução.'}` })
       }
+    }
+    if (fallbackRows.length > 0) {
+      insights.push({ level: 'warn', text: `${fallbackRows.length} raquete${fallbackRows.length !== 1 ? 's' : ''} publicada${fallbackRows.length !== 1 ? 's' : ''} em fallback de busca ML (anúncio inativo). Ver Seção 4.` })
     }
   }
 
@@ -286,6 +331,14 @@ export default async function AnaliseAdmin({
     if (daysParam !== '30') p.set('days', daysParam)
     return p.toString() ? `?${p.toString()}` : '?'
   })()
+
+  // Funil steps
+  const funnelSteps = [
+    { label: 'Sessões com quiz',      n: sessions.length },
+    { label: 'Com recomendação',      n: sessionsWithRec.length },
+    { label: 'Clicaram (quiz)',        n: sessionsWithClick.length },
+    { label: '"Ver na loja" (quiz)',   n: affiliateClicks.length },
+  ]
 
   return (
     <div className="flex flex-col gap-8">
@@ -319,211 +372,375 @@ export default async function AnaliseAdmin({
       )}
 
       {/* ── Insights ── */}
-      <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-          Insights <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
-        </h2>
-        <div className="flex flex-col gap-2">
-          {insights.map((ins, i) => (
-            <div key={i} className={`rounded-xl border px-4 py-3 text-sm flex gap-3 items-start ${insightBg[ins.level]}`}>
-              <span className="text-base shrink-0 mt-px">{insightIcon[ins.level]}</span>
-              <p className="leading-snug">{ins.text}</p>
-            </div>
-          ))}
-          {insights.length === 0 && <p className="text-gray-400 italic text-xs">Nenhum dado disponível.</p>}
-        </div>
-      </section>
-
-      {/* ── Sessões ── */}
-      <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
-          Sessões <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
-        </h2>
-        <p className="text-[11px] text-gray-400 mb-3">Usuários que iniciaram o quiz · cada sessão = 1 browser</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {([
-            { label: 'Total de sessões', value: String(totalConv), sub: 'com quiz (custo > 0)', ok: null as boolean | null, tip: 'Sessões que geraram pelo menos uma chamada de API (quiz iniciado). Não inclui visitantes que apenas navegaram pelas páginas de raquete.' },
-            { label: 'Turnos médios/sessão', value: avgTurns != null ? avgTurns.toFixed(1) : '—', sub: avgTurns != null && avgTurns > 6 ? '⚠ acima do esperado' : 'ok', ok: avgTurns != null ? avgTurns <= 6 : null, tip: 'Chamadas de API por sessão com custo > 0. A maioria resolve em 1 turno (starter → recomendação em uma chamada). Acima de 6 sugere dificuldade de qualificação.' },
-            { label: 'Com recomendação', value: taxaRec !== null ? pct(sessionsWithRec.length, totalConv) : '—', sub: `${sessionsWithRec.length} de ${totalConv} sessões`, ok: taxaRec !== null && taxaRec >= 0.5, tip: 'Sessões que chegaram a ter pelo menos 1 raquete recomendada pelo modelo. Verde ≥ 50%.' },
-          ] as { label: string; value: string; sub: string; ok: boolean | null; tip: string }[]).map(({ label, value, sub, ok, tip }) => (
-            <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${ok === true ? 'border-emerald-200' : ok === false ? 'border-amber-200' : 'border-gray-100'}`}>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
-              <p className={`text-base font-bold ${ok === true ? 'text-emerald-700' : ok === false ? 'text-amber-700' : 'text-gray-800'}`}>{value}</p>
-              <p className="text-[10px] text-gray-300">{sub}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Cliques via quiz ── */}
-      <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
-          Cliques via quiz <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
-        </h2>
-        <p className="text-[11px] text-gray-400 mb-3">
-          Fonte: <code className="font-mono">feedback_events</code> · apenas sessões que passaram pelo quiz ·{' '}
-          <a href="/admin/cliques" className="underline hover:text-gray-600">cliques diretos (sem quiz) → aba Cliques</a>
-        </p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {([
-            { label: 'Sessões que clicaram', value: pct(sessionsWithClick.length, sessions.length), sub: `${sessionsWithClick.length} de ${sessions.length} sessões`, ok: taxaConversao >= 0.08, tip: 'Sessões com quiz que tiveram pelo menos um clique em "Ver na loja" ou "Ver análise". Verde ≥ 8%.' },
-            { label: '"Ver na loja"', value: String(affiliateClicks.length), sub: 'afiliado ML (feedback_events)', ok: null as boolean | null, tip: 'Cliques no botão "Ver na loja" dentro do quiz. Registrado no frontend via feedback_events. Pode diferir de link_clicks se o usuário não completou o redirect.' },
-            { label: '"Ver análise"', value: String(clickRows.filter(r => r.event_type === 'ver_analise').length), sub: 'página da raquete', ok: null as boolean | null, tip: 'Cliques em "Ver análise" — leva à página de detalhes da raquete. Registrado no frontend via feedback_events.' },
-          ] as { label: string; value: string; sub: string; ok: boolean | null; tip: string }[]).map(({ label, value, sub, ok, tip }) => (
-            <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${ok === true ? 'border-emerald-200' : ok === false ? 'border-amber-200' : 'border-gray-100'}`}>
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
-              <p className={`text-base font-bold ${ok === true ? 'text-emerald-700' : ok === false ? 'text-amber-700' : 'text-gray-800'}`}>{value}</p>
-              <p className="text-[10px] text-gray-300">{sub}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Custos + Rentabilidade ── */}
-      <CostSection
-        avgBrl={avgBrl}
-        avgUsd={avgUsd}
-        totalBrl={totalBrl}
-        totalUsd={totalUsd}
-        maxCostBrl={maxCost}
-        maxCostUsd={sessions.length > 0 ? Math.max(...sessions.map(r => r.total_usd)) : null}
-        avgCostTurnBrl={avgCostTurn}
-        avgCostTurnUsd={avgUsd != null && avgTurns != null && avgTurns > 0 ? avgUsd / avgTurns : null}
-        custoPorCliqueBrl={custoPorClique}
-        custoPorCliqueUsd={affiliateClicks.length > 0 ? totalUsd / affiliateClicks.length : null}
-        affiliateClicksCount={affiliateClicks.length}
-        sessionsCount={sessions.length}
-        sessionsWithRecCount={sessionsWithRec.length}
-        sessionsWithClickCount={sessionsWithClick.length}
-        avgTurns={avgTurns}
-        taxaConversao={taxaConversao}
-      />
-
-      {/* ── Recomendações ── */}
-      {topRaquetes.length > 0 && (
+      {insights.length > 0 && (
         <section>
-          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
-            Recomendações <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+            Insights <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
           </h2>
-          <p className="text-[11px] text-gray-400 mb-3">Fonte: <code className="font-mono">recommendation_events</code> · 1 linha por raquete sugerida pelo modelo</p>
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
-            <table className="w-full border-collapse text-xs">
-              <thead className="bg-gray-50 text-gray-400 uppercase">
-                <tr>
-                  <th className="text-left px-4 py-2">#</th>
-                  <th className="text-left px-4 py-2">Raquete</th>
-                  <th className="text-right px-4 py-2">Recomendações</th>
-                  <th className="text-right px-4 py-2">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topRaquetes.map((r, i) => (
-                  <tr key={r.id} className="border-t border-gray-100">
-                    <td className="px-4 py-2 text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-2 font-medium text-gray-800">
-                      {r.slug
-                        ? <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">{r.name}</a>
-                        : r.name}
-                    </td>
-                    <td className="px-4 py-2 text-right font-semibold">{r.count}</td>
-                    <td className="px-4 py-2 text-right text-gray-400">{pct(r.count, recEventRows.length)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="text-[10px] text-gray-300 px-4 py-2">{recEventRows.length} recomendações totais no período</p>
+          <div className="flex flex-col gap-2">
+            {insights.map((ins, i) => (
+              <div key={i} className={`rounded-xl border px-4 py-3 text-sm flex gap-3 items-start ${insightBg[ins.level]}`}>
+                <span className="text-base shrink-0 mt-px">{insightIcon[ins.level]}</span>
+                <p className="leading-snug">{ins.text}</p>
+              </div>
+            ))}
           </div>
         </section>
       )}
 
-      {/* ── Starters ── */}
+      {/* ══ SEÇÃO 1 — Saúde do negócio ══════════════════════════════════════ */}
       <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">Starters usados</h2>
-        <p className="text-[11px] text-gray-400 mb-3">{daysLabel} · clique para ver as primeiras mensagens</p>
-        {starters.length === 0 ? (
-          <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+          Saúde do negócio <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        <p className="text-[11px] text-gray-400 mb-3">
+          Cliques de <code className="font-mono">link_clicks</code> — todos os cliques (com e sem quiz) · fonte de verdade para métricas de dinheiro
+        </p>
+
+        {/* Cliques por tipo */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3">
+          <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-3">Cliques monetizáveis</p>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { emoji: '💰', label: 'Afiliado', n: lcAfiliado, color: 'text-teal-700' },
+              { emoji: '🔍', label: 'Busca ML', n: lcBusca,    color: 'text-amber-600' },
+              { emoji: '🔗', label: 'Oficial',  n: lcOficial,  color: 'text-gray-500' },
+              { emoji: '∑',  label: 'Total',    n: lcTotal,    color: 'text-gray-800' },
+            ].map(({ emoji, label, n, color }) => (
+              <div key={label} className="flex flex-col gap-0.5">
+                <p className="text-[10px] text-gray-400">{emoji} {label}</p>
+                <p className={`text-xl font-bold ${color}`}>{n}</p>
+                {lcTotal > 0 && n < lcTotal && (
+                  <p className="text-[10px] text-gray-300">{pct(n, lcTotal)}</p>
+                )}
+              </div>
+            ))}
+          </div>
+          {lcTotal === 0 && (
+            <p className="text-gray-400 italic text-xs mt-2">Nenhum clique registrado no período.</p>
+          )}
+        </div>
+
+        {/* Cards de custo + sessões */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {([
+            {
+              label: 'Custo API total',
+              value: fmtBrl(totalBrl, 2),
+              sub: `${sessions.length} sessões com quiz`,
+              ok: null as boolean | null,
+              tip: 'Total gasto na API da Anthropic no período, excluindo sessões de teste.',
+            },
+            {
+              label: 'Custo / clique monetizável',
+              value: custoPorClique != null ? fmtBrl(custoPorClique, 4) : '—',
+              sub: `${lcMonetizavel} clique${lcMonetizavel !== 1 ? 's' : ''} afiliado + busca (link_clicks)`,
+              ok: custoPorClique != null ? custoPorClique < 0.5 : null,
+              tip: 'Custo total da API ÷ cliques monetizáveis (afiliado + busca ML) de link_clicks. Inclui cliques com e sem quiz. Verde < R$ 0,50/clique.',
+            },
+            {
+              label: 'Sessões com quiz',
+              value: String(sessions.length),
+              sub: 'API calls com custo > 0',
+              ok: null as boolean | null,
+              tip: 'Sessões que efetivamente rodaram o quiz (fizeram ao menos uma chamada à API com custo). Não inclui visitantes que só navegaram.',
+            },
+          ] as { label: string; value: string; sub: string; ok: boolean | null; tip: string }[]).map(({ label, value, sub, ok, tip }) => (
+            <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${ok === true ? 'border-emerald-200' : ok === false ? 'border-amber-200' : 'border-gray-100'}`}>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
+              <p className={`text-base font-bold ${ok === true ? 'text-emerald-700' : ok === false ? 'text-amber-700' : 'text-gray-800'}`}>{value}</p>
+              <p className="text-[10px] text-gray-300">{sub}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══ SEÇÃO 2 — Funil do quiz ══════════════════════════════════════════ */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+          Funil do quiz <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        <p className="text-[11px] text-gray-400 mb-3">
+          Fonte: <code className="font-mono">feedback_events</code> · apenas sessões que passaram pelo quiz
+        </p>
+        {sessions.length === 0 ? (
+          <p className="text-gray-400 italic text-xs">Nenhuma sessão com quiz no período.</p>
         ) : (
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden text-xs">
-            <thead className="bg-gray-50 text-gray-400 uppercase">
-              <tr>
-                <th className="text-left px-4 py-2">Starter</th>
-                <th className="text-right px-4 py-2">Total</th>
-                <th className="text-right px-4 py-2">%</th>
-                <th className="px-4 py-2 w-1/3"></th>
-                <th className="px-4 py-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {starters.filter(r => r.starter !== null).map(r => {
-                const total    = starters.reduce((a, x) => a + x.total, 0)
-                const isActive = filterStarter !== null && filterStarter === (r.starter ?? 'livre')
-                return (
-                  <tr key={r.starter ?? 'livre'} className={`border-t border-gray-100 ${isActive ? 'bg-teal-50' : ''}`}>
-                    <td className="px-4 py-2">{r.starter ?? <span className="italic text-gray-400">livre (digitou)</span>}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{r.total}</td>
-                    <td className="px-4 py-2 text-right text-gray-400">{pct(r.total, total)}</td>
-                    <td className="px-4 py-2">
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-300 rounded-full" style={{ width: `${Math.round((r.total / total) * 100)}%` }} />
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {primeiraMsgColumnMissing ? (
-                        <span className="text-gray-300 text-[10px]">migration pendente</span>
-                      ) : (
-                        <Link href={starterDetailHref(r.starter)} className={`px-2.5 py-1 rounded-full font-medium transition-colors ${isActive ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
-                          {isActive ? 'Aberto ↓' : 'Ver mensagens'}
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            {funnelSteps.map((step, i) => {
+              const prev = funnelSteps[i - 1]
+              const retencao = prev && prev.n > 0 ? Math.round((step.n / prev.n) * 100) : null
+              const barPct = funnelSteps[0].n > 0 ? Math.round((step.n / funnelSteps[0].n) * 100) : 0
+              return (
+                <div key={step.label} className={`flex items-center gap-4 px-5 py-3 ${i > 0 ? 'border-t border-gray-50' : ''}`}>
+                  <span className="text-[11px] text-gray-400 w-5 shrink-0 text-right">{i + 1}</span>
+                  <span className="text-xs text-gray-700 w-44 shrink-0">{step.label}</span>
+                  <div className="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-teal-500 transition-all"
+                      style={{ width: `${barPct}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 w-6 text-right shrink-0">{step.n}</span>
+                  <span className="text-[11px] w-24 shrink-0 text-right">
+                    {retencao !== null ? (
+                      <span className={retencao >= 70 ? 'text-emerald-600' : retencao >= 40 ? 'text-amber-600' : 'text-red-500'}>
+                        {retencao}% do anterior
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">{barPct}%</span>
+                    )}
+                  </span>
+                </div>
+              )
+            })}
+            <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50">
+              <p className="text-[11px] text-gray-400">
+                Funil completo (visitantes → quiz_start) →{' '}
+                <a
+                  href="https://analytics.google.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-gray-600"
+                >
+                  ver no GA4
+                </a>
+                {' '}· evento <code className="font-mono">quiz_start</code> disponível
+              </p>
+            </div>
+          </div>
         )}
       </section>
 
-      {/* ── Detalhe de starter ── */}
-      {filterStarter !== null && !primeiraMsgColumnMissing && (
-        <section className="border-2 border-teal-200 rounded-2xl p-5 bg-teal-50">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-semibold text-teal-900">
-                Mensagens: <span className="font-normal italic">&ldquo;{filterStarter === 'livre' ? 'livre (digitou)' : filterStarter}&rdquo;</span>
-              </h2>
-              <p className="text-teal-600 text-xs mt-0.5">
-                {starterDetailRows.length} mensagem{starterDetailRows.length !== 1 ? 's' : ''}
-                {filterStarter === 'livre' && ' — texto original, sem edição'}
-              </p>
-            </div>
-            <Link href={backHref} className="text-xs text-teal-600 hover:text-teal-800 border border-teal-300 rounded-lg px-3 py-1.5 transition-colors bg-white">
-              ← Fechar
-            </Link>
-          </div>
-          <div className="flex flex-col gap-2">
-            {starterDetailRows.map((r, i) => (
-              <div key={i} className="bg-white rounded-lg px-4 py-3 border border-teal-100 shadow-sm">
-                <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
-                  <span>{new Date(r.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
-                  {r.intencao_detectada && <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>}
-                </div>
-                <p className="text-gray-800 leading-snug text-sm">{r.primeira_mensagem}</p>
-              </div>
-            ))}
-            {starterDetailRows.length === 0 && <p className="text-teal-600 italic text-sm">Nenhuma mensagem encontrada.</p>}
-          </div>
-        </section>
-      )}
+      {/* ══ SEÇÃO 3 — Produto ════════════════════════════════════════════════ */}
+      <section className="flex flex-col gap-8">
+        <div>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+            Produto <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+          </h2>
+          <p className="text-[11px] text-gray-400 mb-3">
+            Fonte: <code className="font-mono">recommendation_events</code> · % clicou = sessões que clicaram nessa raquete ÷ sessões que a receberam como recomendação
+          </p>
 
-      {/* ── Glossário de dados ── */}
+          {topRaquetes.length === 0 ? (
+            <p className="text-gray-400 italic text-xs">Nenhuma recomendação no período.</p>
+          ) : (
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+              <table className="w-full border-collapse text-xs">
+                <thead className="bg-gray-50 text-gray-400 uppercase">
+                  <tr>
+                    <th className="text-left px-4 py-2">#</th>
+                    <th className="text-left px-4 py-2">Raquete</th>
+                    <th className="text-right px-4 py-2">Recs</th>
+                    <th className="text-right px-4 py-2">%</th>
+                    <th className="text-right px-4 py-2">
+                      <span className="inline-flex items-center gap-0.5 justify-end">
+                        % clicou <InfoTooltip text="Sessões que clicaram (ver_na_loja ou ver_analise) nessa raquete específica ÷ sessões que a receberam como recomendação. Mede atratividade do produto." />
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topRaquetes.map((r, i) => (
+                    <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50/50">
+                      <td className="px-4 py-2 text-gray-400">{i + 1}</td>
+                      <td className="px-4 py-2 font-medium text-gray-800">
+                        {r.slug
+                          ? <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">{r.name}</a>
+                          : r.name}
+                      </td>
+                      <td className="px-4 py-2 text-right font-semibold">{r.count}</td>
+                      <td className="px-4 py-2 text-right text-gray-400">{pct(r.count, recEventRows.length)}</td>
+                      <td className="px-4 py-2 text-right font-medium text-teal-700">{r.pctClicou}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-[10px] text-gray-300 px-4 py-2">{recEventRows.length} recomendações totais no período</p>
+            </div>
+          )}
+        </div>
+
+        {/* Starters */}
+        <div>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">Starters usados</h2>
+          <p className="text-[11px] text-gray-400 mb-3">{daysLabel} · clique para ver as primeiras mensagens</p>
+          {starters.length === 0 ? (
+            <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
+          ) : (
+            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden text-xs">
+              <thead className="bg-gray-50 text-gray-400 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-2">Starter</th>
+                  <th className="text-right px-4 py-2">Total</th>
+                  <th className="text-right px-4 py-2">%</th>
+                  <th className="px-4 py-2 w-1/3"></th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const starterTotal = starters.reduce((a, x) => a + x.total, 0)
+                  return starters.filter(r => r.starter !== null).map(r => {
+                    const isActive = filterStarter !== null && filterStarter === (r.starter ?? 'livre')
+                    return (
+                      <tr key={r.starter ?? 'livre'} className={`border-t border-gray-100 ${isActive ? 'bg-teal-50' : ''}`}>
+                        <td className="px-4 py-2">{r.starter ?? <span className="italic text-gray-400">livre (digitou)</span>}</td>
+                        <td className="px-4 py-2 text-right font-semibold">{r.total}</td>
+                        <td className="px-4 py-2 text-right text-gray-400">{pct(r.total, starterTotal)}</td>
+                        <td className="px-4 py-2">
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-300 rounded-full" style={{ width: `${Math.round((r.total / starterTotal) * 100)}%` }} />
+                          </div>
+                        </td>
+                      <td className="px-4 py-2 text-right">
+                        {primeiraMsgColumnMissing ? (
+                          <span className="text-gray-300 text-[10px]">migration pendente</span>
+                        ) : (
+                          <Link href={starterDetailHref(r.starter)} className={`px-2.5 py-1 rounded-full font-medium transition-colors ${isActive ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
+                            {isActive ? 'Aberto ↓' : 'Ver mensagens'}
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                    )
+                  })
+                })()}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Detalhe de starter */}
+        {filterStarter !== null && !primeiraMsgColumnMissing && (
+          <div className="border-2 border-teal-200 rounded-2xl p-5 bg-teal-50">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-teal-900">
+                  Mensagens: <span className="font-normal italic">&ldquo;{filterStarter === 'livre' ? 'livre (digitou)' : filterStarter}&rdquo;</span>
+                </h2>
+                <p className="text-teal-600 text-xs mt-0.5">
+                  {starterDetailRows.length} mensagem{starterDetailRows.length !== 1 ? 's' : ''}
+                  {filterStarter === 'livre' && ' — texto original, sem edição'}
+                </p>
+              </div>
+              <Link href={backHref} className="text-xs text-teal-600 hover:text-teal-800 border border-teal-300 rounded-lg px-3 py-1.5 transition-colors bg-white">
+                ← Fechar
+              </Link>
+            </div>
+            <div className="flex flex-col gap-2">
+              {starterDetailRows.map((r, i) => (
+                <div key={i} className="bg-white rounded-lg px-4 py-3 border border-teal-100 shadow-sm">
+                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
+                    <span>{new Date(r.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
+                    {r.intencao_detectada && <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>}
+                  </div>
+                  <p className="text-gray-800 leading-snug text-sm">{r.primeira_mensagem}</p>
+                </div>
+              ))}
+              {starterDetailRows.length === 0 && <p className="text-teal-600 italic text-sm">Nenhuma mensagem encontrada.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Custos */}
+        <CostSection
+          avgBrl={avgBrl}
+          avgUsd={avgUsd}
+          totalBrl={totalBrl}
+          totalUsd={totalUsd}
+          maxCostBrl={maxCost}
+          maxCostUsd={sessions.length > 0 ? Math.max(...sessions.map(r => r.total_usd)) : null}
+          avgCostTurnBrl={avgCostTurn}
+          avgCostTurnUsd={avgUsd != null && avgTurns != null && avgTurns > 0 ? avgUsd / avgTurns : null}
+          custoPorCliqueBrl={custoPorClique}
+          custoPorCliqueUsd={custoPorCliqueUsd}
+          affiliateClicksCount={lcMonetizavel}
+          sessionsCount={sessions.length}
+          sessionsWithRecCount={sessionsWithRec.length}
+          sessionsWithClickCount={sessionsWithClick.length}
+          avgTurns={avgTurns}
+          taxaConversao={taxaConversao}
+        />
+      </section>
+
+      {/* ══ SEÇÃO 4 — Operação de links ══════════════════════════════════════ */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Operação de links
+        </h2>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50 text-xs">
+
+          {/* Em fallback */}
+          <div className="px-5 py-4 flex items-start gap-4">
+            <div className="shrink-0 w-32">
+              <p className="font-semibold text-gray-700">Em fallback</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">busca ML ativa</p>
+            </div>
+            <div className="flex-1">
+              {fallbackRows.length === 0 ? (
+                <span className="text-emerald-600 font-medium">✓ Nenhuma — todos os afiliados ativos</span>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <span className="text-amber-600 font-semibold">{fallbackRows.length} publicada{fallbackRows.length !== 1 ? 's' : ''} com anúncio inativo</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {fallbackRows.map(r => (
+                      <span key={r.name} className="bg-amber-50 text-amber-700 border border-amber-200 rounded px-2 py-0.5 text-[11px]">
+                        {r.name}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1">Cliques vão para busca ML em vez do anúncio direto. Atualizar via <a href="/admin/afiliados" className="underline hover:text-gray-600">Afiliados</a>.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sem cobertura */}
+          <div className="px-5 py-4 flex items-start gap-4">
+            <div className="shrink-0 w-32">
+              <p className="font-semibold text-gray-700">Sem cobertura</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">sem affiliate_url</p>
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <span className={`font-semibold ${opsStats.sem_cobertura > 0 ? 'text-gray-600' : 'text-emerald-600'}`}>
+                {opsStats.sem_cobertura > 0 ? `${opsStats.sem_cobertura} publicadas sem afiliado` : '✓ Todas com link'}
+              </span>
+              <span className={`text-[11px] font-medium ${SEARCH_FALLBACK_UNCOVERED ? 'text-amber-600' : 'text-gray-400'}`}>
+                Fallback busca ML para sem-link: <strong>{SEARCH_FALLBACK_UNCOVERED ? 'ON' : 'OFF'}</strong>
+                {!SEARCH_FALLBACK_UNCOVERED && ' — cliques vão para source_url ou not-found'}
+              </span>
+            </div>
+          </div>
+
+          {/* Última sync */}
+          <div className="px-5 py-4 flex items-start gap-4">
+            <div className="shrink-0 w-32">
+              <p className="font-semibold text-gray-700">Última sync</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">price_updated_at</p>
+            </div>
+            <div className="text-gray-600">
+              {opsStats.ultima_sync ? (
+                <span>
+                  {new Date(opsStats.ultima_sync).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  {' '}BRT
+                </span>
+              ) : (
+                <span className="text-gray-400 italic">Nenhuma sync registrada</span>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ══ SEÇÃO 5 — Mapa de dados ══════════════════════════════════════════ */}
       <section>
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
           Mapa de dados
         </h2>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50 text-xs">
 
-          {/* Session */}
           <div className="px-5 py-4 flex gap-4">
             <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Sessão</span>
             <div className="flex flex-col gap-1 text-gray-500">
@@ -532,7 +749,6 @@ export default async function AnaliseAdmin({
             </div>
           </div>
 
-          {/* Conversa */}
           <div className="px-5 py-4 flex gap-4">
             <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Conversa</span>
             <div className="flex flex-col gap-1 text-gray-500">
@@ -541,7 +757,6 @@ export default async function AnaliseAdmin({
             </div>
           </div>
 
-          {/* Recomendação */}
           <div className="px-5 py-4 flex gap-4">
             <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Recomendação</span>
             <div className="flex flex-col gap-1 text-gray-500">
@@ -550,30 +765,27 @@ export default async function AnaliseAdmin({
             </div>
           </div>
 
-          {/* Clique via quiz */}
           <div className="px-5 py-4 flex gap-4">
-            <span className="shrink-0 w-28 font-semibold text-teal-700 pt-0.5">Clique quiz</span>
+            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Clique quiz</span>
             <div className="flex flex-col gap-1 text-gray-500">
               <p>Evento registrado pelo <strong>frontend</strong> quando o usuário clica em um botão dentro da interface do quiz. Tipos: <code className="bg-gray-100 px-1 rounded text-[11px]">ver_na_loja</code> (afiliado), <code className="bg-gray-100 px-1 rounded text-[11px]">ver_analise</code> (página da raquete), <code className="bg-gray-100 px-1 rounded text-[11px]">nova_conversa_pos_rec</code>.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>feedback_events</code> · usado para calcular "Cliques Ver na loja" e "sessões que clicaram" no painel.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>feedback_events</code> · usado para calcular funil e % clicou por raquete.</p>
             </div>
           </div>
 
-          {/* Clique no link */}
           <div className="px-5 py-4 flex gap-4">
-            <span className="shrink-0 w-28 font-semibold text-amber-700 pt-0.5">Clique link</span>
+            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Clique link</span>
             <div className="flex flex-col gap-1 text-gray-500">
               <p>Registrado <strong>server-side</strong> ao passar pelo redirect <code>/ir/[slug]</code>. Captura <em>todos</em> os cliques — com ou sem sessão de quiz. Inclui cliques diretos de quem acessa a página da raquete sem ter feito o quiz. Tem <code>tipo</code> (afiliado / busca ML / oficial) e URL de destino.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>link_clicks</code> · usado no painel <strong>Cliques</strong>. Ver aba Cliques para breakdown por raquete.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>link_clicks</code> · usado no painel <strong>Cliques</strong> e na Seção 1. <strong>Fonte de verdade para métricas de dinheiro.</strong></p>
             </div>
           </div>
 
-          {/* Diferença */}
           <div className="px-5 py-4 bg-gray-100 rounded-b-xl">
             <p className="font-semibold text-gray-700 mb-1.5">Diferença entre as duas fontes de clique</p>
             <div className="text-gray-500 flex flex-col gap-1">
               <p>Um clique vindo do quiz aparece em <strong>ambas</strong> as tabelas: <code>feedback_events</code> (botão pressionado) + <code>link_clicks</code> (passou pelo redirect). Um clique direto (usuário vai à página da raquete sem quiz) aparece <strong>só em <code>link_clicks</code></strong> — sem <code>session_id</code> na conversa.</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">Por isso o painel Dados mostra 3 "Ver na loja" (só quiz) enquanto o painel Cliques mostra 7 (todos, incluindo 3 sem sessão de hoje).</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">Use <code>link_clicks</code> para contar dinheiro. Use <code>feedback_events</code> para analisar comportamento dentro do quiz.</p>
             </div>
           </div>
 
