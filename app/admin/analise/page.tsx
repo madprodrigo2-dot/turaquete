@@ -214,12 +214,15 @@ export default async function AnaliseAdmin({
   const starters: StarterRow[]   = starterRaw
 
   // ── Cost stats ────────────────────────────────────────────────────────────
-  const sessions          = sessionCostRows.filter(r => r.total_brl > 0)
-  const sessions7         = sessions.filter(r => r.first_turn_at >= ago7)
-  const clickSessionIds   = new Set(clickRows.map(r => r.session_id))
-  const affiliateClicks   = clickRows.filter(r => r.event_type === 'ver_na_loja')
-  const sessionsWithRec   = sessions.filter(r => r.had_rec)
-  const sessionsWithClick = sessions.filter(r => clickSessionIds.has(r.session_id))
+  const sessions            = sessionCostRows.filter(r => r.total_brl > 0)
+  const sessions7           = sessions.filter(r => r.first_turn_at >= ago7)
+  const lojaClickRows       = clickRows.filter(r => r.event_type === 'ver_na_loja')
+  const analiseClickRows    = clickRows.filter(r => r.event_type === 'ver_analise')
+  const lojaSessionIds      = new Set(lojaClickRows.map(r => r.session_id))
+  const analiseSessionIds   = new Set(analiseClickRows.map(r => r.session_id))
+  const sessionsWithRec     = sessions.filter(r => r.had_rec)
+  const sessionsWithLoja    = sessions.filter(r => lojaSessionIds.has(r.session_id))
+  const sessionsWithAnalise = sessions.filter(r => analiseSessionIds.has(r.session_id))
 
   const avgBrl      = avg(sessions.map(r => r.total_brl))
   const avg7Brl     = avg(sessions7.map(r => r.total_brl))
@@ -229,8 +232,8 @@ export default async function AnaliseAdmin({
   const maxCost     = sessions.length > 0 ? Math.max(...sessions.map(r => r.total_brl)) : null
   const avgTurns    = avg(sessions.map(r => r.turns))
   const avgCostTurn = avgBrl != null && avgTurns != null && avgTurns > 0 ? avgBrl / avgTurns : null
-  const taxaConversao = sessions.length > 0 ? sessionsWithClick.length / sessions.length : 0
-  const taxaRec       = sessions.length > 0 ? sessionsWithRec.length / sessions.length : null
+  const taxaLoja    = sessionsWithRec.length > 0 ? sessionsWithLoja.length / sessionsWithRec.length : 0
+  const taxaRec     = sessions.length > 0 ? sessionsWithRec.length / sessions.length : null
 
   // ── link_clicks (fonte de verdade para dinheiro) ──────────────────────────
   const lcAfiliado = linkClickCounts['afiliado'] ?? 0
@@ -294,6 +297,14 @@ export default async function AnaliseAdmin({
     if (taxaRec !== null) {
       insights.push({ level: taxaRec >= 0.5 ? 'ok' : 'warn', text: `${pct(sessionsWithRec.length, totalConv)} das sessões chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — verificar abandono.' : ''}` })
     }
+    if (sessionsWithRec.length > 0) {
+      insights.push({ level: 'info', text: `${pct(sessionsWithAnalise.length, sessionsWithRec.length)} das sessões com recomendação abriram a análise (${daysLabel}).` })
+      const lojaRate = sessionsWithRec.length > 0 ? sessionsWithLoja.length / sessionsWithRec.length : 0
+      insights.push({
+        level: lojaRate >= 0.3 ? 'ok' : lojaRate >= 0.1 ? 'warn' : 'warn',
+        text: `${pct(sessionsWithLoja.length, sessionsWithRec.length)} das sessões com recomendação clicaram em Ver na loja (${daysLabel}).${lojaRate < 0.1 ? ' Abaixo de 10% — copy ou confiança podem melhorar.' : lojaRate < 0.3 ? ' Entre 10–29% — espaço para melhorar conversão.' : ''}`,
+      })
+    }
     if (lcTotal > 0) {
       insights.push({ level: lcMonetizavel > 0 ? 'ok' : 'warn', text: `${lcMonetizavel} clique${lcMonetizavel !== 1 ? 's' : ''} monetizável${lcMonetizavel !== 1 ? 'is' : ''} (afiliado + busca) de ${lcTotal} total (${daysLabel}).${custoPorClique != null ? ` Custo/clique ${fmtBrl(custoPorClique, 4)}.` : ''}` })
     }
@@ -332,12 +343,12 @@ export default async function AnaliseAdmin({
     return p.toString() ? `?${p.toString()}` : '?'
   })()
 
-  // Funil steps
-  const funnelSteps = [
-    { label: 'Sessões com quiz',      n: sessions.length },
-    { label: 'Com recomendação',      n: sessionsWithRec.length },
-    { label: 'Clicaram (quiz)',        n: sessionsWithClick.length },
-    { label: '"Ver na loja" (quiz)',   n: affiliateClicks.length },
+  // Funil steps — steps 3 e 4 mostram % vs step 2 (não encadeado entre eles)
+  const funnelSteps: { label: string; n: number; eventos: number | null; vsStep: number | null }[] = [
+    { label: 'Sessões com quiz',       n: sessions.length,             eventos: null,                    vsStep: null },
+    { label: 'Com recomendação',       n: sessionsWithRec.length,      eventos: null,                    vsStep: null },
+    { label: 'Ver análise (via quiz)', n: sessionsWithAnalise.length,  eventos: analiseClickRows.length, vsStep: 1 },
+    { label: 'Ver na loja (via quiz)', n: sessionsWithLoja.length,     eventos: lojaClickRows.length,    vsStep: 1 },
   ]
 
   return (
@@ -468,24 +479,30 @@ export default async function AnaliseAdmin({
         ) : (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             {funnelSteps.map((step, i) => {
-              const prev = funnelSteps[i - 1]
-              const retencao = prev && prev.n > 0 ? Math.round((step.n / prev.n) * 100) : null
-              const barPct = funnelSteps[0].n > 0 ? Math.round((step.n / funnelSteps[0].n) * 100) : 0
+              const refN  = step.vsStep !== null ? funnelSteps[step.vsStep].n : (funnelSteps[i - 1]?.n ?? null)
+              const retencao = refN != null && refN > 0 ? Math.round((step.n / refN) * 100) : null
+              const barPct   = funnelSteps[0].n > 0 ? Math.round((step.n / funnelSteps[0].n) * 100) : 0
+              const isVsRec  = step.vsStep === 1
               return (
                 <div key={step.label} className={`flex items-center gap-4 px-5 py-3 ${i > 0 ? 'border-t border-gray-50' : ''}`}>
                   <span className="text-[11px] text-gray-400 w-5 shrink-0 text-right">{i + 1}</span>
-                  <span className="text-xs text-gray-700 w-44 shrink-0">{step.label}</span>
-                  <div className="flex-1 h-5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-48 shrink-0">
+                    <span className="text-xs text-gray-700">{step.label}</span>
+                    {step.eventos !== null && (
+                      <span className="text-[10px] text-gray-300 ml-1">({step.eventos} eventos)</span>
+                    )}
+                  </div>
+                  <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-teal-500 transition-all"
+                      className={`h-full rounded-full transition-all ${isVsRec ? 'bg-teal-400' : 'bg-teal-500'}`}
                       style={{ width: `${barPct}%` }}
                     />
                   </div>
-                  <span className="text-sm font-bold text-gray-900 w-6 text-right shrink-0">{step.n}</span>
-                  <span className="text-[11px] w-24 shrink-0 text-right">
+                  <span className="text-sm font-bold text-gray-900 w-5 text-right shrink-0">{step.n}</span>
+                  <span className="text-[11px] w-28 shrink-0 text-right">
                     {retencao !== null ? (
                       <span className={retencao >= 70 ? 'text-emerald-600' : retencao >= 40 ? 'text-amber-600' : 'text-red-500'}>
-                        {retencao}% do anterior
+                        {retencao}%{isVsRec ? ' de c/ rec.' : ' do anterior'}
                       </span>
                     ) : (
                       <span className="text-gray-300">{barPct}%</span>
@@ -494,15 +511,13 @@ export default async function AnaliseAdmin({
                 </div>
               )
             })}
-            <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50">
+            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 flex flex-col gap-1">
+              <p className="text-[11px] text-gray-500 italic">
+                Ver análise = interesse (página interna). Ver na loja = intenção de compra (afiliado). Um usuário pode ir direto à loja sem abrir a análise.
+              </p>
               <p className="text-[11px] text-gray-400">
-                Funil completo (visitantes → quiz_start) →{' '}
-                <a
-                  href="https://analytics.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-gray-600"
-                >
+                Funil pré-quiz (visitantes → quiz_start) →{' '}
+                <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">
                   ver no GA4
                 </a>
                 {' '}· evento <code className="font-mono">quiz_start</code> disponível
@@ -535,7 +550,7 @@ export default async function AnaliseAdmin({
                     <th className="text-right px-4 py-2">%</th>
                     <th className="text-right px-4 py-2">
                       <span className="inline-flex items-center gap-0.5 justify-end">
-                        % clicou <InfoTooltip text="Sessões que clicaram (ver_na_loja ou ver_analise) nessa raquete específica ÷ sessões que a receberam como recomendação. Mede atratividade do produto." />
+                        % engajou <InfoTooltip text="Sessões que abriram análise OU clicaram na loja para essa raquete específica ÷ sessões que a receberam como recomendação. Mede interesse no produto — não é conversão." />
                       </span>
                     </th>
                   </tr>
@@ -658,9 +673,9 @@ export default async function AnaliseAdmin({
           affiliateClicksCount={lcMonetizavel}
           sessionsCount={sessions.length}
           sessionsWithRecCount={sessionsWithRec.length}
-          sessionsWithClickCount={sessionsWithClick.length}
+          sessionsWithClickCount={sessionsWithLoja.length}
           avgTurns={avgTurns}
-          taxaConversao={taxaConversao}
+          taxaConversao={taxaLoja}
         />
       </section>
 
@@ -769,7 +784,8 @@ export default async function AnaliseAdmin({
             <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Clique quiz</span>
             <div className="flex flex-col gap-1 text-gray-500">
               <p>Evento registrado pelo <strong>frontend</strong> quando o usuário clica em um botão dentro da interface do quiz. Tipos: <code className="bg-gray-100 px-1 rounded text-[11px]">ver_na_loja</code> (afiliado), <code className="bg-gray-100 px-1 rounded text-[11px]">ver_analise</code> (página da raquete), <code className="bg-gray-100 px-1 rounded text-[11px]">nova_conversa_pos_rec</code>.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>feedback_events</code> · usado para calcular funil e % clicou por raquete.</p>
+              <p className="text-[11px] text-gray-400 mt-1"><strong>ver_analise</strong> mede interesse (navega para página interna). <strong>ver_na_loja</strong> mede intenção de compra (afiliado). Nunca somar os dois como métrica de conversão.</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>feedback_events</code> · usado para calcular funil e % engajou por raquete.</p>
             </div>
           </div>
 

@@ -138,21 +138,21 @@ export function CostSection({
             {custoCliqueV != null && (
               <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">
-                  Custo / clique afiliado
-                  <InfoTooltip text="Custo total de API no período ÷ número de cliques em afiliado." />
+                  Custo / clique monetizável
+                  <InfoTooltip text="Custo total de API ÷ cliques afiliado + busca de link_clicks (fonte de verdade). Inclui cliques com e sem quiz." />
                 </p>
                 <p className="text-base font-bold text-gray-800">{fmt(custoCliqueV, cur, subD)}</p>
-                <p className="text-[10px] text-gray-300">{affiliateClicksCount} cliques &ldquo;Ver na loja&rdquo;</p>
+                <p className="text-[10px] text-gray-300">{affiliateClicksCount} cliques afiliado + busca (link_clicks)</p>
               </div>
             )}
             {taxaConversao > 0 && (
               <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col gap-0.5">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">
-                  Taxa rec. → clique
-                  <InfoTooltip text="Sessões com clique ÷ sessões que receberam recomendação." />
+                  Taxa rec. → loja
+                  <InfoTooltip text="Sessões que clicaram em Ver na loja ÷ sessões com recomendação. Mede conversão real — não conta Ver análise." />
                 </p>
                 <p className="text-base font-bold text-gray-800">{pct(sessionsWithClickCount, sessionsWithRecCount)}</p>
-                <p className="text-[10px] text-gray-300">entre conversas c/ recomendação</p>
+                <p className="text-[10px] text-gray-300">sessões c/ rec. que abriram a loja</p>
               </div>
             )}
           </div>
