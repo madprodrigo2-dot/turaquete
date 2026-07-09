@@ -334,18 +334,42 @@ export default async function AnaliseAdmin({
         </div>
       </section>
 
-      {/* ── Engajamento ── */}
+      {/* ── Sessões ── */}
       <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-          Engajamento <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+          Sessões <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: 'Taxa de recomendação', value: taxaRec !== null ? pct(sessionsWithRec.length, totalConv) : '—', sub: `${sessionsWithRec.length} de ${totalConv} conv.`, ok: taxaRec !== null && taxaRec >= 0.5, tip: 'Sessões que chegaram a receber uma recomendação ÷ total de sessões. Verde ≥ 50% — indica que o assistente está convertendo conversas em sugestões.' },
-            { label: 'Clique em loja/análise', value: pct(sessionsWithClick.length, sessions.length), sub: `${sessionsWithClick.length} sessões`, ok: taxaConversao >= 0.08, tip: 'Sessões com pelo menos um clique em "Ver na loja" ou "Ver análise" ÷ total de sessões. Verde ≥ 8% — mede interesse real em compra.' },
-            { label: 'Cliques "Ver na loja"', value: String(affiliateClicks.length), sub: 'afiliado', ok: null as boolean | null, tip: 'Total de cliques em links de afiliado (Mercado Livre). Cada clique gera uma visita rastreável no painel ML.' },
-            { label: 'Turnos médios/sessão', value: avgTurns != null ? avgTurns.toFixed(1) : '—', sub: avgTurns != null && avgTurns > 6 ? '⚠ acima do esperado' : 'ok', ok: avgTurns != null ? avgTurns <= 6 : null, tip: 'Média de pares pergunta/resposta por sessão. Acima de 6 pode indicar que o usuário está dando voltas sem chegar a uma recomendação — revisar fluxo de conversa.' },
-          ].map(({ label, value, sub, ok, tip }) => (
+        <p className="text-[11px] text-gray-400 mb-3">Usuários que iniciaram o quiz · cada sessão = 1 browser</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {([
+            { label: 'Total de sessões', value: String(totalConv), sub: 'com quiz (custo > 0)', ok: null as boolean | null, tip: 'Sessões que geraram pelo menos uma chamada de API (quiz iniciado). Não inclui visitantes que apenas navegaram pelas páginas de raquete.' },
+            { label: 'Turnos médios/sessão', value: avgTurns != null ? avgTurns.toFixed(1) : '—', sub: avgTurns != null && avgTurns > 6 ? '⚠ acima do esperado' : 'ok', ok: avgTurns != null ? avgTurns <= 6 : null, tip: 'Chamadas de API por sessão com custo > 0. A maioria resolve em 1 turno (starter → recomendação em uma chamada). Acima de 6 sugere dificuldade de qualificação.' },
+            { label: 'Com recomendação', value: taxaRec !== null ? pct(sessionsWithRec.length, totalConv) : '—', sub: `${sessionsWithRec.length} de ${totalConv} sessões`, ok: taxaRec !== null && taxaRec >= 0.5, tip: 'Sessões que chegaram a ter pelo menos 1 raquete recomendada pelo modelo. Verde ≥ 50%.' },
+          ] as { label: string; value: string; sub: string; ok: boolean | null; tip: string }[]).map(({ label, value, sub, ok, tip }) => (
+            <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${ok === true ? 'border-emerald-200' : ok === false ? 'border-amber-200' : 'border-gray-100'}`}>
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
+              <p className={`text-base font-bold ${ok === true ? 'text-emerald-700' : ok === false ? 'text-amber-700' : 'text-gray-800'}`}>{value}</p>
+              <p className="text-[10px] text-gray-300">{sub}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Cliques via quiz ── */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+          Cliques via quiz <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        <p className="text-[11px] text-gray-400 mb-3">
+          Fonte: <code className="font-mono">feedback_events</code> · apenas sessões que passaram pelo quiz ·{' '}
+          <a href="/admin/cliques" className="underline hover:text-gray-600">cliques diretos (sem quiz) → aba Cliques</a>
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {([
+            { label: 'Sessões que clicaram', value: pct(sessionsWithClick.length, sessions.length), sub: `${sessionsWithClick.length} de ${sessions.length} sessões`, ok: taxaConversao >= 0.08, tip: 'Sessões com quiz que tiveram pelo menos um clique em "Ver na loja" ou "Ver análise". Verde ≥ 8%.' },
+            { label: '"Ver na loja"', value: String(affiliateClicks.length), sub: 'afiliado ML (feedback_events)', ok: null as boolean | null, tip: 'Cliques no botão "Ver na loja" dentro do quiz. Registrado no frontend via feedback_events. Pode diferir de link_clicks se o usuário não completou o redirect.' },
+            { label: '"Ver análise"', value: String(clickRows.filter(r => r.event_type === 'ver_analise').length), sub: 'página da raquete', ok: null as boolean | null, tip: 'Cliques em "Ver análise" — leva à página de detalhes da raquete. Registrado no frontend via feedback_events.' },
+          ] as { label: string; value: string; sub: string; ok: boolean | null; tip: string }[]).map(({ label, value, sub, ok, tip }) => (
             <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${ok === true ? 'border-emerald-200' : ok === false ? 'border-amber-200' : 'border-gray-100'}`}>
               <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
               <p className={`text-base font-bold ${ok === true ? 'text-emerald-700' : ok === false ? 'text-amber-700' : 'text-gray-800'}`}>{value}</p>
@@ -375,12 +399,13 @@ export default async function AnaliseAdmin({
         taxaConversao={taxaConversao}
       />
 
-      {/* ── Top raquetes recomendadas ── */}
+      {/* ── Recomendações ── */}
       {topRaquetes.length > 0 && (
         <section>
-          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-            Top raquetes recomendadas <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+            Recomendações <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
           </h2>
+          <p className="text-[11px] text-gray-400 mb-3">Fonte: <code className="font-mono">recommendation_events</code> · 1 linha por raquete sugerida pelo modelo</p>
           <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
             <table className="w-full border-collapse text-xs">
               <thead className="bg-gray-50 text-gray-400 uppercase">
@@ -512,7 +537,7 @@ export default async function AnaliseAdmin({
             <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Conversa</span>
             <div className="flex flex-col gap-1 text-gray-500">
               <p>Uma chamada de API ao Claude (<code>custo_brl &gt; 0</code>). Uma sessão de quiz pode gerar 1–N conversas conforme o usuário continua interagindo. O contador de <strong>Turnos</strong> no painel = total de linhas com custo &gt; 0 por sessão.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>conversations</code> · hoje a média foi de 1,2 turnos/sessão (maioria resolve em 1 chamada).</p>
+              <p className="text-[11px] text-gray-400">Tabela: <code>conversations</code> · 1 linha por chamada de API. Turnos médios tipicamente entre 1–3 (maioria resolve em 1 chamada).</p>
             </div>
           </div>
 
@@ -529,7 +554,7 @@ export default async function AnaliseAdmin({
           <div className="px-5 py-4 flex gap-4">
             <span className="shrink-0 w-28 font-semibold text-teal-700 pt-0.5">Clique quiz</span>
             <div className="flex flex-col gap-1 text-gray-500">
-              <p>Evento registrado pelo <strong>frontend</strong> quando o usuário clica em um botão dentro da interface do quiz. Tipos: <code className="bg-teal-50 text-teal-700 px-1 rounded">ver_na_loja</code> (afiliado), <code className="bg-blue-50 text-blue-700 px-1 rounded">ver_analise</code> (página da raquete), <code className="bg-gray-100 px-1 rounded">nova_conversa_pos_rec</code>.</p>
+              <p>Evento registrado pelo <strong>frontend</strong> quando o usuário clica em um botão dentro da interface do quiz. Tipos: <code className="bg-gray-100 px-1 rounded text-[11px]">ver_na_loja</code> (afiliado), <code className="bg-gray-100 px-1 rounded text-[11px]">ver_analise</code> (página da raquete), <code className="bg-gray-100 px-1 rounded text-[11px]">nova_conversa_pos_rec</code>.</p>
               <p className="text-[11px] text-gray-400">Tabela: <code>feedback_events</code> · usado para calcular "Cliques Ver na loja" e "sessões que clicaram" no painel.</p>
             </div>
           </div>
@@ -544,7 +569,7 @@ export default async function AnaliseAdmin({
           </div>
 
           {/* Diferença */}
-          <div className="px-5 py-4 bg-amber-50/50 rounded-b-xl">
+          <div className="px-5 py-4 bg-gray-100 rounded-b-xl">
             <p className="font-semibold text-gray-700 mb-1.5">Diferença entre as duas fontes de clique</p>
             <div className="text-gray-500 flex flex-col gap-1">
               <p>Um clique vindo do quiz aparece em <strong>ambas</strong> as tabelas: <code>feedback_events</code> (botão pressionado) + <code>link_clicks</code> (passou pelo redirect). Um clique direto (usuário vai à página da raquete sem quiz) aparece <strong>só em <code>link_clicks</code></strong> — sem <code>session_id</code> na conversa.</p>
