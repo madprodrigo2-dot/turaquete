@@ -24,6 +24,10 @@ const WARN_AT       = 20
 const BUDGET_CHIPS = ['Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000', 'Tanto faz / me mostra opções']
 const LEVEL_CHIPS  = ['Iniciante', 'Intermediário', 'Avançado']
 
+function isGATestMode(): boolean {
+  try { return document.cookie.split(';').some(c => c.trim() === 'turaquete_test_mode=1') } catch { return false }
+}
+
 function detectContextChips(text: string): string[] | null {
   const t = text.toLowerCase()
   if (t.includes('?') && (
@@ -276,6 +280,9 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     try {
       const apiMessages = updated.map(({ role, content }) => ({ role, content }))
       const isFirstMessage = !baseMessages.some(m => m.role === 'user')
+    if (isFirstMessage && !isGATestMode()) {
+      try { sendGAEvent({ event: 'quiz_start' }) } catch {}
+    }
       const reqBody: Record<string, unknown> = { messages: apiMessages, sessionId }
       // Post-rec context: send shown IDs and shown brands across ALL rec turns so
       // "Outra marca" never re-offers a brand that was already shown in any turn.
@@ -363,6 +370,15 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
           if (isFirstRec) {
             firstRecShownRef.current = true
             turnosAteRecRef.current = updated.filter(m => m.role === 'user').length
+            if (!isGATestMode()) {
+              try {
+                sendGAEvent({
+                  event: 'recomendacao_mostrada',
+                  confianca: pendingDebugRef.current?.confidenceInfo?.score ?? null,
+                  rodadas: turnosAteRecRef.current,
+                })
+              } catch {}
+            }
           }
           setMessages([...updated, {
             role: 'assistant', content: partialText,
