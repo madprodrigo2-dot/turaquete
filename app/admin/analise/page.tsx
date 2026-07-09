@@ -250,10 +250,10 @@ export default async function AnaliseAdmin({
       insights.push({ level: 'info', text: `"${topIntent.intencao_detectada}" é a intenção #1 (${pct(topIntent.total, totalInt)} das conversas). Vale priorizar esse fluxo no copy e starters.` })
     }
     if (taxaRec !== null) {
-      insights.push({ level: taxaRec >= 0.5 ? 'ok' : 'warn', text: `${pct(sessionsWithRec.length, totalConv)} das conversas chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — verificar abandono ou dificuldade de qualificação.' : ''}` })
+      insights.push({ level: taxaRec >= 0.5 ? 'ok' : 'warn', text: `${pct(sessionsWithRec.length, totalConv)} das sessões chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — verificar abandono ou dificuldade de qualificação.' : ''}` })
     }
     if (sessions.length >= MIN_DATA) {
-      insights.push({ level: taxaConversao >= 0.08 ? 'ok' : 'warn', text: `${pct(sessionsWithClick.length, totalConv)} clicaram em loja ou análise (${daysLabel}).${taxaConversao < 0.08 ? ' Abaixo de 8% — verificar links de afiliado.' : ''}` })
+      insights.push({ level: taxaConversao >= 0.08 ? 'ok' : 'warn', text: `${pct(sessionsWithClick.length, totalConv)} das sessões clicaram em loja ou análise (${daysLabel}).${taxaConversao < 0.08 ? ' Abaixo de 8% — verificar links de afiliado.' : ''}` })
     }
     if (avgBrl != null && avgTurns != null) {
       insights.push({ level: 'neutral', text: `Custo médio ${fmtBrl(avgBrl, 4)}/conversa · ${avgTurns.toFixed(1)} turnos/sessão (${daysLabel}).${avgTurns > 6 ? ' Muitos turnos — agente pode estar demorando para qualificar.' : ''}` })
