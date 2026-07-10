@@ -71,7 +71,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
     try {
       type W = typeof window & { gtag?: (...args: unknown[]) => void }
       if (typeof window !== 'undefined' && typeof (window as W).gtag === 'function') {
-        (window as W).gtag!('event', 'ver_analise', { racket_slug: racket.slug, source: 'lista_resultado' })
+        (window as W).gtag!('event', 'ver_analise', { racket_slug: racket.slug, origem: 'lista_resultado' })
       }
     } catch { /* never block navigation */ }
   }

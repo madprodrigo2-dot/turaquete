@@ -18,12 +18,13 @@ function gaClientId(raw: string | undefined): string {
   return crypto.randomUUID()
 }
 
-// _ga_STREAM_ID cookie format: GS1.1.<session_id>.<session_number>...
+// _ga_STREAM_ID cookie format: GS1.1.<session_id>.<session_number>... or GS2.1...
 // Returns null when absent or malformed — caller omits session params in that case.
 function gaSessionInfo(raw: string | undefined): { session_id: string; session_number: number } | null {
   if (!raw) return null
   const parts = raw.split('.')
   if (parts.length < 4) return null
+  if (parts[0] !== 'GS1' && parts[0] !== 'GS2') return null
   const session_id     = parts[2]
   const session_number = parseInt(parts[3], 10)
   if (!session_id || isNaN(session_number)) return null
