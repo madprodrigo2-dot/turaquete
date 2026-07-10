@@ -470,8 +470,6 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
   const vis   = VIS[winner]
   const arq   = ARQUETIPOS[winner]
   const parts = NAME_PARTS[winner]
-  const utmUrl = `/?utm_source=quiz&utm_medium=perfil&utm_campaign=${winner}`
-
   const [isSharing, setIsSharing] = useState(false)
   const [toast, setToast]         = useState<string | null>(null)
   const blobRef                   = useRef<Blob | null>(null)
@@ -686,7 +684,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
           {/* CTA + Refazer */}
           <div className="flex flex-col gap-3 mx-auto w-full" style={{ maxWidth: '480px' }}>
             <Link
-              href={utmUrl}
+              href="/"
               onClick={() => track('quiz_cta_tury', { arquetipo: winner })}
               className="block text-center font-heading font-bold text-white text-base py-4 rounded-2xl transition-all hover:opacity-90 active:scale-[0.97]"
               style={{ background: '#FF5E3A', boxShadow: '0 8px 24px rgba(255,94,58,0.3)' }}

@@ -18,6 +18,18 @@ function gaClientId(raw: string | undefined): string {
   return crypto.randomUUID()
 }
 
+// _ga_STREAM_ID cookie format: GS1.1.<session_id>.<session_number>...
+// Returns null when absent or malformed — caller omits session params in that case.
+function gaSessionInfo(raw: string | undefined): { session_id: string; session_number: number } | null {
+  if (!raw) return null
+  const parts = raw.split('.')
+  if (parts.length < 4) return null
+  const session_id     = parts[2]
+  const session_number = parseInt(parts[3], 10)
+  if (!session_id || isNaN(session_number)) return null
+  return { session_id, session_number }
+}
+
 function summarizeReferrer(ref: string | null): string {
   if (!ref) return 'direto'
   try {
@@ -80,6 +92,7 @@ async function sendTelegramNotification(opts: {
 // Errors are swallowed — must never affect the redirect.
 async function sendGa4ClickEvent(opts: {
   clientId: string
+  sessionInfo: { session_id: string; session_number: number } | null
   slug: string
   racketName: string
   tipo: 'afiliado' | 'oficial' | 'busca'
@@ -95,6 +108,10 @@ async function sendGa4ClickEvent(opts: {
     racket_name:          opts.racketName,
     link_type:            opts.tipo,
     engagement_time_msec: 1,
+  }
+  if (opts.sessionInfo) {
+    eventParams.session_id     = opts.sessionInfo.session_id
+    eventParams.session_number = opts.sessionInfo.session_number
   }
   if (opts.price) {
     eventParams.value    = opts.price
@@ -176,7 +193,10 @@ export default async function IrPage({
     return
   }
 
-  const clientId = gaClientId(cookieStore.get('_ga')?.value)
+  const clientId   = gaClientId(cookieStore.get('_ga')?.value)
+  // Derive _ga_STREAM_ID cookie name from measurement ID (e.g. G-ABC123 → _ga_ABC123)
+  const streamCookieName = process.env.NEXT_PUBLIC_GA_ID?.replace(/^G-/, '_ga_') ?? null
+  const sessionInfo = gaSessionInfo(streamCookieName ? cookieStore.get(streamCookieName)?.value : undefined)
 
   const price = racket.price ? Number(racket.price) : null
 
@@ -198,6 +218,7 @@ export default async function IrPage({
     !isTest
       ? sendGa4ClickEvent({
           clientId,
+          sessionInfo,
           slug,
           racketName: racket.name,
           tipo,
