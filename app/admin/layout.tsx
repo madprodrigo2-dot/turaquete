@@ -1,8 +1,13 @@
 import { signOut } from '@/auth'
 import { headers, cookies } from 'next/headers'
+import type { Metadata } from 'next'
 import AdminNav from './AdminNav'
 import AdminShell from './AdminShell'
 import AdminTestToggle from '@/components/AdminTestToggle'
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 const buildLabel = process.env.NEXT_PUBLIC_BUILD_LABEL ?? null
 
