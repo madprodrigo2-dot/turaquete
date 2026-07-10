@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (rackets.length < 2) return { title: 'Comparar Raquetes | Turaquete' }
   return {
     title: `${rackets[0].name} vs ${rackets[1].name} | Turaquete`,
-    description: `Compare ${rackets[0].name} e ${rackets[1].name}: pontuacoes, especificacoes e precos.`,
+    description: `Compare ${rackets[0].name} e ${rackets[1].name}: pontuações, especificações e preços lado a lado.`,
     alternates: { canonical: `${SITE_URL}/comparar/${par}` },
   }
 }
