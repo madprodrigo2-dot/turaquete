@@ -12,9 +12,10 @@ interface Props {
   affiliateUrl: string | null
   sourceUrl: string | null
   fallbackUrl: string | null
+  searchFallbackActive?: boolean
 }
 
-export default function AfiliadoRow({ id, name, brandName, price, publicada, isActive, affiliateUrl, sourceUrl, fallbackUrl }: Props) {
+export default function AfiliadoRow({ id, name, brandName, price, publicada, isActive, affiliateUrl, sourceUrl, fallbackUrl, searchFallbackActive = false }: Props) {
   const [url, setUrl] = useState(affiliateUrl ?? '')
   const [status, setStatus] = useState<null | 'saving' | 'ok' | string>(null)
   const [hasAffiliate, setHasAffiliate] = useState(!!affiliateUrl)
@@ -51,12 +52,15 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
     }
   }
 
+  const isFallback = !hasAffiliate && searchFallbackActive
   const tipoPill = isInativo
     ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">🔍 busca ML</span>
     : !hasAffiliate
-      ? sourceUrl
-        ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">🔗 oficial</span>
-        : <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-500">⚠ sem link</span>
+      ? isFallback
+        ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">🔍 busca ML</span>
+        : sourceUrl
+          ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">🔗 oficial</span>
+          : <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-500">⚠ sem link</span>
       : !hasTag
         ? <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">⚠ sem tag</span>
         : <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-teal-50 text-teal-700">💰 afiliado</span>
@@ -117,6 +121,12 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
           <p className="text-[10px] text-red-500 mt-1 font-medium">
             🔴 Anúncio indisponível — cliques vão para:{' '}
             <a href={fallbackUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-red-700 break-all">{fallbackUrl}</a>
+          </p>
+        )}
+        {!isInativo && isFallback && fallbackUrl && (
+          <p className="text-[10px] text-blue-500 mt-1 font-medium">
+            🔍 Sem afiliado curado — cliques vão para:{' '}
+            <a href={fallbackUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-700 break-all">{fallbackUrl}</a>
           </p>
         )}
         {mlSemTag && (

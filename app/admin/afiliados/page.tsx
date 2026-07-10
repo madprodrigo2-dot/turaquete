@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { getSupabase } from '@/lib/supabase'
-import { buildMlSearchUrl } from '@/lib/ml-search'
+import { buildMlSearchUrl, SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import AfiliadoTable, { type RowData } from './AfiliadoTable'
 
 export const dynamic = 'force-dynamic'
@@ -64,7 +64,7 @@ export default async function AfiliadosPage() {
       is_active:     r.is_active,
       affiliate_url: r.affiliate_url,
       source_url:    r.source_url,
-      fallbackUrl:   r.is_active === false && r.affiliate_url
+      fallbackUrl:   (r.is_active === false && r.affiliate_url) || (!r.affiliate_url && SEARCH_FALLBACK_UNCOVERED)
         ? buildMlSearchUrl({ name: r.name, brands: brand ? { name: brand.name } : null })
         : null,
     }
@@ -107,7 +107,7 @@ export default async function AfiliadosPage() {
       </div>
 
       {/* Table with filters + sort — all client-side */}
-      <AfiliadoTable rows={rows} brands={brandOptions} />
+      <AfiliadoTable rows={rows} brands={brandOptions} searchFallbackActive={SEARCH_FALLBACK_UNCOVERED} />
 
     </div>
   )

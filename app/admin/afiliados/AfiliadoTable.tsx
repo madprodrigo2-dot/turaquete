@@ -32,13 +32,17 @@ const TIPO_ORDER: Record<FilterKey, number> = {
   inativos: 0, sem_tag: 1, sem_link: 2, source: 3, afiliado: 4, all: 5,
 }
 
-const FILTER_LABELS: Record<FilterKey, string> = {
+const FILTER_LABELS_DEFAULT: Record<FilterKey, string> = {
   all:      'Todas',
   afiliado: '💰 Afiliado',
   inativos: '🔍 Inativos',
   sem_tag:  '⚠ Sem tag',
   source:   '🔗 Só source',
   sem_link: '❌ Sem link',
+}
+const FILTER_LABELS_FALLBACK: Record<FilterKey, string> = {
+  ...FILTER_LABELS_DEFAULT,
+  source: '🔍 Busca ML (fallback)',
 }
 
 const FILTER_STYLES: Record<FilterKey, { active: string; inactive: string }> = {
@@ -55,7 +59,7 @@ function SortIcon({ col, current, dir }: { col: SortCol; current: SortCol; dir: 
   return <span className="text-teal-600 ml-1">{dir === 'asc' ? '↑' : '↓'}</span>
 }
 
-export default function AfiliadoTable({ rows, brands }: { rows: RowData[]; brands: { slug: string; name: string }[] }) {
+export default function AfiliadoTable({ rows, brands, searchFallbackActive = false }: { rows: RowData[]; brands: { slug: string; name: string }[]; searchFallbackActive?: boolean }) {
   const [q, setQ]             = useState('')
   const [filter, setFilter]   = useState<FilterKey>('all')
   const [brand, setBrand]     = useState('')
@@ -118,6 +122,7 @@ export default function AfiliadoTable({ rows, brands }: { rows: RowData[]; brand
           const count = counts[f]
           if (f !== 'all' && f !== 'afiliado' && count === 0) return null
           const styles = FILTER_STYLES[f]
+          const labels = searchFallbackActive ? FILTER_LABELS_FALLBACK : FILTER_LABELS_DEFAULT
           return (
             <button
               key={f}
@@ -126,7 +131,7 @@ export default function AfiliadoTable({ rows, brands }: { rows: RowData[]; brand
                 filter === f ? styles.active : styles.inactive
               }`}
             >
-              {FILTER_LABELS[f]}{f !== 'all' ? ` (${count})` : ` (${count})`}
+              {labels[f]}{f !== 'all' ? ` (${count})` : ` (${count})`}
             </button>
           )
         })}
@@ -200,6 +205,7 @@ export default function AfiliadoTable({ rows, brands }: { rows: RowData[]; brand
                 affiliateUrl={r.affiliate_url}
                 sourceUrl={r.source_url}
                 fallbackUrl={r.fallbackUrl}
+                searchFallbackActive={searchFallbackActive}
               />
             ))}
             {displayed.length === 0 && (
