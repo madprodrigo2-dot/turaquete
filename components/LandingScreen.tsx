@@ -685,7 +685,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
   const showBottomCta = showHeaderCta && !mainCtaVisible
 
   const handleHeaderCta = () => {
-    sendGAEvent({ event: 'chat_iniciado', source: 'header_sticky' })
+    sendGAEvent({ event: 'chat_iniciado', origem: 'header_sticky' })
     onStart()
   }
 
