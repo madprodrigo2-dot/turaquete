@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { listarRaquetas, type RacketWithInsights } from '@/lib/recommend'
 import ComparePicker from '@/components/ComparePicker'
 import SiteNav from '@/components/SiteNav'
+import { SITE_URL } from '@/lib/site'
 
 export const revalidate = 300
 
@@ -34,6 +35,7 @@ function computePopularPairs(rackets: RacketWithInsights[]) {
 export const metadata: Metadata = {
   title: 'Comparar Raquetes de Beach Tennis | Turaquete',
   description: 'Compare raquetes de beach tennis lado a lado. Veja pontuacoes, especificacoes e precos para escolher a melhor opcao para o seu jogo.',
+  alternates: { canonical: `${SITE_URL}/comparar` },
 }
 
 export default async function CompararPage({

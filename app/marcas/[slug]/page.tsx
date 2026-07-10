@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
+import { SITE_URL } from '@/lib/site'
 import RacketImageTile from '@/components/RacketImageTile'
 import { derivarNivel } from '@/lib/nivel'
 import SiteNav from '@/components/SiteNav'
@@ -150,7 +151,11 @@ export async function generateMetadata(
   const { brand } = result
   const title = `${brand.name} — Raquetes de Beach Tennis | Turaquete`
   const description = `Conheça todas as raquetes ${brand.name} disponíveis. Especificações reais, avaliação e onde comprar cada modelo.`
-  return { title, description }
+  return {
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/marcas/${slug}` },
+  }
 }
 
 // ── Flag SVGs ─────────────────────────────────────────────────────────────────

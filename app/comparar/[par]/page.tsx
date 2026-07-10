@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getRaquetasPorSlug } from '@/lib/recommend'
 import CompareView from '@/components/CompareView'
+import { SITE_URL } from '@/lib/site'
 
 export const revalidate = 300
 
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${rackets[0].name} vs ${rackets[1].name} | Turaquete`,
     description: `Compare ${rackets[0].name} e ${rackets[1].name}: pontuacoes, especificacoes e precos.`,
+    alternates: { canonical: `${SITE_URL}/comparar/${par}` },
   }
 }
 
