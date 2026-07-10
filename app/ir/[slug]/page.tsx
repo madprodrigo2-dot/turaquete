@@ -1,6 +1,11 @@
 import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
+import type { Metadata } from 'next'
 import { getRaquetaPorSlug } from '@/lib/recommend'
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 import { buildMlSearchUrl, SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { headers } from 'next/headers'
