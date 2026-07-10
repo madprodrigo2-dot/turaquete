@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
 import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
+import { SITE_URL } from '@/lib/site'
 import BuyButton from '@/components/BuyButton'
 import SiteNav from '@/components/SiteNav'
 import AthleteBadge from '@/components/AthleteBadge'
@@ -46,7 +47,9 @@ export async function generateMetadata(
     openGraph: {
       title,
       description,
-      ...(racket.image_url && { images: [racket.image_url] }),
+      ...(racket.image_url && {
+        images: [racket.image_url.startsWith('http') ? racket.image_url : `${SITE_URL}${racket.image_url}`],
+      }),
       locale: 'pt_BR',
       type: 'website',
     },
@@ -114,7 +117,9 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
     '@type': 'Product',
     name: racket.name,
     ...(ins?.perfil_resumo && { description: ins.perfil_resumo }),
-    ...(racket.image_url && { image: racket.image_url }),
+    ...(racket.image_url && {
+      image: racket.image_url.startsWith('http') ? racket.image_url : `${SITE_URL}${racket.image_url}`,
+    }),
     ...(racket.brands?.name && { brand: { '@type': 'Brand', name: racket.brands.name } }),
     ...(racket.price && buyUrl && {
       offers: {
