@@ -1,3 +1,5 @@
+import { getSweetSpotCategory } from './sweetSpot'
+
 type Tecnologia = { nome: string; tipo: string }
 
 export interface MotorInput {
@@ -199,8 +201,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const saida_de_bola: 'fácil' | 'média' | 'exigente' =
     delta >= 2 ? 'fácil' : delta <= -2 ? 'exigente' : 'média'
 
-  const sweet_spot: 'grande' | 'médio' | 'pequeno' =
-    forgiveness >= 7 ? 'grande' : forgiveness >= 5 ? 'médio' : 'pequeno'
+  const sweet_spot = getSweetSpotCategory(forgiveness)!
 
   return { spin, comfort, stability, power, control, maneuverability, forgiveness, saida_de_bola, sweet_spot }
 }

@@ -1,4 +1,5 @@
 import { RacketWithInsights } from '@/lib/recommend'
+import { getSweetSpotLabel, getSweetSpotChipClass } from '@/lib/sweetSpot'
 
 interface Props {
   racket: RacketWithInsights
@@ -13,11 +14,8 @@ export default function RacketKeyStats({ racket }: Props) {
   const saidaDeBola = saidaDeBolaRaw === 'rascunho_pendente' ? undefined : saidaDeBolaRaw
   const power = ins.power ?? 0
 
-  const sweetSpotRaw = extra.sweet_spot as 'grande' | 'médio' | 'pequeno' | undefined
-  const sweetSpotLabel = sweetSpotRaw === 'grande' ? 'maior (perdoa mais os erros)'
-    : sweetSpotRaw === 'médio' ? 'médio (equilibrado)'
-    : sweetSpotRaw === 'pequeno' ? 'menor (exige mais precisão)'
-    : null
+  // specs_extra.sweet_spot deprecated — derivado em runtime de ins.forgiveness
+  const sweetSpotLabel = getSweetSpotLabel(ins.forgiveness)
 
   if (!saidaDeBola && !sweetSpotLabel) return null
 
@@ -27,11 +25,7 @@ export default function RacketKeyStats({ racket }: Props) {
     ? 'bg-amber-50 text-amber-700 border-amber-200'
     : 'bg-gray-100 text-gray-600 border-gray-200'
 
-  const sweetSpotChipClass = sweetSpotRaw === 'grande'
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    : sweetSpotRaw === 'pequeno'
-    ? 'bg-amber-50 text-amber-700 border-amber-200'
-    : 'bg-gray-100 text-gray-600 border-gray-200'
+  const sweetSpotChipClass = getSweetSpotChipClass(ins.forgiveness)
 
   return (
     <div className="flex flex-col gap-2">
