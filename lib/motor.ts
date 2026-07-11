@@ -292,9 +292,7 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
   const comfortFinal = Math.min(10, Math.max(1, comfRaw))
 
   const textura = texturaScore(input.superficie, hasSpinTech)
-  const spinFurosScore = furos == null ? 5 : furos <= 20 ? 2 : furos <= 28 ? 4 : furos <= 32 ? 5 : furos <= 36 ? 6 : furos <= 40 ? 7 : 8
-  const spinEspScore = esp == null ? 5 : esp <= 20 ? 4 : esp <= 22 ? 5 : 6
-  const spinFinal = Math.round(0.7 * textura + 0.15 * spinFurosScore + 0.15 * spinEspScore)
+  const spinFinal = textura
 
   const fmt = (n: number) => n > 0 ? `+${n}` : `${n}`
 
@@ -349,9 +347,7 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
     ],
     spin: [
       { label: `textura (${input.superficie ?? '?'})`, value: textura, isBase: true, note: hasSpinTech ? 'com spin tech' : 'sem spin tech' },
-      { label: `furos (${furos ?? '?'}) ×0.15`, value: fmt(Math.round(spinFurosScore * 0.15 * 10) / 10) },
-      { label: `esp (${esp ?? '?'}mm) ×0.15`, value: fmt(Math.round(spinEspScore * 0.15 * 10) / 10) },
-      { label: 'resultado (0.7×textura + 0.15×furos + 0.15×esp)', value: spinFinal, isFinal: true },
+      { label: 'resultado', value: spinFinal, isFinal: true },
     ],
   }
 }
