@@ -226,8 +226,8 @@ async function genPublicada(): Promise<string> {
   let note  = ' _(requer `SUPABASE_URL` + `SUPABASE_ANON_KEY` em `.env.local`)_'
 
   if (env.SUPABASE_URL && env.SUPABASE_ANON_KEY) {
+    const sb = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { auth: { persistSession: false } })
     try {
-      const sb = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, { auth: { persistSession: false } })
       const { count: n, error } = await sb
         .from('rackets')
         .select('*', { count: 'exact', head: true })
@@ -235,6 +235,11 @@ async function genPublicada(): Promise<string> {
       if (!error && n != null) { count = `${n}`; note = '' }
       else if (error)           { note = ` _(erro DB: ${error.message})_` }
     } catch (e) { note = ` _(erro: ${(e as Error).message})_` }
+    finally {
+      // Fechar handles do cliente antes de retornar, para que process.exitCode
+      // possa drenar o event loop sem disparar UV_HANDLE_CLOSING no Windows.
+      sb.realtime.disconnect()
+    }
   }
 
   return [
@@ -291,7 +296,8 @@ async function main() {
     if (stale.length > 0) {
       console.error(`\n${stale.length} seção(ões) desatualizada(s): ${stale.join(', ')}`)
       console.error('Execute `tsx scripts/gen-mapa.ts` para atualizar.')
-      process.exit(1)
+      process.exitCode = 1
+      return  // deixa o event loop drenar; não dispara UV_HANDLE_CLOSING
     }
     console.log('\n✓ Mapa atualizado — nenhuma divergência detectada.')
     return
@@ -305,4 +311,4 @@ async function main() {
   }
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+main().catch(e => { console.error(e); process.exitCode = 2 })
