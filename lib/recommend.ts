@@ -334,14 +334,12 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   }
 
   // Deterministic scorer — ranks by profile weights (turaquete-matriz-pesos.md Level 2)
-  const BRAND_BOOST = 1.5
+  // Reservado para desempate entre raquetes equivalentes. Não conectar como boost sobre match_score: viola neutralidade. Ver decisão de produto.
+  const BRAND_BOOST = 1.5 // eslint-disable-line @typescript-eslint/no-unused-vars
   const TECH_PREF_BOOST = 1.5
   const scored = results
     .map(r => {
       const base = scoreRacket(r, filtros)
-      const preferred = filtros.marca_preferida
-        ? r.brands?.name?.toLowerCase() === filtros.marca_preferida.toLowerCase()
-        : false
       let techBoost = 0
       if (filtros.pref_carbono) {
         const face = (r.face_material || '').toLowerCase()
@@ -371,7 +369,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
         )
         if (matches) techBoost += TECH_PREF_BOOST
       }
-      return { ...r, match_score: base + (preferred ? BRAND_BOOST : 0) + techBoost }
+      return { ...r, match_score: base + techBoost }
     })
     .sort((a, b) => b.match_score - a.match_score)
   filterTrace.push({ filtro: 'scorer (ranking por pesos)', antes: results.length, depois: scored.length, relaxado: false, note: 'sem eliminação, apenas ordenação' })
@@ -379,7 +377,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     const ndaMarca = scored.filter(r => r.brands?.name?.toLowerCase() === filtros.marca_preferida!.toLowerCase()).length
     const topNaoE = scored.length > 0 && scored[0].brands?.name?.toLowerCase() !== filtros.marca_preferida.toLowerCase()
     filterTrace.push({
-      filtro: `marca preferida "${filtros.marca_preferida}" (+${BRAND_BOOST} pts boost)`,
+      filtro: `marca preferida "${filtros.marca_preferida}" (sem boost — apenas registro)`,
       depois: scored.length,
       relaxado: false,
       note: `${ndaMarca} raquete(s) da marca no pool; top candidata ${topNaoE ? 'NÃO é' : 'é'} da marca preferida`,
