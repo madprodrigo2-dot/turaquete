@@ -113,7 +113,7 @@ describe('INVARIANTE #3: orçamento aberto → nenhuma raquete é removida por p
 
 // ── INVARIANTE #4: Preferência de marca é honesta, não exclusiva ────────────
 
-describe('INVARIANTE #4: marca preferida boost (+1.5) não esconde alternativas melhores', () => {
+describe('INVARIANTE #4: marca preferida não afeta ranking — score puro decide', () => {
   test('raquete de outra marca mas com score muito maior ainda aparece nos resultados', async () => {
     const preferredBrand = makeRacket('Preferida A', {
       brands: { name: 'Adidas', slug: 'adidas' },
@@ -139,10 +139,9 @@ describe('INVARIANTE #4: marca preferida boost (+1.5) não esconde alternativas 
     expect(raquetes).toHaveLength(2)
   })
 
-  test('marca preferida com score suficiente (base + 1.5) supera concorrente', async () => {
-    // Adidas: base ~6.0. Com boost 1.5 → ~7.5
-    // Head:   base ~7.0. Sem boost → 7.0
-    // Adidas preferred deve ficar em #1
+  test('marca_preferida não altera ranking: raquete com score maior vence mesmo sem ser a preferida', async () => {
+    // BRAND_BOOST preservado mas inativo (decisão de produto, ROJO-3 v0.3.838).
+    // Head tem scores maiores → deve vencer independente de marca_preferida: 'Adidas'.
     const adidas = makeRacket('Adidas X', {
       brands: { name: 'Adidas', slug: 'adidas' },
     }, {
@@ -160,7 +159,7 @@ describe('INVARIANTE #4: marca preferida boost (+1.5) não esconde alternativas 
       marca_preferida: 'Adidas',
     })
 
-    expect(raquetes[0].slug).toBe('adidas-x')
+    expect(raquetes[0].slug).toBe('head-y')
   })
 
   test('sem marca preferida: ranking é só por score (sem boost)', async () => {

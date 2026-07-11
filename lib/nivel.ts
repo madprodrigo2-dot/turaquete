@@ -1,7 +1,9 @@
 import { RacketWithInsights } from './recommend'
 
-// nivel_sugerido (DB) é a fonte primária — já auditado e alinhado com derivarNivel formula.
-// A fórmula abaixo serve só como fallback para raquetes sem nivel_sugerido (rascunho/sem insights).
+// Função de EXIBIÇÃO — retorna o label público da raquete ("Pra quem: Iniciante/...").
+// nivel_sugerido (DB) é a fonte primária; fórmula abaixo serve apenas como fallback.
+// NÃO deve ser alinhada ao portão de filtragem isAvancadaParaFiltro (recommend.ts):
+// são perguntas distintas — etiqueta de exibição vs gate de proteção do pool.
 export function derivarNivel(
   racket: RacketWithInsights
 ): 'iniciante' | 'intermediario' | 'avancado' | null {

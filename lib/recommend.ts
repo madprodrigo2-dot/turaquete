@@ -227,13 +227,16 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     }
   }
 
-  // Nivel ceiling filter — asymmetric teto: users can receive rackets BELOW their level,
-  // but NOT above. Iniciante/intermediário are protected from expert rackets.
-  // Avançado sees the full catalog (including iniciante-tagged comfort rackets for injuries).
-  // Not applied for name/athlete lookups (user asked for a specific model by name).
+  // Portão de filtragem: protege iniciantes e intermediários de raquetes avançadas.
+  // Teto assimétrico — um usuário pode receber raquetes ABAIXO do seu nível, nunca acima.
+  // Avançado vê o catálogo completo. Não aplicado para buscas por nome/atleta.
   //
-  // Inline version of derivarNivel() — avoids circular import with lib/nivel.ts.
-  const isNivelAvancado = (r: RacketWithInsights): boolean => {
+  // DISTINTO de derivarNivel() em lib/nivel.ts — são perguntas diferentes por design:
+  //   derivarNivel        → "que label exibir publicamente?" (usa nivel_sugerido do DB)
+  //   isAvancadaParaFiltro → "bloquear esta raquete para não-avançados?" (usa scores)
+  // Os thresholds divergem intencionalmente: p>=8 ou c>=9 aqui vs p>=7 ou c>=7 lá.
+  // Mais permissivo = mais raquetes chegam ao iniciante; a etiqueta de exibição não muda.
+  const isAvancadaParaFiltro = (r: RacketWithInsights): boolean => {
     const ins = r.racket_insights
     if (!ins) return false
     const f = ins.forgiveness, p = ins.power, c = ins.control, co = ins.comfort
@@ -252,7 +255,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
         const ins = r.racket_insights
         if (!ins) return true  // no insights → keep (unknown is not confirmed harmful)
         if (ins.forgiveness != null && ins.forgiveness <= 5) return false
-        return !isNivelAvancado(r)
+        return !isAvancadaParaFiltro(r)
       })
       filterTrace.push({
         filtro: 'teto de nível: iniciante (exclui avancado + forgiveness ≤ 5)',
@@ -264,7 +267,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     } else if (filtros.nivel === 'intermediario') {
       // Exclude avancado only — borderline forgiveness 4-5 intermediario stays (intermediary
       // players can handle some demanding rackets; no forgiveness floor here).
-      results = results.filter(r => !isNivelAvancado(r))
+      results = results.filter(r => !isAvancadaParaFiltro(r))
       filterTrace.push({
         filtro: 'teto de nível: intermediario (exclui avancado)',
         antes: before,
