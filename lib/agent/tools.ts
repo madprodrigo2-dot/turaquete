@@ -48,6 +48,10 @@ export const agentTools: Anthropic.Tool[] = [
           type: 'boolean',
           description: 'Jogador tem dor ou histórico de problema no ombro',
         },
+        punho_sensivel: {
+          type: 'boolean',
+          description: 'Jogador tem dor no punho ou outro local do braço que não seja cotovelo nem ombro',
+        },
         frequencia_alta: {
           type: 'boolean',
           description: 'Joga 4+ vezes por semana — sobe conforto uma prioridade',
