@@ -5,7 +5,10 @@ import { getSupabaseAdmin } from './supabase'
 export async function getRecsCount(): Promise<number> {
   try {
     const { data } = await getSupabaseAdmin()
-      .rpc('admin_cost_by_session', { days_back: 3650 })
+      .rpc('admin_cost_by_session', {
+        cutoff_at: new Date(Date.now() - 3650 * 86_400_000).toISOString(),
+        p_include_test: false,
+      })
     const sessions = (data || []) as { had_rec: boolean }[]
     return sessions.filter(s => s.had_rec).length
   } catch {
