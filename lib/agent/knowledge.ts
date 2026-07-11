@@ -30,7 +30,7 @@ O miolo da raquete; define toque, saída de bola, conforto e potência.
 ### 5. Espessura (perfil)
 - Fina (19-20mm) → mais controle, sensibilidade e toque na bola; resposta rápida.
 - Média (21-22mm) → equilíbrio entre potência, controle e conforto; versátil.
-- Grossa (23-24mm) → mais potência e estabilidade; golpes mais pesados e maior tolerância no impacto.
+- Grossa (23-24mm) → mais potência e estabilidade; golpes mais pesados e maior absorção no impacto.
 
 ### 6. Furos
 Reduzem a resistência do ar (swing mais rápido), melhoram a manobrabilidade e influenciam o sweet spot.
@@ -50,14 +50,14 @@ Aumentam o atrito com a bola → mais efeito (spin), controle e durabilidade.
 
 ### 9. Sweet spot
 A região da face onde a bola responde melhor: mais potência, precisão e conforto, menos vibração.
-- Cabeça redonda → sweet spot maior e mais central: mais tolerância e controle; ideal para consistência e para quem está evoluindo.
+- Cabeça redonda → sweet spot maior e mais central: sweet spot mais generoso e controle; ideal para consistência e para quem está evoluindo.
 - Cabeça diamante/lágrima → sweet spot menor e mais alto: mais potência concentrada; ideal para ataque e jogadores experientes.
 
 ### 10. Como tudo se conecta
 Nenhum fator decide sozinho: peso + balance + material + EVA + espessura trabalham juntos. O perfil de uma raquete é o conjunto. Por isso a Turaquete avalia cada raquete em seis dimensões: POTÊNCIA, CONTROLE, CONFORTO, MANUSEIO, SPIN e ESTABILIDADE.
 
 ## Mapeamentos rápidos (perfil do jogador → características)
-- Iniciante → fibra de vidro ou carbono 3K, EVA soft/médio, leve, cabeça redonda, equilibrado. Prioridade: conforto + tolerância.
+- Iniciante → fibra de vidro ou carbono 3K, EVA soft/médio, leve, cabeça redonda, equilibrado. Prioridade: conforto + sweet spot generoso.
 - Dor no braço (cotovelo/ombro/punho) → leve, EVA soft, coração aberto, kevlar ou fibra flexível, balance no cabo. Nunca prometer cura; sugerir profissional se a dor persiste.
 - Jogo de defesa → leve, manuseio alto, controle, espessura fina/média, cabeça redonda.
 - Jogo de ataque/potência → mais peso ou balance na cabeça, carbono 12K/18K, EVA médio/hard, espessura grossa, diamante/lágrima.

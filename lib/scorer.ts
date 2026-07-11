@@ -87,7 +87,7 @@ export function calcular_faixa_ideal(p: FittingProfile): FaixaIdeal {
       // Absolute override — lightest safe range, never head-heavy
       peso_min = 315; peso_max = 320
       balance_preferido = 'medio_ou_cabo'
-      prioridades = ['conforto', 'sweet spot generoso', 'tolerância']
+      prioridades = ['conforto', 'sweet spot generoso']
     } else if (p.idade >= 50) {
       // Absolute override — comfort range regardless of level
       peso_min = 315; peso_max = 325
@@ -332,7 +332,7 @@ export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaId
       }
       const prev = { peso_min, peso_max, b: balance_preferido }
       peso_min = 315; peso_max = 320; balance_preferido = 'medio_ou_cabo'
-      prioridades = ['conforto', 'sweet spot generoso', 'tolerância']
+      prioridades = ['conforto', 'sweet spot generoso']
       steps.push({ label: '+ idade ≥65 (override absoluto)', result: { peso_min, peso_max, balance: balance_preferido }, note: `${prev.peso_min}–${prev.peso_max}g, ${prev.b} → 315–320g, medio_ou_cabo`, isOverride: true })
     } else if (p.idade >= 50) {
       const prev = { peso_min, peso_max, b: balance_preferido }
