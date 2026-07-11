@@ -48,8 +48,11 @@ brand-raw/
 
 # scripts e backups one-shot locais
 backups/
-scripts/
 tmp/
+# Scripts TypeScript permanentes são rastreados; bloqueia apenas extensões de migração/debug
+scripts/*.mjs
+scripts/*.sh
+scripts/*.js
 
 # relatórios gerados localmente
 QA_REPORT.md
