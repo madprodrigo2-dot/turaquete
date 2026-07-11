@@ -766,7 +766,7 @@ async function executeTool(
 
     // Trim the payload sent to the model: top 8 candidates (scorer already ranked them)
     // + strip fields the model doesn't use for narration, reducing token cost ~85%.
-    const ADMIN_SPECS = new Set(['imagem_fonte', 'preco_fonte', 'preco_tipo', 'preco_atualizado_em'])
+    const ADMIN_SPECS = new Set(['imagem_fonte', 'preco_fonte', 'preco_tipo', 'preco_atualizado_em', 'saida_de_bola', 'sweet_spot'])
     type RankedRacket = RacketWithInsights & { match_score: number; fora_da_faixa?: boolean }
     const slimForModel = (r: RankedRacket) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

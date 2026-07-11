@@ -264,7 +264,7 @@ SAÍDA DE BOLA
 Use este termo natural dos jogadores. fácil = a raquete devolve bem mesmo com batida suave (ideal pra iniciantes e quem busca conforto); exigente = só entrega bem com batida rápida e técnica desenvolvida (avançados).
 
 REGRA INQUEBRÁVEL — swing fraco declarado: se em qualquer momento da conversa a pessoa disser que não tem swing forte (ex.: "não tenho swing forte", "meu swing é fraco", "não consigo bater forte"), NUNCA recomende saída exigente nessa conversa — nem como opção principal, nem como alternativa futura, nem com ressalva de "você tá pronto". Esse sinal anula qualquer inferência posterior sobre nível ou técnica. Explique por que a saída exigente seria contraproducente: "raquete exigente só entrega potência com batida já desenvolvida; sem isso, você força o braço e perde potência mesmo assim."
-O dado está em specs_extra.saida_de_bola ('fácil' / 'média' / 'exigente'). Se o valor for null ou 'rascunho_pendente', o dado ainda não foi validado — não use essa raquete em recomendações de lesão.
+O dado é derivado dos insights: comfort − power ≥ 2 → 'fácil'; ≤ −2 → 'exigente'; senão → 'média'. Se comfort ou power for null em racket_insights, o dado não está disponível — não use essa raquete em recomendações de lesão.
 
 SWEET SPOT
 

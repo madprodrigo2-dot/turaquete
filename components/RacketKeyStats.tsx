@@ -1,5 +1,6 @@
 import { RacketWithInsights } from '@/lib/recommend'
 import { getSweetSpotCopy, getSweetSpotChipClass } from '@/lib/sweetSpot'
+import { getSaidaDeBola } from '@/lib/saidaBola'
 
 interface Props {
   racket: RacketWithInsights
@@ -9,9 +10,8 @@ export default function RacketKeyStats({ racket }: Props) {
   const ins = racket.racket_insights
   if (!ins) return null
 
-  const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
-  const saidaDeBolaRaw = extra.saida_de_bola as string | undefined
-  const saidaDeBola = saidaDeBolaRaw === 'rascunho_pendente' ? undefined : saidaDeBolaRaw
+  // specs_extra.saida_de_bola deprecated — derivado em runtime de ins.comfort − ins.power
+  const saidaDeBola = getSaidaDeBola(ins.comfort, ins.power)
   const power = ins.power ?? 0
 
   // specs_extra.sweet_spot deprecated — derivado em runtime de ins.forgiveness

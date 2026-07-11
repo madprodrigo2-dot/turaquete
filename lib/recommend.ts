@@ -1,5 +1,6 @@
 import { getSupabase } from './supabase'
 import { scoreRacket } from './scorer'
+import { getSaidaDeBola } from './saidaBola'
 import type { FilterStep } from './debug-types'
 
 export interface RacketFilters {
@@ -303,7 +304,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
       if (!ins) return false
       if (ins.elbow_friendly === true) return true
       if (ins.elbow_friendly === false) return false
-      const saida = r.specs_extra?.saida_de_bola as string | undefined
+      const saida = getSaidaDeBola(ins.comfort, ins.power)
       return (ins.comfort ?? 0) >= 8 && saida === 'fácil'
     })
     if (strict.length >= INJURY_MIN_POOL) {
@@ -315,7 +316,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
         if (!ins) return false
         if (ins.elbow_friendly === false) return false
         if (ins.elbow_friendly === true) return true
-        const saida = r.specs_extra?.saida_de_bola as string | undefined
+        const saida = getSaidaDeBola(ins.comfort, ins.power)
         return ins.comfort == null || (ins.comfort >= 7 && saida !== 'exigente')
       })
       if (relaxed.length >= 1) {
