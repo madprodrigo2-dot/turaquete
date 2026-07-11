@@ -7,6 +7,7 @@ import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingP
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, LESAO_LOCAL_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 import { SWEET_SPOT_HIGHLIGHT, SWEET_SPOT_COMPARISON } from '../sweetSpot'
+import { classifyCore } from '../motor'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -1026,11 +1027,10 @@ async function executeTool(
             return effectiveFilters.pref_carbono === '3k' ? m3k : effectiveFilters.pref_carbono === '12k' ? m12k : m18k
           }
           if (effectiveFilters.pref_eva) {
-            const core = (r.core || '').toLowerCase()
-            const isSS = core.includes('supersoft') || core.includes('extra soft') || core.includes('extrasoft') || core.includes('branco') || core.includes('white') || core === 'eva 10' || core === 'eva 13'
-            const isSoft = !isSS && core.includes('soft')
-            const isHard = core.includes('hard') || core.includes('duro') || core.includes('high density') || core.includes('alta densidade') || core.includes('black pro')
-            return effectiveFilters.pref_eva === 'soft' ? (isSS || isSoft) : effectiveFilters.pref_eva === 'medium' ? (!isSS && !isSoft && !isHard) : isHard
+            const cc = classifyCore(r.core)
+            return effectiveFilters.pref_eva === 'soft'   ? (cc === 'SOFT' || cc === 'SUPERSOFT')
+                 : effectiveFilters.pref_eva === 'medium' ? cc === 'MEDIUM'
+                 : cc === 'HARD'
           }
           if (effectiveFilters.pref_espessura) {
             const esp = (r.specs_extra?.espessura_mm as number | null | undefined) ?? null

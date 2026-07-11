@@ -1,6 +1,7 @@
 import { getSupabase } from './supabase'
 import { scoreRacket } from './scorer'
 import { getSaidaDeBola } from './saidaBola'
+import { classifyCore } from './motor'
 import type { FilterStep } from './debug-types'
 
 export interface RacketFilters {
@@ -358,11 +359,10 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
         if (matches) techBoost += TECH_PREF_BOOST
       }
       if (filtros.pref_eva) {
-        const core = (r.core || '').toLowerCase()
-        const isSS = core.includes('supersoft') || core.includes('extra soft') || core.includes('extrasoft') || core.includes('branco') || core.includes('white') || core === 'eva 10' || core === 'eva 13'
-        const isSoft = !isSS && core.includes('soft')
-        const isHard = core.includes('hard') || core.includes('duro') || core.includes('high density') || core.includes('alta densidade') || core.includes('black pro')
-        const matches = filtros.pref_eva === 'soft' ? (isSS || isSoft) : filtros.pref_eva === 'medium' ? (!isSS && !isSoft && !isHard) : isHard
+        const cc = classifyCore(r.core)
+        const matches = filtros.pref_eva === 'soft'   ? (cc === 'SOFT' || cc === 'SUPERSOFT')
+                      : filtros.pref_eva === 'medium' ? cc === 'MEDIUM'
+                      : cc === 'HARD'
         if (matches) techBoost += TECH_PREF_BOOST
       }
       if (filtros.pref_espessura) {
