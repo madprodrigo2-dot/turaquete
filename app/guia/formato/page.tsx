@@ -187,7 +187,7 @@ export default function FormatoPage() {
             <p className="font-semibold text-tinta text-sm mb-2">Resumo rápido: qual formato para cada perfil</p>
             <ul className="space-y-2">
               {[
-                { perfil: 'Iniciante', formato: 'Redonda', motivo: 'sweet spot amplo, maior tolerância ao erro' },
+                { perfil: 'Iniciante', formato: 'Redonda', motivo: 'sweet spot amplo, perdoa mais os erros' },
                 { perfil: 'Intermediário', formato: 'Gota ou redonda', motivo: 'equilíbrio; avalie o seu ponto fraco' },
                 { perfil: 'Avançado ofensivo', formato: 'Diamante ou gota', motivo: 'mais potência no smash' },
                 { perfil: 'Avançado defensivo', formato: 'Redonda ou gota', motivo: 'reação e controle' },

@@ -6,6 +6,7 @@ import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, getBrandChipsForPref,
 import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, LESAO_LOCAL_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
+import { SWEET_SPOT_HIGHLIGHT, SWEET_SPOT_COMPARISON } from '../sweetSpot'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -405,7 +406,7 @@ function razoesDiferenciadas(
     dim === 'power' ? (estilo === 'ofensivo' ? 'A mais agressiva das três' : 'A de mais potência entre as três') :
     dim === 'control' ? 'A de mais controle e precisão' :
     dim === 'comfort' ? 'A mais confortável das três' :
-    dim === 'forgiveness' ? 'A de sweet spot mais amplo' :
+    dim === 'forgiveness' ? SWEET_SPOT_COMPARISON :
     dim === 'stability' ? 'A mais estável das três' :
     dim === 'maneuverability' ? 'A mais ágil das três' :
     `A de mais ${DIM_PT_LABEL[dim]}`
@@ -415,7 +416,7 @@ function razoesDiferenciadas(
     dim === 'power' ? (estilo === 'ofensivo' ? 'Potente e agressiva' : 'Alta potência') :
     dim === 'control' ? 'Controle e precisão elevados' :
     dim === 'comfort' ? 'Confortável e suave de usar' :
-    dim === 'forgiveness' ? 'Sweet spot generoso' :
+    dim === 'forgiveness' ? SWEET_SPOT_HIGHLIGHT :
     dim === 'stability' ? 'Alta estabilidade' :
     dim === 'maneuverability' ? 'Ágil e fácil de manobrar' :
     `Bom nível de ${DIM_PT_LABEL[dim]}`
