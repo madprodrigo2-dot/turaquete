@@ -1,4 +1,12 @@
 import { getSweetSpotCategory } from './sweetSpot'
+import {
+  type FaceGrade, type CoreClass,
+  FACE_POWER, CORE_POWER,
+  CORE_CTRL, FACE_CTRL,
+  FACE_STAB,
+  FACE_FORG, CORE_FORG,
+  CORE_COMFORT, FACE_COMFORT,
+} from './motorTables'
 
 type Tecnologia = { nome: string; tipo: string }
 
@@ -33,10 +41,6 @@ export type MotorDim = (typeof MOTOR_DIMS)[number]
 
 // ── Classificação de materiais ────────────────────────────────────────────────
 
-type FaceGrade =
-  | 'VIDRO' | 'HYBRID_VIDRO' | 'KEVLAR_PURE' | 'KEVLAR_CARBON'
-  | 'CARBON_3K' | 'CARBON_3K_METAL' | 'CARBON_6K' | 'CARBON_6K_15K' | 'CARBON_24K' | 'CARBON_18K'
-
 export function classifyFace(face: string | null | undefined): FaceGrade {
   const f = (face || '').toLowerCase()
   // HYBRID_VIDRO antes de VIDRO — "Carbono + Fibra de Vidro" contém "fibra de vidro"
@@ -55,8 +59,6 @@ export function classifyFace(face: string | null | undefined): FaceGrade {
   ) return 'CARBON_3K_METAL'
   return 'CARBON_3K'
 }
-
-type CoreClass = 'SUPERSOFT' | 'SOFT' | 'MEDIUM' | 'HARD'
 
 export function classifyCore(core: string | null | undefined): CoreClass {
   const c = (core || '').toLowerCase()
@@ -84,14 +86,6 @@ function texturaScore(superficie: string | null | undefined, hasSpinTech: boolea
   if (s.includes('levemente')) return hasSpinTech ? 7 : 5
   if (s.includes('áspera') || s.includes('aspera') || s.includes('quartzo')) return 7
   return 5
-}
-
-const FACE_STAB: Partial<Record<FaceGrade, number>> = {
-  VIDRO: -1, HYBRID_VIDRO: -1,
-  KEVLAR_PURE: -1, KEVLAR_CARBON: 0,
-  CARBON_3K: 0, CARBON_3K_METAL: 1,
-  CARBON_6K: 1, CARBON_6K_15K: 1,
-  CARBON_18K: 1, CARBON_24K: 1,
 }
 
 // ── Motor principal ───────────────────────────────────────────────────────────
@@ -122,14 +116,6 @@ export function calcularMotor(input: MotorInput): MotorResult {
   ))
 
   // Power — face é o driver dominante; core duro acrescenta, supersoft absorve
-  const FACE_POWER: Record<FaceGrade, number> = {
-    VIDRO: 4, HYBRID_VIDRO: 4,
-    KEVLAR_PURE: 5, CARBON_3K: 5,
-    KEVLAR_CARBON: 6, CARBON_3K_METAL: 6, CARBON_6K: 6,
-    CARBON_6K_15K: 7,
-    CARBON_24K: 8, CARBON_18K: 8,
-  }
-  const CORE_POWER: Record<CoreClass, number> = { SUPERSOFT: -1, SOFT: -1, MEDIUM: 0, HARD: +1 }
   let power = FACE_POWER[faceGrade]
   if (bal.includes('pesada para a cabeça')) power += 1
   power += CORE_POWER[coreClass]
@@ -137,12 +123,6 @@ export function calcularMotor(input: MotorInput): MotorResult {
 
   // Control — núcleo macio = mais dwell time/perdão (mais controle); rígido = rebote rápido (menos controle)
   // Face flexível (3K, 6K) = mais controle; face rígida (18K/24K) = potência, não controle
-  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
-  const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
-    CARBON_3K: +1,
-    VIDRO: +1, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: +1,
-    // 6K/12K/15K/16K/18K/24K/METAL: 0 (rígidos → potência, não controle)
-  }
   let control = 4
   control += CORE_CTRL[coreClass]
   control += FACE_CTRL[faceGrade] ?? 0
@@ -164,14 +144,6 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const maneuverability = Math.min(10, Math.max(1, man))
 
   // Forgiveness — face grade + core softness + redonda(+1) + espessura
-  // VIDRO +2 (era +3): fibra de vidro é forgiving mas não ao ponto de dominar o ranking de iniciante
-  // HYBRID_VIDRO +1 (era +2): mantém gradiente abaixo do vidro puro
-  const FACE_FORG: Record<FaceGrade, number> = {
-    VIDRO: +2, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: 0,
-    CARBON_3K: 0, CARBON_3K_METAL: 0, CARBON_6K: 0, CARBON_6K_15K: 0,
-    CARBON_24K: -1, CARBON_18K: -1,
-  }
-  const CORE_FORG: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
   let forg = 4
   forg += FACE_FORG[faceGrade]
   forg += CORE_FORG[coreClass]
@@ -183,11 +155,6 @@ export function calcularMotor(input: MotorInput): MotorResult {
   const forgiveness = Math.min(10, Math.max(1, forg))
 
   // Comfort — núcleo é o driver principal; antivib é bônus encima
-  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +1, SOFT: +1, MEDIUM: 0, HARD: -2 }
-  const FACE_COMFORT: Partial<Record<FaceGrade, number>> = {
-    VIDRO: +1, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: +1,
-    CARBON_6K_15K: -1, CARBON_18K: -1, CARBON_24K: -1,
-  }
   let comfort = 5
   comfort += CORE_COMFORT[coreClass]
   comfort += Math.min(antivibCount, 2)
@@ -235,21 +202,10 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
   const wg    = input.weight_g ?? null
   const bal   = (input.balance || '').toLowerCase()
 
-  const FACE_POWER: Record<FaceGrade, number> = {
-    VIDRO: 4, HYBRID_VIDRO: 4, KEVLAR_PURE: 5, CARBON_3K: 5,
-    KEVLAR_CARBON: 6, CARBON_3K_METAL: 6, CARBON_6K: 6, CARBON_6K_15K: 7,
-    CARBON_24K: 8, CARBON_18K: 8,
-  }
-  const CORE_POWER: Record<CoreClass, number> = { SUPERSOFT: -1, SOFT: -1, MEDIUM: 0, HARD: +1 }
   const balBonus = bal.includes('pesada para a cabeça') ? 1 : 0
   const powerRaw = FACE_POWER[faceGrade] + balBonus + CORE_POWER[coreClass]
   const powerFinal = Math.min(10, Math.max(1, powerRaw))
 
-  const CORE_CTRL: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
-  const FACE_CTRL: Partial<Record<FaceGrade, number>> = {
-    CARBON_3K: +1,
-    VIDRO: +1, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: +1,
-  }
   const ctrlEsp = esp == null ? 0 : esp <= 20 ? 2 : esp === 21 ? 1 : esp >= 23 ? -2 : 0
   const ctrlFuros = furos != null && furos >= 42 ? -1 : furos != null && furos <= 20 ? 1 : 0
   const ctrlPeso = wg != null && wg > 340 ? -1 : 0
@@ -268,23 +224,12 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
   const manRaw = 7 + manEsp + manPeso + manFuros
   const maneuverabilityFinal = Math.min(10, Math.max(1, manRaw))
 
-  const FACE_FORG: Record<FaceGrade, number> = {
-    VIDRO: +2, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: 0,
-    CARBON_3K: 0, CARBON_3K_METAL: 0, CARBON_6K: 0, CARBON_6K_15K: 0,
-    CARBON_24K: -1, CARBON_18K: -1,
-  }
-  const CORE_FORG: Record<CoreClass, number> = { SUPERSOFT: +2, SOFT: +1, MEDIUM: 0, HARD: -1 }
   const forgEsp = esp != null && esp >= 22 ? 1 : esp != null && esp <= 20 ? -1 : 0
   let forgRaw = 4 + FACE_FORG[faceGrade] + CORE_FORG[coreClass] + 1 + forgEsp
   const forgCapped = (faceGrade === 'CARBON_18K' || faceGrade === 'CARBON_24K') && forgRaw > 7
   if (forgCapped) forgRaw = 7
   const forgivenessFinal = Math.min(10, Math.max(1, forgRaw))
 
-  const CORE_COMFORT: Record<CoreClass, number> = { SUPERSOFT: +1, SOFT: +1, MEDIUM: 0, HARD: -2 }
-  const FACE_COMFORT: Partial<Record<FaceGrade, number>> = {
-    VIDRO: +1, HYBRID_VIDRO: +1, KEVLAR_PURE: +1, KEVLAR_CARBON: +1,
-    CARBON_6K_15K: -1, CARBON_18K: -1, CARBON_24K: -1,
-  }
   const comfEsp = esp != null && esp <= 20 ? -1 : esp != null && esp >= 23 ? 1 : 0
   const comfPeso = wg != null && wg >= 340 ? -1 : 0
   const comfAntivib = Math.min(antivibCount, 2)
