@@ -97,17 +97,18 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
 }
 
 // ── Score tag (derived from racket_insights scores) ───────────────────────────
+// spin excluído: peso=0 em todos os perfis de baseWeights() (lib/scorer.ts) —
+// incluir spin aqui contradiria o recomendador. Não reintegrar sem alterar o scorer.
 
 const SCORE_TAGS: Record<string, string> = {
   control:         'Ótima pra controle',
   power:           'Pra quem ataca',
-  spin:            'Pra quem busca efeito',
   stability:       'Estável e firme',
   maneuverability: 'Leve e ágil',
   comfort:         'Confortável',
   forgiveness:     'Fácil de jogar',
 }
-const SCORE_PRIORITY = ['control','power','spin','stability','maneuverability','comfort','forgiveness'] as const
+const SCORE_PRIORITY = ['control','power','stability','maneuverability','comfort','forgiveness'] as const
 
 function deriveScoreTag(ins: RacketWithInsights['racket_insights']): string | null {
   if (!ins) return null
