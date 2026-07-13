@@ -45,11 +45,12 @@ export async function GET(req: NextRequest) {
 
   const { from, to, label } = brtRange()
 
-  const [convsRes, recsRes, clicksRes, afiliRes] = await Promise.all([
+  const [convsRes, recsRes, clicksRes, afiliRes, ipRes] = await Promise.all([
     sb.from('conversations').select('session_id, custo_brl').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('recommendation_events').select('racket_id').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).eq('tipo', 'afiliado'),
+    sb.from('link_clicks').select('ip_hash, pais').gte('created_at', from).lt('created_at', to).eq('is_test', false).not('ip_hash', 'is', null),
   ])
 
   const convs = convsRes.data ?? []
@@ -59,6 +60,15 @@ export async function GET(req: NextRequest) {
   const totalSessoes = new Set(convs.map(c => c.session_id)).size
   const totalRecs = recs.length
   const custoBRL = convs.reduce((s, c) => s + (c.custo_brl ?? 0), 0)
+
+  const ipCounts: Record<string, { count: number; pais: string | null }> = {}
+  for (const row of (ipRes.data ?? [])) {
+    if (!row.ip_hash) continue
+    if (!ipCounts[row.ip_hash]) ipCounts[row.ip_hash] = { count: 0, pais: row.pais ?? null }
+    ipCounts[row.ip_hash].count++
+  }
+  const suspiciousOrigins = Object.values(ipCounts).filter(e => e.count > 10)
+  const topOrigin = suspiciousOrigins.sort((a, b) => b.count - a.count)[0] ?? null
 
   // Top rackets
   const recCounts: Record<number, number> = {}
@@ -85,6 +95,7 @@ export async function GET(req: NextRequest) {
       `💸 Custo API: <b>R$ ${custoBRL.toFixed(2)}</b>`,
     ].join('\n') : '(sem atividade ontem)',
     topIds.length > 0 ? `\n🏆 Mais recomendadas:\n${topLines}` : '',
+    topOrigin ? `\n⚠️ ${suspiciousOrigins.length} origem(ns) com +10 clics/dia (top: ${topOrigin.count} clics, país ${topOrigin.pais ?? '?'})` : '',
   ].filter(Boolean).join('\n')
 
   await sendTelegram(text)

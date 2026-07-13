@@ -206,6 +206,18 @@ export default async function IrPage({
 
   const price = racket.price ? Number(racket.price) : null
 
+  const rawIp = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
+             ?? hdrs.get('x-real-ip')
+             ?? null
+  const ipHash = rawIp && process.env.IP_HASH_SALT
+    ? Array.from(
+        new Uint8Array(
+          await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawIp + process.env.IP_HASH_SALT))
+        )
+      ).map(b => b.toString(16).padStart(2, '0')).join('')
+    : null
+  const pais = hdrs.get('x-vercel-ip-country') ?? null
+
   // DB insert, GA4 event and Telegram notification run concurrently
   await Promise.allSettled([
     getSupabaseAdmin()
@@ -220,6 +232,8 @@ export default async function IrPage({
         session_id: sp.s ?? null,
         referrer: hdrs.get('referer') ?? null,
         user_agent: hdrs.get('user-agent') ?? null,
+        ip_hash:    ipHash,
+        pais,
       }),
     !isTest
       ? sendGa4ClickEvent({

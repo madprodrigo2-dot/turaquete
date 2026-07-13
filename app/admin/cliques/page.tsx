@@ -12,6 +12,7 @@ interface TotalsRow  { total: number; afiliado: number; oficial: number; busca: 
 interface SlugRow    { slug: string; nome: string | null; total: number; ultimo_tipo: string | null; ultimo_url: string | null }
 interface DayRow     { day: string; total: number }
 interface ReferrerRow{ referrer: string; total: number }
+interface OrigemRow  { ip_hash: string; pais: string | null; total: number }
 
 function getAdmin() {
   return createClient(
@@ -60,17 +61,34 @@ export default async function CliquesAdmin({
 
   const sb = getAdmin()
 
-  const [totalsRes, slugsRes, daysRes, referrersRes] = await Promise.all([
+  const todayCutoff = brtCutoff(1)
+
+  const [totalsRes, slugsRes, daysRes, referrersRes, origensRawRes] = await Promise.all([
     sb.rpc('admin_click_totals',       { p_cutoff: cutoffDate, p_include_test: includeTest }),
     sb.rpc('admin_click_top_slugs',    { p_cutoff: cutoffDate, p_include_test: includeTest, p_limit: 20 }),
     sb.rpc('admin_click_by_day',       { p_include_test: includeTest }),
     sb.rpc('admin_click_top_referrers',{ p_cutoff: cutoffDate, p_include_test: includeTest }),
+    (includeTest
+      ? sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null)
+      : sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null).eq('is_test', false)
+    ),
   ])
 
   const totals    = (totalsRes.data?.[0]   ?? { total: 0, afiliado: 0, oficial: 0, busca: 0 }) as TotalsRow
   const slugs     = (slugsRes.data         ?? []) as SlugRow[]
   const days      = (daysRes.data          ?? []) as DayRow[]
   const referrers = (referrersRes.data     ?? []) as ReferrerRow[]
+
+  const origemCounts: Record<string, { count: number; pais: string | null }> = {}
+  for (const row of (origensRawRes.data ?? [])) {
+    if (!row.ip_hash) continue
+    if (!origemCounts[row.ip_hash]) origemCounts[row.ip_hash] = { count: 0, pais: row.pais ?? null }
+    origemCounts[row.ip_hash].count++
+  }
+  const origens: OrigemRow[] = Object.entries(origemCounts)
+    .filter(([, v]) => v.count >= 5)
+    .sort(([, a], [, b]) => b.count - a.count)
+    .map(([ip_hash, v]) => ({ ip_hash, pais: v.pais, total: v.count }))
 
   const maxDayCount = days.length > 0 ? Math.max(...days.map(d => d.total)) : 1
 
@@ -259,6 +277,35 @@ export default async function CliquesAdmin({
           </div>
         )}
       </section>
+
+      {/* Origens suspeitas */}
+      {origens.length > 0 && (
+        <section>
+          <h2 className="text-xs font-semibold text-amber-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+            ⚠️ Origens com 5+ clics hoje
+          </h2>
+          <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-amber-200">
+            <table className="w-full border-collapse text-xs">
+              <thead className="bg-amber-50 text-amber-700 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-2">Origem (hash)</th>
+                  <th className="text-left px-4 py-2">País</th>
+                  <th className="text-right px-4 py-2">Cliques hoje</th>
+                </tr>
+              </thead>
+              <tbody>
+                {origens.map((o, i) => (
+                  <tr key={o.ip_hash} className={`border-t border-amber-100 ${i === 0 && o.total >= 10 ? 'bg-red-50' : ''}`}>
+                    <td className="px-4 py-2.5 font-mono text-gray-500 text-[11px]">{o.ip_hash.slice(0, 16)}…</td>
+                    <td className="px-4 py-2.5 text-gray-700">{o.pais ?? '—'}</td>
+                    <td className="px-4 py-2.5 text-right font-semibold text-amber-700">{o.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Origem do trafego */}
       <section>
