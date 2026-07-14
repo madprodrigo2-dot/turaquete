@@ -109,8 +109,10 @@ function fmtDelta(curr: number, prev: number): { text: string; cls: string } {
 
 export function EvolucaoSection({ rawData }: Props) {
   const { dark } = useAdminTheme()
-  const [granularity, setGranularity] = useState<Granularity>('semana')
-  const [range, setRange]             = useState<Range>(30)
+  const [range, setRange] = useState<Range>(30)
+
+  // granularidade derivada do range: 30d → dia, 90d → semana
+  const granularity: Granularity = range <= 30 ? 'dia' : 'semana'
 
   const { points, prevTotals } = useMemo(
     () => buildChart(rawData, granularity, range),
@@ -136,23 +138,8 @@ export function EvolucaoSection({ rawData }: Props) {
     <section>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Evolucao</h2>
-        <div className="flex gap-1.5 flex-wrap">
-          {/* Granularidade */}
-          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-            {(['dia', 'semana'] as Granularity[]).map(g => (
-              <button
-                key={g}
-                onClick={() => setGranularity(g)}
-                className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  granularity === g
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {g === 'dia' ? 'Por dia' : 'Por semana'}
-              </button>
-            ))}
-          </div>
+        <div className="flex gap-1.5 flex-wrap items-center">
+          <span className="text-[11px] text-gray-400">{granularity === 'dia' ? 'Por dia' : 'Por semana'}</span>
           {/* Rango */}
           <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
             {([30, 90] as Range[]).map(r => (
