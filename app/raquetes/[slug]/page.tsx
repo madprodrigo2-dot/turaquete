@@ -304,9 +304,6 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 </Link>
               )}
 
-              <p className="text-center text-tinta/40 text-xs leading-relaxed">
-                A Turaquete pode receber comissão por compras feitas pelos links indicados, sem custo extra pra você.
-              </p>
 
             </div>{/* fim coluna direita */}
           </div>
