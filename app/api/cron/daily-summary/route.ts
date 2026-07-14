@@ -45,18 +45,28 @@ export async function GET(req: NextRequest) {
 
   const { from, to, label } = brtRange()
 
-  const [convsRes, recsRes, clicksRes, afiliRes, ipRes] = await Promise.all([
+  const [convsRes, recsRes, clicksRes, afiliRes, ipRes, externalRes] = await Promise.all([
     sb.from('conversations').select('session_id, custo_brl').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('recommendation_events').select('racket_id').gte('created_at', from).lt('created_at', to).eq('is_test', false),
-    sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false),
-    sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).eq('tipo', 'afiliado'),
+    sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).not('session_id', 'is', null),
+    sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).eq('tipo', 'afiliado').not('session_id', 'is', null),
     sb.from('link_clicks').select('ip_hash, pais').gte('created_at', from).lt('created_at', to).eq('is_test', false).not('ip_hash', 'is', null),
+    sb.from('link_clicks').select('pais').gte('created_at', from).lt('created_at', to).eq('is_test', false).is('session_id', null),
   ])
 
   const convs = convsRes.data ?? []
   const recs = recsRes.data ?? []
   const totalClicks = clicksRes.count ?? 0
   const totalAfiliado = afiliRes.count ?? 0
+
+  const externalRows = externalRes.data ?? []
+  const externalCount = externalRows.length
+  const externalPaisCounts: Record<string, number> = {}
+  for (const row of externalRows) {
+    if (row.pais) externalPaisCounts[row.pais] = (externalPaisCounts[row.pais] ?? 0) + 1
+  }
+  const topExternalPais = Object.entries(externalPaisCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
   const totalSessoes = new Set(convs.map(c => c.session_id)).size
   const totalRecs = recs.length
   const custoBRL = convs.reduce((s, c) => s + (c.custo_brl ?? 0), 0)
@@ -94,6 +104,7 @@ export async function GET(req: NextRequest) {
       `🛒 Cliques afiliado: <b>${totalAfiliado}</b>`,
       `💸 Custo API: <b>R$ ${custoBRL.toFixed(2)}</b>`,
     ].join('\n') : '(sem atividade ontem)',
+    externalCount > 0 ? `🤖 Acessos externos: <b>${externalCount}</b>${topExternalPais ? ` (top: ${topExternalPais})` : ''}` : '',
     topIds.length > 0 ? `\n🏆 Mais recomendadas:\n${topLines}` : '',
     topOrigin ? `\n⚠️ ${suspiciousOrigins.length} origem(ns) com +10 clics/dia (top: ${topOrigin.count} clics, país ${topOrigin.pais ?? '?'})` : '',
   ].filter(Boolean).join('\n')

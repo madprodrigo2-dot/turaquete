@@ -39,14 +39,15 @@ function shortenReferrer(ref: string): string {
 export default async function CliquesAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; from?: string; to?: string }>
+  searchParams: Promise<{ days?: string; from?: string; to?: string; ext?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '1', from: fromParam, to: toParam } = await searchParams
-  const cookieStore  = await cookies()
-  const includeTest  = cookieStore.get('admin_test_view')?.value === '1'
+  const { days: daysParam = '1', from: fromParam, to: toParam, ext: extParam } = await searchParams
+  const cookieStore    = await cookies()
+  const includeTest    = cookieStore.get('admin_test_view')?.value === '1'
+  const includeExternal = extParam === '1'
 
   let cutoffDate: string
   let daysLabel: string
@@ -63,15 +64,20 @@ export default async function CliquesAdmin({
 
   const todayCutoff = brtCutoff(1)
 
+  const sessionOnly = !includeExternal
+
   const [totalsRes, slugsRes, daysRes, referrersRes, origensRawRes] = await Promise.all([
-    sb.rpc('admin_click_totals',       { p_cutoff: cutoffDate, p_include_test: includeTest }),
-    sb.rpc('admin_click_top_slugs',    { p_cutoff: cutoffDate, p_include_test: includeTest, p_limit: 20 }),
-    sb.rpc('admin_click_by_day',       { p_include_test: includeTest }),
-    sb.rpc('admin_click_top_referrers',{ p_cutoff: cutoffDate, p_include_test: includeTest }),
-    (includeTest
-      ? sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null)
-      : sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null).eq('is_test', false)
-    ),
+    sb.rpc('admin_click_totals',       { p_cutoff: cutoffDate, p_include_test: includeTest, p_session_only: sessionOnly }),
+    sb.rpc('admin_click_top_slugs',    { p_cutoff: cutoffDate, p_include_test: includeTest, p_limit: 20, p_session_only: sessionOnly }),
+    sb.rpc('admin_click_by_day',       { p_include_test: includeTest, p_session_only: sessionOnly }),
+    sb.rpc('admin_click_top_referrers',{ p_cutoff: cutoffDate, p_include_test: includeTest, p_session_only: sessionOnly }),
+    (() => {
+      const base = sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null)
+      if (!includeTest && !includeExternal) return base.eq('is_test', false).not('session_id', 'is', null)
+      if (!includeTest) return base.eq('is_test', false)
+      if (!includeExternal) return base.not('session_id', 'is', null)
+      return base
+    })(),
   ])
 
   const totals    = (totalsRes.data?.[0]   ?? { total: 0, afiliado: 0, oficial: 0, busca: 0 }) as TotalsRow
@@ -101,9 +107,21 @@ export default async function CliquesAdmin({
           <h1 className="text-sm font-semibold text-gray-800">Cliques em comprar</h1>
           <p className="text-[11px] text-gray-400 mt-0.5">{daysLabel}</p>
         </div>
-        <Suspense fallback={null}>
-          <AdminPeriodFilter current={fromParam ? '' : daysParam} currentFrom={fromParam} currentTo={toParam} />
-        </Suspense>
+        <div className="flex items-center gap-2">
+          <a
+            href={includeExternal ? '/admin/cliques' : '/admin/cliques?ext=1'}
+            className={`text-[11px] px-2 py-1 rounded border transition-colors ${
+              includeExternal
+                ? 'bg-amber-50 text-amber-700 border-amber-300'
+                : 'text-gray-400 border-gray-200 hover:text-gray-600'
+            }`}
+          >
+            {includeExternal ? '⚠ incluindo externos' : '+ externos'}
+          </a>
+          <Suspense fallback={null}>
+            <AdminPeriodFilter current={fromParam ? '' : daysParam} currentFrom={fromParam} currentTo={toParam} />
+          </Suspense>
+        </div>
       </div>
 
       {/* Cards principais */}

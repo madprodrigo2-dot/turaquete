@@ -235,7 +235,7 @@ export default async function IrPage({
         ip_hash:    ipHash,
         pais,
       }),
-    !isTest
+    !isTest && !!cookieStore.get('_ga')?.value
       ? sendGa4ClickEvent({
           clientId,
           sessionInfo,
@@ -246,7 +246,7 @@ export default async function IrPage({
           currency: racket.currency ?? 'BRL',
         })
       : Promise.resolve(),
-    !isTest
+    !isTest && !!sessionId
       ? sendTelegramNotification({
           racketName: racket.name,
           tipo,
