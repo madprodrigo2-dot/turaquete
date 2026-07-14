@@ -72,11 +72,11 @@ export default async function CliquesAdmin({
     sb.rpc('admin_click_by_day',       { p_include_test: includeTest, p_session_only: sessionOnly }),
     sb.rpc('admin_click_top_referrers',{ p_cutoff: cutoffDate, p_include_test: includeTest, p_session_only: sessionOnly }),
     (() => {
-      const base = sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null)
-      if (!includeTest && !includeExternal) return base.eq('is_test', false).not('session_id', 'is', null)
-      if (!includeTest) return base.eq('is_test', false)
-      if (!includeExternal) return base.not('session_id', 'is', null)
-      return base
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q: any = sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null)
+      if (!includeTest) q = q.eq('is_test', false)
+      if (!includeExternal) q = q.not('session_id', 'is', null)
+      return q
     })(),
   ])
 
