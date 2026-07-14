@@ -61,6 +61,7 @@ export default async function RankingPage({
     (() => {
       const q = sb.from('link_clicks')
         .select('racket_id, destination_type')
+        .not('session_id', 'is', null)
         .gte('created_at', cutoff)
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as ClickRow[])
     })(),

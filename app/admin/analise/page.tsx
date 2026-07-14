@@ -170,10 +170,12 @@ export default async function AnaliseAdmin({
           ).then(r => (r.data ?? []) as MensagemRow[])
         })(),
 
-    // link_clicks por tipo no período
+    // link_clicks por tipo no período — só cliques do site (session_id presente)
     (() => {
       let q = sb.from('link_clicks')
         .select('tipo')
+        .eq('is_test', false)
+        .not('session_id', 'is', null)
         .gte('created_at', cutoffDate)
       if (toDate) q = q.lte('created_at', toDate)
       return q.then(r => {
@@ -234,6 +236,8 @@ export default async function AnaliseAdmin({
     })(),
     sb.from('link_clicks')
       .select('created_at')
+      .eq('is_test', false)
+      .not('session_id', 'is', null)
       .in('tipo', ['afiliado', 'busca'])
       .gte('created_at', evolCutoff)
       .then(r => (r.data ?? []) as { created_at: string }[]),
@@ -471,7 +475,7 @@ export default async function AnaliseAdmin({
           Saúde do negócio <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
         </h2>
         <p className="text-[11px] text-gray-400 mb-3">
-          Cliques de <code className="font-mono">link_clicks</code> — todos os cliques (com e sem quiz) · fonte de verdade para métricas de dinheiro
+          Cliques de <code className="font-mono">link_clicks</code> — só cliques com session_id (do site, sem bots) · fonte de verdade para métricas de dinheiro
         </p>
 
         {/* Cliques por tipo */}
@@ -513,7 +517,7 @@ export default async function AnaliseAdmin({
               value: custoPorClique != null ? fmtBrl(custoPorClique, 4) : '—',
               sub: `${lcMonetizavel} clique${lcMonetizavel !== 1 ? 's' : ''} afiliado + busca (link_clicks)`,
               ok: custoPorClique != null ? custoPorClique < 0.5 : null,
-              tip: 'Custo total da API ÷ cliques monetizáveis (afiliado + busca ML) de link_clicks. Inclui cliques com e sem quiz. Verde < R$ 0,50/clique.',
+              tip: 'Custo total da API ÷ cliques monetizáveis (afiliado + busca ML) de link_clicks. Só cliques com session_id (sem externos/bots). Verde < R$ 0,50/clique.',
             },
             {
               label: 'Sessões com quiz',
