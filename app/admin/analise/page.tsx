@@ -47,7 +47,7 @@ export default async function AnaliseAdmin({
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '7', starter: starterParam, from: fromParam, to: toParam } = await searchParams
+  const { days: daysParam = '1', starter: starterParam, from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 
