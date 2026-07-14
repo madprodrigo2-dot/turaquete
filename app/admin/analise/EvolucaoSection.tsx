@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
   Tooltip, Legend, CartesianGrid,
@@ -8,7 +8,6 @@ import {
 import { useAdminTheme } from '../AdminShell'
 
 type Granularity = 'dia' | 'semana'
-type Range = 30 | 90
 
 export interface EvolucaoPoint {
   date: string  // YYYY-MM-DD em BRT
@@ -19,6 +18,8 @@ export interface EvolucaoPoint {
 
 interface Props {
   rawData: EvolucaoPoint[]  // 180 dias pré-agregados pelo servidor
+  daysBack: number          // do filtro de período da página
+  daysLabel: string
 }
 
 const SERIES = [
@@ -55,7 +56,6 @@ function buildChart(rawData: EvolucaoPoint[], granularity: Granularity, rangeDay
 
   const dataMap = new Map(rawData.map(p => [p.date, p]))
 
-  // Previous period totals
   const prevTotals = zero()
   let d = startPrev
   while (d < startCurr) {
@@ -107,16 +107,16 @@ function fmtDelta(curr: number, prev: number): { text: string; cls: string } {
   }
 }
 
-export function EvolucaoSection({ rawData }: Props) {
+export function EvolucaoSection({ rawData, daysBack, daysLabel }: Props) {
   const { dark } = useAdminTheme()
-  const [range, setRange] = useState<Range>(30)
 
-  // granularidade derivada do range: 30d → dia, 90d → semana
-  const granularity: Granularity = range <= 30 ? 'dia' : 'semana'
+  // Capado a 180 dias (limite do servidor); granularidade auto-derivada
+  const effectiveDays: number = Math.min(daysBack, 180)
+  const granularity: Granularity = effectiveDays <= 60 ? 'dia' : 'semana'
 
   const { points, prevTotals } = useMemo(
-    () => buildChart(rawData, granularity, range),
-    [rawData, granularity, range],
+    () => buildChart(rawData, granularity, effectiveDays),
+    [rawData, granularity, effectiveDays],
   )
 
   const currTotals = useMemo(() =>
@@ -138,25 +138,9 @@ export function EvolucaoSection({ rawData }: Props) {
     <section>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Evolucao</h2>
-        <div className="flex gap-1.5 flex-wrap items-center">
-          <span className="text-[11px] text-gray-400">{granularity === 'dia' ? 'Por dia' : 'Por semana'}</span>
-          {/* Rango */}
-          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-            {([30, 90] as Range[]).map(r => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-colors ${
-                  range === r
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {r} dias
-              </button>
-            ))}
-          </div>
-        </div>
+        <span className="text-[11px] text-gray-400">
+          {daysLabel} · {granularity === 'dia' ? 'por dia' : 'por semana'}
+        </span>
       </div>
 
       {/* Grafico */}
