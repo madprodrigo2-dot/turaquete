@@ -778,8 +778,12 @@ async function executeTool(
       // elbow_friendly/shoulder_friendly omitidos: o filtro de lesão já rodou antes de chegar aqui.
       // Expor esses flags faz o modelo excluir raquetes boas para usuários SEM lesão.
       const { observations: _obs, summary: _sum, good_for_beginners: _gb, good_for_intermediate: _gi, good_for_advanced: _ga, elbow_friendly: _ef, shoulder_friendly: _sf, ...insClean } = (racket_insights ?? {}) as Record<string, unknown>
+      const display_name = (base.nome_base && base.model_year && (base.racket_family_count ?? 0) >= 2)
+        ? `${base.nome_base} ${base.model_year}`
+        : (base.nome_base ?? base.name)
       return {
         ...base,
+        display_name,
         ...(Object.keys(specsClean).length > 0 ? { specs_extra: specsClean } : {}),
         ...(Object.keys(insClean).length > 0 ? { racket_insights: insClean } : {}),
       }

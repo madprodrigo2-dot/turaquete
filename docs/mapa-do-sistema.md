@@ -1,7 +1,7 @@
 # Mapa do Sistema — Turaquete
 _Referência para o dono do produto. PT-BR simples, baseado no código real._
 <!-- AUTO-GEN:cabecera -->
-_Versão: 0.3.843 · Hash: b3d6ae7 · Gerado em: 2026-07-11_
+_Versão: 0.3.856 · Hash: 9822533 · Gerado em: 2026-07-14_
 <!-- /AUTO-GEN:cabecera -->
 
 ---
@@ -253,8 +253,8 @@ _Extraídos dinamicamente do código real. `arquivo:linha` é calculado ao gerar
 | Máximo de turnos sem recomendar | `4 turnos` | `lib/agent/confidence.ts:33` |
 | Peso mínimo inviolável (CATALOGO_FLOOR) | `315g` | `lib/scorer.ts:33` |
 | Janela mínima de faixa de peso | `15g (MIN_WINDOW)` | `lib/scorer.ts:125` |
-| Forgiveness floor para pool de iniciante | `≤5 → excluída do pool` | `lib/recommend.ts:258` |
-| isAvancadaParaFiltro (gate de filtragem) | `f≤4 | (f≤6 & (p≥8|c≥9)) | (f≤7 & p≥9)` | `lib/recommend.ts:245` |
+| Forgiveness floor para pool de iniciante | `≤5 → excluída do pool` | `lib/recommend.ts:260` |
+| isAvancadaParaFiltro (gate de filtragem) | `f≤4 | (f≤6 & (p≥8|c≥9)) | (f≤7 & p≥9)` | `lib/recommend.ts:247` |
 | derivarNivel (exibição — distinto do gate) | `f≤4 | (f≤6 & (p≥7|c≥7)) | (f≤7 & p≥9)` | `lib/nivel.ts:23` |
 | Sweet spot: Generoso | `forgiveness ≥7` | `lib/sweetSpot.ts:32` |
 | Sweet spot: Equilibrado | `forgiveness 5–6` | `lib/sweetSpot.ts:32` |
@@ -276,7 +276,7 @@ _Extraídos dinamicamente do código real. `arquivo:linha` é calculado ao gerar
 Controla: recomendador, catálogo, páginas, sitemap, todas as queries do código.
 Campos que NÃO controlam visibilidade: `is_active` (se modelo está no mercado), `stock`, `destaque_atleta`.
 
-**Contagem atual:** 246 raquetes publicadas
+**Contagem atual:** 249 raquetes publicadas
 
 _Fonte: lib/recommend.ts:25–29 (comentário FIELD SEMANTICS)_
 <!-- /AUTO-GEN:publicada -->

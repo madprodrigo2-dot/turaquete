@@ -34,6 +34,7 @@ const ROOT       = resolve(__dirname, '..')
 import { buscarRaquetas } from '../lib/recommend'
 import type { RacketWithInsights } from '../lib/recommend'
 import type { ArquetipoSlug } from '../lib/quiz-perfil'
+import { getDisplayName } from '../lib/displayName'
 
 // ── Archetype → profile mapping ───────────────────────────────────────────────
 // Maps each archetype to the RacketFilters that best represent its play style.
@@ -154,9 +155,7 @@ async function main() {
     console.log(`\n── ${slug.toUpperCase()} (${filtros.nivel}/${filtros.prioridade}) ──`)
     top6.forEach((item, i) => {
       const r = item.racket
-      const nameDisplay = r.model_year && !r.name.includes(String(r.model_year))
-        ? `${r.name} ${r.model_year}`
-        : r.name
+      const nameDisplay = getDisplayName(r)
       const brand = r.brands?.name ?? '?'
       const price = r.price ? `R$${r.price.toLocaleString('pt-BR')}` : 'sem preço'
       const cb    = custoBadges[i] ? ' [custo-beneficio]' : ''
@@ -167,9 +166,7 @@ async function main() {
 
     OUTPUT[slug] = top6.map((item, i) => {
       const r = item.racket
-      const nameDisplay = r.model_year && !r.name.includes(String(r.model_year))
-        ? `${r.name} ${r.model_year}`
-        : r.name
+      const nameDisplay = getDisplayName(r)
       return {
         slug:           r.slug,
         name:           nameDisplay,

@@ -80,7 +80,9 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
       const q = normalize(query.trim())
       out = out.filter(r =>
         normalize(r.name).includes(q) ||
-        normalize(r.brands?.name ?? '').includes(q)
+        normalize(r.brands?.name ?? '').includes(q) ||
+        normalize(r.nome_base ?? '').includes(q) ||
+        (r.nome_base && r.model_year ? normalize(`${r.nome_base} ${r.model_year}`).includes(q) : false)
       )
     }
 
