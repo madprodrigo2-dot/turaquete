@@ -467,7 +467,7 @@ export default async function AnaliseAdmin({
       )}
 
       {/* ══ EVOLUÇÃO ════════════════════════════════════════════════════════ */}
-      <EvolucaoSection rawData={evolRawData} daysBack={daysBack} daysLabel={daysLabel} />
+      <EvolucaoSection rawData={evolRawData} />
 
       {/* ══ SEÇÃO 1 — Saúde do negócio ══════════════════════════════════════ */}
       <section>

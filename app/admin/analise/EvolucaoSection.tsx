@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
   Tooltip, Legend, CartesianGrid,
@@ -8,6 +8,7 @@ import {
 import { useAdminTheme } from '../AdminShell'
 
 type Granularity = 'dia' | 'semana'
+type PeriodKey = '1' | '7' | '30' | '180' | 'custom'
 
 export interface EvolucaoPoint {
   date: string  // YYYY-MM-DD em BRT
@@ -18,15 +19,22 @@ export interface EvolucaoPoint {
 
 interface Props {
   rawData: EvolucaoPoint[]  // 180 dias pré-agregados pelo servidor
-  daysBack: number          // do filtro de período da página
-  daysLabel: string
 }
+
+const PERIOD_OPTIONS: { key: PeriodKey; label: string; days: number }[] = [
+  { key: '1',   label: 'Hoje',    days: 1   },
+  { key: '7',   label: '7 dias',  days: 7   },
+  { key: '30',  label: '30 dias', days: 30  },
+  { key: '180', label: 'Tudo',    days: 180 },
+]
 
 const SERIES = [
   { key: 'conversas'     as const, label: 'Conversas',        color: '#0d9488' },
   { key: 'recomendacoes' as const, label: 'Com recomendacao', color: '#7c3aed' },
   { key: 'cliques'       as const, label: 'Cliques afiliado', color: '#d97706' },
 ]
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function addDays(dateStr: string, n: number): string {
   const d = new Date(dateStr + 'T12:00:00Z')
@@ -49,38 +57,28 @@ function fmtLabel(dateStr: string): string {
 
 const zero = () => ({ conversas: 0, recomendacoes: 0, cliques: 0 })
 
-function buildChart(rawData: EvolucaoPoint[], granularity: Granularity, rangeDays: number) {
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const startCurr = addDays(todayStr, -(rangeDays - 1))
-  const startPrev = addDays(todayStr, -(rangeDays * 2 - 1))
+type Point = { label: string; conversas: number; recomendacoes: number; cliques: number }
+type Totals = { conversas: number; recomendacoes: number; cliques: number }
 
-  const dataMap = new Map(rawData.map(p => [p.date, p]))
-
-  const prevTotals = zero()
-  let d = startPrev
-  while (d < startCurr) {
-    const p = dataMap.get(d) ?? zero()
-    prevTotals.conversas     += p.conversas
-    prevTotals.recomendacoes += p.recomendacoes
-    prevTotals.cliques       += p.cliques
-    d = addDays(d, 1)
-  }
-
+function aggregateRange(
+  dataMap: Map<string, { conversas: number; recomendacoes: number; cliques: number }>,
+  startStr: string,
+  endStr: string,
+  granularity: Granularity,
+): Point[] {
   if (granularity === 'dia') {
-    const points: { label: string; conversas: number; recomendacoes: number; cliques: number }[] = []
-    let d = startCurr
-    while (d <= todayStr) {
+    const pts: Point[] = []
+    let d = startStr
+    while (d <= endStr) {
       const p = dataMap.get(d) ?? zero()
-      points.push({ label: fmtLabel(d), ...p })
+      pts.push({ label: fmtLabel(d), ...p })
       d = addDays(d, 1)
     }
-    return { points, prevTotals }
+    return pts
   }
-
-  // Semanal
-  const weekMap = new Map<string, { conversas: number; recomendacoes: number; cliques: number }>()
-  let wd = startCurr
-  while (wd <= todayStr) {
+  const weekMap = new Map<string, Totals>()
+  let wd = startStr
+  while (wd <= endStr) {
     const wk = mondayOf(wd)
     const p  = dataMap.get(wd) ?? zero()
     const ex = weekMap.get(wk) ?? zero()
@@ -91,10 +89,42 @@ function buildChart(rawData: EvolucaoPoint[], granularity: Granularity, rangeDay
     })
     wd = addDays(wd, 1)
   }
-  const points = [...weekMap.entries()]
+  return [...weekMap.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([wk, v]) => ({ label: fmtLabel(wk), ...v }))
-  return { points, prevTotals }
+}
+
+function sumRange(
+  dataMap: Map<string, Totals>,
+  startStr: string,
+  endStr: string,
+): Totals {
+  const t = zero()
+  let d = startStr
+  while (d <= endStr) {
+    const p = dataMap.get(d) ?? zero()
+    t.conversas     += p.conversas
+    t.recomendacoes += p.recomendacoes
+    t.cliques       += p.cliques
+    d = addDays(d, 1)
+  }
+  return t
+}
+
+function buildChart(
+  rawData: EvolucaoPoint[],
+  granularity: Granularity,
+  startStr: string,
+  endStr: string,
+): { points: Point[]; prevTotals: Totals } {
+  const dataMap = new Map(rawData.map(p => [p.date, p]))
+  const rangeDays = Math.round((new Date(endStr).getTime() - new Date(startStr).getTime()) / 86400000) + 1
+  const prevEnd   = addDays(startStr, -1)
+  const prevStart = addDays(prevEnd, -(rangeDays - 1))
+  return {
+    points:     aggregateRange(dataMap, startStr, endStr, granularity),
+    prevTotals: sumRange(dataMap, prevStart, prevEnd),
+  }
 }
 
 function fmtDelta(curr: number, prev: number): { text: string; cls: string } {
@@ -107,16 +137,33 @@ function fmtDelta(curr: number, prev: number): { text: string; cls: string } {
   }
 }
 
-export function EvolucaoSection({ rawData, daysBack, daysLabel }: Props) {
-  const { dark } = useAdminTheme()
+// ── Component ──────────────────────────────────────────────────────────────────
 
-  // Capado a 180 dias (limite do servidor); granularidade auto-derivada
-  const effectiveDays: number = Math.min(daysBack, 180)
-  const granularity: Granularity = effectiveDays <= 60 ? 'dia' : 'semana'
+export function EvolucaoSection({ rawData }: Props) {
+  const { dark } = useAdminTheme()
+  const [periodKey, setPeriodKey] = useState<PeriodKey>('30')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo,   setCustomTo]   = useState('')
+
+  const todayStr = new Date().toISOString().slice(0, 10)
+
+  // Derive start/end from selected period
+  const { startStr, endStr, effectiveDays } = useMemo(() => {
+    if (periodKey === 'custom') {
+      const from = customFrom || addDays(todayStr, -29)
+      const to   = customTo   || todayStr
+      const days = Math.max(1, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86400000) + 1)
+      return { startStr: from, endStr: to, effectiveDays: days }
+    }
+    const days = PERIOD_OPTIONS.find(p => p.key === periodKey)!.days
+    return { startStr: addDays(todayStr, -(days - 1)), endStr: todayStr, effectiveDays: days }
+  }, [periodKey, customFrom, customTo, todayStr])
+
+  const granularity: Granularity = effectiveDays <= 30 ? 'dia' : 'semana'
 
   const { points, prevTotals } = useMemo(
-    () => buildChart(rawData, granularity, effectiveDays),
-    [rawData, granularity, effectiveDays],
+    () => buildChart(rawData, granularity, startStr, endStr),
+    [rawData, granularity, startStr, endStr],
   )
 
   const currTotals = useMemo(() =>
@@ -136,12 +183,58 @@ export function EvolucaoSection({ rawData, daysBack, daysLabel }: Props) {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Evolucao</h2>
-        <span className="text-[11px] text-gray-400">
-          {daysLabel} · {granularity === 'dia' ? 'por dia' : 'por semana'}
-        </span>
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest">Evolucao</h2>
+          <p className="text-[11px] text-gray-400 mt-0.5">{granularity === 'dia' ? 'por dia' : 'por semana'}</p>
+        </div>
+        <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
+          {PERIOD_OPTIONS.map(p => (
+            <button
+              key={p.key}
+              onClick={() => setPeriodKey(p.key)}
+              className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-colors ${
+                periodKey === p.key
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+          <button
+            onClick={() => setPeriodKey('custom')}
+            className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-colors ${
+              periodKey === 'custom'
+                ? 'bg-white text-gray-800 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Personalizado
+          </button>
+        </div>
       </div>
+
+      {periodKey === 'custom' && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <input
+            type="date"
+            value={customFrom}
+            max={customTo || todayStr}
+            onChange={e => setCustomFrom(e.target.value)}
+            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-teal-400"
+          />
+          <span className="text-gray-400 text-xs">→</span>
+          <input
+            type="date"
+            value={customTo}
+            min={customFrom}
+            max={todayStr}
+            onChange={e => setCustomTo(e.target.value)}
+            className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-teal-400"
+          />
+        </div>
+      )}
 
       {/* Grafico */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3">
