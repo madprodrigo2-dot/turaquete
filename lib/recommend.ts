@@ -56,7 +56,9 @@ export interface RacketWithInsights {
   id: number
   name: string
   slug: string
+  nome_base: string | null
   model_year: number | null
+  racket_family_count: number | null
   weight_g: number | null
   balance: string | null
   format: string | null
@@ -94,7 +96,7 @@ function normalizeRacket(raw: unknown): RacketWithInsights {
 }
 
 const SELECT_FIELDS = `
-  id, name, slug, model_year, weight_g, balance, format,
+  id, name, slug, nome_base, model_year, racket_family_count, weight_g, balance, format,
   face_material, core, price, price_updated_at, currency, affiliate_url, source_url, image_url, technologies,
   specs_extra, publicada, is_active,
   brands ( name, slug ),
@@ -155,8 +157,8 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     : { baseName: '', year: null }
 
   if (filtros.nome) {
-    // Broad SQL pre-filter on base name (without year); TypeScript word-boundary filter follows.
-    query = query.ilike('name', `%${nomeBase}%`)
+    // Broad SQL pre-filter on name OR nome_base (without year); TypeScript word-boundary filter follows.
+    query = query.or(`name.ilike.%${nomeBase}%,nome_base.ilike.%${nomeBase}%`)
   }
 
   if (filtros.atleta) {

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { sendGAEvent } from '@next/third-parties/google'
 import { RacketWithInsights } from '@/lib/recommend'
+import { getDisplayName } from '@/lib/displayName'
 import { gerarExplicacoes } from '@/lib/explicador'
 import AthleteBadge from './AthleteBadge'
 import SpecsGrid, { buildSpecRows } from './SpecsGrid'
@@ -63,7 +64,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-4 pb-2">
           <div>
-            <p className="font-semibold text-tinta text-sm leading-snug">{racket.name}</p>
+            <p className="font-semibold text-tinta text-sm leading-snug">{getDisplayName(racket)}</p>
             {athlete
               ? <AthleteBadge athlete={athlete} variant="modal" />
               : <p className="text-tinta/50 text-xs mt-0.5">Análise completa</p>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState, useMemo, useRef } from 'react'
 import type { RacketWithInsights } from '@/lib/recommend'
+import { getDisplayName } from '@/lib/displayName'
 import RacketImageTile from './RacketImageTile'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
@@ -39,7 +40,7 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
     >
       <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
       <div className="p-3 flex flex-col gap-1 flex-1">
-        <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{racket.name}</p>
+        <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
         {nivel && <p className="text-tinta/50 text-xs">{NIVEL_LABEL[nivel] ?? nivel}</p>}
       </div>

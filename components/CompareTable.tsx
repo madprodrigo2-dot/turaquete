@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { RecommendedRacket } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
+import { getDisplayName } from '@/lib/displayName'
 
 const DIMS = [
   { key: 'power',           label: 'Potência'     },
@@ -16,14 +17,6 @@ const DIMS = [
 // coral → aqua → yellow: distinct on white and on dark bg
 const COL_COLORS = ['#FF5E3A', '#0CC0BE', '#FFC42E'] as const
 
-function shortName(name: string, modelYear: number | null): string {
-  const withYear = modelYear && !name.includes(String(modelYear))
-    ? `${name} ${modelYear}`
-    : name
-  // Max 2 words keeps it scannable in a narrow column
-  const words = withYear.split(' ')
-  return words.slice(0, 2).join(' ')
-}
 
 interface Props {
   recommendations: RecommendedRacket[]
@@ -51,7 +44,7 @@ export default function CompareTable({ recommendations }: Props) {
               key={rec.racket.id}
               onClick={() => setOpenModal(rec.racket.id)}
               className="px-1 py-2 flex flex-col items-center gap-1 hover:bg-white/10 active:bg-white/20 transition-colors min-w-0"
-              aria-label={`Ver análise: ${rec.racket.name}`}
+              aria-label={`Ver análise: ${getDisplayName(rec.racket)}`}
             >
               <span
                 className="w-2 h-2 rounded-full shrink-0"
@@ -59,7 +52,7 @@ export default function CompareTable({ recommendations }: Props) {
                 aria-hidden="true"
               />
               <span className="text-white text-[10px] font-semibold leading-tight text-center w-full truncate px-0.5">
-                {shortName(rec.racket.name, rec.racket.model_year)}
+                {getDisplayName(rec.racket).split(' ').slice(0, 2).join(' ')}
               </span>
             </button>
           ))}

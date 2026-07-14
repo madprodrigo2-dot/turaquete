@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ShieldCheck, ChartBar, Target, Lightning, ChatText, type Icon as PhosphorIcon } from '@phosphor-icons/react' // MIT license
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
+import { getDisplayName } from '@/lib/displayName'
 import { derivarNivel } from '@/lib/nivel'
 import InsightsModal from './InsightsModal'
 import RacketImageTile from './RacketImageTile'
@@ -161,7 +162,7 @@ function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
           )}
         </div>
         <div className="px-2.5 py-2 flex flex-col flex-1">
-          <p className="font-heading text-tinta text-[10px] font-semibold leading-tight line-clamp-2 min-h-[25px]">{racket.name}</p>
+          <p className="font-heading text-tinta text-[10px] font-semibold leading-tight line-clamp-2 min-h-[25px]">{getDisplayName(racket)}</p>
           {price && <p className="font-heading text-coral font-bold text-xs mt-0.5">{price}</p>}
         </div>
       </div>
@@ -249,7 +250,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
         <div className="p-3 flex flex-col gap-2 flex-1">
           <Link href={`/raquetes/${racket.slug}`}>
             <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors min-h-[33px]">
-              {racket.name}
+              {getDisplayName(racket)}
             </p>
           </Link>
           {(() => {

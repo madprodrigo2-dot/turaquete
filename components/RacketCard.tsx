@@ -6,6 +6,7 @@ import InsightsModal from './InsightsModal'
 import AthleteBadge from './AthleteBadge'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
+import { getDisplayName } from '@/lib/displayName'
 
 interface Props {
   racket: RacketWithInsights
@@ -39,9 +40,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
     ? `R$ ${racket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
     : null
 
-  const nameDisplay = racket.model_year && !racket.name.includes(String(racket.model_year))
-    ? `${racket.name} ${racket.model_year}`
-    : racket.name
+  const nameDisplay = getDisplayName(racket)
 
   const _athleteRaw = (racket.specs_extra as Record<string, unknown> | null)?.atleta
   const athlete: string | undefined = Array.isArray(_athleteRaw)

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
+import { getDisplayName } from '@/lib/displayName'
 import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { SITE_URL } from '@/lib/site'
 import BuyButton from '@/components/BuyButton'
@@ -33,10 +34,11 @@ export async function generateMetadata(
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
 
-  const title = `${racket.name} — Raquete de Beach Tennis | Turaquete`
+  const displayName = getDisplayName(racket)
+  const title = `${displayName} — Raquete de Beach Tennis | Turaquete`
   const description =
     ins?.perfil_resumo ??
-    `Especificações reais, avaliação e onde comprar a ${racket.name}.${price ? ` A partir de ${price}.` : ''}`
+    `Especificações reais, avaliação e onde comprar a ${displayName}.${price ? ` A partir de ${price}.` : ''}`
 
   return {
     title,
@@ -66,33 +68,12 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   ])
   if (!racket) notFound()
 
-  // Strip year suffixes and common qualifiers to detect same model series
-  function modelSeries(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/\b20\d{2}\b/g, '')
-      .replace(/\b(luxury|ltd|limited|pro cup|cup)\b/gi, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-  }
-  // Brand-prefixed names (Head, Adidas, Drop Shot, Kona) — skip to avoid
-  // matching all models of a brand as "same family"
-  const BRAND_FIRST_WORDS = new Set(['head', 'adidas', 'drop', 'kona'])
-  function sameFamily(a: string, b: string): boolean {
-    const sa = modelSeries(a)
-    const sb = modelSeries(b)
-    if (sa === sb) return true
-    const firstA = sa.split(' ')[0]
-    if (firstA.length < 3 || BRAND_FIRST_WORDS.has(firstA)) return false
-    return firstA === sb.split(' ')[0]
-  }
-
   const sugestoes = allRackets
     .filter(r => r.slug !== racket.slug)
     .map(r => ({
       r,
       score:
-        (sameFamily(r.name, racket.name) ? 20 : 0) +
+        (r.nome_base && r.nome_base === racket.nome_base && r.brands?.name === racket.brands?.name ? 20 : 0) +
         (r.brands?.name === racket.brands?.name ? 10 : 0) +
         (racket.price && r.price
           ? Math.abs(r.price - racket.price) / racket.price < 0.3 ? 5 : 0
@@ -115,7 +96,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   const product = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: racket.name,
+    name: getDisplayName(racket),
     ...(ins?.perfil_resumo && { description: ins.perfil_resumo }),
     ...(racket.image_url && {
       image: racket.image_url.startsWith('http') ? racket.image_url : `${SITE_URL}${racket.image_url}`,
@@ -174,7 +155,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                       <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="currentColor" />
                       <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="currentColor" />
                     </svg>
-                    <span className="text-xs text-tinta/30">{racket.name}</span>
+                    <span className="text-xs text-tinta/30">{getDisplayName(racket)}</span>
                   </div>
                 )}
               </div>
@@ -185,7 +166,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
 
               {/* Título + preço + badges */}
               <div className="flex flex-col gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold text-tinta leading-tight">{racket.name}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-tinta leading-tight">{getDisplayName(racket)}</h1>
                 {price && (
                   <div>
                     <p className="text-coral text-2xl font-bold">{price}</p>
