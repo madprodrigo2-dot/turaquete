@@ -24,7 +24,7 @@ vi.mock('@/lib/supabase', () => {
       const noop = () => chain
       Object.assign(chain, {
         from: noop, select: noop, eq: noop, order: noop,
-        gte: noop, lte: noop, ilike: noop, filter: noop,
+        gte: noop, lte: noop, ilike: noop, filter: noop, or: noop,
         limit: () => Promise.resolve({ data: mockFixtures, error: null }),
       })
       return chain
