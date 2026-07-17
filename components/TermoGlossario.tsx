@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+// WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import type { GlossarioEntry } from '@/lib/glossario'
 
