@@ -21,7 +21,7 @@ export default function BuyButton({ href, racketName, racketSlug, linkTipo, chil
       className={className}
       onClick={() => {
         track('affiliate_click', { racket: racketSlug, name: racketName, tipo: linkTipo })
-        sendGAEvent({ event: gaEvent, racket: racketSlug })
+        sendGAEvent('event', gaEvent, { racket: racketSlug })
       }}
     >
       {children}

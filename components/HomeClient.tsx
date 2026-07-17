@@ -220,13 +220,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     setMessages([{ role: 'assistant', content: OPENING_MESSAGE, suggestions: ESTILO_CHIPS }])
     setSessionId(generateId())
     try { sessionStorage.removeItem(CHAT_STORAGE_KEY) } catch {}
-    sendGAEvent({ event: 'conversa_reiniciada' })
+    sendGAEvent('event', 'conversa_reiniciada')
     setConfirmReset(false)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId])
 
   const handleStart = () => {
-    sendGAEvent({ event: 'chat_iniciado' })
+    sendGAEvent('event', 'chat_iniciado')
     history.pushState({ view: 'chat' }, '')
     setFading(true)
     setTimeout(() => {
@@ -281,7 +281,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
       const apiMessages = updated.map(({ role, content }) => ({ role, content }))
       const isFirstMessage = !baseMessages.some(m => m.role === 'user')
     if (isFirstMessage && !isGATestMode()) {
-      try { sendGAEvent({ event: 'quiz_start' }) } catch {}
+      try { sendGAEvent('event', 'quiz_start') } catch {}
     }
       const reqBody: Record<string, unknown> = { messages: apiMessages, sessionId }
       // Post-rec context: send shown IDs and shown brands across ALL rec turns so
@@ -364,7 +364,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
           const dbg = pendingDebugRef.current ?? undefined
           if (evt.intencao) {
             intencaoConvRef.current = evt.intencao
-            sendGAEvent({ event: 'intencao_detectada', intencao: evt.intencao })
+            sendGAEvent('event', 'intencao_detectada', { intencao: evt.intencao })
           }
           const isFirstRec = !!(recs && recs.length > 0 && !firstRecShownRef.current)
           if (isFirstRec) {
@@ -372,8 +372,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
             turnosAteRecRef.current = updated.filter(m => m.role === 'user').length
             if (!isGATestMode()) {
               try {
-                sendGAEvent({
-                  event: 'recomendacao_mostrada',
+                sendGAEvent('event', 'recomendacao_mostrada', {
                   confianca: pendingDebugRef.current?.confidenceInfo?.score ?? null,
                   rodadas: turnosAteRecRef.current,
                 })
@@ -391,13 +390,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
             confirmedProfile: evt.confirmedProfile ?? undefined,
           }])
           if (recs && recs.length > 0) {
-            sendGAEvent({ event: 'recomendacao_exibida', count: recs.length })
+            sendGAEvent('event', 'recomendacao_exibida', { count: recs.length })
           }
           if (isCmp && recs && recs.length > 0) {
-            sendGAEvent({ event: 'comparacao_exibida', count: recs.length })
+            sendGAEvent('event', 'comparacao_exibida', { count: recs.length })
           }
           if (diag) {
-            sendGAEvent({ event: 'diagnostico_exibido', nivel: diag.peso_min + '-' + diag.peso_max })
+            sendGAEvent('event', 'diagnostico_exibido', { nivel: diag.peso_min + '-' + diag.peso_max })
           }
           setStreamIsDone(true)
         } else if (evt.type === 'error') {

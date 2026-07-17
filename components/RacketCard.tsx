@@ -65,7 +65,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
 
   const handleOpenModal = () => {
     setModalOpen(true)
-    sendGAEvent({ event: 'analise_aberta', racket: racket.slug })
+    sendGAEvent('event', 'analise_aberta', { racket: racket.slug })
     if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_analise', racket_id: racket.id })
     try {
       type W = typeof window & { gtag?: (...args: unknown[]) => void }
@@ -168,7 +168,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => {
-                sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })
+                sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })
                 if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_na_loja', racket_id: racket.id })
               }}
               className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-[0_4px_16px_rgba(255,94,58,0.30)] active:scale-[0.98] transition-all"

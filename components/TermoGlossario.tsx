@@ -136,7 +136,7 @@ export default function TermoGlossario({ entry, children, className }: Props) {
   const handleOpen = useCallback(() => {
     if (open) { setOpen(false); return }
     setOpen(true)
-    sendGAEvent({ event: 'glossario_aberto', termo: entry.termo })
+    sendGAEvent('event', 'glossario_aberto', { termo: entry.termo })
   }, [open, entry.termo])
 
   return (

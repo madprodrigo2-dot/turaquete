@@ -112,7 +112,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               onClick={() => {
                 const next = !anatomiaOpen
                 setAnatomiaOpen(next)
-                if (next) sendGAEvent({ event: 'anatomia_aberta', racket: racket.slug })
+                if (next) sendGAEvent('event', 'anatomia_aberta', { racket: racket.slug })
               }}
             >
               <span>Anatomia da raquete</span>

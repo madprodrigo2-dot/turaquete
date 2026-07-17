@@ -141,7 +141,7 @@ function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
   return (
     <Link
       href={`/raquetes/${racket.slug}`}
-      onClick={() => sendGAEvent({ event: 'racket_atleta_aberta', slug: racket.slug })}
+      onClick={() => sendGAEvent('event', 'racket_atleta_aberta', { slug: racket.slug })}
       className="block shrink-0 w-[130px] group"
     >
       <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md transition-shadow h-full flex flex-col">
@@ -211,7 +211,7 @@ function BrandCard({ brand }: { brand: Brand }) {
     return (
       <Link
         href={`/marcas/${brand.slug}`}
-        onClick={() => sendGAEvent({ event: 'marca_aberta', slug: brand.slug })}
+        onClick={() => sendGAEvent('event', 'marca_aberta', { slug: brand.slug })}
         className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 active:scale-[0.98] active:bg-aqua/5 transition-all"
       >
         {inner}
@@ -272,7 +272,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
               href={ctaHref}
               target="_blank"
               rel={`noopener noreferrer${linkTipo === 'afiliado' ? ' sponsored' : ''}`}
-              onClick={() => sendGAEvent({ event: linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', racket: racket.slug })}
+              onClick={() => sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })}
               className="mt-auto w-full text-center border border-aqua text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:bg-aqua/20 active:scale-[0.98] transition-all leading-tight"
             >
               Ver na loja
@@ -686,7 +686,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
   const showBottomCta = showHeaderCta && !mainCtaVisible
 
   const handleHeaderCta = () => {
-    sendGAEvent({ event: 'chat_iniciado', origem: 'header_sticky' })
+    sendGAEvent('event', 'chat_iniciado', { origem: 'header_sticky' })
     onStart()
   }
 
