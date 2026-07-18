@@ -246,7 +246,7 @@ export default async function IrPage({
           currency: racket.currency ?? 'BRL',
         })
       : Promise.resolve(),
-    !isTest && !!sessionId
+    !isTest
       ? sendTelegramNotification({
           racketName: racket.name,
           tipo,
