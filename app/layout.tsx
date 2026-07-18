@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import PresenceTracker from "@/components/PresenceTracker";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import GALoader from "@/components/GALoader";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -66,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <VercelAnalytics />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
-        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        <GALoader gaId={process.env.NEXT_PUBLIC_GA_ID} />
       )}
     </html>
   );
