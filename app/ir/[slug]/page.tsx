@@ -63,7 +63,10 @@ async function sendTelegramNotification(opts: {
 }) {
   const token  = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
-  if (!token || !chatId) return
+  if (!token || !chatId) {
+    console.error('[Telegram] TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID ausente nas env vars')
+    return
+  }
 
   // Only flag as suspicious if referrer is /ir/ itself (redirect loop)
   const isSuspicious = opts.referrer?.includes('/ir/') ?? false
