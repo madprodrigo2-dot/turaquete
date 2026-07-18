@@ -13,32 +13,35 @@ export interface RowData {
   is_active: boolean | null
   affiliate_url: string | null
   source_url: string | null
+  price_updated_at: string | null
   fallbackUrl: string | null
 }
 
-type FilterKey = 'all' | 'afiliado' | 'inativos' | 'sem_tag' | 'source' | 'sem_link'
+type FilterKey = 'all' | 'afiliado' | 'inativos' | 'sem_preco' | 'sem_tag' | 'source' | 'sem_link'
 type SortCol   = 'name' | 'price' | 'tipo' | 'status'
 type SortDir   = 'asc' | 'desc'
 
 function getTipo(r: RowData): FilterKey {
-  if (r.is_active === false && r.affiliate_url)         return 'inativos'
-  if (r.affiliate_url && !r.affiliate_url.includes('matt_word')) return 'sem_tag'
-  if (r.affiliate_url)                                  return 'afiliado'
-  if (r.source_url)                                     return 'source'
+  if (r.is_active === false && r.affiliate_url)                    return 'inativos'
+  if (r.affiliate_url && !r.price_updated_at)                      return 'sem_preco'
+  if (r.affiliate_url && !r.affiliate_url.includes('matt_word'))   return 'sem_tag'
+  if (r.affiliate_url)                                             return 'afiliado'
+  if (r.source_url)                                                return 'source'
   return 'sem_link'
 }
 
 const TIPO_ORDER: Record<FilterKey, number> = {
-  inativos: 0, sem_tag: 1, sem_link: 2, source: 3, afiliado: 4, all: 5,
+  inativos: 0, sem_preco: 1, sem_tag: 2, sem_link: 3, source: 4, afiliado: 5, all: 6,
 }
 
 const FILTER_LABELS_DEFAULT: Record<FilterKey, string> = {
-  all:      'Todas',
-  afiliado: '💰 Afiliado',
-  inativos: '🔍 Inativos',
-  sem_tag:  '⚠ Sem tag',
-  source:   '🔗 Só source',
-  sem_link: '❌ Sem link',
+  all:       'Todas',
+  afiliado:  '💰 Afiliado',
+  inativos:  '🔍 Inativos',
+  sem_preco: '⏰ Sem preço',
+  sem_tag:   '⚠ Sem tag',
+  source:    '🔗 Só source',
+  sem_link:  '❌ Sem link',
 }
 const FILTER_LABELS_FALLBACK: Record<FilterKey, string> = {
   ...FILTER_LABELS_DEFAULT,
@@ -46,12 +49,13 @@ const FILTER_LABELS_FALLBACK: Record<FilterKey, string> = {
 }
 
 const FILTER_STYLES: Record<FilterKey, { active: string; inactive: string }> = {
-  all:      { active: 'bg-teal-600 text-white',    inactive: 'bg-gray-100 text-gray-600 hover:bg-gray-200' },
-  afiliado: { active: 'bg-teal-600 text-white',    inactive: 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200' },
-  inativos: { active: 'bg-amber-500 text-white',   inactive: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200' },
-  sem_tag:  { active: 'bg-orange-500 text-white',  inactive: 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200' },
-  source:   { active: 'bg-gray-500 text-white',    inactive: 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200' },
-  sem_link: { active: 'bg-red-500 text-white',     inactive: 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200' },
+  all:       { active: 'bg-teal-600 text-white',    inactive: 'bg-gray-100 text-gray-600 hover:bg-gray-200' },
+  afiliado:  { active: 'bg-teal-600 text-white',    inactive: 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200' },
+  inativos:  { active: 'bg-amber-500 text-white',   inactive: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200' },
+  sem_preco: { active: 'bg-orange-500 text-white',  inactive: 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200' },
+  sem_tag:   { active: 'bg-orange-500 text-white',  inactive: 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200' },
+  source:    { active: 'bg-gray-500 text-white',    inactive: 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200' },
+  sem_link:  { active: 'bg-red-500 text-white',     inactive: 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200' },
 }
 
 function SortIcon({ col, current, dir }: { col: SortCol; current: SortCol; dir: SortDir }) {
@@ -67,7 +71,7 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
 
   // Counts per tipo (before brand/q filter, for chips)
   const counts = useMemo(() => {
-    const c: Record<FilterKey, number> = { all: rows.length, afiliado: 0, inativos: 0, sem_tag: 0, source: 0, sem_link: 0 }
+    const c: Record<FilterKey, number> = { all: rows.length, afiliado: 0, inativos: 0, sem_preco: 0, sem_tag: 0, source: 0, sem_link: 0 }
     for (const r of rows) c[getTipo(r)]++
     return c
   }, [rows])
@@ -118,7 +122,7 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
 
       {/* Filters row */}
       <div className="flex items-center gap-2 flex-wrap">
-        {(['all', 'afiliado', 'inativos', 'sem_tag', 'source', 'sem_link'] as FilterKey[]).map(f => {
+        {(['all', 'afiliado', 'inativos', 'sem_preco', 'sem_tag', 'source', 'sem_link'] as FilterKey[]).map(f => {
           const count = counts[f]
           if (f !== 'all' && f !== 'afiliado' && count === 0) return null
           const styles = FILTER_STYLES[f]
@@ -204,6 +208,7 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
                 isActive={r.is_active}
                 affiliateUrl={r.affiliate_url}
                 sourceUrl={r.source_url}
+                priceUpdatedAt={r.price_updated_at}
                 fallbackUrl={r.fallbackUrl}
                 searchFallbackActive={searchFallbackActive}
               />

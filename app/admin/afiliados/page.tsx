@@ -16,6 +16,7 @@ interface RacketRow {
   affiliate_url: string | null
   source_url: string | null
   brand_id: number | null
+  price_updated_at: string | null
 }
 
 interface BrandRow {
@@ -35,7 +36,7 @@ export default async function AfiliadosPage() {
   const [{ data: rackets }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, price, currency, publicada, is_active, affiliate_url, source_url, brand_id')
+      .select('id, name, price, currency, publicada, is_active, affiliate_url, source_url, brand_id, price_updated_at')
       .order('name'),
     sb
       .from('brands')
@@ -51,20 +52,22 @@ export default async function AfiliadosPage() {
   const comAfiliado = rawRows.filter(r => !!r.affiliate_url).length
   const inativos    = rawRows.filter(r => r.is_active === false && !!r.affiliate_url).length
   const semLink     = rawRows.filter(r => !r.affiliate_url && !r.source_url).length
+  const semPreco    = rawRows.filter(r => !!r.affiliate_url && r.is_active !== false && !r.price_updated_at).length
   const pct         = total > 0 ? Math.round((comAfiliado / total) * 100) : 0
 
   const rows: RowData[] = rawRows.map(r => {
     const brand = brandById.get(r.brand_id ?? -1)
     return {
-      id:            r.id,
-      name:          r.name,
-      brandName:     brand?.name ?? '—',
-      price:         r.price,
-      publicada:     r.publicada,
-      is_active:     r.is_active,
-      affiliate_url: r.affiliate_url,
-      source_url:    r.source_url,
-      fallbackUrl:   (r.is_active === false && r.affiliate_url) || (!r.affiliate_url && SEARCH_FALLBACK_UNCOVERED)
+      id:               r.id,
+      name:             r.name,
+      brandName:        brand?.name ?? '—',
+      price:            r.price,
+      publicada:        r.publicada,
+      is_active:        r.is_active,
+      affiliate_url:    r.affiliate_url,
+      source_url:       r.source_url,
+      price_updated_at: r.price_updated_at,
+      fallbackUrl:      (r.is_active === false && r.affiliate_url) || (!r.affiliate_url && SEARCH_FALLBACK_UNCOVERED)
         ? buildMlSearchUrl({ name: r.name, brands: brand ? { name: brand.name } : null })
         : null,
     }
@@ -87,8 +90,9 @@ export default async function AfiliadosPage() {
         </div>
         <div className="text-right text-xs text-gray-500 space-y-0.5 pt-1">
           <div className="font-semibold text-gray-800">{comAfiliado}/{total} com afiliado ({pct}%)</div>
-          {inativos > 0 && <div className="text-amber-600">🔍 {inativos} em fallback busca ML</div>}
-          {semLink > 0  && <div className="text-red-500">❌ {semLink} sem nenhum link</div>}
+          {inativos > 0  && <div className="text-amber-600">🔍 {inativos} em fallback busca ML</div>}
+          {semPreco > 0  && <div className="text-orange-500">⏰ {semPreco} sem preço sincronizado</div>}
+          {semLink > 0   && <div className="text-red-500">❌ {semLink} sem nenhum link</div>}
         </div>
       </div>
 

@@ -11,11 +11,12 @@ interface Props {
   isActive: boolean | null
   affiliateUrl: string | null
   sourceUrl: string | null
+  priceUpdatedAt: string | null
   fallbackUrl: string | null
   searchFallbackActive?: boolean
 }
 
-export default function AfiliadoRow({ id, name, brandName, price, publicada, isActive, affiliateUrl, sourceUrl, fallbackUrl, searchFallbackActive = false }: Props) {
+export default function AfiliadoRow({ id, name, brandName, price, publicada, isActive, affiliateUrl, sourceUrl, priceUpdatedAt, fallbackUrl, searchFallbackActive = false }: Props) {
   const [url, setUrl] = useState(affiliateUrl ?? '')
   const [status, setStatus] = useState<null | 'saving' | 'ok' | string>(null)
   const [hasAffiliate, setHasAffiliate] = useState(!!affiliateUrl)
@@ -73,6 +74,9 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
       </td>
       <td className="px-4 py-2.5 text-sm text-gray-600 tabular-nums whitespace-nowrap">
         {price != null ? `R$ ${price.toLocaleString('pt-BR')}` : '—'}
+        {affiliateUrl && isActive !== false && !priceUpdatedAt && (
+          <div className="text-[10px] text-orange-500 font-medium mt-0.5">⏰ sem sync</div>
+        )}
       </td>
       <td className="px-4 py-2.5">
         <div className="flex flex-col gap-1">

@@ -332,14 +332,17 @@ if (bigIncreases.length > 0) {
   }
 }
 
-// Failures: counts only, no individual names (prevents message overflow)
+// Failures: layout/seletor ones listed individually (need link review); others as counts
 if (failed.length > 0) {
   msg += `\n❌ <b>Falhas (${failed.length}):</b>\n`
-  if (failVariacao.length  > 0) msg += `  • ${failVariacao.length} variação indisponível (catálogo ok)\n`
-  if (failSemPreco.length  > 0) msg += `  • ${failSemPreco.length} sem preço visível (layout ML?)\n`
-  if (failLayout.length    > 0) msg += `  • ${failLayout.length} seletor não encontrado\n`
+  if (failVariacao.length > 0) msg += `  • ${failVariacao.length} variação indisponível (catálogo ok)\n`
+  if (failSemPreco.length > 0) msg += `  • ${failSemPreco.length} sem preço visível (scraper)\n`
   const failOther = failed.length - failVariacao.length - failSemPreco.length - failLayout.length
-  if (failOther > 0)             msg += `  • ${failOther} outros\n`
+  if (failOther > 0)           msg += `  • ${failOther} outros\n`
+}
+if (failLayout.length > 0) {
+  msg += `\n🔴 <b>Revisar link — seletor não encontrado (${failLayout.length}):</b>\n`
+  for (const r of failLayout) msg += `  • ${r.name}\n`
 }
 
 if (paused.length === 0 && bigDrops.length === 0 && bigIncreases.length === 0 && failed.length === 0 && markedInactive.length === 0 && markedActive.length === 0) {
