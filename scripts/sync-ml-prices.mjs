@@ -162,7 +162,14 @@ for (const racket of rackets) {
   const page = await context.newPage()
   try {
     await page.goto(racket.affiliate_url, { waitUntil: 'domcontentloaded', timeout: 20000 })
-    await page.waitForSelector('.andes-money-amount__fraction', { timeout: 10000 }).catch(() => {})
+    // Wait until a price fraction has actual text (not just an empty skeleton element)
+    await page.waitForFunction(
+      () => {
+        const el = document.querySelector('.andes-money-amount__fraction')
+        return el && el.textContent.trim().length > 0
+      },
+      { timeout: 20000 }
+    ).catch(() => {})
 
     const listingStatus = await detectListingStatus(page)
 
