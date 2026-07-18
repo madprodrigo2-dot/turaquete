@@ -250,7 +250,8 @@ for (const racket of rackets) {
     process.stderr.write(`!! ERRO: ${reason}\n`)
   } finally {
     await page.close().catch(() => {})
-    await new Promise(r => setTimeout(r, 1200))
+    // jitter 3–7s entre requisições — menos previsível que delay fixo
+    await new Promise(r => setTimeout(r, 3000 + Math.floor(Math.random() * 4000)))
   }
 }
 
