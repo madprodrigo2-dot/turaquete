@@ -53,6 +53,7 @@ tmp/
 scripts/*.mjs
 scripts/*.sh
 scripts/*.js
+!scripts/sync-ml-prices.mjs
 
 # relatórios gerados localmente
 QA_REPORT.md
