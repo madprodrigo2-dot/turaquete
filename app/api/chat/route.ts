@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { runAgentTurn, ChatMessage, PostRecContext } from '@/lib/agent/agent'
+import { runAgentTurn, ChatMessage, PostRecContext, extractOrcamentoFromHistory } from '@/lib/agent/agent'
 import { calcCost, PRICING } from '@/lib/agent/pricing'
 import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit, getRateLimitState } from '@/lib/rate-limit'
@@ -334,11 +334,14 @@ export async function POST(req: NextRequest) {
             .then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16))
 
           // Fire-and-forget persistence
+          const fullMessages = [...messages, { role: 'assistant', content: cleanText }]
+          const orcamento = extractOrcamentoFromHistory(fullMessages)
           getSupabase()
             .from('conversations')
             .insert({
               session_id: sessionId,
-              messages: [...messages, { role: 'assistant', content: cleanText }],
+              messages: fullMessages,
+              profile: orcamento ? { orcamento } : {},
               recommended_racket_ids: recommendations?.map(r => r.racket.id) ?? [],
               tokens_input:       usage.input,
               tokens_output:      usage.output,

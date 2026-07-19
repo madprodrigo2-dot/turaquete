@@ -8,6 +8,7 @@ import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '..
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, LESAO_LOCAL_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 import { SWEET_SPOT_HIGHLIGHT, SWEET_SPOT_COMPARISON } from '../sweetSpot'
 import { classifyCore } from '../motor'
+import { PRECO_BUCKETS, PRECO_TANTO_FAZ, buildBudgetPromptLines } from './preco-buckets'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -29,17 +30,10 @@ const MARCA_FILTRO_QUESTION_TEXT = 'Quer ver só de uma marca específica?'
 const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']  // kept for backward compat
 const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
 
-const PRECO_BUCKETS: Array<{ label: string; instrucao: string; min: number; max: number | null }> = [
-  { label: 'Até R$1.200',       instrucao: 'presupuesto_max=1200',                        min: 0,    max: 1200 },
-  { label: 'R$1.200 a R$2.000', instrucao: 'presupuesto_min=1201 + presupuesto_max=2000', min: 1201, max: 2000 },
-  { label: 'R$2.000 a R$3.000', instrucao: 'presupuesto_min=2001 + presupuesto_max=3000', min: 2001, max: 3000 },
-  { label: 'Mais de R$3.000',   instrucao: 'presupuesto_min=3001 (sem teto)',              min: 3001, max: null },
-]
-
 // Always show all 4 buckets — do not filter by candidate prices, as candidates
 // reflect a mid-range query and would suppress the cheapest and most expensive options.
 function computePrecoChips(_ranked: Array<{ price: number | null }>): string[] {
-  return [...PRECO_BUCKETS.map(b => b.label), 'Tanto faz / me mostra opções']
+  return [...PRECO_BUCKETS.map(b => b.label), PRECO_TANTO_FAZ]
 }
 
 // Price question is mandatory after profile fit — always ask when budget is unknown.
@@ -51,12 +45,15 @@ function computePrecoDecision(budgetKnown: boolean): PrecoDecision {
     : { status: 'disparo',      note: 'orçamento desconhecido → perguntar faixa obrigatoriamente' }
 }
 
-// Known price-range answers — module-level so post-rec state detection can reference them
+// Known price-range answers — module-level so post-rec state detection can reference them.
+// Current bucket labels are derived from PRECO_BUCKETS (single source of truth);
+// legacy labels kept for backward compat with stored conversation history.
 const PRICE_ANSWERS = new Set([
-  'Até R$1.200', 'R$1.200 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000',
+  ...PRECO_BUCKETS.map(b => b.label),
+  PRECO_TANTO_FAZ,
+  // legacy labels (pre-R$1.200 divisor) — still appear in stored conversations
   'Até R$1.000', 'R$1.000 a R$2.000',
   'Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500', 'Acima de R$2.500', 'Acima de R$3.000',
-  'Tanto faz / me mostra opções',
 ])
 
 // Fixed post-recommendation action chips and types
@@ -108,8 +105,27 @@ export type AgentResult = {
   intencao?: IntencaoTipo
   marcaListPending?: boolean
   confirmedProfile?: Record<string, unknown>
+  orcamento?: string
   usage: TokenUsage
   debug: AgentDebugInfo
+}
+
+// Extracts the budget label from conversation history.
+// Priority: chip answer (exact PRICE_ANSWERS match) › spontaneous numeric mention.
+// Used by route.ts to persist profile.orcamento without mining free text.
+export function extractOrcamentoFromHistory(
+  messages: readonly { role: string; content: string }[]
+): string | undefined {
+  const chip = [...messages].findLast(
+    m => m.role === 'user' && PRICE_ANSWERS.has((m.content as string).trim())
+  )
+  if (chip) return (chip.content as string).trim()
+  // Spontaneous mention: "tenho uns 1100 reais", "meu budget é R$900"
+  const spontaneous = [...messages].findLast(
+    m => m.role === 'user' && /\b\d[\d.,]*\s*(reais|R\$)/i.test(m.content as string)
+  )
+  if (spontaneous) return (spontaneous.content as string).trim().slice(0, 100)
+  return undefined
 }
 
 export type { FaixaIdeal, TokenUsage }
@@ -962,10 +978,7 @@ async function executeTool(
 
     if (priceDecision.status === 'disparo') {
       // Chips already pre-populated above in the priceDecision block.
-      const bucketMappings = PRECO_BUCKETS
-        .map(b => `"${b.label}" → ${b.instrucao}`)
-        .concat(['"Tanto faz / me mostra opções" → presupuesto_min=0 (sem filtro de preço)'])
-        .join('; ')
+      const bucketMappings = buildBudgetPromptLines().replaceAll('\n', '; ')
       payload.PRECO = {
         status: 'ORCAMENTO_DESCONHECIDO',
         instrucao_OBRIGATORIA:
@@ -1120,7 +1133,7 @@ async function executeTool(
     if (field === 'preco') {
       chips = precoChipsRef.value.length > 0
         ? precoChipsRef.value
-        : ['Até R$1.000', 'R$1.000 a R$2.000', 'R$2.000 a R$3.000', 'Mais de R$3.000', 'Tanto faz / me mostra opções']
+        : computePrecoChips([])
     } else if (field === 'marca') {
       chips = marcaChipsRef.value.length > 0 ? marcaChipsRef.value : MARCA_CHIPS
     } else if (field?.startsWith('disambig:')) {
