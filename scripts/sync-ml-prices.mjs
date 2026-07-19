@@ -22,6 +22,20 @@ import { chromium } from 'playwright'
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
 
+// ── SYNC DESATIVADO — jul/2026 ────────────────────────────────────────────────
+// ML implementou /gz/account-verification em todas as páginas de produto.
+// Qualquer sessão nova sem cookies válidos recebe o challenge anti-bot antes
+// de chegar à página de produto — independente de headless, UA ou affiliate params.
+// Leitura anônima de preços não é mais viável sem autenticação.
+// Atualize preços manualmente via /admin/precos.
+// Para reativar quando/se o ML revogar a restrição: node scripts/sync-ml-prices.mjs --force
+if (!process.argv.includes('--force')) {
+  console.error('[sync-ml-prices] ⛔ Sync desativado desde jul/2026 — ML bloqueia leitura anônima.')
+  console.error('[sync-ml-prices] Atualize preços manualmente em /admin/precos.')
+  console.error('[sync-ml-prices] Para forçar: node scripts/sync-ml-prices.mjs --force')
+  process.exit(0)
+}
+
 // ── Load env vars from .env.local ─────────────────────────────────────────────
 const envFile = new URL('../.env.local', import.meta.url)
 let envContent = ''

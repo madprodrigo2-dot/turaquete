@@ -96,6 +96,12 @@ export default async function AfiliadosPage() {
         </div>
       </div>
 
+      {/* Sync disabled banner */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-800">
+        <span className="font-semibold">⛔ Sync automático de preços desativado</span> — ML bloqueou leitura anônima em jul/2026.
+        {' '}<a href="/admin/precos" className="underline font-medium hover:text-amber-900">Atualizar preços manualmente →</a>
+      </div>
+
       {/* Progress bar */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-3">
         <div className="flex justify-between text-[10px] text-gray-400 mb-1.5">

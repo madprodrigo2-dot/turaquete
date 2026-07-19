@@ -10,6 +10,7 @@ const TABS = [
   { label: 'Cliques',     href: '/admin/cliques'    },
   { label: 'Ranking',     href: '/admin/ranking'    },
   { label: 'Afiliados',   href: '/admin/afiliados'  },
+  { label: 'Preços',      href: '/admin/precos'     },
   { label: 'Conversas',   href: '/admin/conversas'  },
   { label: 'Raquetas',    href: '/admin/rackets'    },
   { label: 'Motor',       href: '/admin/motor'      },
