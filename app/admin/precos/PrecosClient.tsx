@@ -13,6 +13,10 @@ export interface PriceRowData {
   clicks30d: number
 }
 
+function stripAffiliateParams(url: string): string {
+  try { const u = new URL(url); return u.origin + u.pathname } catch { return url }
+}
+
 function StalenessLabel({ updatedAt }: { updatedAt: string | null }) {
   if (!updatedAt) return <span className="text-[10px] text-red-500 font-medium">⏰ nunca</span>
   const days = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000)
@@ -59,7 +63,7 @@ function PriceRow({ row }: { row: PriceRowData }) {
         <div className="text-[11px] text-gray-400 mt-0.5">{row.brandName}</div>
         {row.affiliate_url && (
           <a
-            href={row.affiliate_url}
+            href={stripAffiliateParams(row.affiliate_url)}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[10px] text-teal-600 hover:underline mt-0.5 inline-block"
