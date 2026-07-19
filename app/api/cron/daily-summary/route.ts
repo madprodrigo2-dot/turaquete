@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+const MONETIZABLE_THRESHOLD = 3
+
 function brtRange() {
   const now = new Date()
   const brtNow = new Date(now.getTime() - 3 * 60 * 60 * 1000)
@@ -13,7 +15,11 @@ function brtRange() {
   const to = new Date(brtToday.getTime() + 3 * 60 * 60 * 1000).toISOString()
   // from = meia-noite BRT em UTC → exibe corretamente como dia anterior
   const label = new Date(from).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })
-  return { from, to, label }
+  // Primeiro dia do mês BRT corrente em UTC
+  const monthFrom = new Date(
+    Date.UTC(brtToday.getUTCFullYear(), brtToday.getUTCMonth(), 1) + 3 * 60 * 60 * 1000
+  ).toISOString()
+  return { from, to, label, monthFrom }
 }
 
 async function sendTelegram(text: string) {
@@ -43,21 +49,23 @@ export async function GET(req: NextRequest) {
     { auth: { persistSession: false } }
   )
 
-  const { from, to, label } = brtRange()
+  const { from, to, label, monthFrom } = brtRange()
 
-  const [convsRes, recsRes, clicksRes, afiliRes, ipRes, externalRes] = await Promise.all([
+  const [convsRes, recsRes, clicksRes, afiliRes, ipRes, externalRes, afiliMesRes] = await Promise.all([
     sb.from('conversations').select('session_id, custo_brl').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('recommendation_events').select('racket_id').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).not('session_id', 'is', null),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).eq('tipo', 'afiliado').not('session_id', 'is', null),
     sb.from('link_clicks').select('ip_hash, pais').gte('created_at', from).lt('created_at', to).eq('is_test', false).not('ip_hash', 'is', null),
     sb.from('link_clicks').select('pais').gte('created_at', from).lt('created_at', to).eq('is_test', false).is('session_id', null),
+    sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', monthFrom).lt('created_at', to).eq('is_test', false).eq('tipo', 'afiliado').not('session_id', 'is', null),
   ])
 
   const convs = convsRes.data ?? []
   const recs = recsRes.data ?? []
   const totalClicks = clicksRes.count ?? 0
   const totalAfiliado = afiliRes.count ?? 0
+  const totalAfiliaoMes = afiliMesRes.count ?? 0
 
   const externalRows = externalRes.data ?? []
   const externalCount = externalRows.length
@@ -94,6 +102,11 @@ export async function GET(req: NextRequest) {
 
   const hasDados = totalSessoes > 0 || totalRecs > 0
 
+  const monetizableLine = totalAfiliado >= MONETIZABLE_THRESHOLD
+    ? `💵 Ontem: <b>${totalAfiliado}</b> cliques monetizáveis. Vale conferir vendas no painel ML (atualiza a cada 24h).`
+    : ''
+  const mesLine = `📅 Mês corrente: <b>${totalAfiliaoMes}</b> cliques monetizáveis`
+
   const text = [
     `🎾 <b>Turaquete — ${label}</b>`,
     '',
@@ -104,6 +117,8 @@ export async function GET(req: NextRequest) {
       `🛒 Cliques afiliado: <b>${totalAfiliado}</b>`,
       `💸 Custo API: <b>R$ ${custoBRL.toFixed(2)}</b>`,
     ].join('\n') : '(sem atividade ontem)',
+    monetizableLine,
+    mesLine,
     externalCount > 0 ? `🤖 Acessos externos: <b>${externalCount}</b>${topExternalPais ? ` (top: ${topExternalPais})` : ''}` : '',
     topIds.length > 0 ? `\n🏆 Mais recomendadas:\n${topLines}` : '',
     topOrigin ? `\n⚠️ ${suspiciousOrigins.length} origem(ns) com +10 clics/dia (top: ${topOrigin.count} clics, país ${topOrigin.pais ?? '?'})` : '',
