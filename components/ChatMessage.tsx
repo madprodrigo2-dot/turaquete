@@ -275,6 +275,12 @@ export default function ChatMessage({
           {!isComparison && recommendations!.some(r => r.racket.price) && (
             <p className="text-[10px] text-tinta/40 mt-0.5">Preços de referência, podem variar por loja.</p>
           )}
+          {!isComparison && recommendations!.some(r => r.racket.affiliate_url) && (
+            <p className="text-[10px] text-tinta/40 mt-0.5">
+              Links de afiliado — podemos receber comissão sem custo adicional para você.{' '}
+              <a href="/termos" className="underline underline-offset-2">Saiba mais</a>.
+            </p>
+          )}
         </div>
       )}
 

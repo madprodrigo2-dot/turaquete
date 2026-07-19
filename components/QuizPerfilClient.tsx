@@ -429,7 +429,7 @@ function RaquetesMiniCard({ card, winner }: { card: QuizRaqueteCard; winner: Arq
         <a
           href={`/ir/${card.slug}`}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener noreferrer sponsored"
           onClick={handleClick}
           className="mt-auto block text-center rounded-xl text-xs font-heading font-semibold py-2 transition-all hover:opacity-90 active:scale-[0.98]"
           style={{ background: '#FF5E3A', color: 'white' }}

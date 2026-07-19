@@ -281,9 +281,9 @@ export default function CompareView({ rackets }: Props) {
                 )}
                 {r.affiliate_url && (
                   <a
-                    href={r.affiliate_url}
+                    href={`/ir/${r.slug}`}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopener noreferrer sponsored"
                     className="mt-1 text-[11px] font-medium px-2.5 py-1 rounded-lg w-fit transition-colors"
                     style={{ backgroundColor: `${color}15`, color }}
                   >

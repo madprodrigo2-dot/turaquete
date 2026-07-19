@@ -1021,6 +1021,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
               )}
               <FeaturedCarousel rackets={featuredRackets} />
+              <p className="text-[10px] text-tinta/40 mt-1">
+                Preços de referência, podem variar. Links de afiliado — podemos receber comissão sem custo para você.
+              </p>
             </div>
           )}
 

@@ -167,7 +167,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
             <a
               href={ctaHref}
               target="_blank"
-              rel="noopener noreferrer"
+              rel={`noopener noreferrer${linkTipo === 'afiliado' ? ' sponsored' : ''}`}
               onClick={() => {
                 sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })
                 if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_na_loja', racket_id: racket.id })

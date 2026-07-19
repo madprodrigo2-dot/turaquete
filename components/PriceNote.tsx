@@ -1,10 +1,11 @@
 interface Props {
   updatedAt?: string | null
   affiliateUrl?: string | null
+  slug?: string | null
   className?: string
 }
 
-export default function PriceNote({ updatedAt, affiliateUrl, className = '' }: Props) {
+export default function PriceNote({ updatedAt, affiliateUrl, slug, className = '' }: Props) {
   const updatedLabel = updatedAt
     ? new Date(updatedAt).toLocaleDateString('pt-BR', {
         day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo',
@@ -14,11 +15,11 @@ export default function PriceNote({ updatedAt, affiliateUrl, className = '' }: P
   return (
     <p className={`text-[10px] text-tinta/40 leading-snug ${className}`}>
       Preço de referência.{' '}
-      {affiliateUrl ? (
+      {affiliateUrl && slug ? (
         <a
-          href={affiliateUrl}
+          href={`/ir/${slug}`}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener noreferrer sponsored"
           className="underline underline-offset-2 hover:text-aqua transition-colors"
         >
           Confira o valor atual no Mercado Livre

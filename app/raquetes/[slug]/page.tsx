@@ -173,6 +173,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                     <PriceNote
                       updatedAt={racket.price_updated_at}
                       affiliateUrl={racket.affiliate_url}
+                      slug={racket.slug}
                       className="mt-0.5"
                     />
                   </div>

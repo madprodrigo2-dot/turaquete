@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import PresenceTracker from "@/components/PresenceTracker";
 import GALoader from "@/components/GALoader";
+import SiteFooter from "@/components/SiteFooter";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           url={process.env.SUPABASE_URL!}
           anonKey={process.env.SUPABASE_ANON_KEY!}
         />
+        <SiteFooter />
         <VercelAnalytics />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
