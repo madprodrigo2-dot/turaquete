@@ -341,7 +341,7 @@ export async function POST(req: NextRequest) {
             .insert({
               session_id: sessionId,
               messages: fullMessages,
-              profile: orcamento ? { orcamento } : {},
+              profile: orcamento ? { ...orcamento } : {},
               recommended_racket_ids: recommendations?.map(r => r.racket.id) ?? [],
               tokens_input:       usage.input,
               tokens_output:      usage.output,

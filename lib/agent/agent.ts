@@ -110,21 +110,79 @@ export type AgentResult = {
   debug: AgentDebugInfo
 }
 
-// Extracts the budget label from conversation history.
+export type OrcamentoInfo = {
+  orcamento_label: string | null
+  orcamento_max: number | null
+  orcamento_min: number | null
+  orcamento_raw: string
+}
+
+function _parseReais(s: string): number {
+  return parseInt(s.replace(/\./g, '').replace(/,/g, ''), 10)
+}
+
+function _parseLabelNums(label: string): { min: number | null; max: number | null } {
+  const ate = label.match(/(?:Até|Ate)\s+R?\$?\s*([\d.]+)/i)
+  if (ate) return { min: null, max: _parseReais(ate[1]) }
+  const acima = label.match(/(?:Acima de|Mais de)\s+R?\$?\s*([\d.]+)/i)
+  if (acima) return { min: _parseReais(acima[1]), max: null }
+  const range = label.match(/R?\$?\s*([\d.]+)\s*(?:a|–)\s*R?\$?\s*([\d.]+)/i)
+  if (range) return { min: _parseReais(range[1]), max: _parseReais(range[2]) }
+  if (/tanto faz/i.test(label)) return { min: 0, max: null }
+  return { min: null, max: null }
+}
+
+function _parseSpontaneousNums(text: string): { min: number | null; max: number | null } {
+  const ate = text.match(/(?:até|ate)\s+R?\$?\s*([\d.]+)/i)
+  if (ate) return { min: null, max: _parseReais(ate[1]) }
+  const acima = text.match(/(?:acima de|mais de|a partir de)\s+R?\$?\s*([\d.]+)/i)
+  if (acima) return { min: _parseReais(acima[1]), max: null }
+  const range = text.match(/(?:entre|de)\s+R?\$?\s*([\d.]+)\s+(?:e|a)\s+R?\$?\s*([\d.]+)/i)
+  if (range) return { min: _parseReais(range[1]), max: _parseReais(range[2]) }
+  const nums = [...text.matchAll(/R?\$\s*([\d.]+)|([\d.]+)\s+reais/gi)]
+    .map(m => _parseReais(m[1] ?? m[2]))
+    .filter(n => n >= 200)
+  if (nums.length === 1) return { min: null, max: nums[0] }
+  if (nums.length >= 2) return { min: Math.min(nums[0], nums[1]), max: Math.max(nums[0], nums[1]) }
+  return { min: null, max: null }
+}
+
+// Extracts the budget from conversation history as a structured object.
 // Priority: chip answer (exact PRICE_ANSWERS match) › spontaneous numeric mention.
 // Used by route.ts to persist profile.orcamento without mining free text.
 export function extractOrcamentoFromHistory(
   messages: readonly { role: string; content: string }[]
-): string | undefined {
-  const chip = [...messages].findLast(
+): OrcamentoInfo | undefined {
+  const chipMsg = [...messages].findLast(
     m => m.role === 'user' && PRICE_ANSWERS.has((m.content as string).trim())
   )
-  if (chip) return (chip.content as string).trim()
+  if (chipMsg) {
+    const raw = (chipMsg.content as string).trim()
+    const bucket = PRECO_BUCKETS.find(b => b.label === raw)
+    if (bucket) {
+      return {
+        orcamento_label: raw,
+        orcamento_min: bucket.min > 0 ? bucket.min : null,
+        orcamento_max: bucket.max,
+        orcamento_raw: raw,
+      }
+    }
+    if (raw === PRECO_TANTO_FAZ) {
+      return { orcamento_label: raw, orcamento_min: 0, orcamento_max: null, orcamento_raw: raw }
+    }
+    // Legacy chip (pre-R$1.200 divisor) — parse from label text
+    const { min, max } = _parseLabelNums(raw)
+    return { orcamento_label: raw, orcamento_min: min, orcamento_max: max, orcamento_raw: raw }
+  }
   // Spontaneous mention: "tenho uns 1100 reais", "meu budget é R$900"
-  const spontaneous = [...messages].findLast(
-    m => m.role === 'user' && /\b\d[\d.,]*\s*(reais|R\$)/i.test(m.content as string)
+  const spontMsg = [...messages].findLast(
+    m => m.role === 'user' && /R\$\s*[\d.]+|[\d.]+\s+reais/i.test(m.content as string)
   )
-  if (spontaneous) return (spontaneous.content as string).trim().slice(0, 100)
+  if (spontMsg) {
+    const raw = (spontMsg.content as string).trim().slice(0, 100)
+    const { min, max } = _parseSpontaneousNums(raw)
+    return { orcamento_label: null, orcamento_min: min, orcamento_max: max, orcamento_raw: raw }
+  }
   return undefined
 }
 
