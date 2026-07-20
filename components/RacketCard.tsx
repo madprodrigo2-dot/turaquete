@@ -68,12 +68,6 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
     setModalOpen(true)
     sendGAEvent('event', 'analise_aberta', { racket: racket.slug })
     if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_analise', racket_id: racket.id })
-    try {
-      type W = typeof window & { gtag?: (...args: unknown[]) => void }
-      if (typeof window !== 'undefined' && typeof (window as W).gtag === 'function') {
-        (window as W).gtag!('event', 'ver_analise', { racket_slug: racket.slug, origem: 'lista_resultado' })
-      }
-    } catch { /* never block navigation */ }
   }
 
   return (
