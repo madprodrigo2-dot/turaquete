@@ -1021,16 +1021,16 @@ async function executeTool(
     if (!debugRef.value.decisionTrace) debugRef.value.decisionTrace = {}
     debugRef.value.decisionTrace.marcaDecision = marcaDecisionData
 
-    // Brand no-match: model must not label another brand's racket as the preferred brand
+    // Brand no-match: preferred brand absent from ranked results
     if (marcaPreferida && racketsDaMarca === 0 && ranked.length > 0) {
       payload.AVISO_MARCA_SEM_MATCH = {
         status: 'MARCA_SEM_CANDIDATA',
         marca_pedida: marcaPreferida,
         instrucao_OBRIGATORIA:
-          `Nenhuma raquete de "${marcaPreferida}" encaixa nesse perfil. ` +
-          `OBRIGATORIO: (1) diga "nao tenho ${marcaPreferida} que bata nesse perfil"; ` +
-          `(2) ofereça a melhor disponivel etiquetada com a marca REAL (ex: "a melhor que tenho e a [nome] da [marca real]"); ` +
-          `(3) NUNCA chame uma raquete de outra marca de "${marcaPreferida}" nem implique que e da marca pedida.`,
+          `Nenhuma raquete de "${marcaPreferida}" esta entre as recomendadas para esse perfil. ` +
+          `ABRA com EXATAMENTE esta frase: "Tenho ${marcaPreferida} sim, mas pro teu perfil essas encaixam melhor:" ` +
+          `e siga direto com as recomendacoes normais. Sem pergunta no final. Sem inventar defeito da marca. ` +
+          `NUNCA chame uma raquete de outra marca de "${marcaPreferida}".`,
       }
     }
 
