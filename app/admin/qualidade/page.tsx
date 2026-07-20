@@ -74,6 +74,7 @@ export default async function QualidadeAdmin({
     .select('id, created_at, session_id, event_type, motivo, comentario, intencao, turnos_ate_recomendacao, racket_id')
     .in('event_type', ['rating_positive', 'rating_negative', 'ver_na_loja', 'ver_analise', 'nova_conversa_pos_rec', 'busca_sem_resultado'])
     .gte('created_at', cutoffDate)
+    .not('session_id', 'is', null)
     .order('created_at', { ascending: false })
     .limit(1000)
   if (toDate) q = q.lte('created_at', toDate)

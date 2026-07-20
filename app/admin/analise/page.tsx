@@ -630,9 +630,12 @@ export default async function AnaliseAdmin({
                     <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50/50">
                       <td className="px-4 py-2 text-gray-400">{i + 1}</td>
                       <td className="px-4 py-2 font-medium text-gray-800">
-                        {r.slug
-                          ? <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">{r.name}</a>
-                          : r.name}
+                        <div>
+                          {r.slug
+                            ? <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">{r.name}</a>
+                            : r.name}
+                        </div>
+                        {r.slug && <div className="text-[10px] text-gray-400 font-mono">{r.slug}</div>}
                       </td>
                       <td className="px-4 py-2 text-right font-semibold">{r.count}</td>
                       <td className="px-4 py-2 text-right text-gray-400">{pct(r.count, recEventRows.length)}</td>

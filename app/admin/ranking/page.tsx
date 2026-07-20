@@ -196,9 +196,12 @@ export default async function RankingPage({
                   <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50/60">
                     <td className="px-4 py-2 text-gray-400">{i + 1}</td>
                     <td className="px-4 py-2 font-medium text-gray-800">
-                      <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">
-                        {r.name}
-                      </a>
+                      <div>
+                        <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">
+                          {r.name}
+                        </a>
+                      </div>
+                      <div className="text-[10px] text-gray-400 font-mono">{r.slug}</div>
                     </td>
                     <td className="px-4 py-2 text-right font-semibold">{r.recs}</td>
                     <td className="px-4 py-2 text-right">{r.clicks}</td>
@@ -253,7 +256,10 @@ export default async function RankingPage({
               <tbody>
                 {affiliateRows.map(r => (
                   <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50/60">
-                    <td className="px-4 py-2 font-medium text-gray-800">{r.name}</td>
+                    <td className="px-4 py-2 font-medium text-gray-800">
+                      <div>{r.name}</div>
+                      <div className="text-[10px] text-gray-400 font-mono">{r.slug}</div>
+                    </td>
                     <td className="px-4 py-2 text-right">{r.recs}</td>
                     <td className="px-4 py-2 text-right font-semibold">{r.clicks}</td>
                     <td className="px-4 py-2 text-right text-teal-600 font-semibold">{r.mlClicks}</td>
