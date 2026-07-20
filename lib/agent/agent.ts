@@ -25,7 +25,7 @@ const MODEL = PRICING.model
 const MAX_TOKENS = 1200  // 1024 was tight for tool call JSON; 1200 fits full rec text with brevity prompt
 const MAX_TOOL_ROUNDS = 4  // normal flows need ≤4 rounds (troca+marca-filtro worst case)
 
-const MARCA_QUESTION_TEXT = 'Tem alguma marca que você curte ou tanto faz?'
+const MARCA_QUESTION_TEXT = 'Tem alguma marca que você curte? Levo em conta, mas priorizo o que encaixa no teu perfil.'
 const MARCA_FILTRO_QUESTION_TEXT = 'Quer ver só de uma marca específica?'
 const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']  // kept for backward compat
 const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
