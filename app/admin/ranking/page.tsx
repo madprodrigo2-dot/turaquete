@@ -18,7 +18,7 @@ function getAdmin() {
 }
 
 interface RecRow    { racket_id: number; confidence: number | null; rank: number | null }
-interface ClickRow  { racket_id: number; destination_type: string | null }
+interface ClickRow  { racket_id: number; destination_type: string | null; tipo: string }
 interface RacketRow { id: number; name: string; slug: string; affiliate_url: string | null }
 
 function pct(num: number, den: number): string {
@@ -60,7 +60,7 @@ export default async function RankingPage({
 
     (() => {
       const q = sb.from('link_clicks')
-        .select('racket_id, destination_type')
+        .select('racket_id, destination_type, tipo')
         .not('session_id', 'is', null)
         .gte('created_at', cutoff)
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as ClickRow[])
@@ -107,7 +107,7 @@ export default async function RankingPage({
       hasAffiliate: !!racket.affiliate_url,
       recs:    myRecs.length,
       clicks:  myClicks.length,
-      mlClicks: myClicks.filter(r => r.destination_type === 'ml').length,
+      mlClicks: myClicks.filter(r => r.destination_type === 'ml' && r.tipo === 'afiliado').length,
       avgConfidence: confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null,
       avgRank:  ranks.length ? parseFloat((ranks.reduce((a, b) => a + b, 0) / ranks.length).toFixed(1)) : null,
     })
@@ -241,8 +241,8 @@ export default async function RankingPage({
                     <InfoTooltip text="Total de cliques rastreados pela rota interna /ir/ (inclui ML e outros destinos)." />
                   </th>
                   <th className="text-right px-4 py-2">
-                    Cliques ML
-                    <InfoTooltip text="Cliques cujo destination_type=ml. Comparar com o painel do Mercado Livre para validar rastreamento." />
+                    Cliques ML (afiliado)
+                    <InfoTooltip text="Cliques tipo=afiliado com destination_type=ml. Comparável direto com o painel do Mercado Livre." />
                   </th>
                   <th className="text-right px-4 py-2">
                     Taxa rec→clique
@@ -263,7 +263,7 @@ export default async function RankingPage({
               </tbody>
             </table>
             <p className="text-[10px] text-gray-300 px-4 py-2">
-              Cliques ML = cliques em /ir/ com destination_type=ml. Comparar com painel Mercado Livre manualmente.
+              Cliques ML = destination_type=ml + tipo=afiliado. Comparável direto com painel Mercado Livre.
             </p>
           </div>
         )}

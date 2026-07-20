@@ -787,15 +787,18 @@ export default async function AnaliseAdmin({
             </div>
           </div>
 
-          {/* Sem cobertura */}
+          {/* Sem affiliate_url */}
           <div className="px-5 py-4 flex items-start gap-4">
             <div className="shrink-0 w-32">
-              <p className="font-semibold text-gray-700">Sem cobertura</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">sem affiliate_url</p>
+              <p className="font-semibold text-gray-700">Sem affiliate_url</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">publicada + affiliate_url IS NULL</p>
             </div>
             <div className="flex-1 flex flex-col gap-1">
               <span className={`font-semibold ${opsStats.sem_cobertura > 0 ? 'text-gray-600' : 'text-emerald-600'}`}>
-                {opsStats.sem_cobertura > 0 ? `${opsStats.sem_cobertura} publicadas sem afiliado` : '✓ Todas com link'}
+                {opsStats.sem_cobertura > 0 ? `${opsStats.sem_cobertura} sem affiliate_url configurada` : '✓ Nenhuma sem affiliate_url'}
+              </span>
+              <span className={`text-[11px] font-medium ${fallbackRows.length > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                Inativos (busca fallback): {fallbackRows.length > 0 ? `${fallbackRows.length}` : '0 — nenhum'}
               </span>
               <span className={`text-[11px] font-medium ${SEARCH_FALLBACK_UNCOVERED ? 'text-amber-600' : 'text-gray-400'}`}>
                 Fallback busca ML para sem-link: <strong>{SEARCH_FALLBACK_UNCOVERED ? 'ON' : 'OFF'}</strong>
@@ -807,8 +810,8 @@ export default async function AnaliseAdmin({
           {/* Última sync */}
           <div className="px-5 py-4 flex items-start gap-4">
             <div className="shrink-0 w-32">
-              <p className="font-semibold text-gray-700">Última sync</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">price_updated_at</p>
+              <p className="font-semibold text-gray-700">Última atualização de preço</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">atualizada manualmente em /admin/precos</p>
             </div>
             <div className="text-gray-600">
               {opsStats.ultima_sync ? (
