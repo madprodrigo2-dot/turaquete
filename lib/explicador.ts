@@ -1,4 +1,5 @@
 import { RacketWithInsights } from './recommend'
+import { getSaidaDeBola } from './saidaBola'
 
 interface TechEntry { nome: string; tipo: string }
 
@@ -37,7 +38,6 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
   const core  = racket.core?.toLowerCase() ?? ''
   const face  = racket.face_material?.toLowerCase() ?? ''
   const trama = (extra.trama_carbono as string | undefined)?.toLowerCase()
-  const saidaDeBola = extra.saida_de_bola as string | undefined
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function push(key: string, linha: string) {
@@ -204,7 +204,8 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
     push('furos', `Muitos furos (${furos}): batida mais leve e estável em dia de vento`)
   }
 
-  // Saída de bola
+  // Saída de bola — derivada do motor, mesma fonte que recommend.ts
+  const saidaDeBola = getSaidaDeBola(comfort, power)
   if (saidaDeBola && linhas.length < 5) {
     if (saidaDeBola === 'fácil') {
       push('saida', 'Saída de bola fácil: devolve bem mesmo com batida suave. Ótimo para iniciantes.')

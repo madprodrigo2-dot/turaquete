@@ -45,7 +45,6 @@ export interface EditorialData {
   is_active: boolean
   destaque_atleta: boolean
   atleta: string
-  saida_de_bola: string
   nivel_sugerido: 'iniciante' | 'intermediario' | 'avancado' | null
   summary: string
   perfil_resumo: string
@@ -234,8 +233,8 @@ export async function salvarEditorial(slug: string, data: EditorialData) {
   const newExtra: Record<string, unknown> = {
     ...currentExtra,
     atleta: data.atleta || undefined,
-    saida_de_bola: data.saida_de_bola || undefined,
   }
+  delete newExtra.saida_de_bola
   // Clean up undefined keys
   Object.keys(newExtra).forEach(k => newExtra[k] === undefined && delete newExtra[k])
 

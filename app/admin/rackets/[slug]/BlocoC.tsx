@@ -12,13 +12,6 @@ const NIVEL_OPTIONS = [
   { value: 'avancado', label: 'Avançado' },
 ]
 
-const SAIDA_OPTIONS = [
-  { value: '', label: '— (não definido)' },
-  { value: 'fácil', label: 'Fácil' },
-  { value: 'média', label: 'Média' },
-  { value: 'exigente', label: 'Exigente' },
-]
-
 export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRacket }) {
   const ins = racket.racket_insights
   const se = (racket.specs_extra ?? {}) as Record<string, unknown>
@@ -30,7 +23,6 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
   const [isActive, setIsActive] = useState(racket.is_active ?? true)
   const [destaqueAtleta, setDestaqueAtleta] = useState(racket.destaque_atleta ?? false)
   const [atleta, setAtleta] = useState<string>((se.atleta as string | null) ?? '')
-  const [saidaDeBola, setSaidaDeBola] = useState<string>((se.saida_de_bola as string | null) ?? '')
   const [nivelSugerido, setNivelSugerido] = useState<string>(ins?.nivel_sugerido ?? '')
   const [summary, setSummary] = useState(ins?.summary ?? '')
   const [perfilResumo, setPerfilResumo] = useState(ins?.perfil_resumo ?? '')
@@ -54,7 +46,6 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
           is_active: isActive,
           destaque_atleta: destaqueAtleta,
           atleta,
-          saida_de_bola: saidaDeBola,
           nivel_sugerido: (nivelSugerido || null) as 'iniciante' | 'intermediario' | 'avancado' | null,
           summary,
           perfil_resumo: perfilResumo,
@@ -83,7 +74,7 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
 
       <div className="p-5 space-y-4">
         {/* Nível + Preço + flags */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Nível sugerido</label>
             <select
@@ -105,18 +96,6 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
               className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
               placeholder="ex: 2599"
             />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Saída de bola</label>
-            <select
-              value={saidaDeBola}
-              onChange={e => setSaidaDeBola(e.target.value)}
-              className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
-            >
-              {SAIDA_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
           </div>
         </div>
 
