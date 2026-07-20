@@ -15,10 +15,11 @@ export interface RowData {
   source_url: string | null
   price_updated_at: string | null
   fallbackUrl: string | null
+  model_year: number | null
 }
 
 type FilterKey = 'all' | 'afiliado' | 'inativos' | 'sem_preco' | 'sem_tag' | 'source' | 'sem_link'
-type SortCol   = 'name' | 'price' | 'tipo' | 'status'
+type SortCol   = 'name' | 'price' | 'tipo' | 'status' | 'year'
 type SortDir   = 'asc' | 'desc'
 
 function getTipo(r: RowData): FilterKey {
@@ -90,6 +91,7 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
       if (sort.col === 'price')  cmp = (a.price ?? -1) - (b.price ?? -1)
       if (sort.col === 'status') cmp = Number(b.publicada) - Number(a.publicada)
       if (sort.col === 'tipo')   cmp = TIPO_ORDER[getTipo(a)] - TIPO_ORDER[getTipo(b)]
+      if (sort.col === 'year')   cmp = (a.model_year ?? 0) - (b.model_year ?? 0)
       return sort.dir === 'asc' ? cmp : -cmp
     })
 
@@ -177,6 +179,12 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
               </th>
               <th
                 className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none whitespace-nowrap"
+                onClick={() => toggleSort('year')}
+              >
+                Ano <SortIcon col="year" current={sort.col} dir={sort.dir} />
+              </th>
+              <th
+                className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none whitespace-nowrap"
                 onClick={() => toggleSort('price')}
               >
                 Preço <SortIcon col="price" current={sort.col} dir={sort.dir} />
@@ -210,12 +218,13 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
                 sourceUrl={r.source_url}
                 priceUpdatedAt={r.price_updated_at}
                 fallbackUrl={r.fallbackUrl}
+                modelYear={r.model_year}
                 searchFallbackActive={searchFallbackActive}
               />
             ))}
             {displayed.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic text-sm">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400 italic text-sm">
                   {q ? `Nenhuma raquete encontrada para "${q}".` : 'Nenhuma raquete com este filtro.'}
                 </td>
               </tr>

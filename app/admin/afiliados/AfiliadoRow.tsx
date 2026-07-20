@@ -13,10 +13,11 @@ interface Props {
   sourceUrl: string | null
   priceUpdatedAt: string | null
   fallbackUrl: string | null
+  modelYear: number | null
   searchFallbackActive?: boolean
 }
 
-export default function AfiliadoRow({ id, name, brandName, price, publicada, isActive, affiliateUrl, sourceUrl, priceUpdatedAt, fallbackUrl, searchFallbackActive = false }: Props) {
+export default function AfiliadoRow({ id, name, brandName, price, publicada, isActive, affiliateUrl, sourceUrl, priceUpdatedAt, fallbackUrl, modelYear, searchFallbackActive = false }: Props) {
   const [url, setUrl] = useState(affiliateUrl ?? '')
   const [status, setStatus] = useState<null | 'saving' | 'ok' | string>(null)
   const [hasAffiliate, setHasAffiliate] = useState(!!affiliateUrl)
@@ -71,6 +72,9 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
       <td className="px-4 py-2.5">
         <div className="font-medium text-gray-800 text-sm leading-tight">{name}</div>
         <div className="text-[11px] text-gray-400 mt-0.5">{brandName}</div>
+      </td>
+      <td className="px-4 py-2.5 whitespace-nowrap">
+        <span className="text-xs tabular-nums text-gray-500">{modelYear ?? '—'}</span>
       </td>
       <td className="px-4 py-2.5 text-sm text-gray-600 tabular-nums whitespace-nowrap">
         {price != null ? `R$ ${price.toLocaleString('pt-BR')}` : '—'}

@@ -17,6 +17,7 @@ interface RacketRow {
   source_url: string | null
   brand_id: number | null
   price_updated_at: string | null
+  model_year: number | null
 }
 
 interface BrandRow {
@@ -36,7 +37,7 @@ export default async function AfiliadosPage() {
   const [{ data: rackets }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, price, currency, publicada, is_active, affiliate_url, source_url, brand_id, price_updated_at')
+      .select('id, name, price, currency, publicada, is_active, affiliate_url, source_url, brand_id, price_updated_at, model_year')
       .order('name'),
     sb
       .from('brands')
@@ -67,6 +68,7 @@ export default async function AfiliadosPage() {
       affiliate_url:    r.affiliate_url,
       source_url:       r.source_url,
       price_updated_at: r.price_updated_at,
+      model_year:       r.model_year,
       fallbackUrl:      (r.is_active === false && r.affiliate_url) || (!r.affiliate_url && SEARCH_FALLBACK_UNCOVERED)
         ? buildMlSearchUrl({ name: r.name, brands: brand ? { name: brand.name } : null })
         : null,
