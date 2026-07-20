@@ -224,6 +224,7 @@ flowchart TD
 | **isAvancadaParaFiltro** | Função de **FILTRAGEM** (`lib/recommend.ts`). Gate que protege iniciantes/intermediários de raquetes avançadas. Usa scores diretamente (f≤4, f≤6+p≥8, etc.). Thresholds **propositalmente mais permissivos** que `derivarNivel` — mais raquetes chegam a iniciantes. **São conceitos distintos, não duplicatas; não fusionar.** |
 | **session stitching** | Técnica de passar `?s=SESSION_ID` nos links de /ir/ para conectar o clique na loja ao contexto da conversa com Tury. |
 | **hardcoded slug** | `beast-2023` está hardcoded em recommend.ts como fallback de entrada para cold start (quando há menos de 30 raquetes no pool). |
+| **analise_aberta / ver_analise** | São o **mesmo clique** ("ver análise") medido em dois sistemas com propósitos distintos. `analise_aberta` dispara via `sendGAEvent` para GA4 (comportamento web). `ver_analise` insere em `feedback_events` via Supabase (funil do quiz, painel de qualidade). **Não são duplicatas; não unificar.** |
 
 ---
 
