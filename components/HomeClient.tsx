@@ -80,6 +80,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: OPENING_MESSAGE, suggestions: ESTILO_CHIPS },
   ])
+  const hasUserMessages = messages.some(m => m.role === 'user')
   const [loading, setLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [sessionId, setSessionId] = useState<string>(generateId)
@@ -162,7 +163,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     if (view === 'chat' && hasUserMessages) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, loading, view, hasUserMessages])
+  }, [messages, loading, view])
 
   // Scroll to bottom when animation finishes so that newly revealed cards are visible
   useEffect(() => {
@@ -465,7 +466,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     }
   }
 
-  const hasUserMessages = messages.some(m => m.role === 'user')
   const atLimit   = messages.length >= MESSAGE_LIMIT
   const nearLimit = !atLimit && messages.length >= WARN_AT
 
