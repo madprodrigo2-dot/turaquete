@@ -156,10 +156,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   }, [messages])
 
   useEffect(() => {
-    if (view === 'chat') {
+    // Only scroll to bottom after the user has sent at least one message.
+    // On initial chat open messages = [greeting only] — no scroll needed and scrollIntoView
+    // would push the window into SiteFooter (rendered in layout below h-screen).
+    if (view === 'chat' && hasUserMessages) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, loading, view])
+  }, [messages, loading, view, hasUserMessages])
 
   // Scroll to bottom when animation finishes so that newly revealed cards are visible
   useEffect(() => {
@@ -167,18 +170,6 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [isAnimating, streamRawText, view])
-
-  // Lock window scroll when in chat so SiteFooter (rendered in layout outside this component)
-  // doesn't add scrollable height below the h-screen container. scrollIntoView then only
-  // scrolls the inner overflow-y-auto messages container, never the window.
-  useEffect(() => {
-    if (view === 'chat') {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => { document.body.style.overflow = '' }
-  }, [view])
 
   // Keep viewRef in sync so the popstate handler never sees a stale closure
   useEffect(() => { viewRef.current = view }, [view])
