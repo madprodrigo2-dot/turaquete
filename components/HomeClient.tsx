@@ -485,30 +485,42 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
           <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">
 
             <header className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 bg-white border-b border-gray-100 shrink-0">
-              {/* Logo */}
-              <div className="flex flex-col items-start">
-                <Link
-                  href="/"
+              {/* Logo + botão voltar */}
+              <div className="flex items-center gap-1 md:gap-2">
+                <button
+                  onClick={() => history.back()}
                   aria-label="Voltar à página inicial"
-                  className="cursor-pointer"
-                  onClick={e => { e.preventDefault(); history.back() }}
+                  className="flex items-center gap-1 text-tinta/40 hover:text-aqua transition-colors p-1.5 rounded-lg hover:bg-aqua/5 shrink-0"
                 >
-                  <Image
-                    src="/logo-header.png"
-                    alt="Turaquete"
-                    width={322}
-                    height={128}
-                    priority
-                    className="h-9 md:h-12 w-auto"
-                    style={{ width: 'auto' }}
-                  />
-                </Link>
-                <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
-                  {(loading || isStreaming || isAnimating)
-                    ? <span className="text-aqua/70 italic">digitando...</span>
-                    : <span className="text-tinta/50">especialista em raquetes</span>
-                  }
-                </span>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span className="hidden sm:block text-xs font-medium">Início</span>
+                </button>
+                <div className="flex flex-col items-start">
+                  <Link
+                    href="/"
+                    aria-label="Voltar à página inicial"
+                    className="cursor-pointer"
+                    onClick={e => { e.preventDefault(); history.back() }}
+                  >
+                    <Image
+                      src="/logo-header.png"
+                      alt="Turaquete"
+                      width={322}
+                      height={128}
+                      priority
+                      className="h-9 md:h-12 w-auto"
+                      style={{ width: 'auto' }}
+                    />
+                  </Link>
+                  <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
+                    {(loading || isStreaming || isAnimating)
+                      ? <span className="text-aqua/70 italic">digitando...</span>
+                      : <span className="text-tinta/50">especialista em raquetes</span>
+                    }
+                  </span>
+                </div>
               </div>
 
               {/* Nova conversa */}
