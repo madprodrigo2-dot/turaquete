@@ -168,6 +168,18 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     }
   }, [isAnimating, streamRawText, view])
 
+  // Lock window scroll when in chat so SiteFooter (rendered in layout outside this component)
+  // doesn't add scrollable height below the h-screen container. scrollIntoView then only
+  // scrolls the inner overflow-y-auto messages container, never the window.
+  useEffect(() => {
+    if (view === 'chat') {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [view])
+
   // Keep viewRef in sync so the popstate handler never sees a stale closure
   useEffect(() => { viewRef.current = view }, [view])
 
@@ -231,6 +243,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     history.pushState({ view: 'chat' }, '')
     setFading(true)
     setTimeout(() => {
+      window.scrollTo(0, 0)
       setView('chat')
       setFading(false)
     }, 150)
