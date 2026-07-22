@@ -276,17 +276,14 @@ export default function ChatMessage({
             <p className="text-[10px] text-tinta/40 mt-0.5">Preços de referência, podem variar por loja.</p>
           )}
           {!isComparison && recommendations!.some(r => r.racket.affiliate_url) && (
-            <p className="text-[10px] text-tinta/40 mt-0.5">
-              Links de afiliado — podemos receber comissão sem custo adicional para você.{' '}
-              <a href="/termos" className="underline underline-offset-2">Saiba mais</a>.
-            </p>
+            <p className="text-[10px] text-tinta/30 mt-1">Contém links de afiliado.</p>
           )}
         </div>
       )}
 
       {/* Quick reply chips — held back until animation finishes */}
       {isAssistant && suggestions && suggestions.length > 0 && onSuggestion && !holdBack && (
-        <div className="mt-2 pl-[68px] flex flex-wrap gap-2">
+        <div className="mt-4 pl-[68px] flex flex-wrap gap-2">
           {suggestions.map(s => (
             <button
               key={s}
