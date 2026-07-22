@@ -223,8 +223,8 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
   // 3. CONTRAPARTIDA — honest tradeoff when relevant
   // ═════════════════════════════════════════════════════════════════════════
 
-  if (spin != null && spin >= 7 && control != null && control <= 6 && linhas.length < 5) {
-    push('contrapartida', `Controle ${control}: com tanto spin, exige posicionamento para não abrir demais a bola`)
+  if (control != null && control <= 6 && linhas.length < 5) {
+    push('contrapartida', `Controle ${control}: exige mais precisão no posicionamento e na direção da bola`)
   }
 
   return linhas.slice(0, 5)
