@@ -349,7 +349,7 @@ export default async function ConversasPage({
                       title={`hash: ${s.ip_hash}`}
                       className={s.ip_session_count >= 3 ? 'text-red-500 font-bold' : 'text-gray-300'}
                     >
-                      {s.ip_session_count >= 3 ? `×${s.ip_session_count}` : '·'}
+                      {s.ip_session_count >= 2 ? `×${s.ip_session_count}` : '·'}
                     </span>
                   ) : <span className="text-gray-200">—</span>}
                 </td>
