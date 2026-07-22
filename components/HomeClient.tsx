@@ -85,6 +85,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const [isStreaming, setIsStreaming] = useState(false)
   const [sessionId, setSessionId] = useState<string>(generateId)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   // Guard against concurrent sends (double-tap, quick-reply race)
   const sendingRef = useRef(false)
   // AbortController for the in-flight fetch — cancelled on timeout or unmount
@@ -156,20 +157,19 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     }
   }, [messages])
 
+  const scrollToBottom = (smooth = true) => {
+    const el = messagesContainerRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'instant' })
+  }
+
   useEffect(() => {
-    // Only scroll to bottom after the user has sent at least one message.
-    // On initial chat open messages = [greeting only] — no scroll needed and scrollIntoView
-    // would push the window into SiteFooter (rendered in layout below h-screen).
-    if (view === 'chat' && hasUserMessages) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
+    if (view === 'chat' && hasUserMessages) scrollToBottom()
   }, [messages, loading, view])
 
   // Scroll to bottom when animation finishes so that newly revealed cards are visible
   useEffect(() => {
-    if (!isAnimating && streamRawText && view === 'chat') {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
+    if (!isAnimating && streamRawText && view === 'chat') scrollToBottom()
   }, [isAnimating, streamRawText, view])
 
   // Keep viewRef in sync so the popstate handler never sees a stale closure
@@ -576,7 +576,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
               </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full bg-[#EAF7F6]">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-6 py-4 space-y-3 w-full bg-[#EAF7F6]">
               {messages.map((m, i) => {
                 const isLast = i === messages.length - 1
                 const isPacing = (isStreaming || streamRawText !== '') && isLast && m.role === 'assistant'
