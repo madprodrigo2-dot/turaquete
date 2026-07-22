@@ -173,7 +173,11 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   }, [isAnimating, streamRawText, view])
 
   // Keep viewRef in sync so the popstate handler never sees a stale closure
-  useEffect(() => { viewRef.current = view }, [view])
+  useEffect(() => {
+    viewRef.current = view
+    document.body.classList.toggle('chat-active', view === 'chat')
+    return () => document.body.classList.remove('chat-active')
+  }, [view])
 
   // Android/browser back button: if user is in chat, return to landing instead of exiting the site.
   // handleStart pushes a history entry; popstate fires when the user navigates back.

@@ -9,6 +9,11 @@
   --color-arena:      #F7EDDC;
 }
 
+/* Hide global footer when chat is active — chat needs full viewport */
+body.chat-active [data-site-footer] {
+  display: none;
+}
+
 @layer utilities {
   /* Sand texture background — warm crema base */
   .sand-texture {
