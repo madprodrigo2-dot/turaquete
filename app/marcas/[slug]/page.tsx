@@ -126,11 +126,11 @@ function deriveScoreTag(ins: RacketWithInsights['racket_insights']): string | nu
 
 const BRAND_LOGOS: Record<string, string> = {
   'adidas':     '/brands/adidas-logo.svg',
-  'ama-sports': '/brands/ama-sports-logo.svg',
-  'drop-shot':  '/brands/drop-shot-logo.svg',
+  'ama-sports': '/brands/ama-sports-logo.webp',
+  'drop-shot':  '/brands/drop-shot-logo.png',
   'fobel':      '/brands/fobel-logo.png',
   'head':       '/brands/head-logo.svg',
-  'heroes':     '/brands/heroes-logo.svg',
+  'heroes':     '/brands/heroes-logo.webp',
   'kona':       '/brands/kona-logo.png',
   'minimalist': '/brands/minimalist-logo.png',
   'mormaii':    '/brands/mormaii-logo.png',
