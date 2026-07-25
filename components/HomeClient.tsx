@@ -104,6 +104,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   const intencaoConvRef = useRef<string | undefined>(undefined)
   const turnosAteRecRef = useRef(0)
   const viewRef = useRef(view)
+  const wasAnimatingRef = useRef(false)
 
   const STREAM_TIMEOUT_MS = 40_000
 
@@ -167,10 +168,14 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
     if (view === 'chat' && hasUserMessages) scrollToBottom()
   }, [messages, loading, view])
 
-  // Scroll to bottom when animation finishes so that newly revealed cards are visible
+  // Scroll when animation completes so newly-revealed cards/chips enter the viewport.
+  // streamRawText is cleared atomically with isAnimating=false (React 18 batching),
+  // so checking streamRawText would always be falsy here — use a ref for the transition.
   useEffect(() => {
-    if (!isAnimating && streamRawText && view === 'chat') scrollToBottom()
-  }, [isAnimating, streamRawText, view])
+    const was = wasAnimatingRef.current
+    wasAnimatingRef.current = isAnimating
+    if (was && !isAnimating && view === 'chat') scrollToBottom()
+  }, [isAnimating, view])
 
   // Keep viewRef in sync so the popstate handler never sees a stale closure
   useEffect(() => {
