@@ -216,7 +216,7 @@ export function gerarExplicacoes(racket: RacketWithInsights): string[] {
 
   // Superfície lisa (spin baixo por design — mencionar só se não foi coberto)
   if (!used.has('superficie') && superficieRaw?.includes('lisa') && linhas.length < 5) {
-    push('superficie', 'Superfície lisa: favorece controle sobre efeito')
+    push('superficie', 'Superfície lisa: precisão e controle na direção da bola')
   }
 
   // ═════════════════════════════════════════════════════════════════════════
