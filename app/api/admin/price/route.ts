@@ -21,21 +21,34 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Body inválido' }, { status: 400 })
   }
 
-  const { id, price } = body as { id?: unknown; price?: unknown }
+  const { id, price, touch } = body as { id?: unknown; price?: unknown; touch?: unknown }
 
   if (typeof id !== 'number') {
     return NextResponse.json({ error: 'id deve ser número' }, { status: 400 })
   }
+
+  const now = new Date().toISOString()
+
+  // touch=true: only refreshes price_updated_at, doesn't change the price
+  if (touch === true) {
+    const { error } = await getAdmin()
+      .from('rackets')
+      .update({ price_updated_at: now })
+      .eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true, touched: true, price_updated_at: now })
+  }
+
   if (typeof price !== 'number' || price <= 0 || !isFinite(price)) {
     return NextResponse.json({ error: 'Preço inválido' }, { status: 400 })
   }
 
   const { error } = await getAdmin()
     .from('rackets')
-    .update({ price, price_updated_at: new Date().toISOString() })
+    .update({ price, price_updated_at: now })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true, price, price_updated_at: new Date().toISOString() })
+  return NextResponse.json({ ok: true, price, price_updated_at: now })
 }

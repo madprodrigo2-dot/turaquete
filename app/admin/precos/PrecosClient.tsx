@@ -11,6 +11,13 @@ export interface PriceRowData {
   affiliate_url: string | null
   is_active: boolean | null
   clicks30d: number
+  group: 'A' | 'B' | 'C'
+}
+
+interface Summary {
+  groupA: number
+  stale30d: number
+  neverUpdated: number
 }
 
 function stripAffiliateParams(url: string): string {
@@ -18,17 +25,17 @@ function stripAffiliateParams(url: string): string {
 }
 
 function StalenessLabel({ updatedAt }: { updatedAt: string | null }) {
-  if (!updatedAt) return <span className="text-[10px] text-red-500 font-medium">⏰ nunca</span>
+  if (!updatedAt) return <span className="text-[10px] text-red-500 font-semibold">⏰ nunca</span>
   const days = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000)
-  if (days > 60) return <span className="text-[10px] text-orange-500 font-medium">⚠️ {days}d atrás</span>
-  if (days > 30) return <span className="text-[10px] text-yellow-600 font-medium">📅 {days}d atrás</span>
+  if (days > 30) return <span className="text-[10px] text-red-500 font-medium">⚠️ {days}d atrás</span>
+  if (days > 15) return <span className="text-[10px] text-yellow-600 font-medium">📅 {days}d atrás</span>
   return <span className="text-[10px] text-green-600 font-medium">✓ {days}d atrás</span>
 }
 
 function PriceRow({ row }: { row: PriceRowData }) {
   const [priceStr, setPriceStr] = useState(row.price?.toString() ?? '')
-  const [status, setStatus] = useState<null | 'saving' | 'ok' | string>(null)
-  const [savedAt, setSavedAt] = useState(row.price_updated_at)
+  const [status, setStatus]     = useState<null | 'saving' | 'ok' | 'touched' | string>(null)
+  const [savedAt, setSavedAt]   = useState(row.price_updated_at)
 
   const currentStr = row.price?.toString() ?? ''
   const dirty = priceStr.trim() !== currentStr
@@ -43,12 +50,33 @@ function PriceRow({ row }: { row: PriceRowData }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: row.id, price: num }),
       })
-      const data = await res.json() as { error?: string }
+      const data = await res.json() as { error?: string; price_updated_at?: string }
       if (!res.ok) {
         setStatus(data.error ?? 'Erro ao salvar')
       } else {
-        setSavedAt(new Date().toISOString())
+        setSavedAt(data.price_updated_at ?? new Date().toISOString())
         setStatus('ok')
+        setTimeout(() => setStatus(null), 4000)
+      }
+    } catch {
+      setStatus('Erro de rede')
+    }
+  }
+
+  async function touch() {
+    setStatus('saving')
+    try {
+      const res = await fetch('/api/admin/price', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: row.id, touch: true }),
+      })
+      const data = await res.json() as { error?: string; price_updated_at?: string }
+      if (!res.ok) {
+        setStatus(data.error ?? 'Erro')
+      } else {
+        setSavedAt(data.price_updated_at ?? new Date().toISOString())
+        setStatus('touched')
         setTimeout(() => setStatus(null), 4000)
       }
     } catch {
@@ -109,11 +137,24 @@ function PriceRow({ row }: { row: PriceRowData }) {
           >
             {status === 'saving' ? '...' : 'Salvar'}
           </button>
+          {row.affiliate_url && (
+            <button
+              onClick={touch}
+              disabled={status === 'saving'}
+              title="Preço confere — só atualiza a data de revisão"
+              className="text-[10px] text-gray-400 hover:text-teal-600 transition-colors whitespace-nowrap shrink-0 px-1"
+            >
+              ✓ revisada
+            </button>
+          )}
         </div>
         {status === 'ok' && (
-          <p className="text-[10px] text-green-600 mt-1">✓ Salvo · data_atualização = hoje</p>
+          <p className="text-[10px] text-green-600 mt-1">✓ Salvo</p>
         )}
-        {status && status !== 'ok' && status !== 'saving' && (
+        {status === 'touched' && (
+          <p className="text-[10px] text-green-600 mt-1">✓ Marcada como revisada hoje</p>
+        )}
+        {status && status !== 'ok' && status !== 'touched' && status !== 'saving' && (
           <p className="text-[10px] text-red-500 mt-1">{status}</p>
         )}
       </td>
@@ -121,50 +162,54 @@ function PriceRow({ row }: { row: PriceRowData }) {
   )
 }
 
-type FilterKey = 'afiliado' | 'no_price' | 'stale' | 'all'
+type FilterKey = 'priority' | 'afiliado' | 'all'
 
-const FILTER_LABELS: Record<FilterKey, string> = {
-  afiliado: '💰 Com afiliado',
-  no_price: '⏰ Sem preço',
-  stale:    '⚠️ +30 dias',
-  all:      'Todas',
-}
-
-export default function PrecosClient({ rows }: { rows: PriceRowData[] }) {
+export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; summary: Summary }) {
   const [q, setQ]           = useState('')
-  const [filter, setFilter] = useState<FilterKey>('afiliado')
+  const [filter, setFilter] = useState<FilterKey>('priority')
 
-  const counts = useMemo(() => {
-    const now = Date.now()
-    return {
-      afiliado: rows.filter(r => r.affiliate_url && r.is_active !== false).length,
-      no_price: rows.filter(r => !r.price_updated_at && r.affiliate_url && r.is_active !== false).length,
-      stale:    rows.filter(r => {
-        if (!r.affiliate_url || r.is_active === false || !r.price_updated_at) return false
-        return (now - new Date(r.price_updated_at).getTime()) > 30 * 86_400_000
-      }).length,
-      all: rows.length,
-    }
-  }, [rows])
+  const counts = useMemo(() => ({
+    priority: rows.filter(r => r.group === 'A').length,
+    afiliado: rows.filter(r => r.group === 'A' || r.group === 'B').length,
+    all:      rows.length,
+  }), [rows])
 
   const displayed = useMemo(() => {
-    const now = Date.now()
     let out = rows
     if (q) out = out.filter(r =>
       r.name.toLowerCase().includes(q.toLowerCase()) ||
       r.brandName.toLowerCase().includes(q.toLowerCase())
     )
-    if (filter === 'afiliado') out = out.filter(r => r.affiliate_url && r.is_active !== false)
-    if (filter === 'no_price') out = out.filter(r => !r.price_updated_at && r.affiliate_url && r.is_active !== false)
-    if (filter === 'stale')    out = out.filter(r => {
-      if (!r.affiliate_url || r.is_active === false || !r.price_updated_at) return false
-      return (now - new Date(r.price_updated_at).getTime()) > 30 * 86_400_000
-    })
+    if (filter === 'priority') out = out.filter(r => r.group === 'A')
+    if (filter === 'afiliado') out = out.filter(r => r.group !== 'C')
     return out
   }, [rows, q, filter])
 
+  const FILTER_LABELS: Record<FilterKey, string> = {
+    priority: '🔥 Prioritárias',
+    afiliado: '💰 Todas com afiliado',
+    all:      'Todas',
+  }
+
   return (
     <div className="flex flex-col gap-4">
+
+      {/* Summary bar */}
+      <div className="flex items-center gap-4 flex-wrap text-sm">
+        <span className="font-semibold text-gray-800">
+          🔥 {summary.groupA} prioritárias a revisar
+        </span>
+        {summary.stale30d > 0 && (
+          <span className="text-red-500 font-medium">⚠️ {summary.stale30d} com preço &gt;30d</span>
+        )}
+        {summary.neverUpdated > 0 && (
+          <span className="text-orange-500 font-medium">⏰ {summary.neverUpdated} nunca atualizadas</span>
+        )}
+        {summary.stale30d === 0 && summary.neverUpdated === 0 && (
+          <span className="text-green-600 text-xs">✓ Nenhuma com preço vencido</span>
+        )}
+      </div>
+
       {/* Controls */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative">
@@ -181,7 +226,7 @@ export default function PrecosClient({ rows }: { rows: PriceRowData[] }) {
           )}
         </div>
 
-        {(['afiliado', 'no_price', 'stale', 'all'] as FilterKey[]).map(f => (
+        {(['priority', 'afiliado', 'all'] as FilterKey[]).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -203,7 +248,7 @@ export default function PrecosClient({ rows }: { rows: PriceRowData[] }) {
             <tr className="text-[11px] text-gray-500 uppercase tracking-wide">
               <th className="text-left px-4 py-2.5 font-semibold">Raquete</th>
               <th className="text-center px-4 py-2.5 font-semibold whitespace-nowrap">Cliques 30d</th>
-              <th className="text-left px-4 py-2.5 font-semibold whitespace-nowrap">Últ. atualização</th>
+              <th className="text-left px-4 py-2.5 font-semibold whitespace-nowrap">Últ. revisão</th>
               <th className="text-left px-4 py-2.5 font-semibold">Preço</th>
             </tr>
           </thead>
