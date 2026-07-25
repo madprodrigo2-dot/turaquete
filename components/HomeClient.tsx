@@ -686,6 +686,15 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                     </svg>
                     Recomeçar
                   </button>
+                  <a
+                    href={`https://wa.me/${process.env.NEXT_PUBLIC_WA_NUMBER ?? '5547997649011'}?text=${encodeURIComponent('Oi! Cheguei no final da recomendação do Turaquete e queria tirar uma dúvida sobre...')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => { try { sendGAEvent('event', 'whatsapp_contato_click') } catch {} }}
+                    className="text-xs text-tinta/40 hover:text-aqua transition-colors underline underline-offset-2"
+                  >
+                    Ficou com dúvida? Fala no WhatsApp
+                  </a>
                 </div>
               )}
 
