@@ -10,6 +10,21 @@ import { brtCutoff } from '@/lib/brt'
 
 export const dynamic = 'force-dynamic'
 
+// Map legacy starter chip labels to current equivalents
+const STARTER_NORMALIZE: Record<string, string> = {
+  'Sou iniciante':               'Equilibrado (legado)',
+  'Quero trocar minha raquete':  'Troca (legado)',
+  'Tenho uma raquete e quero trocar': 'Troca (legado)',
+  'Quero minha primeira raquete': 'Iniciante (legado)',
+  'Tenho dor no braço':          'Lesão (legado)',
+  'Tenho lesão no braço':        'Lesão (legado)',
+}
+
+function normalizeStarter(s: string | null | undefined): string | null {
+  if (!s) return null
+  return STARTER_NORMALIZE[s] ?? s
+}
+
 interface FeedbackRow {
   id: number
   created_at: string
@@ -136,7 +151,7 @@ export default async function QualidadeAdmin({
   const intencaoMap: Record<string, { pos: number; neg: number }> = {}
   for (const e of ratings) {
     const conv = convMap.get(e.session_id)
-    const starter = conv?.starter_usado ?? conv?.primeira_mensagem
+    const starter = normalizeStarter(conv?.starter_usado) ?? conv?.primeira_mensagem
     const key = e.intencao ?? starter ?? '(não registrada)'
     if (!intencaoMap[key]) intencaoMap[key] = { pos: 0, neg: 0 }
     if (e.event_type === 'rating_positive') intencaoMap[key].pos++
@@ -345,7 +360,7 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
               <tbody className="divide-y divide-gray-50">
                 {ratings.map(e => {
                   const conv = convMap.get(e.session_id)
-                  const label = conv?.starter_usado ?? conv?.primeira_mensagem?.slice(0, 60) ?? null
+                  const label = normalizeStarter(conv?.starter_usado) ?? conv?.primeira_mensagem?.slice(0, 60) ?? null
                   return (
                     <tr key={e.id} className="hover:bg-gray-50/60">
                       <td className="px-3 py-2 whitespace-nowrap text-gray-400 font-mono">
