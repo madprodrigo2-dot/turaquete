@@ -371,7 +371,7 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
                       </td>
                       <td className="px-3 py-2 max-w-[220px]">
                         {label ? (
-                          <span className={conv?.starter_usado ? 'bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-medium' : 'text-gray-600 text-xs truncate block'}>
+                          <span className="bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-medium">
                             {label}
                           </span>
                         ) : <span className="text-gray-300 text-xs">—</span>}
