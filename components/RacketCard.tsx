@@ -180,16 +180,16 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
           {ins && (
             <button
               onClick={handleOpenModal}
-              className="flex items-center gap-1.5 text-sm font-medium text-tinta hover:text-aqua hover:underline transition-colors mt-0.5 w-fit"
+              className="flex items-center gap-1.5 text-xs font-medium text-aqua underline underline-offset-2 hover:text-aqua/70 active:scale-[0.97] transition-colors mt-1 w-fit"
             >
-              <svg width="14" height="14" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
                 <polygon points="6.5,1 11.5,3.8 11.5,9.2 6.5,12 1.5,9.2 1.5,3.8"
                   stroke="currentColor" strokeWidth="1.2" fill="none" />
                 <line x1="6.5" y1="4" x2="6.5" y2="9" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
                 <line x1="3.7" y1="5.5" x2="9.3" y2="7.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
                 <line x1="3.7" y1="7.5" x2="9.3" y2="5.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
               </svg>
-              Ver o perfil completo no radar
+              Por que essa combina? Ver radar
             </button>
           )}
         </div>
