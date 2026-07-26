@@ -11,6 +11,9 @@ const VALID_TYPES = new Set([
   'ver_analise',
   'nova_conversa_pos_rec',
   'busca_sem_resultado',
+  'timeout_retry',
+  'whatsapp_shown',
+  'whatsapp_click',
 ])
 
 export async function POST(req: NextRequest) {

@@ -74,7 +74,7 @@ export default async function ConversaDetailPage({
 
   const sb = getAdmin()
 
-  const [{ data: rows }, { data: recEvents }] = await Promise.all([
+  const [{ data: rows }, { data: recEvents }, { data: waEvents }] = await Promise.all([
     sb.from('conversations')
       .select('*')
       .eq('session_id', session_id)
@@ -83,6 +83,11 @@ export default async function ConversaDetailPage({
       .select('racket_id, confidence, rank, created_at')
       .eq('conversation_id', session_id)
       .order('rank', { ascending: true }),
+    sb.from('feedback_events')
+      .select('event_type, created_at')
+      .eq('session_id', session_id)
+      .in('event_type', ['whatsapp_shown', 'whatsapp_click'])
+      .order('created_at', { ascending: true }),
   ])
 
   if (!rows || rows.length === 0) notFound()
@@ -91,6 +96,9 @@ export default async function ConversaDetailPage({
   const messages: Msg[] = Array.isArray(row.messages) ? row.messages as Msg[] : []
   const msgCount = messages.length
   const cierreAtingido = msgCount >= MESSAGE_LIMIT
+  const waShown = (waEvents ?? []).some(e => e.event_type === 'whatsapp_shown')
+  const waClicked = (waEvents ?? []).some(e => e.event_type === 'whatsapp_click')
+  const waClickedAt = (waEvents ?? []).find(e => e.event_type === 'whatsapp_click')?.created_at
 
   // All unique recommended racket IDs across rows (fallback when no rec events)
   const allRecIds = [...new Set(
@@ -223,29 +231,32 @@ export default async function ConversaDetailPage({
       <Block>
         <SectionTitle>Cierre & WhatsApp</SectionTitle>
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
               cierreAtingido ? 'bg-orange-50 text-orange-700' : 'bg-gray-100 text-gray-500'
             }`}>
-              {cierreAtingido ? '🔔 Cierre atingido' : '— Cierre não atingido'}
+              {cierreAtingido ? '🔔 Cierre atingido' : '— Cierre nao atingido'}
             </span>
             <span className="text-[10px] text-gray-400">{msgCount} / {MESSAGE_LIMIT} mensagens</span>
           </div>
 
-          <div className="text-[10px] leading-relaxed">
-            <span className="font-semibold text-gray-600">WA clicado: </span>
-            <span className="text-amber-600 font-semibold">não rastreado por sessão.</span>
-            <span className="text-gray-400">
-              {' '}O evento <code className="bg-gray-100 px-1 rounded">whatsapp_contato_click</code> vai apenas
-              para GA4 sem <code className="bg-gray-100 px-1 rounded">session_id</code> — não há como ligar
-              a uma conversa específica.
-            </span>
-          </div>
-
-          <div className="text-[10px] text-gray-400 pt-1 border-t border-gray-200">
-            <span className="font-semibold">Para medir por conversa:</span>
-            {' '}adicionar <code className="bg-gray-100 px-1 rounded">fireEvent({'{'} session_id, event_type: &apos;whatsapp_click&apos; {'}'})</code>
-            {' '}no <code className="bg-gray-100 px-1 rounded">onClick</code> do botão WA em <code className="bg-gray-100 px-1 rounded">HomeClient.tsx</code>.
+          <div className="flex flex-col gap-1 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 w-20 shrink-0">WA exibido:</span>
+              {waShown
+                ? <span className="text-green-700 font-semibold">Sim</span>
+                : <span className="text-gray-400">Nao</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 w-20 shrink-0">WA clicado:</span>
+              {waClicked
+                ? <span className="text-green-700 font-semibold">
+                    Sim{waClickedAt ? <span className="text-gray-400 font-normal ml-1">({fmtDate(waClickedAt)})</span> : null}
+                  </span>
+                : waShown
+                  ? <span className="text-gray-400">Nao clicou</span>
+                  : <span className="text-gray-300">—</span>}
+            </div>
           </div>
         </div>
       </Block>

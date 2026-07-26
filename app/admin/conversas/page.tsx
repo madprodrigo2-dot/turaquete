@@ -37,6 +37,8 @@ type SessionRow = {
   utm_medium: string | null
   referrer: string | null
   rec_racket_names: string[]
+  wa_shown: boolean
+  wa_click: boolean
 }
 
 function fmtBrl(v: number) {
@@ -149,6 +151,8 @@ export default async function ConversasPage({
       had_click: false,
       had_retry: false,
       rating: null,
+      wa_shown: false,
+      wa_click: false,
       ip_hash: sessionIpMap.get(r.session_id) ?? null,
       ip_session_count: 0,
       utm_source: sessionUtmSource.get(r.session_id) ?? null,
@@ -219,12 +223,13 @@ export default async function ConversasPage({
     }
   }
 
-  // Query: fetch ver_na_loja clicks, timeout_retry and rating events per session
+  // Query: fetch ver_na_loja clicks, timeout_retry, rating and WA events per session
   if (sessionIds.length > 0) {
-    const [{ data: clickRows }, { data: retryRows }, { data: ratingRows }] = await Promise.all([
+    const [{ data: clickRows }, { data: retryRows }, { data: ratingRows }, { data: waRows }] = await Promise.all([
       sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'ver_na_loja'),
       sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'timeout_retry'),
       sb.from('feedback_events').select('session_id, event_type').in('session_id', sessionIds).in('event_type', ['rating_positive', 'rating_negative']),
+      sb.from('feedback_events').select('session_id, event_type').in('session_id', sessionIds).in('event_type', ['whatsapp_shown', 'whatsapp_click']),
     ])
     if (clickRows) {
       const clickSet = new Set(clickRows.map(r => r.session_id))
@@ -249,9 +254,21 @@ export default async function ConversasPage({
         s.rating = ratingMap.get(s.session_id) ?? null
       }
     }
+    if (waRows) {
+      const waShownSet = new Set(waRows.filter(r => r.event_type === 'whatsapp_shown').map(r => r.session_id))
+      const waClickSet = new Set(waRows.filter(r => r.event_type === 'whatsapp_click').map(r => r.session_id))
+      for (const s of sessions) {
+        if (waShownSet.has(s.session_id)) s.wa_shown = true
+        if (waClickSet.has(s.session_id)) s.wa_click = true
+      }
+    }
   }
 
   const KNOWN_STARTERS = ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado']
+
+  const waShownCount = sessions.filter(s => s.wa_shown).length
+  const waClickCount = sessions.filter(s => s.wa_click).length
+  const waRate = waShownCount > 0 ? Math.round((waClickCount / waShownCount) * 100) : null
 
   return (
     <div>
@@ -264,6 +281,19 @@ export default async function ConversasPage({
           <AdminPeriodFilter current={fromParam ? '' : daysParam} currentFrom={fromParam} currentTo={toParam} />
         </Suspense>
       </div>
+
+      {waShownCount > 0 && (
+        <div className="mb-4 flex items-center gap-3 flex-wrap text-xs">
+          <span className="font-semibold text-gray-700">📱 WhatsApp</span>
+          <span className="text-gray-500">{waShownCount} conversas viram o botão</span>
+          <span className="text-green-700 font-semibold">{waClickCount} clicaram</span>
+          {waRate !== null && (
+            <span className={`font-mono px-1.5 py-0.5 rounded text-[11px] ${waRate >= 20 ? 'bg-green-50 text-green-700' : waRate >= 10 ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-100 text-gray-500'}`}>
+              {waRate}% CTR
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
         <table className="w-full text-xs">
@@ -279,6 +309,7 @@ export default async function ConversasPage({
               <th className="text-center px-3 py-2">Loja?</th>
               <th className="text-center px-3 py-2" title="Usuário clicou em 'Tentar de novo' após timeout">↻?</th>
               <th className="text-center px-3 py-2" title="Feedback do usuário">👍👎</th>
+              <th className="text-center px-3 py-2" title="WhatsApp: 📱=viu botão, ✓=clicou">WA</th>
               <th className="text-center px-3 py-2">IP</th>
               <th className="text-left px-3 py-2">Origem</th>
               <th className="px-3 py-2"></th>
@@ -341,6 +372,13 @@ export default async function ConversasPage({
                     ? <span title="me ajudou">👍</span>
                     : s.rating === 'negative'
                     ? <span title="não era isso">👎</span>
+                    : <span className="text-gray-200">—</span>}
+                </td>
+                <td className="px-3 py-2 text-center text-xs">
+                  {s.wa_click
+                    ? <span className="text-green-600 font-bold" title="Clicou no WhatsApp">✓</span>
+                    : s.wa_shown
+                    ? <span className="text-gray-400" title="Viu o botao, nao clicou">📱</span>
                     : <span className="text-gray-200">—</span>}
                 </td>
                 <td className="px-3 py-2 text-center font-mono">
