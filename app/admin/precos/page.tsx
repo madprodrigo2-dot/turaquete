@@ -26,7 +26,6 @@ export default async function PrecosPage() {
       .select('racket_id')
       .eq('tipo', 'afiliado')
       .eq('is_test', false)
-      .not('session_id', 'is', null)
       .gte('created_at', thirtyDaysAgo),
   ])
 

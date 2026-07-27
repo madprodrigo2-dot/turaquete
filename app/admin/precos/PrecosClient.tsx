@@ -1,6 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+
+type SortKey = 'name' | 'clicks' | 'staleness' | 'price'
+type SortDir = 'asc' | 'desc'
+
+function staleDaysClient(updatedAt: string | null): number {
+  if (!updatedAt) return 99999
+  return (Date.now() - new Date(updatedAt).getTime()) / 86_400_000
+}
 
 export interface PriceRowData {
   id: number
@@ -162,11 +170,43 @@ function PriceRow({ row }: { row: PriceRowData }) {
   )
 }
 
+function SortTh({ col, align, active, dir, onSort, className, children }: {
+  col: SortKey; align: 'left' | 'center' | 'right'
+  active: SortKey | null; dir: SortDir
+  onSort: (k: SortKey) => void
+  className?: string; children: React.ReactNode
+}) {
+  const isActive = active === col
+  return (
+    <th
+      onClick={() => onSort(col)}
+      className={`font-semibold cursor-pointer select-none hover:bg-gray-100 transition-colors text-${align} ${className ?? ''}`}
+    >
+      <span className="inline-flex items-center gap-1">
+        {children}
+        <span className={`text-[9px] ${isActive ? 'text-teal-600' : 'text-gray-300'}`}>
+          {isActive ? (dir === 'asc' ? '↑' : '↓') : '↕'}
+        </span>
+      </span>
+    </th>
+  )
+}
+
 type FilterKey = 'priority' | 'afiliado' | 'all'
 
 export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; summary: Summary }) {
   const [q, setQ]           = useState('')
   const [filter, setFilter] = useState<FilterKey>('priority')
+  const [sortKey, setSortKey] = useState<SortKey | null>(null)
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+  const handleSort = useCallback((key: SortKey) => {
+    setSortKey(prev => {
+      if (prev === key) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); return key }
+      setSortDir(key === 'name' ? 'asc' : 'desc')
+      return key
+    })
+  }, [])
 
   const counts = useMemo(() => ({
     priority: rows.filter(r => r.group === 'A').length,
@@ -182,8 +222,18 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     )
     if (filter === 'priority') out = out.filter(r => r.group === 'A')
     if (filter === 'afiliado') out = out.filter(r => r.group !== 'C')
+    if (sortKey) {
+      out = [...out].sort((a, b) => {
+        let diff = 0
+        if (sortKey === 'name')      diff = a.name.localeCompare(b.name, 'pt-BR')
+        if (sortKey === 'clicks')    diff = a.clicks30d - b.clicks30d
+        if (sortKey === 'staleness') diff = staleDaysClient(b.price_updated_at) - staleDaysClient(a.price_updated_at)
+        if (sortKey === 'price')     diff = (a.price ?? 0) - (b.price ?? 0)
+        return sortDir === 'asc' ? diff : -diff
+      })
+    }
     return out
-  }, [rows, q, filter])
+  }, [rows, q, filter, sortKey, sortDir])
 
   const FILTER_LABELS: Record<FilterKey, string> = {
     priority: '🔥 Prioritárias',
@@ -246,10 +296,10 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
         <table className="w-full border-collapse">
           <thead className="bg-gray-50">
             <tr className="text-[11px] text-gray-500 uppercase tracking-wide">
-              <th className="text-left px-4 py-2.5 font-semibold">Raquete</th>
-              <th className="text-center px-4 py-2.5 font-semibold whitespace-nowrap">Cliques 30d</th>
-              <th className="text-left px-4 py-2.5 font-semibold whitespace-nowrap">Últ. revisão</th>
-              <th className="text-left px-4 py-2.5 font-semibold">Preço</th>
+              <SortTh col="name"      align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5">Raquete</SortTh>
+              <SortTh col="clicks"    align="center" active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Cliques 30d</SortTh>
+              <SortTh col="staleness" align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Últ. revisão</SortTh>
+              <SortTh col="price"     align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5">Preço</SortTh>
             </tr>
           </thead>
           <tbody>
