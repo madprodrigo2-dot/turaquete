@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin as getSupabase } from '@/lib/supabase'
 import PrecosClient, { type PriceRowData } from './PrecosClient'
 
 export const dynamic = 'force-dynamic'
