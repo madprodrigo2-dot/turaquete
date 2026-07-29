@@ -39,7 +39,7 @@ export default function PresenceTracker({ url, anonKey }: { url: string; anonKey
 
   return (
     <div className="fixed bottom-4 right-4 z-[9998] flex items-center gap-1.5 bg-[#0E3A40] text-white/80 text-xs font-medium px-3 py-1.5 rounded-full shadow-lg pointer-events-none select-none">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#0CC0BE] animate-pulse" />
+      <span className="w-1.5 h-1.5 rounded-full bg-[#0CC0BE] pulse-dot" />
       {count} {count === 1 ? 'pessoa online' : 'pessoas online'}
     </div>
   )

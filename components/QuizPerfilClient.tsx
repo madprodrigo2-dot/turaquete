@@ -326,7 +326,7 @@ function Question({
                 key={i}
                 onClick={() => selected === null && onAnswer(i as Resposta)}
                 disabled={selected !== null}
-                className="w-full text-left rounded-2xl quiz-slide"
+                className={`w-full text-left rounded-2xl quiz-slide${isSel ? ' chip-select' : ''}`}
                 style={{
                   animationDelay: `${0.08 + i * 0.06}s`,
                   border: isSel ? '2.5px solid #0CC0BE' : '2px solid rgba(14,58,64,0.09)',
@@ -335,8 +335,7 @@ function Question({
                     ? '0 0 0 4px rgba(12,192,190,0.1), 0 4px 16px rgba(14,58,64,0.07)'
                     : '0 2px 8px rgba(14,58,64,0.05)',
                   opacity: isDim ? 0.3 : 1,
-                  transform: isSel ? 'scale(0.983)' : 'scale(1)',
-                  transition: 'opacity 0.2s ease, transform 0.2s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease',
+                  transition: 'opacity 0.2s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease',
                   cursor: selected !== null ? 'default' : 'pointer',
                 }}
               >
@@ -349,7 +348,11 @@ function Question({
                       transition: 'background 0.15s ease, color 0.15s ease',
                     }}
                   >
-                    {LETTERS[i]}
+                    {isSel ? (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <polyline points="3,8.5 6.5,12 13,5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : LETTERS[i]}
                   </div>
                   <span className="font-medium text-sm leading-snug" style={{ color: '#0E3A40' }}>
                     {opcao.label}

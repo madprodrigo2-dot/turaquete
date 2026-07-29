@@ -29,7 +29,7 @@ export interface ScoreSectionProps {
   tratamentoFabrica?: boolean | null
 }
 
-function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop }: {
+function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop, delay }: {
   label: string
   entry: GlossarioEntry
   value: number | null
@@ -37,6 +37,7 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop }: {
   sublabel?: string
   strong?: boolean
   isTop?: boolean
+  delay?: number
 }) {
   const labelNode = (
     <div className="flex items-center gap-1.5">
@@ -63,6 +64,7 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop }: {
       color={strong ? CORAL : undefined}
       badge={isTop ? '★' : undefined}
       highlight={strong}
+      delay={delay}
     />
   )
 }
@@ -93,12 +95,12 @@ export default function ScoreSection({
 
   return (
     <div className="flex flex-col gap-3">
-      <ScoreRow label="Potência"     entry={D_POTENCIA}     value={power}           sublabel={power     != null ? powerSublabel(power)     : undefined} strong={strong(power)}           isTop={isTop(power)} />
-      <ScoreRow label="Controle"     entry={D_CONTROLE}     value={control}                                                                              strong={strong(control)}         isTop={isTop(control)} />
-      <ScoreRow label="Conforto"     entry={D_CONFORTO}     value={comfort}         sublabel={comfort    != null ? comfortSublabel(comfort)   : undefined} strong={strong(comfort)}         isTop={isTop(comfort)} />
-      <ScoreRow label="Manuseio"     entry={D_MANUSEIO}     value={maneuverability}                                                                       strong={strong(maneuverability)} isTop={isTop(maneuverability)} />
-      <ScoreRow label="Spin"         entry={D_SPIN}         value={spin}            spinLisa={true}                                                       strong={strong(spin)}            isTop={isTop(spin)} />
-      <ScoreRow label="Estabilidade" entry={D_ESTABILIDADE} value={stability}                                                                             strong={strong(stability)}       isTop={isTop(stability)} />
+      <ScoreRow label="Potência"     entry={D_POTENCIA}     value={power}           sublabel={power     != null ? powerSublabel(power)     : undefined} strong={strong(power)}           isTop={isTop(power)}           delay={0} />
+      <ScoreRow label="Controle"     entry={D_CONTROLE}     value={control}                                                                              strong={strong(control)}         isTop={isTop(control)}         delay={100} />
+      <ScoreRow label="Conforto"     entry={D_CONFORTO}     value={comfort}         sublabel={comfort    != null ? comfortSublabel(comfort)   : undefined} strong={strong(comfort)}         isTop={isTop(comfort)}         delay={200} />
+      <ScoreRow label="Manuseio"     entry={D_MANUSEIO}     value={maneuverability}                                                                       strong={strong(maneuverability)} isTop={isTop(maneuverability)} delay={300} />
+      <ScoreRow label="Spin"         entry={D_SPIN}         value={spin}            spinLisa={true}                                                       strong={strong(spin)}            isTop={isTop(spin)}            delay={400} />
+      <ScoreRow label="Estabilidade" entry={D_ESTABILIDADE} value={stability}                                                                             strong={strong(stability)}       isTop={isTop(stability)}       delay={500} />
     </div>
   )
 }

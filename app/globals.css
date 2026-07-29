@@ -9,6 +9,22 @@
   --color-arena:      #F7EDDC;
 }
 
+/* ── Motion tokens ────────────────────────────────────────────────────────── */
+:root {
+  --dur-fast: 150ms;
+  --dur-base: 300ms;
+  --dur-slow: 700ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow:  0ms;
+  }
+}
+
 /* Hide global footer when chat is active — chat needs full viewport */
 body.chat-active [data-site-footer] {
   display: none;
@@ -180,6 +196,28 @@ body {
 }
 .quiz-result { animation: quiz-result 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* ── Reveal on scroll ────────────────────────────────────────────────────── */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.reveal-up { animation: reveal-up var(--dur-base) var(--ease-out) both; }
+
+/* ── Chip select micro-bounce ────────────────────────────────────────────── */
+@keyframes chip-select {
+  0%   { transform: scale(1);     }
+  40%  { transform: scale(1.04);  }
+  100% { transform: scale(0.983); }
+}
+.chip-select { animation: chip-select var(--dur-fast) var(--ease-out) both; }
+
+/* ── Presence dot pulse ──────────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1);    opacity: 1;    }
+  50%       { transform: scale(1.5); opacity: 0.45; }
+}
+.pulse-dot { animation: pulse-dot 2s var(--ease-out) infinite; }
+
 /* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .bt-ball,
@@ -189,7 +227,10 @@ body {
   .char-fade,
   .quiz-in,
   .quiz-slide,
-  .quiz-result {
+  .quiz-result,
+  .reveal-up,
+  .chip-select,
+  .pulse-dot {
     animation: none !important;
   }
   .typing-cursor { display: none; }

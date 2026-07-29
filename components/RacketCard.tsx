@@ -166,7 +166,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
                 sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })
                 if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_na_loja', racket_id: racket.id })
               }}
-              className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-[0_4px_16px_rgba(255,94,58,0.30)] active:scale-[0.98] transition-all"
+              className="mt-1 w-full text-center rounded-lg bg-coral text-white text-xs font-heading font-semibold py-2 px-3 hover:scale-[1.02] hover:shadow-[0_4px_16px_rgba(255,94,58,0.30)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-1"
             >
               Ver na loja →
             </a>

@@ -154,6 +154,42 @@ function SocialProof({ recsCount }: { recsCount: number }) {
   )
 }
 
+function RevealDiv({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+  const ref    = useRef<HTMLDivElement>(null)
+  const fired  = useRef(false)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) { setVisible(true); return }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || fired.current) return
+        fired.current = true
+        if (delay) setTimeout(() => setVisible(true), delay)
+        else setVisible(true)
+        observer.disconnect()
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [delay])
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(16px)',
+        transition: visible ? 'opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out)' : 'none',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function DiscoveryTile({
   href, label, sub, icon, chipClass, hoverBorderClass,
 }: {
@@ -858,10 +894,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
             {/* Badges */}
             <div className="flex gap-2 flex-wrap">
-              {BADGES.map(badge => (
+              {BADGES.map((badge, i) => (
                 <span
                   key={badge}
-                  className="bg-aqua/[0.12] text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-aqua/20"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                  className="bg-aqua/[0.12] text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-aqua/20 reveal-up"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
                   {badge}
@@ -890,7 +927,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <button
                 ref={heroCtaRef}
                 onClick={onStart}
-                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md"
+                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
               >
                 Começar agora
               </button>
@@ -975,6 +1012,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
 
           {/* Como funciona */}
+          <RevealDiv>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
             <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
             <div className="flex flex-col">
@@ -1001,8 +1039,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               ))}
             </div>
           </div>
+          </RevealDiv>
 
           {/* Quem é a Tury? — transparência */}
+          <RevealDiv delay={100}>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
             <div className="flex items-start gap-3 mb-4">
               <Image
@@ -1035,6 +1075,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               ))}
             </div>
           </div>
+          </RevealDiv>
 
           {/* Veja como funciona na prática — preview com raquete real */}
           {exampleRacket && (
@@ -1129,6 +1170,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         )}
 
         {/* Explorar por perfil */}
+        <RevealDiv>
         <div id="explorar" className="flex flex-col gap-3 scroll-mt-20">
           <div className="flex flex-col gap-0.5">
             <p className="font-heading font-bold text-tinta text-base md:text-lg">Explorar por perfil</p>
@@ -1170,6 +1212,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
 
         </div>
+        </RevealDiv>
 
         {/* Compare lado a lado */}
         <div className="flex flex-col gap-3">
@@ -1232,6 +1275,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         )}
 
         {/* Perguntas frequentes */}
+        <RevealDiv delay={50}>
         <div className="flex flex-col gap-3">
           <p className="font-heading font-bold text-tinta text-base md:text-lg">Perguntas frequentes</p>
           <div className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] divide-y divide-tinta/5">
@@ -1254,12 +1298,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             ))}
           </div>
         </div>
+        </RevealDiv>
 
         {/* CTA principal */}
         <button
           ref={mainCtaRef}
           onClick={onStart}
-          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md"
+          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
         >
           Começar agora
         </button>
@@ -1352,7 +1397,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         >
           <button
             onClick={onStart}
-            className="pointer-events-auto w-full font-heading font-bold bg-coral text-white text-lg py-4 rounded-2xl active:scale-[0.98] transition-all shadow-lg"
+            className="pointer-events-auto w-full font-heading font-bold bg-coral text-white text-lg py-4 rounded-2xl active:scale-[0.98] transition-all shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
           >
             Começar agora
           </button>
