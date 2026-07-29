@@ -326,14 +326,15 @@ function Question({
                 key={i}
                 onClick={() => selected === null && onAnswer(i as Resposta)}
                 disabled={selected !== null}
-                className={`w-full text-left rounded-2xl quiz-slide${isSel ? ' chip-select' : ''}`}
+                className={`w-full text-left quiz-slide${isSel ? ' chip-select' : ''}`}
                 style={{
+                  borderRadius: 'var(--radius-lg)',
                   animationDelay: `${0.08 + i * 0.06}s`,
                   border: isSel ? '2.5px solid #0CC0BE' : '2px solid rgba(14,58,64,0.09)',
                   background: isSel ? 'rgba(12,192,190,0.09)' : 'white',
                   boxShadow: isSel
-                    ? '0 0 0 4px rgba(12,192,190,0.1), 0 4px 16px rgba(14,58,64,0.07)'
-                    : '0 2px 8px rgba(14,58,64,0.05)',
+                    ? '0 0 0 4px rgba(12,192,190,0.1), var(--shadow-sm)'
+                    : 'var(--shadow-sm)',
                   opacity: isDim ? 0.3 : 1,
                   transition: 'opacity 0.2s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease',
                   cursor: selected !== null ? 'default' : 'pointer',
@@ -341,8 +342,9 @@ function Question({
               >
                 <div className="flex items-center gap-4 p-4">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-heading font-bold text-sm"
+                    className="w-10 h-10 flex items-center justify-center shrink-0 font-heading font-bold text-sm"
                     style={{
+                      borderRadius: 'var(--radius-sm)',
                       background: isSel ? '#0CC0BE' : 'rgba(12,192,190,0.08)',
                       color: isSel ? 'white' : '#0CC0BE',
                       transition: 'background 0.15s ease, color 0.15s ease',

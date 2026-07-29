@@ -856,7 +856,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
             {/* H1 + subtítulo */}
             <div className="flex flex-col gap-3">
-              <h1 className="font-heading font-extrabold text-tinta text-[2.5rem] md:text-[3rem] leading-[1.1] tracking-tight">
+              <h1 className="font-heading font-extrabold text-tinta text-[clamp(2.1rem,7vw,3.25rem)] leading-[1.05]" style={{ letterSpacing: '-0.02em' }}>
                 A raquete certa{' '}
                 <span className="relative inline-block text-coral">
                   de primeira.
@@ -886,7 +886,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             {recsCount >= RECS_THRESHOLD && <SocialProof recsCount={recsCount} />}
 
             {/* Franja */}
-            <div className="bg-coral/[0.07] border-l-[4px] border-coral rounded-r-xl px-4 py-3.5 md:px-5 md:py-4 backdrop-blur-[2px]">
+            <div className="bg-white border-l-[3px] border-coral rounded-r-[var(--radius-md)] px-4 py-4 md:px-5 md:py-5 shadow-card">
               <p className="text-tinta font-semibold text-sm md:text-base leading-relaxed">
                 O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
               </p>
@@ -927,7 +927,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <button
                 ref={heroCtaRef}
                 onClick={onStart}
-                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
+                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-full shadow-cta hover:scale-[1.02] hover:shadow-[0_10px_32px_rgba(255,94,58,0.44)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
               >
                 Começar agora
               </button>
@@ -1009,7 +1009,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         {/* 4: gutter direito topo — desktop only */}
         <SandMound width={82} height={17} className="hidden md:block top-[18%] right-[1.5%]" />
 
-        <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-7 md:py-9 flex flex-col gap-5 md:gap-7">
+        <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-8 md:py-12 flex flex-col gap-6 md:gap-8">
 
           {/* Como funciona */}
           <RevealDiv>
@@ -1155,7 +1155,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       </div>
 
       {/* ── Seção menta: marcas + FAQ + CTA + footer ── */}
-      <div className="w-full max-w-sm md:max-w-4xl flex flex-col gap-5 md:gap-7 px-5 md:px-8 pt-3 md:pt-4">
+      <div className="w-full max-w-sm md:max-w-4xl flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-5 md:pt-6">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
@@ -1304,7 +1304,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <button
           ref={mainCtaRef}
           onClick={onStart}
-          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-2xl hover:scale-[1.02] hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
+          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-full shadow-cta hover:scale-[1.02] hover:shadow-[0_10px_32px_rgba(255,94,58,0.44)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
         >
           Começar agora
         </button>
@@ -1397,7 +1397,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         >
           <button
             onClick={onStart}
-            className="pointer-events-auto w-full font-heading font-bold bg-coral text-white text-lg py-4 rounded-2xl active:scale-[0.98] transition-all shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
+            className="pointer-events-auto w-full font-heading font-bold bg-coral text-white text-lg py-4 rounded-full shadow-cta active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
           >
             Começar agora
           </button>

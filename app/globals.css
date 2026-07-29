@@ -9,12 +9,35 @@
   --color-arena:      #F7EDDC;
 }
 
-/* ── Motion tokens ────────────────────────────────────────────────────────── */
+/* ── Design tokens ────────────────────────────────────────────────────────── */
 :root {
+  /* Motion */
   --dur-fast: 150ms;
   --dur-base: 300ms;
   --dur-slow: 700ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Spacing — multiples of 8px */
+  --space-1:  8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-7: 56px;
+  --space-8: 64px;
+
+  /* Border radius */
+  --radius-sm:   12px;
+  --radius-md:   16px;
+  --radius-lg:   24px;
+  --radius-pill: 9999px;
+
+  /* Shadows — teal-tinted, never pure black */
+  --shadow-sm:  0 1px 4px rgba(14,58,64,0.05), 0 4px 12px rgba(14,58,64,0.07);
+  --shadow-md:  0 2px 8px rgba(14,58,64,0.06), 0 14px 34px rgba(14,58,64,0.09);
+  --shadow-lg:  0 4px 16px rgba(14,58,64,0.08), 0 24px 48px rgba(14,58,64,0.12);
+  --shadow-cta: 0 6px 24px rgba(255,94,58,0.32), 0 2px 8px rgba(255,94,58,0.18);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -31,33 +54,30 @@ body.chat-active [data-site-footer] {
 }
 
 @layer utilities {
-  /* Sand texture background — warm crema base */
+  /* Page background — subtle mint-to-white gradient for depth */
   .sand-texture {
-    background-color: #FBF6EF;
-    background-image:
-      linear-gradient(rgba(234, 247, 246, 0.93), rgba(234, 247, 246, 0.93)),
-      url('/textura-areia.webp');
-    background-size: 100% 100%, 400px auto;
-    background-repeat: no-repeat, repeat;
+    background: linear-gradient(165deg, #EAF7F6 0%, rgba(234,247,246,0.45) 28%, #ffffff 58%);
   }
 
   .font-heading {
     font-family: var(--font-display), sans-serif;
+    letter-spacing: -0.01em;
   }
   .font-body {
     font-family: var(--font-sans), system-ui, sans-serif;
   }
-  /* Modern petróleo-tinted card shadow — works on crema and white backgrounds */
+  /* Teal-tinted card shadow — ambient + contact layers */
   .shadow-card {
-    box-shadow:
-      0 2px 8px rgba(14, 58, 64, 0.06),
-      0 14px 34px rgba(14, 58, 64, 0.09);
+    box-shadow: var(--shadow-md);
     transition: box-shadow 0.2s ease, transform 0.2s ease;
   }
   .shadow-card:hover {
-    box-shadow:
-      0 4px 12px rgba(14, 58, 64, 0.08),
-      0 20px 44px rgba(14, 58, 64, 0.13);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Coral CTA floating shadow */
+  .shadow-cta {
+    box-shadow: var(--shadow-cta);
   }
 
   /* Warm two-layer shadow: ambient (wide) + contact (tight) — cards resting on sand */
@@ -96,6 +116,7 @@ body {
 
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
+  line-height: 1.6;
 }
 
 * {
