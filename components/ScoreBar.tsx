@@ -14,18 +14,13 @@ interface Props {
 }
 
 export default function ScoreBar({ label, sublabel, value, color = '#0CC0BE', badge, highlight, muted, delay = 0 }: Props) {
-  if (value === null) return null
-
-  const barColor   = muted ? '#CBD5E1' : color
-  const trackColor = muted ? '#CBD5E133' : `${color}26`
-  const hasLabel   = label !== undefined || sublabel !== undefined
-
   const ref    = useRef<HTMLDivElement>(null)
   const fired  = useRef(false)
   const [count,   setCount]   = useState(0)
   const [barPct,  setBarPct]  = useState(0)
 
   useEffect(() => {
+    if (value === null) return
     const el = ref.current
     if (!el) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -55,6 +50,12 @@ export default function ScoreBar({ label, sublabel, value, color = '#0CC0BE', ba
     observer.observe(el)
     return () => observer.disconnect()
   }, [value, delay])
+
+  if (value === null) return null
+
+  const barColor   = muted ? '#CBD5E1' : color
+  const trackColor = muted ? '#CBD5E133' : `${color}26`
+  const hasLabel   = label !== undefined || sublabel !== undefined
 
   return (
     <div ref={ref} className="flex items-center gap-3">
