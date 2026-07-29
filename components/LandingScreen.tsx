@@ -1129,7 +1129,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         )}
 
         {/* Explorar por perfil */}
-        <div id="explorar" className="flex flex-col gap-3">
+        <div id="explorar" className="flex flex-col gap-3 scroll-mt-20">
           <div className="flex flex-col gap-0.5">
             <p className="font-heading font-bold text-tinta text-base md:text-lg">Explorar por perfil</p>
             <p className="text-tinta/50 text-xs">encontre pelo que você precisa</p>
