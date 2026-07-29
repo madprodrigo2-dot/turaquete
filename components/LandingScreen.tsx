@@ -82,6 +82,78 @@ const FAQS: { q: string; a: ReactNode }[] = [
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
+function useCountUp(target: number, duration = 1200) {
+  const [count, setCount] = useState(0)
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const fired = useRef(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || fired.current) return
+        fired.current = true
+        setVisible(true)
+        if (reduced) { setCount(target); observer.disconnect(); return }
+        const t0 = performance.now()
+        const tick = (now: number) => {
+          const p = Math.min((now - t0) / duration, 1)
+          setCount(Math.round((1 - Math.pow(1 - p, 3)) * target))
+          if (p < 1) requestAnimationFrame(tick)
+        }
+        requestAnimationFrame(tick)
+        observer.disconnect()
+      },
+      { threshold: 0.2 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [target, duration])
+
+  return { count, visible, ref }
+}
+
+function SocialProof({ recsCount }: { recsCount: number }) {
+  const { count, visible, ref } = useCountUp(recsCount)
+  return (
+    <div
+      ref={ref}
+      className="flex items-center gap-4"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
+        transition: 'opacity 0.5s ease, transform 0.5s ease',
+      }}
+    >
+      <span
+        style={{
+          fontSize: 'clamp(2.4rem, 9vw, 3.2rem)',
+          fontVariantNumeric: 'tabular-nums',
+          fontWeight: 800,
+          color: '#FF5E3A',
+          lineHeight: 1,
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {count.toLocaleString('pt-BR')}
+      </span>
+      <span
+        style={{
+          fontSize: '0.8125rem',
+          lineHeight: 1.35,
+          color: '#0E3A40',
+          opacity: 0.65,
+        }}
+      >
+        jogadores ja encontraram<br />a raquete certa com a Tury
+      </span>
+    </div>
+  )
+}
+
 function DiscoveryTile({
   href, label, sub, icon, chipClass, hoverBorderClass,
 }: {
@@ -774,17 +846,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </p>
             </div>
 
-            {/* Prova social — número dinâmico, visível antes de rolar */}
-            {recsCount >= RECS_THRESHOLD && (
-              <div className="flex items-center gap-3">
-                <span className="text-[2.2rem] font-extrabold text-tinta leading-none tracking-tight tabular-nums">
-                  {recsCount.toLocaleString('pt-BR')}
-                </span>
-                <span className="text-sm text-tinta/60 leading-snug">
-                  jogadores ja encontraram<br />a raquete certa com a Tury
-                </span>
-              </div>
-            )}
+            {/* Prova social — numero animado, visivel antes de rolar */}
+            {recsCount >= RECS_THRESHOLD && <SocialProof recsCount={recsCount} />}
 
             {/* Franja */}
             <div className="bg-coral/[0.07] border-l-[4px] border-coral rounded-r-xl px-4 py-3.5 md:px-5 md:py-4 backdrop-blur-[2px]">
