@@ -774,6 +774,18 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </p>
             </div>
 
+            {/* Prova social — número dinâmico, visível antes de rolar */}
+            {recsCount >= RECS_THRESHOLD && (
+              <div className="flex items-center gap-3">
+                <span className="text-[2.2rem] font-extrabold text-tinta leading-none tracking-tight tabular-nums">
+                  {recsCount.toLocaleString('pt-BR')}
+                </span>
+                <span className="text-sm text-tinta/60 leading-snug">
+                  jogadores ja encontraram<br />a raquete certa com a Tury
+                </span>
+              </div>
+            )}
+
             {/* Franja */}
             <div className="bg-coral/[0.07] border-l-[4px] border-coral rounded-r-xl px-4 py-3.5 md:px-5 md:py-4 backdrop-blur-[2px]">
               <p className="text-tinta font-semibold text-sm md:text-base leading-relaxed">
@@ -821,18 +833,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </button>
             </div>
 
-            {/* A — Contador vivo / trust signal */}
-            {recsCount >= RECS_THRESHOLD ? (
-              <p className="text-tinta/50 text-xs">
-                Já ajudei{' '}
-                <strong className="text-tinta/70">{recsCount.toLocaleString('pt-BR')}</strong>{' '}
-                jogadores a encontrar a raquete certa
-              </p>
-            ) : (
-              <p className="text-tinta/50 text-xs">
-                Consultoria instantânea pra jogadores de todo o Brasil
-              </p>
-            )}
+            {/* Segunda porta — explorar sem quiz */}
+            <p className="text-center text-sm text-tinta/50">
+              ou{' '}
+              <Link
+                href="/raquetes/iniciante"
+                className="font-medium text-tinta/65 hover:text-tinta transition-colors underline underline-offset-2 decoration-tinta/25"
+              >
+                explore as raquetes
+              </Link>
+            </p>
 
           </div>{/* end coluna texto */}
 
