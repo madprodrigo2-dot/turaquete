@@ -1,10 +1,30 @@
+import type { Metadata } from 'next'
 import { listarMarcas, getTopRaquetas, getRaquetasComAtleta, getRaquetaPorSlug, getRandomExpensiveRacket } from '@/lib/recommend'
 import { getRecsCount } from '@/lib/stats'
 import HomeClient from '@/components/HomeClient'
+import { SITE_URL } from '@/lib/site'
 
 // Regenerate every 5 min so the recommendation carousel reflects recent data.
 // Edit CURATED_SLUGS in lib/recommend.ts to change the cold-start fallback.
 export const revalidate = 300
+
+export const metadata: Metadata = {
+  title: {
+    absolute: 'Turaquete | Descubra a raquete de beach tennis ideal pra você',
+  },
+  description:
+    'Conta como você joga e a Tury indica a raquete de beach tennis ideal para o seu nível, estilo e orçamento. Recomendação gratuita com análise técnica real.',
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    title: 'Turaquete | A raquete certa de primeira.',
+    description:
+      'Conta como você joga e a Tury indica a raquete de beach tennis ideal para o seu nível, estilo e orçamento. Recomendação gratuita com análise técnica real.',
+    url: SITE_URL,
+    images: [{ url: '/hero-beach-tennis2.png', width: 1200, height: 630, alt: 'Turaquete' }],
+  },
+}
 
 const jsonLd = {
   '@context': 'https://schema.org',
