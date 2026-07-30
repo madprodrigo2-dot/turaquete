@@ -384,7 +384,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
               onClick={() => sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })}
               className="mt-auto w-full text-center border border-aqua text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:bg-aqua/20 active:scale-[0.98] transition-all leading-tight"
             >
-              Ver na loja
+              Ver na loja →
             </a>
           ) : (
             <span className="mt-auto w-full text-center rounded-xl bg-gray-100 text-gray-400 text-xs font-semibold py-2 cursor-not-allowed select-none block">

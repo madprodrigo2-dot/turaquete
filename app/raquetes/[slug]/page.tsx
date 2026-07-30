@@ -210,7 +210,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                   linkTipo={linkTipo}
                   className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md text-center block"
                 >
-                  {price ? `Comprar por ${price}` : 'Ver onde comprar'}
+                  {price ? `Ver na loja → ${price}` : 'Ver na loja →'}
                 </BuyButton>
               ) : (
                 <Link
