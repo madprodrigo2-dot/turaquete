@@ -232,12 +232,31 @@ function FlagGermany() {
   )
 }
 
+function FlagUSA() {
+  return (
+    <svg
+      width="24" height="17" viewBox="0 0 19 10"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Estados Unidos"
+      role="img"
+      className="inline-block align-middle rounded-[1px]"
+      style={{ boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.15)', shapeRendering: 'crispEdges' }}
+    >
+      {[0,1,2,3,4,5,6,7,8,9].map(i => (
+        <rect key={i} y={i} width="19" height="1" fill={i % 2 === 0 ? '#B22234' : '#FFFFFF'}/>
+      ))}
+      <rect width="8" height="5" fill="#3C3B6E"/>
+    </svg>
+  )
+}
+
 function countryName(raw: string): string {
   const c = raw.toLowerCase().trim()
-  if (c === 'br' || c === 'brazil') return 'Brasil'
-  if (c === 'it' || c === 'italy') return 'Itália'
-  if (c === 'es' || c === 'spain') return 'Espanha'
+  if (c === 'br' || c === 'brazil' || c === 'brasil') return 'Brasil'
+  if (c === 'it' || c === 'italy' || c === 'itália' || c === 'italia') return 'Itália'
+  if (c === 'es' || c === 'spain' || c === 'espanha') return 'Espanha'
   if (c === 'de' || c === 'germany' || c === 'alemanha' || c === 'deutschland') return 'Alemanha'
+  if (c === 'us' || c === 'usa' || c === 'united states' || c === 'estados unidos') return 'EUA'
   return raw
 }
 
@@ -247,6 +266,7 @@ function CountryFlag({ country }: { country: string }) {
   if (c === 'brasil' || c === 'brazil' || c === 'br') return <FlagBrazil />
   if (c === 'espanha' || c === 'spain' || c === 'es') return <FlagSpain />
   if (c === 'alemanha' || c === 'germany' || c === 'de' || c === 'deutschland') return <FlagGermany />
+  if (c === 'us' || c === 'usa' || c === 'united states' || c === 'estados unidos') return <FlagUSA />
   return null
 }
 
