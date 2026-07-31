@@ -889,8 +889,8 @@ async function executeTool(
         })
       }
       const originalFilters = input as RacketFilters
-      // presupuesto_max is now soft-filtered (not a DB hard filter), so 0 results here
-      // only happen for presupuesto_min constraints (e.g. "Mais de R$3.000" with no premium matches).
+      // presupuesto_max is soft-filtered: 0 results happen for presupuesto_min constraints
+      // (e.g. "Mais de R$3.000") or when OVER_BUDGET_CAP cuts all profile-matching candidates.
       if (originalFilters.presupuesto_min && originalFilters.presupuesto_min > 0) {
         const { raquetes: raquetesSemOrc, criteriosRelaxados: relSemOrc } = await buscarRaquetas({ ...effectiveFilters, presupuesto_min: undefined, presupuesto_max: undefined })
         const rankedSemOrc = diagnosticoRef.value ? applyFaixaFilter(raquetesSemOrc, diagnosticoRef.value) : raquetesSemOrc
@@ -910,6 +910,23 @@ async function executeTool(
           pendingSuggestions.splice(0, pendingSuggestions.length, ...priceChips)
           return JSON.stringify({ encontradas: 0, status: 'ZERO_NA_FAIXA' })
         }
+      }
+      // OVER_BUDGET_CAP cut all candidates — all profile-matching rackets cost > presupuestoMaxBudget × 1.5.
+      // Mirror ZERO_NA_FAIXA: set hardcoded text + price chips so the model loop is skipped entirely.
+      if (!isLookupCall && presupuestoMaxBudget != null && rankedBase.length > 0) {
+        const withPrice = rankedBase.filter(r => r.price != null)
+        const cheapest = withPrice.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0]
+        const cheapPrice = cheapest?.price ?? null
+        const cheapName = cheapest?.name ?? null
+        const hardcoded = cheapPrice != null && cheapName
+          ? `Dentro de R$${presupuestoMaxBudget} não tenho opções para esse perfil — a mais acessível que encaixa custa R$${Math.round(cheapPrice as number)} (${cheapName}).\n\nSe quiser explorar outra faixa:`
+          : `Não encontrei opções dentro de R$${presupuestoMaxBudget} para esse perfil. Se quiser explorar outra faixa:`
+        debugRef.value.hardcodedText = hardcoded
+        priceAskPendingRef.value = true
+        const priceChips = computePrecoChips([])
+        precoChipsRef.value = priceChips
+        pendingSuggestions.splice(0, pendingSuggestions.length, ...priceChips)
+        return JSON.stringify({ encontradas: 0, status: 'ZERO_BUDGET_CAP' })
       }
       return JSON.stringify({ encontradas: 0, mensagem: 'Nenhuma raquete encontrada com os critérios informados.' })
     }
@@ -1800,6 +1817,12 @@ export async function runAgentTurn(
           intencao: intencaoRef.value ?? undefined,
           usage, debug: debugRef.value,
         }
+      }
+      // ZERO_BUDGET_CAP / ZERO_NA_FAIXA: handler already set hardcoded text + chips — return directly.
+      if (priceAskPendingRef.value && debugRef.value.hardcodedText) {
+        const text = debugRef.value.hardcodedText
+        if (onToken) onToken(text)
+        return { text, suggestions: [...pendingSuggestions], usage, debug: debugRef.value }
       }
       // buscar returned 0 results, price gate fired, or other edge case → fall through to model loop
     }
