@@ -55,6 +55,7 @@ function summarizeReferrer(ref: string | null): string {
 async function sendTelegramNotification(opts: {
   racketName: string
   slug: string
+  imageUrl: string | null
   ctaUrl: string
   tipo: 'afiliado' | 'oficial' | 'busca'
   price: number | null
@@ -71,7 +72,6 @@ async function sendTelegramNotification(opts: {
     return
   }
 
-  // Only flag as suspicious if referrer is /ir/ itself (redirect loop)
   const isSuspicious = opts.referrer?.includes('/ir/') ?? false
   const emoji  = isSuspicious ? '🤖' : (opts.tipo === 'afiliado' ? '💰' : opts.tipo === 'busca' ? '🔍' : '🔗')
   const preco  = opts.price
@@ -81,7 +81,6 @@ async function sendTelegramNotification(opts: {
   const nivel  = opts.nivel ? (nivelMap[opts.nivel] ?? opts.nivel) : '—'
   const tipoLabel = opts.tipo === 'busca' ? 'busca ML (fallback)' : opts.tipo
 
-  // via: UTM tem prioridade, depois referrer, depois origem da sessão
   const origem = opts.hasSession ? 'conversa' : 'direto'
   let via = origem
   if (opts.utmSource) {
@@ -91,15 +90,24 @@ async function sendTelegramNotification(opts: {
   }
 
   const label = isSuspicious ? 'Clique suspeito (loop)' : 'Clique em Comprar'
-  // Link aponta para o destino real (ML, pichau.com.br etc.) — não para a página interna.
-  // Assim o preview do Telegram mostra a página de destino, não a foto do nosso site.
   const text  = `${emoji} ${label}\n${opts.racketName}\n${tipoLabel} · ${preco} · ${nivel}\nvia ${via}\n[🛒 Ir pra loja](${opts.ctaUrl})`
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
-  })
+  const base = `https://api.telegram.org/bot${token}`
+  const headers = { 'Content-Type': 'application/json' }
+
+  if (opts.imageUrl) {
+    await fetch(`${base}/sendPhoto`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ chat_id: chatId, photo: opts.imageUrl, caption: text, parse_mode: 'Markdown' }),
+    })
+  } else {
+    await fetch(`${base}/sendMessage`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+    })
+  }
 }
 
 // Sends a "click_comprar" event to GA4 via Measurement Protocol (server-side).
@@ -259,6 +267,7 @@ export default async function IrPage({
       ? sendTelegramNotification({
           racketName: racket.name,
           slug,
+          imageUrl: racket.image_url ?? null,
           ctaUrl,
           tipo,
           price,
