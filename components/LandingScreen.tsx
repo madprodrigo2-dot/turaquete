@@ -419,16 +419,27 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
   const [activeIdx, setActiveIdx] = useState(0)
   const [atStart, setAtStart] = useState(true)
   const [atEnd, setAtEnd] = useState(false)
+  const [shuffled, setShuffled] = useState(rackets)
+
+  useEffect(() => {
+    const arr = [...rackets]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    setShuffled(arr)
+  }, [])
+
   // maxIdx = highest index that can actually be scrolled to (varies by viewport).
   // On desktop (3 cards visible) fewer positions are reachable than rackets.length - 1.
-  const [maxIdx, setMaxIdx] = useState(rackets.length - 1)
+  const [maxIdx, setMaxIdx] = useState(shuffled.length - 1)
 
   const computeMaxIdx = () => {
     const el = trackRef.current
     if (!el || el.children.length === 0) return
     const maxScroll = el.scrollWidth - el.clientWidth
     const scrollPadding = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0
-    for (let i = rackets.length - 1; i >= 0; i--) {
+    for (let i = shuffled.length - 1; i >= 0; i--) {
       const card = el.children[i] as HTMLElement | null
       if (!card) continue
       if (card.offsetLeft - scrollPadding <= maxScroll + 2) {
@@ -499,7 +510,7 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
           className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pl-5 pr-5 md:pl-0 md:pr-0 scroll-pl-5 md:scroll-pl-0"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
         >
-          {rackets.map(racket => (
+          {shuffled.map(racket => (
             <div
               key={racket.id}
               className="w-52 md:w-[calc((100%-24px)/3)] shrink-0 snap-start"
