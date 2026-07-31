@@ -71,6 +71,7 @@ export function classifyCore(core: string | null | undefined): CoreClass {
   if (c === 'eva 10' || c === 'eva 13') return 'SUPERSOFT'
   if (c.includes('hard') || c.includes('duro') || c.includes('high density') || c.includes('alta densidade')) return 'HARD'
   if (c.includes('black pro') || c.startsWith('black pro')) return 'HARD'
+  if (c === 'eva15' || c === 'eva 15') return 'SOFT'
   if (c.includes('soft') || c.includes('active')) return 'SOFT'
   if (c.includes('medium')) return 'MEDIUM'
   return 'MEDIUM'
