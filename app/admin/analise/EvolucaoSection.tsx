@@ -253,6 +253,7 @@ export function EvolucaoSection({ rawData }: Props) {
               tickLine={false}
               axisLine={false}
               allowDecimals={false}
+              tickCount={8}
               width={28}
             />
             <Tooltip
