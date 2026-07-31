@@ -8,19 +8,11 @@ import RacketImageTile from './RacketImageTile'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 import NaoAcheiWidget from './NaoAcheiWidget'
+import { PRECO_BUCKETS } from '@/lib/agent/preco-buckets'
 
 function normalize(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 }
-
-// Same canonical buckets as the chat (lib/agent/preco-buckets.ts PRECO_BUCKETS)
-const PRECO_BUCKETS = [
-  { label: 'Até R$500',          min: 0,    max: 500   },
-  { label: 'R$500 a R$1.200',    min: 501,  max: 1200  },
-  { label: 'R$1.200 a R$2.000',  min: 1201, max: 2000  },
-  { label: 'R$2.000 a R$3.000',  min: 2001, max: 3000  },
-  { label: 'Mais de R$3.000',    min: 3001, max: null   },
-] as const
 
 export type SortKey = 'menor-preco' | 'maior-preco'
 
