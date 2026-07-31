@@ -216,57 +216,19 @@ export default async function AnaliseAdmin({
 
   ])
 
-  // ── Evolução — 180 dias independente do filtro de período ────────────────
+  // ── Evolução — 180 dias via RPC (agrega no banco, evita limite de 1000 rows do PostgREST) ──
   function toBrtDate(iso: string): string {
     return new Date(new Date(iso).getTime() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10)
   }
   const evolCutoff = new Date(now - 181 * 24 * 60 * 60 * 1000).toISOString()
-  const [evolConvRows, evolRecRows, evolClickRows] = await Promise.all([
-    (() => {
-      const q = sb.from('conversations')
-        .select('created_at, session_id')
-        .gt('custo_brl', 0)
-        .gte('created_at', evolCutoff)
-        .limit(5000)
-      return (includeTest ? q : q.eq('is_test', false))
-        .then(r => (r.data ?? []) as { created_at: string; session_id: string }[])
-    })(),
-    (() => {
-      const q = sb.from('recommendation_events')
-        .select('created_at, conversation_id')
-        .gte('created_at', evolCutoff)
-        .limit(5000)
-      return (includeTest ? q : q.eq('is_test', false))
-        .then(r => (r.data ?? []) as { created_at: string; conversation_id: string }[])
-    })(),
-    sb.from('link_clicks')
-      .select('created_at')
-      .eq('is_test', false)
-      .not('session_id', 'is', null)
-      .in('tipo', ['afiliado', 'busca'])
-      .gte('created_at', evolCutoff)
-      .limit(5000)
-      .then(r => (r.data ?? []) as { created_at: string }[]),
-  ])
-
-  // Agregar por dia BRT
-  const convByDay = new Map<string, Set<string>>()
-  for (const r of evolConvRows) {
-    const d = toBrtDate(r.created_at)
-    if (!convByDay.has(d)) convByDay.set(d, new Set())
-    convByDay.get(d)!.add(r.session_id)
-  }
-  const recByDay = new Map<string, Set<string>>()
-  for (const r of evolRecRows) {
-    const d = toBrtDate(r.created_at)
-    if (!recByDay.has(d)) recByDay.set(d, new Set())
-    recByDay.get(d)!.add(r.conversation_id)
-  }
-  const clicksByDay = new Map<string, number>()
-  for (const r of evolClickRows) {
-    const d = toBrtDate(r.created_at)
-    clicksByDay.set(d, (clicksByDay.get(d) ?? 0) + 1)
-  }
+  const evolRpcResult = await sb.rpc('admin_evolucao_rpc', {
+    cutoff_at:    evolCutoff,
+    include_test: includeTest,
+  })
+  type EvolRpcRow = { dia: string; conversas: number; recomendacoes: number; cliques: number }
+  const evolRpcMap = new Map<string, EvolRpcRow>(
+    ((evolRpcResult.data ?? []) as EvolRpcRow[]).map(r => [r.dia, r])
+  )
 
   // Gerar array de 180 dias (hoje incluído)
   const todayBrt   = toBrtDate(new Date(now).toISOString())
@@ -274,11 +236,12 @@ export default async function AnaliseAdmin({
   for (let i = 179; i >= 0; i--) {
     const dayMs = new Date(todayBrt + 'T12:00:00Z').getTime() - i * 86400000
     const day   = new Date(dayMs).toISOString().slice(0, 10)
+    const rpc   = evolRpcMap.get(day)
     evolRawData.push({
       date:          day,
-      conversas:     convByDay.get(day)?.size    ?? 0,
-      recomendacoes: recByDay.get(day)?.size     ?? 0,
-      cliques:       clicksByDay.get(day)        ?? 0,
+      conversas:     Number(rpc?.conversas     ?? 0),
+      recomendacoes: Number(rpc?.recomendacoes ?? 0),
+      cliques:       Number(rpc?.cliques       ?? 0),
     })
   }
 
