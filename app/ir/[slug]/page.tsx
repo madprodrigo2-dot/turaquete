@@ -54,6 +54,7 @@ function summarizeReferrer(ref: string | null): string {
 // Sends a Telegram notification to the owner on every real buy click.
 async function sendTelegramNotification(opts: {
   racketName: string
+  slug: string
   tipo: 'afiliado' | 'oficial' | 'busca'
   price: number | null
   nivel: string | null
@@ -88,12 +89,13 @@ async function sendTelegramNotification(opts: {
   }
 
   const label  = isSuspicious ? 'Clique suspeito (loop)' : 'Clique em Comprar'
-  const text   = `${emoji} ${label}\n${opts.racketName}\n${tipoLabel} · ${preco} · ${nivel}\nvia ${via}`
+  const racketUrl = `https://turaquete.com.br/raquetes/${opts.slug}`
+  const text   = `${emoji} ${label}\n${opts.racketName}\n${tipoLabel} · ${preco} · ${nivel}\nvia ${via}\n[🔗 Ver raquete](${racketUrl})`
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
   })
 }
 
@@ -253,6 +255,7 @@ export default async function IrPage({
     !isTest
       ? sendTelegramNotification({
           racketName: racket.name,
+          slug,
           tipo,
           price,
           nivel: derivarNivel(racket),
