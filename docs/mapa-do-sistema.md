@@ -215,6 +215,7 @@ flowchart TD
 | **fallback** | Quando não há link curado: busca automática no ML pelo nome da raquete. Tipo: "busca". |
 | **MP** | Measurement Protocol — API do Google Analytics 4 para enviar eventos server-side (sem JavaScript do browser). |
 | **motor_cache** | JSON salvo em `racket_insights` com o resultado completo do último recalc. Contém saida_de_bola, sweet_spot e os 7 scores como o motor os calculou. |
+| **elbow_friendly** | Boolean armazenado em `racket_insights` (true/false/null). Fórmula: `comfort≥8 AND saida≠'exigente'→true; comfort≤3 OR saida='exigente'→false; senão→null`. Setado em INSERT (seed-insights.ts) e em batch UPDATE (recalc-motor-v4.ts). `salvarFisicos()` NÃO atualiza este campo. **Candidato à migração para runtime** (como saida_de_bola e nivel já foram), mas requer revisão cuidadosa de `getRaquetasConforto()` e do filtro em camadas de `recommend.ts` antes de migrar. Pendente. |
 | **specs_extra** | Campo JSON em `rackets` com dados que não cabem nas colunas principais (textura, furos, atleta, etc.). Alguns valores são stale — o motor_cache é a fonte confiável. |
 | **publicada** | Único campo que controla visibilidade pública. `publicada = true` = aparece no site, no recomendador e no catálogo. |
 | **is_test** | Flag que marca sessões de admin, bots ou teste manual (cookie). Excluído dos contadores e não dispara GA4 ou Telegram. |
