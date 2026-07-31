@@ -24,7 +24,7 @@ export type RacketData = {
     forgiveness: number | null
     maneuverability: number | null
     stability: number | null
-    nivel_sugerido: string | null
+    nivel_override: string | null
     nivel: 'iniciante' | 'intermediario' | 'avancado' | null
     scoreGeral: number | null
     scoreIni: number | null

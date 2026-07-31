@@ -23,7 +23,8 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
   const [isActive, setIsActive] = useState(racket.is_active ?? true)
   const [destaqueAtleta, setDestaqueAtleta] = useState(racket.destaque_atleta ?? false)
   const [atleta, setAtleta] = useState<string>((se.atleta as string | null) ?? '')
-  const [nivelSugerido, setNivelSugerido] = useState<string>(ins?.nivel_sugerido ?? '')
+  const [nivelOverride, setNivelOverride] = useState<string>(ins?.nivel_override ?? '')
+  const [nivelOverrideMotivo, setNivelOverrideMotivo] = useState<string>(ins?.nivel_override_motivo ?? '')
   const [summary, setSummary] = useState(ins?.summary ?? '')
   const [perfilResumo, setPerfilResumo] = useState(ins?.perfil_resumo ?? '')
   const [observations, setObservations] = useState(
@@ -38,6 +39,10 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
   function handleSave() {
     setError(null)
     setSuccess(false)
+    if (nivelOverride && !nivelOverrideMotivo.trim()) {
+      setError('Motivo obrigatório quando nivel override está preenchido.')
+      return
+    }
     startTransition(async () => {
       try {
         await salvarEditorial(slug, {
@@ -46,7 +51,8 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
           is_active: isActive,
           destaque_atleta: destaqueAtleta,
           atleta,
-          nivel_sugerido: (nivelSugerido || null) as 'iniciante' | 'intermediario' | 'avancado' | null,
+          nivel_override: (nivelOverride || null) as 'iniciante' | 'intermediario' | 'avancado' | null,
+          nivel_override_motivo: nivelOverride ? nivelOverrideMotivo : null,
           summary,
           perfil_resumo: perfilResumo,
           observations: observations
@@ -73,19 +79,32 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
       </div>
 
       <div className="p-5 space-y-4">
-        {/* Nível + Preço + flags */}
+        {/* Nível override + Preço + flags */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Nível sugerido</label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Nível override{' '}
+              <span className="text-gray-400">(vazio = fórmula automática)</span>
+            </label>
             <select
-              value={nivelSugerido}
-              onChange={e => setNivelSugerido(e.target.value)}
+              value={nivelOverride}
+              onChange={e => { setNivelOverride(e.target.value); if (!e.target.value) setNivelOverrideMotivo('') }}
               className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white"
             >
               {NIVEL_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
+            {nivelOverride && (
+              <textarea
+                value={nivelOverrideMotivo}
+                onChange={e => setNivelOverrideMotivo(e.target.value)}
+                rows={2}
+                required
+                className="mt-1 w-full text-xs border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-amber-400 bg-amber-50 resize-none"
+                placeholder="Motivo obrigatório — por que contrariar a fórmula?"
+              />
+            )}
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Preço (R$)</label>

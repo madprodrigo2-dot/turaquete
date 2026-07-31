@@ -2,6 +2,7 @@ import { getSupabase } from './supabase'
 import { scoreRacket } from './scorer'
 import { getSaidaDeBola } from './saidaBola'
 import { classifyCore } from './motor'
+import { derivarNivel } from './nivel'
 import type { FilterStep } from './debug-types'
 
 export interface RacketFilters {
@@ -48,7 +49,8 @@ export interface Insights {
   observations: string[]
   summary: string | null
   perfil_resumo: string | null
-  nivel_sugerido: 'iniciante' | 'intermediario' | 'avancado' | null
+  nivel_override: 'iniciante' | 'intermediario' | 'avancado' | null
+  nivel_override_motivo: string | null
   confianca: 'alta' | 'media' | 'baixa' | null
 }
 
@@ -105,7 +107,7 @@ const SELECT_FIELDS = `
     power, control, comfort, maneuverability, stability, spin, forgiveness,
     good_for_beginners, good_for_intermediate, good_for_advanced,
     elbow_friendly, shoulder_friendly, observations, summary,
-    perfil_resumo, nivel_sugerido, confianca
+    perfil_resumo, nivel_override, nivel_override_motivo, confianca
   )
 `.trim()
 
@@ -236,7 +238,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
   // Avançado vê o catálogo completo. Não aplicado para buscas por nome/atleta.
   //
   // DISTINTO de derivarNivel() em lib/nivel.ts — são perguntas diferentes por design:
-  //   derivarNivel        → "que label exibir publicamente?" (usa nivel_sugerido do DB)
+  //   derivarNivel        → "que label exibir publicamente?" (fórmula runtime; nivel_override vence se preenchido)
   //   isAvancadaParaFiltro → "bloquear esta raquete para não-avançados?" (usa scores)
   // Os thresholds divergem intencionalmente: p>=8 ou c>=9 aqui vs p>=7 ou c>=7 lá.
   // Mais permissivo = mais raquetes chegam ao iniciante; a etiqueta de exibição não muda.
@@ -244,7 +246,7 @@ export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResu
     const ins = r.racket_insights
     if (!ins) return false
     const f = ins.forgiveness, p = ins.power, c = ins.control, co = ins.comfort
-    if (f == null || p == null || c == null || co == null) return ins.nivel_sugerido === 'avancado'
+    if (f == null || p == null || c == null || co == null) return ins.nivel_override === 'avancado'
     return f <= 4 || (f <= 6 && (p >= 8 || c >= 9)) || (f <= 7 && p >= 9)
   }
 
@@ -559,7 +561,7 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   }
 
   // Ensure at least one entry-level racket in the carousel
-  const hasEntry = finalRackets.some(r => r.racket_insights?.nivel_sugerido === 'iniciante')
+  const hasEntry = finalRackets.some(r => derivarNivel(r) === 'iniciante')
   if (!hasEntry) {
     const [entry] = await getRaquetasPorSlug(['beast-2023'])
     if (entry && !finalRackets.some(r => r.slug === 'beast-2023')) {
@@ -631,7 +633,7 @@ export async function getRaquetasPorNivel(
     .order('name')
   if (error) throw new Error(`Supabase: ${error.message}`)
   const all = ((data as unknown[]) ?? []).map(normalizeRacket)
-  return all.filter(r => r.racket_insights?.nivel_sugerido === nivel)
+  return all.filter(r => derivarNivel(r) === nivel)
 }
 
 export async function getRaquetasPorOrcamento(max: number): Promise<RacketWithInsights[]> {

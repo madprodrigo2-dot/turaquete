@@ -28,7 +28,7 @@ const BASE_INSIGHTS: Insights = {
   good_for_beginners: false, good_for_intermediate: true, good_for_advanced: false,
   elbow_friendly: false, shoulder_friendly: false,
   observations: [], summary: null, perfil_resumo: null,
-  nivel_sugerido: 'intermediario', confianca: 'alta',
+  nivel_override: null, nivel_override_motivo: null, confianca: 'alta',
 }
 
 function makeRacket(overrides: Partial<Insights> = {}, specsExtra: Record<string, unknown> = {}): RacketData {

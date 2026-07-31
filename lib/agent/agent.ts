@@ -8,6 +8,7 @@ import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '..
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, LESAO_LOCAL_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 import { SWEET_SPOT_HIGHLIGHT, SWEET_SPOT_COMPARISON } from '../sweetSpot'
 import { classifyCore } from '../motor'
+import { derivarNivel } from '../nivel'
 import { PRECO_BUCKETS, PRECO_TANTO_FAZ, buildBudgetPromptLines } from './preco-buckets'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -851,7 +852,8 @@ async function executeTool(
       )
       // elbow_friendly/shoulder_friendly omitidos: o filtro de lesão já rodou antes de chegar aqui.
       // Expor esses flags faz o modelo excluir raquetes boas para usuários SEM lesão.
-      const { observations: _obs, summary: _sum, good_for_beginners: _gb, good_for_intermediate: _gi, good_for_advanced: _ga, elbow_friendly: _ef, shoulder_friendly: _sf, ...insClean } = (racket_insights ?? {}) as Record<string, unknown>
+      const { observations: _obs, summary: _sum, good_for_beginners: _gb, good_for_intermediate: _gi, good_for_advanced: _ga, elbow_friendly: _ef, shoulder_friendly: _sf, nivel_override: _no, nivel_override_motivo: _nom, confianca: _cf, ...insClean } = (racket_insights ?? {}) as Record<string, unknown>
+      const nivel = derivarNivel(r)
       const display_name = (base.nome_base && base.model_year && (base.racket_family_count ?? 0) >= 2)
         ? `${base.nome_base} ${base.model_year}`
         : (base.nome_base ?? base.name)
@@ -859,6 +861,7 @@ async function executeTool(
         ...base,
         display_name,
         ...(Object.keys(specsClean).length > 0 ? { specs_extra: specsClean } : {}),
+        ...(nivel ? { nivel } : {}),
         ...(Object.keys(insClean).length > 0 ? { racket_insights: insClean } : {}),
       }
     }

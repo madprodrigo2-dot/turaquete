@@ -35,7 +35,7 @@ type RawInsights = {
   stability: number | null
   spin: number | null
   forgiveness: number | null
-  nivel_sugerido: string | null
+  nivel_override: string | null
   perfil_resumo: string | null
   review_status: string | null
   review_note: string | null
@@ -59,7 +59,7 @@ export default async function RevisaoPage() {
       brands(name),
       racket_insights(
         power, control, comfort, maneuverability, stability, spin,
-        forgiveness, nivel_sugerido, perfil_resumo,
+        forgiveness, nivel_override, perfil_resumo,
         review_status, review_note, reviewed_at
       )
     `)
@@ -122,7 +122,15 @@ export default async function RevisaoPage() {
       spin: ins?.spin ?? null,
       forgiveness: ins?.forgiveness ?? null,
       scoreGeral,
-      nivel: ins?.nivel_sugerido ?? null,
+      nivel: (() => {
+        const f = ins?.forgiveness, p = ins?.power, c = ins?.control, co = ins?.comfort
+        if (f != null && p != null && c != null && co != null) {
+          if (f <= 4 || (f <= 6 && (p >= 7 || c >= 7)) || (f <= 7 && p >= 9)) return 'avancado'
+          if (f >= 7 && co >= 6 && p <= 6) return 'iniciante'
+          return 'intermediario'
+        }
+        return (ins?.nivel_override as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null
+      })(),
       review_status: reviewStatus,
       review_note: ins?.review_note ?? null,
     }

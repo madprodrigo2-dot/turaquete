@@ -5,7 +5,7 @@ import { scoreForNivel } from '@/lib/scorer'
 import RaquetasTable from './RaquetasTable'
 
 const SCORE_FIELDS = ['power', 'control', 'maneuverability', 'stability'] as const
-type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { spin: number | null; comfort: number | null; forgiveness: number | null; nivel_sugerido: string | null }
+type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { spin: number | null; comfort: number | null; forgiveness: number | null; nivel_override: string | null }
 
 type RacketRow = {
   id: number
@@ -30,7 +30,7 @@ export default async function AdminRaquetasPage() {
   const [{ data, error }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, slug, publicada, price, affiliate_url, source_url, core, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_sugerido)')
+      .select('id, name, slug, publicada, price, affiliate_url, source_url, core, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_override)')
       .order('name'),
     sb.from('brands').select('id, name').order('name'),
   ])
@@ -48,7 +48,15 @@ export default async function AdminRaquetasPage() {
     const scoreIni = scoreForNivel(ins, 'iniciante')
     const scoreInt = scoreForNivel(ins, 'intermediario')
     const scoreAva = scoreForNivel(ins, 'avancado')
-    const nivel = (ins?.nivel_sugerido as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null
+    const nivel = (() => {
+      const f = ins?.forgiveness, p = ins?.power, c = ins?.control, co = ins?.comfort
+      if (f != null && p != null && c != null && co != null) {
+        if (f <= 4 || (f <= 6 && (p >= 7 || c >= 7)) || (f <= 7 && p >= 9)) return 'avancado' as const
+        if (f >= 7 && co >= 6 && p <= 6) return 'iniciante' as const
+        return 'intermediario' as const
+      }
+      return (ins?.nivel_override as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null
+    })()
     return {
       id: r.id,
       name: r.name,

@@ -27,7 +27,7 @@ type RawRacket = {
         stability: number | null
         spin: number | null
         forgiveness: number | null
-        nivel_sugerido: string | null
+        nivel_override: string | null
         overrides: Record<string, { valor: number; motivo: string }> | null
       }
     | {
@@ -38,7 +38,7 @@ type RawRacket = {
         stability: number | null
         spin: number | null
         forgiveness: number | null
-        nivel_sugerido: string | null
+        nivel_override: string | null
         overrides: Record<string, { valor: number; motivo: string }> | null
       }[]
     | null
@@ -91,7 +91,7 @@ export default async function AdminMotorPage() {
     .select(`
       id, name, slug, model_year, face_material, core, weight_g, balance, thickness_mm, price, specs_extra,
       brands(name),
-      racket_insights(power, control, comfort, maneuverability, stability, spin, forgiveness, nivel_sugerido, overrides)
+      racket_insights(power, control, comfort, maneuverability, stability, spin, forgiveness, nivel_override, overrides)
     `)
     .eq('publicada', true)
     .order('name')
@@ -155,7 +155,15 @@ export default async function AdminMotorPage() {
       scorePot: scoreForProfile(ins ?? null, { nivel: 'avancado', prioridade: 'potencia' }),
       scoreDef: scoreForProfile(ins ?? null, { nivel: 'avancado', prioridade: 'defesa' }),
       scoreLesao: scoreForProfile(ins ?? null, { cotovelo_sensivel: true }),
-      nivel: (ins?.nivel_sugerido as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null,
+      nivel: (() => {
+        const f = ins?.forgiveness, p = ins?.power, c = ins?.control, co = ins?.comfort
+        if (f != null && p != null && c != null && co != null) {
+          if (f <= 4 || (f <= 6 && (p >= 7 || c >= 7)) || (f <= 7 && p >= 9)) return 'avancado'
+          if (f >= 7 && co >= 6 && p <= 6) return 'iniciante'
+          return 'intermediario'
+        }
+        return (ins?.nivel_override as 'iniciante' | 'intermediario' | 'avancado' | null) ?? null
+      })(),
       price: r.price ?? null,
       overrides,
       antivib,

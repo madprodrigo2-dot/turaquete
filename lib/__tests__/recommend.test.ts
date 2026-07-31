@@ -42,7 +42,7 @@ const BASE_INSIGHTS: Insights = {
   good_for_beginners: false, good_for_intermediate: true, good_for_advanced: false,
   elbow_friendly: false, shoulder_friendly: false,
   observations: [], summary: null, perfil_resumo: null,
-  nivel_sugerido: 'intermediario', confianca: 'alta',
+  nivel_override: null, nivel_override_motivo: null, confianca: 'alta',
 }
 
 let _id = 0
@@ -56,6 +56,8 @@ function makeRacket(
     id: _id,
     name,
     slug: name.toLowerCase().replace(/\s+/g, '-'),
+    nome_base: null,
+    racket_family_count: null,
     model_year: 2025,
     weight_g: 330,
     balance: 'medio',
@@ -64,6 +66,7 @@ function makeRacket(
     core: 'eva',
     price: 1500,
     price_updated_at: null,
+    updated_at: null,
     currency: 'BRL',
     affiliate_url: null,
     source_url: null,
@@ -71,10 +74,11 @@ function makeRacket(
     technologies: [],
     specs_extra: null,
     publicada: true,
+    is_active: null,
     brands: { name: 'GenericBrand', slug: 'genericbrand' },
     racket_insights: { ...BASE_INSIGHTS, ...insightsOverrides },
     ...overrides,
-  }
+  } as RacketWithInsights
 }
 
 beforeEach(() => {
@@ -185,13 +189,13 @@ describe('INVARIANTE #5: teto de nível protege iniciantes e intermediários', (
 
   const avancadaRacket = makeRacket.bind(null, 'Avancada Pro')
   const iniciante = () => makeRacket('Amiga Iniciante', {}, {
-    forgiveness: 8, power: 5, control: 5, nivel_sugerido: 'iniciante',
+    forgiveness: 8, power: 5, control: 5,
   })
   const avancada = () => makeRacket('Expert Elite', {}, {
-    forgiveness: 4, power: 9, control: 8, nivel_sugerido: 'avancado',
+    forgiveness: 4, power: 9, control: 8,
   })
   const intermediaria = () => makeRacket('Intermediaria', {}, {
-    forgiveness: 7, power: 7, control: 7, nivel_sugerido: 'intermediario',
+    forgiveness: 7, power: 7, control: 7,
   })
 
   test('INVARIANTE #5a: nivel=iniciante exclui raquete avancada (f=4, p=9)', async () => {
@@ -207,7 +211,7 @@ describe('INVARIANTE #5: teto de nível protege iniciantes e intermediários', (
 
   test('INVARIANTE #5a: nivel=iniciante também exclui raquete com forgiveness <= 5', async () => {
     const harshIntermediate = makeRacket('Intermediaria Dura', {}, {
-      forgiveness: 5, power: 7, control: 7, nivel_sugerido: 'intermediario',
+      forgiveness: 5, power: 7, control: 7,
     })
     mockFixtures = [iniciante(), harshIntermediate]
 

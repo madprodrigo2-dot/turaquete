@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
 import { getRaquetaPorSlug } from '@/lib/recommend'
+import { derivarNivel } from '@/lib/nivel'
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -254,7 +255,7 @@ export default async function IrPage({
           racketName: racket.name,
           tipo,
           price,
-          nivel: racket.racket_insights?.nivel_sugerido ?? null,
+          nivel: derivarNivel(racket),
           utmSource:  sessionOrigin?.utm_source ?? null,
           utmMedium:  sessionOrigin?.utm_medium ?? null,
           referrer:   sessionOrigin?.referrer ?? hdrs.get('referer') ?? null,

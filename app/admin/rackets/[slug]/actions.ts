@@ -45,7 +45,8 @@ export interface EditorialData {
   is_active: boolean
   destaque_atleta: boolean
   atleta: string
-  nivel_sugerido: 'iniciante' | 'intermediario' | 'avancado' | null
+  nivel_override: 'iniciante' | 'intermediario' | 'avancado' | null
+  nivel_override_motivo: string | null
   summary: string
   perfil_resumo: string
   observations: string[]
@@ -246,8 +247,13 @@ export async function salvarEditorial(slug: string, data: EditorialData) {
     specs_extra: newExtra,
   }).eq('slug', slug)
 
+  if (data.nivel_override && !data.nivel_override_motivo?.trim()) {
+    throw new Error('Motivo obrigatório quando nivel override está preenchido.')
+  }
+
   await sb.from('racket_insights').update({
-    nivel_sugerido: data.nivel_sugerido,
+    nivel_override: data.nivel_override,
+    nivel_override_motivo: data.nivel_override ? (data.nivel_override_motivo || null) : null,
     summary: data.summary || null,
     perfil_resumo: data.perfil_resumo || null,
     observations: data.observations,

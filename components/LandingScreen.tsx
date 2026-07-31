@@ -1091,10 +1091,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                   <RacketImageTile src={exampleRacket.image_url} alt={exampleRacket.name} />
                 </div>
                 <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                  {exampleRacket.racket_insights?.nivel_sugerido && (
+                  {derivarNivel(exampleRacket) && (
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-aqua/12 text-aqua leading-none w-fit">
-                      {exampleRacket.racket_insights.nivel_sugerido === 'iniciante' ? 'De iniciante a avançado' :
-                       exampleRacket.racket_insights.nivel_sugerido === 'intermediario' ? 'A partir de intermediário' :
+                      {derivarNivel(exampleRacket) === 'iniciante' ? 'De iniciante a avançado' :
+                       derivarNivel(exampleRacket) === 'intermediario' ? 'A partir de intermediário' :
                        'Jogadores experientes'}
                     </span>
                   )}

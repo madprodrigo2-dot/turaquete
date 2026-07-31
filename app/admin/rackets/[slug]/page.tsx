@@ -33,7 +33,8 @@ export type AdminInsights = {
   observations: string[] | null
   summary: string | null
   perfil_resumo: string | null
-  nivel_sugerido: 'iniciante' | 'intermediario' | 'avancado' | null
+  nivel_override: 'iniciante' | 'intermediario' | 'avancado' | null
+  nivel_override_motivo: string | null
   confianca: string | null
   motor_cache: Record<string, number | null> | null
   overrides: Record<string, OverrideEntry> | null
@@ -90,7 +91,7 @@ export default async function EditRaquetaPage({
         good_for_beginners, good_for_intermediate, good_for_advanced,
         elbow_friendly, shoulder_friendly,
         observations, summary, perfil_resumo,
-        nivel_sugerido, confianca,
+        nivel_override, nivel_override_motivo, confianca,
         motor_cache, overrides,
         ai_drafted, reviewed
       )
