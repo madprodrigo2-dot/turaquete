@@ -2,8 +2,21 @@ import { getSupabase } from './supabase'
 import { scoreRacket } from './scorer'
 import { getSaidaDeBola } from './saidaBola'
 import { classifyCore } from './motor'
-import { derivarNivel } from './nivel'
 import type { FilterStep } from './debug-types'
+
+// Inline para evitar dependência circular com nivel.ts (que importa RacketWithInsights daqui).
+// Mantida idêntica à fórmula em lib/nivel.ts — derivarNivel() delega a esta lógica.
+function computeNivelFormula(r: RacketWithInsights): 'iniciante' | 'intermediario' | 'avancado' | null {
+  const ins = r.racket_insights
+  if (!ins) return null
+  const f = ins.forgiveness, p = ins.power, c = ins.control, co = ins.comfort
+  if (f != null && p != null && c != null && co != null) {
+    if (f <= 4 || (f <= 6 && (p >= 7 || c >= 7)) || (f <= 7 && p >= 9)) return 'avancado'
+    if (f >= 7 && co >= 6 && p <= 6) return 'iniciante'
+    return 'intermediario'
+  }
+  return ins.nivel_override ?? null
+}
 
 export interface RacketFilters {
   nome?: string
@@ -561,7 +574,7 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   }
 
   // Ensure at least one entry-level racket in the carousel
-  const hasEntry = finalRackets.some(r => derivarNivel(r) === 'iniciante')
+  const hasEntry = finalRackets.some(r => computeNivelFormula(r) === 'iniciante')
   if (!hasEntry) {
     const [entry] = await getRaquetasPorSlug(['beast-2023'])
     if (entry && !finalRackets.some(r => r.slug === 'beast-2023')) {
@@ -633,7 +646,7 @@ export async function getRaquetasPorNivel(
     .order('name')
   if (error) throw new Error(`Supabase: ${error.message}`)
   const all = ((data as unknown[]) ?? []).map(normalizeRacket)
-  return all.filter(r => derivarNivel(r) === nivel)
+  return all.filter(r => computeNivelFormula(r) === nivel)
 }
 
 export async function getRaquetasPorOrcamento(max: number): Promise<RacketWithInsights[]> {
