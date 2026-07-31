@@ -31,7 +31,7 @@ const MARCA_FILTRO_QUESTION_TEXT = 'Quer ver só de uma marca específica?'
 const MARCA_CHIPS = ['AMA Sport', 'Drop Shot', "Heroe's", 'Tanto faz']  // kept for backward compat
 const BRAND_BOOST = 1.5  // must match recommend.ts BRAND_BOOST
 
-// Always show all 4 buckets — do not filter by candidate prices, as candidates
+// Always show all 5 buckets — do not filter by candidate prices, as candidates
 // reflect a mid-range query and would suppress the cheapest and most expensive options.
 function computePrecoChips(_ranked: Array<{ price: number | null }>): string[] {
   return [...PRECO_BUCKETS.map(b => b.label), PRECO_TANTO_FAZ]
@@ -52,7 +52,8 @@ function computePrecoDecision(budgetKnown: boolean): PrecoDecision {
 const PRICE_ANSWERS = new Set([
   ...PRECO_BUCKETS.map(b => b.label),
   PRECO_TANTO_FAZ,
-  // legacy labels (pre-R$1.200 divisor) — still appear in stored conversations
+  // legacy labels — still appear in stored conversations
+  'Até R$1.200',   // pre-R$500 split (era o primeiro bucket)
   'Até R$1.000', 'R$1.000 a R$2.000',
   'Até R$1.500', 'R$1.500–2.500', 'R$2.500–3.500', 'Acima de R$3.500', 'Acima de R$2.500', 'Acima de R$3.000',
 ])
