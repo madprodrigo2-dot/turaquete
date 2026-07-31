@@ -224,6 +224,7 @@ export default async function AnaliseAdmin({
         .select('created_at, session_id')
         .gt('custo_brl', 0)
         .gte('created_at', evolCutoff)
+        .limit(5000)
       return (includeTest ? q : q.eq('is_test', false))
         .then(r => (r.data ?? []) as { created_at: string; session_id: string }[])
     })(),
@@ -231,6 +232,7 @@ export default async function AnaliseAdmin({
       const q = sb.from('recommendation_events')
         .select('created_at, conversation_id')
         .gte('created_at', evolCutoff)
+        .limit(5000)
       return (includeTest ? q : q.eq('is_test', false))
         .then(r => (r.data ?? []) as { created_at: string; conversation_id: string }[])
     })(),
@@ -240,6 +242,7 @@ export default async function AnaliseAdmin({
       .not('session_id', 'is', null)
       .in('tipo', ['afiliado', 'busca'])
       .gte('created_at', evolCutoff)
+      .limit(5000)
       .then(r => (r.data ?? []) as { created_at: string }[]),
   ])
 
