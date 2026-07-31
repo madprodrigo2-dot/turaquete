@@ -267,7 +267,11 @@ export default async function IrPage({
       ? sendTelegramNotification({
           racketName: racket.name,
           slug,
-          imageUrl: racket.image_url ?? null,
+          imageUrl: racket.image_url
+            ? racket.image_url.startsWith('http')
+              ? racket.image_url
+              : `https://turaquete.com.br${racket.image_url}`
+            : null,
           ctaUrl,
           tipo,
           price,
