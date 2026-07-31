@@ -55,6 +55,7 @@ function summarizeReferrer(ref: string | null): string {
 async function sendTelegramNotification(opts: {
   racketName: string
   slug: string
+  ctaUrl: string
   tipo: 'afiliado' | 'oficial' | 'busca'
   price: number | null
   nivel: string | null
@@ -79,18 +80,20 @@ async function sendTelegramNotification(opts: {
   const nivelMap: Record<string, string> = { iniciante: 'iniciante', intermediario: 'intermediário', avancado: 'avançado' }
   const nivel  = opts.nivel ? (nivelMap[opts.nivel] ?? opts.nivel) : '—'
   const tipoLabel = opts.tipo === 'busca' ? 'busca ML (fallback)' : opts.tipo
-  const origem = opts.hasSession ? 'conversa' : 'direto'
 
+  // via: UTM tem prioridade, depois referrer, depois origem da sessão
+  const origem = opts.hasSession ? 'conversa' : 'direto'
   let via = origem
   if (opts.utmSource) {
-    via = opts.utmMedium ? `${opts.utmSource}/${opts.utmMedium}` : opts.utmSource
-  } else if (opts.referrer) {
+    via = opts.utmMedium ? `${opts.utmSource} / ${opts.utmMedium}` : opts.utmSource
+  } else if (opts.referrer && !opts.referrer.includes('turaquete.com.br')) {
     via = opts.referrer
   }
 
-  const label  = isSuspicious ? 'Clique suspeito (loop)' : 'Clique em Comprar'
-  const racketUrl = `https://turaquete.com.br/raquetes/${opts.slug}`
-  const text   = `${emoji} ${label}\n${opts.racketName}\n${tipoLabel} · ${preco} · ${nivel}\nvia ${via}\n[🔗 Ver raquete](${racketUrl})`
+  const label = isSuspicious ? 'Clique suspeito (loop)' : 'Clique em Comprar'
+  // Link aponta para o destino real (ML, pichau.com.br etc.) — não para a página interna.
+  // Assim o preview do Telegram mostra a página de destino, não a foto do nosso site.
+  const text  = `${emoji} ${label}\n${opts.racketName}\n${tipoLabel} · ${preco} · ${nivel}\nvia ${via}\n[🛒 Ir pra loja](${opts.ctaUrl})`
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method:  'POST',
@@ -256,6 +259,7 @@ export default async function IrPage({
       ? sendTelegramNotification({
           racketName: racket.name,
           slug,
+          ctaUrl,
           tipo,
           price,
           nivel: derivarNivel(racket),
