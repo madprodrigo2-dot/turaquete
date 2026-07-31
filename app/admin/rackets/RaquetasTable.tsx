@@ -30,6 +30,8 @@ export type RacketData = {
     scoreIni: number | null
     scoreInt: number | null
     scoreAva: number | null
+    perfil_resumo: string | null
+    perfil_resumo_revisar: boolean | null
   } | null
 }
 
@@ -55,26 +57,42 @@ function SortIcon({ col, active, dir }: { col: SortCol; active: SortCol; dir: So
   return <span className="ml-0.5 text-teal-500">{dir === 'asc' ? '↑' : '↓'}</span>
 }
 
-function HealthBadge({ price, source_url, affiliate_url, core }: {
+function HealthBadge({ price, source_url, affiliate_url, core, perfil_resumo, perfil_resumo_revisar }: {
   price: number | null
   source_url: string | null
   affiliate_url: string | null
   core: string | null
+  perfil_resumo: string | null
+  perfil_resumo_revisar: boolean | null
 }) {
   const missing: string[] = []
   if (price == null) missing.push('preço')
   if (affiliate_url == null && source_url == null) missing.push('link')
   if (core == null) missing.push('core')
+  if (!perfil_resumo) missing.push('desc')
 
-  if (missing.length === 0) {
+  const allOk = missing.length === 0 && !perfil_resumo_revisar
+  if (allOk) {
     return <span className="inline-block w-2 h-2 rounded-full bg-teal-400" title="Dados completos" />
   }
   return (
-    <span
-      className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-50 text-orange-600 border border-orange-200 cursor-help"
-      title={`Falta: ${missing.join(', ')}`}
-    >
-      {missing.length}
+    <span className="inline-flex gap-1">
+      {missing.length > 0 && (
+        <span
+          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-50 text-orange-600 border border-orange-200 cursor-help"
+          title={`Falta: ${missing.join(', ')}`}
+        >
+          {missing.length}
+        </span>
+      )}
+      {perfil_resumo_revisar && (
+        <span
+          className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-600 border border-amber-200 cursor-help"
+          title="Specs mudaram: revisar descrição"
+        >
+          ⚠
+        </span>
+      )}
     </span>
   )
 }
@@ -125,6 +143,7 @@ export default function RaquetasTable({
   const [filterAfiliado, setFilterAfiliado] = useState('')
   const [filterPublicada, setFilterPublicada] = useState('')
   const [filterIncompleta, setFilterIncompleta] = useState('')
+  const [filterDescricao, setFilterDescricao] = useState('')
   const [pubOverrides] = useState<Record<number, boolean>>({})
 
   const uniqueYears = useMemo(() => {
@@ -132,7 +151,7 @@ export default function RaquetasTable({
     return [...new Set(years)].sort((a, b) => b - a)
   }, [rackets])
 
-  const hasFilters = !!(search || filterMarca || filterAno || filterNivel || filterAfiliado || filterPublicada || filterIncompleta)
+  const hasFilters = !!(search || filterMarca || filterAno || filterNivel || filterAfiliado || filterPublicada || filterIncompleta || filterDescricao)
 
   function handleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
@@ -142,7 +161,7 @@ export default function RaquetasTable({
   function clearFilters() {
     setSearch(''); setFilterMarca(''); setFilterAno('')
     setFilterNivel(''); setFilterAfiliado(''); setFilterPublicada('')
-    setFilterIncompleta('')
+    setFilterIncompleta(''); setFilterDescricao('')
   }
 
   const racketRows = useMemo(() =>
@@ -166,6 +185,8 @@ export default function RaquetasTable({
     if (filterIncompleta === 'incompleta') result = result.filter(r =>
       r.price == null || (r.affiliate_url == null && r.source_url == null) || r.core == null
     )
+    if (filterDescricao === 'sem-desc') result = result.filter(r => !r.ins?.perfil_resumo)
+    if (filterDescricao === 'revisar') result = result.filter(r => r.ins?.perfil_resumo_revisar === true)
 
     return [...result].sort((a, b) => {
       let av: string | number = 0, bv: string | number = 0
@@ -251,6 +272,12 @@ export default function RaquetasTable({
           <option value="incompleta">Só incompletas</option>
         </select>
 
+        <select value={filterDescricao} onChange={e => setFilterDescricao(e.target.value)} className={selectCls}>
+          <option value="">Descrição: todas</option>
+          <option value="sem-desc">Sem descrição</option>
+          <option value="revisar">Revisar descrição ⚠</option>
+        </select>
+
         {hasFilters && (
           <button onClick={clearFilters} className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1.5 transition-colors">
             Limpar ✕
@@ -330,6 +357,8 @@ export default function RaquetasTable({
                       source_url={r.source_url}
                       affiliate_url={r.affiliate_url}
                       core={r.core}
+                      perfil_resumo={r.ins?.perfil_resumo ?? null}
+                      perfil_resumo_revisar={r.ins?.perfil_resumo_revisar ?? null}
                     />
                   </td>
                   <td className="px-4 py-2 text-right text-gray-400">
@@ -352,7 +381,7 @@ export default function RaquetasTable({
 
       <p className="mt-3 text-xs text-gray-400 flex items-center gap-3">
         <span>I = Iniciante · M = Intermediario · A = Avancado (match score por perfil)</span>
-        <span>· Dados: dot verde = completa · badge laranja = campos faltando (hover para ver)</span>
+        <span>· Dados: dot verde = completa · badge laranja = campos faltando (hover) · ⚠ amber = revisar descrição</span>
         <span>· Clique em <strong>pub/nao</strong> para publicar ou despublicar</span>
       </p>
     </div>

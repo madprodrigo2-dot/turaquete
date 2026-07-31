@@ -18,12 +18,13 @@ if (!ids.length) { console.error('Uso: npx tsx scripts/seed-insights.ts <id1> <i
 async function main() {
   const { data: rackets, error } = await sb
     .from('rackets')
-    .select('id, name, face_material, core, weight_g, balance, specs_extra')
+    .select('id, name, slug, face_material, core, weight_g, balance, specs_extra')
     .in('id', ids)
 
   if (error) { console.error('DB error:', error.message); process.exit(1) }
 
   let inserted = 0, skipped = 0, errors = 0
+  const insertedSlugs: { name: string; slug: string }[] = []
 
   for (const r of rackets as any[]) {
     const { data: existing } = await sb
@@ -68,10 +69,19 @@ async function main() {
       const vals = MOTOR_DIMS.map(d => `${d}=${nv[d]}`).join(' ')
       console.log(`[OK] ${r.name} — ${vals}`)
       inserted++
+      insertedSlugs.push({ name: r.name, slug: r.slug })
     }
   }
 
   console.log(`\nConcluído: ${inserted} inseridos | ${skipped} já existiam | ${errors} erros`)
+
+  if (insertedSlugs.length > 0) {
+    console.log(`\n⚠️  ${insertedSlugs.length} raquete(s) cadastrada(s) SEM perfil_resumo:`)
+    for (const { name, slug } of insertedSlugs) {
+      console.log(`  - ${slug}  (${name})`)
+    }
+    console.log('Acesse /admin/rackets/<slug> → aba C para adicionar a descrição.')
+  }
 }
 
 main()

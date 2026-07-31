@@ -72,10 +72,15 @@ export default function BlocoC({ slug, racket }: { slug: string; racket: AdminRa
 
   return (
     <section className="rounded-xl border border-gray-100 bg-white overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100">
+      <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-3">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
           C — Editorial / Comercial
         </span>
+        {ins?.perfil_resumo_revisar && (
+          <span className="flex items-center gap-1.5 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+            ⚠ specs mudaram — revisar descrição
+          </span>
+        )}
       </div>
 
       <div className="p-5 space-y-4">

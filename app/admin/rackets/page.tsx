@@ -5,7 +5,7 @@ import { scoreForNivel } from '@/lib/scorer'
 import RaquetasTable from './RaquetasTable'
 
 const SCORE_FIELDS = ['power', 'control', 'maneuverability', 'stability'] as const
-type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { spin: number | null; comfort: number | null; forgiveness: number | null; nivel_override: string | null }
+type InsRow = { [K in typeof SCORE_FIELDS[number]]: number | null } & { spin: number | null; comfort: number | null; forgiveness: number | null; nivel_override: string | null; perfil_resumo: string | null; perfil_resumo_revisar: boolean | null }
 
 type RacketRow = {
   id: number
@@ -30,7 +30,7 @@ export default async function AdminRaquetasPage() {
   const [{ data, error }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, slug, publicada, price, affiliate_url, source_url, core, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_override)')
+      .select('id, name, slug, publicada, price, affiliate_url, source_url, core, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_override, perfil_resumo, perfil_resumo_revisar)')
       .order('name'),
     sb.from('brands').select('id, name').order('name'),
   ])
@@ -68,7 +68,7 @@ export default async function AdminRaquetasPage() {
       core: r.core,
       model_year: r.model_year,
       brandName: r.brand_id ? (brandMap.get(r.brand_id) ?? '—') : '—',
-      ins: ins ? { ...ins, scoreGeral, scoreIni, scoreInt, scoreAva, nivel } : null,
+      ins: ins ? { ...ins, scoreGeral, scoreIni, scoreInt, scoreAva, nivel, perfil_resumo: ins.perfil_resumo ?? null, perfil_resumo_revisar: ins.perfil_resumo_revisar ?? null } : null,
     }
   })
 

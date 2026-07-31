@@ -40,6 +40,7 @@ export type AdminInsights = {
   overrides: Record<string, OverrideEntry> | null
   ai_drafted: boolean | null
   reviewed: boolean | null
+  perfil_resumo_revisar: boolean | null
 }
 
 export type AdminRacket = {
@@ -90,7 +91,7 @@ export default async function EditRaquetaPage({
         power, control, comfort, maneuverability, stability, spin, forgiveness,
         good_for_beginners, good_for_intermediate, good_for_advanced,
         elbow_friendly, shoulder_friendly,
-        observations, summary, perfil_resumo,
+        observations, summary, perfil_resumo, perfil_resumo_revisar,
         nivel_override, nivel_override_motivo, confianca,
         motor_cache, overrides,
         ai_drafted, reviewed

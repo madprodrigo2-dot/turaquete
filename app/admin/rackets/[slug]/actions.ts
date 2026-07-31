@@ -101,7 +101,7 @@ export async function salvarFisicos(slug: string, data: FisicosData) {
   // Fetch current insights to respect existing editorial overrides
   const { data: ins } = await sb
     .from('racket_insights')
-    .select('overrides, motor_cache')
+    .select('overrides, motor_cache, perfil_resumo')
     .eq('racket_id', racket.id)
     .single()
 
@@ -133,6 +133,11 @@ export async function salvarFisicos(slug: string, data: FisicosData) {
   for (const dim of DIMS) {
     const hasEditorial = dim in cleanedOverrides
     if (!hasEditorial) effectiveUpdates[dim] = motorResult[dim]
+  }
+
+  // Sinaliza que o perfil_resumo pode estar desatualizado quando specs mudam
+  if (ins?.perfil_resumo) {
+    effectiveUpdates.perfil_resumo_revisar = true
   }
 
   await sb.from('racket_insights').update(effectiveUpdates).eq('racket_id', racket.id)
@@ -256,6 +261,7 @@ export async function salvarEditorial(slug: string, data: EditorialData) {
     nivel_override_motivo: data.nivel_override ? (data.nivel_override_motivo || null) : null,
     summary: data.summary || null,
     perfil_resumo: data.perfil_resumo || null,
+    perfil_resumo_revisar: false,
     observations: data.observations,
     ai_drafted: data.ai_drafted,
     reviewed: data.reviewed,
