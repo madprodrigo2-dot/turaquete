@@ -113,6 +113,7 @@ export default async function AnaliseAdmin({
       const q = sb.from('recommendation_events')
         .select('racket_id, conversation_id')
         .gte('created_at', cutoffDate)
+        .limit(2000)
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as RecEventRow[])
     })(),
 
@@ -121,6 +122,7 @@ export default async function AnaliseAdmin({
         .select('session_id, intencao_detectada')
         .not('intencao_detectada', 'is', null)
         .gte('created_at', cutoffDate)
+        .limit(3000)
       return (includeTest ? q : q.eq('is_test', false)).then(r => {
         const seen = new Set<string>()
         const c: Record<string, number> = {}
@@ -138,6 +140,7 @@ export default async function AnaliseAdmin({
         .select('session_id, starter_usado')
         .not('primeira_mensagem', 'is', null)
         .gte('created_at', cutoffDate)
+        .limit(3000)
       return (includeTest ? q : q.eq('is_test', false)).then(r => {
         const sessionMap = new Map<string, string | null>()
         for (const row of (r.data ?? []) as { session_id: string; starter_usado: string | null }[]) {

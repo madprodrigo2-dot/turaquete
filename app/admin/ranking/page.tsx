@@ -55,6 +55,7 @@ export default async function RankingPage({
       const q = sb.from('recommendation_events')
         .select('racket_id, confidence, rank')
         .gte('created_at', cutoff)
+        .limit(2000)
       return (includeTest ? q : q.eq('is_test', false)).then(r => (r.data ?? []) as RecRow[])
     })(),
 
