@@ -95,13 +95,22 @@ async function sendTelegramNotification(opts: {
   const base = `https://api.telegram.org/bot${token}`
   const headers = { 'Content-Type': 'application/json' }
 
+  let sent = false
   if (opts.imageUrl) {
-    await fetch(`${base}/sendPhoto`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ chat_id: chatId, photo: opts.imageUrl, caption: text, parse_mode: 'Markdown' }),
-    })
-  } else {
+    try {
+      const res = await fetch(`${base}/sendPhoto`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ chat_id: chatId, photo: opts.imageUrl, caption: text, parse_mode: 'Markdown' }),
+      })
+      const json = await res.json() as { ok: boolean }
+      sent = json.ok === true
+    } catch {
+      // fall through to sendMessage
+    }
+  }
+
+  if (!sent) {
     await fetch(`${base}/sendMessage`, {
       method: 'POST',
       headers,
