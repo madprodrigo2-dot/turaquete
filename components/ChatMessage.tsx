@@ -205,7 +205,7 @@ export default function ChatMessage({
             className={`px-4 py-3 rounded-2xl text-sm md:text-[15px] leading-relaxed
               ${isAssistant
                 ? `${turyConfig ? 'max-w-[85%]' : 'w-full'} bg-white text-gray-800 rounded-tl-sm shadow-sm border border-gray-100`
-                : 'max-w-[85%] bg-tinta text-white rounded-tr-sm'
+                : 'max-w-[80%] break-words bg-tinta text-white rounded-tr-sm'
               }`}
             onClick={holdBack ? flush : undefined}
           >
