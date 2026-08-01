@@ -173,10 +173,15 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   // Scroll when animation completes so newly-revealed cards/chips enter the viewport.
   // streamRawText is cleared atomically with isAnimating=false (React 18 batching),
   // so checking streamRawText would always be falsy here — use a ref for the transition.
+  // rAF defers until after layout so scrollHeight (and chip heights) are fully measured.
   useEffect(() => {
     const was = wasAnimatingRef.current
     wasAnimatingRef.current = isAnimating
-    if (was && !isAnimating && view === 'chat') scrollToBottom()
+    if (was && !isAnimating && view === 'chat') {
+      requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      })
+    }
   }, [isAnimating, view])
 
   // Keep viewRef in sync so the popstate handler never sees a stale closure
