@@ -283,12 +283,15 @@ export default function ChatMessage({
 
       {/* Quick reply chips — held back until animation finishes */}
       {isAssistant && suggestions && suggestions.length > 0 && onSuggestion && !holdBack && (
-        <div className="mt-4 pl-[68px] flex flex-wrap gap-2">
+        <div className={`mt-4 pl-[68px] flex gap-2 ${suggestions.length >= 3 ? 'flex-col sm:flex-row sm:flex-wrap' : 'flex-wrap'}`}>
           {suggestions.map(s => (
             <button
               key={s}
               onClick={() => onSuggestion(s)}
-              className="text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm"
+              className={suggestions.length >= 3
+                ? 'text-sm font-medium px-4 py-2.5 rounded-xl border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm w-full sm:w-auto text-left'
+                : 'text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm'
+              }
             >
               {s}
             </button>
