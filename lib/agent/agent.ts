@@ -14,7 +14,7 @@ import { PRECO_BUCKETS, PRECO_TANTO_FAZ, buildBudgetPromptLines } from './preco-
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const PREF_QUESTION_TEXT  = 'Algum detalhe que você prefere na raquete? Pode escolher ou pular 😉'
-const PREF_CHIPS          = ['Marca', 'Carbono', 'EVA', 'Espessura', 'Sem preferência']
+const PREF_CHIPS          = ['Sem preferência', 'Marca', 'Carbono', 'EVA', 'Espessura']
 const CARBONO_QUESTION_TEXT = 'Tem preferência no tipo de carbono?'
 const CARBONO_CHIPS       = ['3K', '12K', '18K', 'Tanto faz']
 const EVA_QUESTION_TEXT   = 'E o núcleo (EVA)? Mais macio ou mais firme?'
