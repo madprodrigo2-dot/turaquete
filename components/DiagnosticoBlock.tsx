@@ -18,18 +18,17 @@ export default function DiagnosticoBlock({ faixa }: Props) {
 
   return (
     <div className="mt-2 rounded-xl overflow-hidden">
-      <div className="bg-coral px-3.5 py-1.5">
+      <div className="bg-coral px-3.5 py-1">
         <p className="text-white text-[10px] font-bold uppercase tracking-wider">Seu perfil ideal</p>
       </div>
-      <div className="bg-tinta px-3.5 py-3 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <span className="text-white text-sm font-bold">{faixa.peso_min}–{faixa.peso_max}g</span>
-        <span className="text-white/30 text-sm">·</span>
-        <span className="text-white/80 text-sm">{balanceRange}</span>
+      <div className="bg-tinta px-3.5 py-2 flex flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <span className="text-white text-[13px] font-bold">{faixa.peso_min}–{faixa.peso_max}g</span>
+          <span className="text-white/30 text-[13px]">·</span>
+          <span className="text-white/80 text-[13px]">{balanceRange}</span>
+        </div>
         {faixa.prioridades.length > 0 && (
-          <>
-            <span className="text-white/30 text-sm">·</span>
-            <span className="text-white/70 text-sm">{faixa.prioridades.join(', ')}</span>
-          </>
+          <span className="text-white/60 text-[11px]">{faixa.prioridades.join(' · ')}</span>
         )}
       </div>
     </div>
