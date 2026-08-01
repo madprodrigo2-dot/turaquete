@@ -17,16 +17,18 @@ export default function DiagnosticoBlock({ faixa }: Props) {
   const balanceRange = BALANCE_CM[faixa.balance_preferido] ?? 'Balance médio'
 
   return (
-    <div className="mt-2 rounded-xl bg-aqua/10 border border-aqua/25 px-3.5 py-3 flex flex-col gap-1.5">
-      <p className="text-tinta/40 text-[10px] font-semibold uppercase tracking-wider">Seu perfil ideal</p>
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <span className="text-tinta text-sm font-semibold">{faixa.peso_min}–{faixa.peso_max}g</span>
-        <span className="text-tinta/25 text-sm">·</span>
-        <span className="text-tinta/80 text-sm">{balanceRange}</span>
+    <div className="mt-2 rounded-xl overflow-hidden">
+      <div className="bg-coral px-3.5 py-1.5">
+        <p className="text-white text-[10px] font-bold uppercase tracking-wider">Seu perfil ideal</p>
+      </div>
+      <div className="bg-tinta px-3.5 py-3 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <span className="text-white text-sm font-bold">{faixa.peso_min}–{faixa.peso_max}g</span>
+        <span className="text-white/30 text-sm">·</span>
+        <span className="text-white/80 text-sm">{balanceRange}</span>
         {faixa.prioridades.length > 0 && (
           <>
-            <span className="text-tinta/25 text-sm">·</span>
-            <span className="text-tinta/60 text-sm">{faixa.prioridades.join(', ')}</span>
+            <span className="text-white/30 text-sm">·</span>
+            <span className="text-white/70 text-sm">{faixa.prioridades.join(', ')}</span>
           </>
         )}
       </div>

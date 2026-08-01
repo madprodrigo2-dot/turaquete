@@ -256,7 +256,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               <div className="bg-white rounded-2xl px-5 py-4 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">
                 <Link
                   href={`/comparar?a=${racket.slug}`}
-                  className="flex items-center gap-2.5 w-full bg-white border-[1.5px] border-aqua text-tinta font-semibold text-sm py-3 px-4 rounded-xl hover:bg-aqua/8 active:scale-[0.98] transition-all"
+                  className="flex items-center gap-2 w-full border border-gray-200 text-tinta/55 font-medium text-sm py-2.5 px-3.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#0CC0BE]">
                     <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
@@ -299,7 +299,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               {irUrl && (
                 <Link
                   href="/?chat=1"
-                  className="w-full bg-aqua/10 border border-aqua/50 text-aqua font-semibold text-sm py-3.5 rounded-2xl hover:bg-aqua/20 hover:border-aqua/70 active:scale-[0.98] transition-all text-center block"
+                  className="w-full text-aqua/80 text-sm font-medium text-center block pt-1 hover:text-aqua active:opacity-70 transition-all underline underline-offset-2"
                 >
                   Não tem certeza? Fale com a especialista →
                 </Link>

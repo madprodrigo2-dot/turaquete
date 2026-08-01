@@ -1,5 +1,17 @@
 import { getSupabaseAdmin } from './supabase'
 
+export async function getPublishedRacketCount(): Promise<number> {
+  try {
+    const { count } = await getSupabaseAdmin()
+      .from('rackets')
+      .select('id', { count: 'exact', head: true })
+      .eq('publicada', true)
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
+
 // Returns total sessions (all time) that reached a racket recommendation.
 // Used server-side only — never exposed to client.
 export async function getRecsCount(): Promise<number> {

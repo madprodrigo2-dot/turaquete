@@ -68,11 +68,12 @@ interface Props {
   featuredSource: 'real' | 'curated'
   athleteRackets: RacketWithInsights[]
   recsCount: number
+  racketCount?: number
   exampleRacket?: RacketWithInsights
   compareRacket?: RacketWithInsights
 }
 
-export default function HomeClient({ brands, featuredRackets, featuredSource, athleteRackets, recsCount, exampleRacket, compareRacket }: Props) {
+export default function HomeClient({ brands, featuredRackets, featuredSource, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket }: Props) {
   const [view, setView] = useState<'landing' | 'chat'>('landing')
   const [fading, setFading] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
@@ -503,7 +504,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       {view === 'landing' ? (
-        <LandingScreen brands={brands} featuredRackets={featuredRackets} featuredSource={featuredSource} athleteRackets={athleteRackets} recsCount={recsCount} exampleRacket={exampleRacket} compareRacket={compareRacket} onStart={handleStart} />
+        <LandingScreen brands={brands} featuredRackets={featuredRackets} featuredSource={featuredSource} athleteRackets={athleteRackets} recsCount={recsCount} racketCount={racketCount} exampleRacket={exampleRacket} compareRacket={compareRacket} onStart={handleStart} />
       ) : (
         <div className="h-screen flex flex-col bg-gray-50 md:bg-aqua-light">
           <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">
