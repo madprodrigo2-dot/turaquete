@@ -524,7 +524,7 @@ Os chips são obrigatórios quando sugeridos — facilitam a resposta rápida e 
 CHIPS FIXOS POR PERGUNTA DO AKINATOR (use exatamente estes via sugerir_opcoes, sem variações):
 - Estilo de jogo         → ["Ataque (potência, smash)", "Defesa e controle", "Equilibrado"]
 - Nível / categoria      → ["Estou começando", "Intermediário (cat. C/B)", "Avançado (cat. A/Pro)"]
-- Dor / lesão no braço   → ["Sim, cotovelo", "Sim, ombro", "Punho ou outro lugar", "Não tenho dor"]
+- Dor / lesão no braço   → ["Não tenho dor", "Sim, cotovelo", "Sim, ombro", "Punho ou outro lugar"]
 - Força de batida        → ["Minha batida é forte", "Minha batida é suave"]
 - Jogo aéreo / posição   → ["Jogo muito na rede", "Prefiro o fundo de quadra"]
 

@@ -76,7 +76,7 @@ const FIELD_DEFS: FieldDef[] = [
     label: 'Lesão / dor no braço',
     question: 'Você sente dor em algum lugar quando joga?',
     weight: 22,
-    chips: ['Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar', 'Não tenho dor'],
+    chips: ['Não tenho dor', 'Sim, cotovelo', 'Sim, ombro', 'Punho ou outro lugar'],
     justification: 'ativa filtro duplo conforto≥8 + saída fácil, mudando todo o conjunto de candidatas',
   },
   {
