@@ -16,6 +16,7 @@ import RacketKeyStats from '@/components/RacketKeyStats'
 import RacketHexagon from '@/components/RacketHexagon'
 import { derivarNivel } from '@/lib/nivel'
 import PriceNote from '@/components/PriceNote'
+import ShareButton from '@/components/ShareButton'
 
 export async function generateStaticParams() {
   const rackets = await listarRaquetas().catch(() => [])
@@ -252,24 +253,27 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 <SpecsGrid racket={racket} />
               </div>
 
-              {/* Comparar */}
+              {/* Comparar + Compartilhar */}
               <div className="bg-white rounded-2xl px-5 py-4 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">
-                <Link
-                  href={`/comparar?a=${racket.slug}`}
-                  className="flex items-center gap-2 w-full border border-gray-200 text-tinta/55 font-medium text-sm py-2.5 px-3.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#0CC0BE]">
-                    <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                    <path d="M8 4.5L11 6.25V9.75L8 11.5L5 9.75V6.25L8 4.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" strokeOpacity="0.4"/>
-                    <line x1="8" y1="1" x2="8" y2="4.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
-                    <line x1="14" y1="4.5" x2="11" y2="6.25" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
-                    <line x1="14" y1="11.5" x2="11" y2="9.75" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
-                    <line x1="8" y1="15" x2="8" y2="11.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
-                    <line x1="2" y1="11.5" x2="5" y2="9.75" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
-                    <line x1="2" y1="4.5" x2="5" y2="6.25" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
-                  </svg>
-                  <span>Comparar lado a lado no radar</span>
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/comparar?a=${racket.slug}`}
+                    className="flex items-center gap-2 flex-1 border border-gray-200 text-tinta/55 font-medium text-sm py-2.5 px-3.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#0CC0BE]">
+                      <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                      <path d="M8 4.5L11 6.25V9.75L8 11.5L5 9.75V6.25L8 4.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" strokeOpacity="0.4"/>
+                      <line x1="8" y1="1" x2="8" y2="4.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                      <line x1="14" y1="4.5" x2="11" y2="6.25" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                      <line x1="14" y1="11.5" x2="11" y2="9.75" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                      <line x1="8" y1="15" x2="8" y2="11.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                      <line x1="2" y1="11.5" x2="5" y2="9.75" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                      <line x1="2" y1="4.5" x2="5" y2="6.25" stroke="currentColor" strokeWidth="1" strokeOpacity="0.35"/>
+                    </svg>
+                    <span>Comparar</span>
+                  </Link>
+                  <ShareButton racketName={getDisplayName(racket)} slug={racket.slug} />
+                </div>
                 {sugestoes.length > 0 && (
                   <div className="flex flex-col gap-2">
                     <p className="text-xs text-tinta/40 font-medium">Comparações populares</p>
