@@ -84,9 +84,9 @@ export default async function ConversaDetailPage({
       .eq('conversation_id', session_id)
       .order('rank', { ascending: true }),
     sb.from('feedback_events')
-      .select('event_type, created_at')
+      .select('event_type, created_at, motivo')
       .eq('session_id', session_id)
-      .in('event_type', ['whatsapp_shown', 'whatsapp_click'])
+      .in('event_type', ['whatsapp_shown', 'whatsapp_click', 'compartilhar_click'])
       .order('created_at', { ascending: true }),
   ])
 
@@ -99,6 +99,10 @@ export default async function ConversaDetailPage({
   const waShown = (waEvents ?? []).some(e => e.event_type === 'whatsapp_shown')
   const waClicked = (waEvents ?? []).some(e => e.event_type === 'whatsapp_click')
   const waClickedAt = (waEvents ?? []).find(e => e.event_type === 'whatsapp_click')?.created_at
+  const compartilharClicked = (waEvents ?? []).some(e => e.event_type === 'compartilhar_click')
+  const compartilharEv = (waEvents ?? []).find(e => e.event_type === 'compartilhar_click')
+  const compartilharSlug = compartilharEv?.motivo ?? null
+  const compartilharAt = compartilharEv?.created_at ?? null
 
   // All unique recommended racket IDs across rows (fallback when no rec events)
   const allRecIds = [...new Set(
@@ -256,6 +260,16 @@ export default async function ConversaDetailPage({
                 : waShown
                   ? <span className="text-gray-400">Nao clicou</span>
                   : <span className="text-gray-300">—</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 w-20 shrink-0">Compartilhou:</span>
+              {compartilharClicked
+                ? <span className="text-green-700 font-semibold">
+                    Sim
+                    {compartilharSlug && <span className="text-gray-400 font-normal ml-1">· {compartilharSlug}</span>}
+                    {compartilharAt && <span className="text-gray-400 font-normal ml-1">({fmtDate(compartilharAt)})</span>}
+                  </span>
+                : <span className="text-gray-300">—</span>}
             </div>
           </div>
         </div>

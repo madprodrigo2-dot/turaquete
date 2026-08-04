@@ -25,7 +25,7 @@ export default function ShareButton({ racketName, slug }: Props) {
 
   async function handleShare() {
     track('share_click', { racket: slug })
-    postEvent({ event_type: 'compartilhar_click', racket_slug: slug })
+    postEvent({ event_type: 'compartilhar_click', racket_slug: slug, racket_name: racketName })
 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {

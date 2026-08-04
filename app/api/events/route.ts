@@ -38,13 +38,29 @@ export async function POST(req: NextRequest) {
     const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
     const isTest  = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
 
-    const { event_type, session_id, motivo, racket_slug, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body
+    const { event_type, session_id, motivo, racket_slug, racket_name, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body
 
     if (typeof event_type !== 'string' || !VALID_TYPES.has(event_type)) {
       return NextResponse.json({ error: 'event_type inválido' }, { status: 400 })
     }
     if (!SESSION_OPTIONAL.has(event_type) && (typeof session_id !== 'string' || !session_id)) {
       return NextResponse.json({ error: 'session_id obrigatório' }, { status: 400 })
+    }
+
+    // Telegram notification for share events (fire-and-forget)
+    if (event_type === 'compartilhar_click' && !isTest) {
+      const token  = process.env.TELEGRAM_BOT_TOKEN
+      const chatId = process.env.TELEGRAM_CHAT_ID
+      if (token && chatId) {
+        const label = typeof racket_name === 'string' && racket_name
+          ? racket_name
+          : typeof racket_slug === 'string' && racket_slug ? racket_slug : '?'
+        fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: `🔗 Alguém compartilhou: ${label}` }),
+        }).catch(() => {})
+      }
     }
 
     // Fire-and-forget — never blocks the caller
