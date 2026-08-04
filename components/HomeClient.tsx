@@ -223,11 +223,13 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   }, [])
 
   function fireEvent(body: Record<string, unknown>) {
-    fetch('/api/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }).catch(() => {})
+    const payload = JSON.stringify(body)
+    // sendBeacon survives page unload (e.g. opening WhatsApp); fetch does not
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/events', new Blob([payload], { type: 'application/json' }))
+    } else {
+      fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload }).catch(() => {})
+    }
   }
 
   const resetConversation = useCallback(() => {

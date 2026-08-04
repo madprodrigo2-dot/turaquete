@@ -21,11 +21,12 @@ interface Props {
 const NIVEL_ORDER: Record<string, number> = { iniciante: 0, intermediario: 1, avancado: 2 }
 
 function fireEvent(body: Record<string, unknown>) {
-  fetch('/api/events', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  }).catch(() => {})
+  const payload = JSON.stringify(body)
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon('/api/events', new Blob([payload], { type: 'application/json' }))
+  } else {
+    fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload }).catch(() => {})
+  }
 }
 
 export default function RacketCard({ racket, razao, sessionId, calce, custoBeneficio, userNivel }: Props) {
