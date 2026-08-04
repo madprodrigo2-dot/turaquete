@@ -899,9 +899,33 @@ async function executeTool(
           const bestMatch = rankedSemOrc[0]
           const bestDesc = bestMatch.price != null ? `${bestMatch.name} (R$${bestMatch.price})` : bestMatch.name
           // Build deterministic text — no LLM call needed.
-          const hardcoded =
-            `Acima de R$${originalFilters.presupuesto_min} não tenho opções para esse perfil. ` +
-            `A que melhor encaixa é a ${bestDesc}.\n\nSe quiser explorar outras faixas, escolha abaixo:`
+          // When the gap between requested min and best-match price is large, add the real reason
+          // so the user understands WHY a much cheaper racket is the best fit for their profile.
+          const perfil = debugRef.value.perfilInput as FittingProfile | undefined
+          const minPreco = originalFilters.presupuesto_min as number
+          const gapGrande = bestMatch.price != null && bestMatch.price < minPreco * 0.6
+          let hardcoded: string
+          if (gapGrande && perfil) {
+            const parteCorpo = perfil.ombro_sensivel ? 'ombro' : perfil.cotovelo_sensivel ? 'cotovelo' : perfil.punho_sensivel ? 'punho' : null
+            if (parteCorpo) {
+              hardcoded =
+                `Nessa faixa não tenho opções que protejam bem o teu ${parteCorpo} — ` +
+                `as raquetes acima de R$${minPreco} priorizam potência, não proteção de articulação. ` +
+                `A que melhor encaixa no que você precisa hoje é a ${bestDesc}.\n\nSe quiser explorar outras faixas, escolha abaixo:`
+            } else if (perfil.nivel === 'iniciante') {
+              hardcoded =
+                `Acima de R$${minPreco} as raquetes são voltadas pra jogadores com mais experiência — ` +
+                `no teu momento de jogo, a que melhor encaixa é a ${bestDesc}.\n\nSe quiser explorar outras faixas, escolha abaixo:`
+            } else {
+              hardcoded =
+                `Acima de R$${minPreco} não tenho opções para esse perfil. ` +
+                `A que melhor encaixa é a ${bestDesc}.\n\nSe quiser explorar outras faixas, escolha abaixo:`
+            }
+          } else {
+            hardcoded =
+              `Acima de R$${minPreco} não tenho opções para esse perfil. ` +
+              `A que melhor encaixa é a ${bestDesc}.\n\nSe quiser explorar outras faixas, escolha abaixo:`
+          }
           debugRef.value.hardcodedText = hardcoded
           // Pre-populate price chips so the user can pick a different range.
           const priceChips = computePrecoChips([])
