@@ -942,8 +942,12 @@ async function executeTool(
         const cheapest = withPrice.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0]
         const cheapPrice = cheapest?.price ?? null
         const cheapName = cheapest?.name ?? null
+        const perfilCap = debugRef.value.perfilInput as FittingProfile | undefined
+        const parteCorpoCap = perfilCap?.ombro_sensivel ? 'ombro' : perfilCap?.cotovelo_sensivel ? 'cotovelo' : perfilCap?.punho_sensivel ? 'punho' : null
         const hardcoded = cheapPrice != null && cheapName
-          ? `Dentro de R$${presupuestoMaxBudget} não tenho opções para esse perfil — a mais acessível que encaixa custa R$${Math.round(cheapPrice as number)} (${cheapName}).\n\nSe quiser explorar outra faixa:`
+          ? parteCorpoCap
+            ? `Dentro de R$${presupuestoMaxBudget} não tenho opções que protejam bem o teu ${parteCorpoCap} — raquetes de conforto alto têm custo maior. A mais acessível que encaixa no que você precisa é a ${cheapName} (R$${Math.round(cheapPrice as number)}).\n\nSe quiser explorar outra faixa:`
+            : `Dentro de R$${presupuestoMaxBudget} não tenho opções para esse perfil — a mais acessível que encaixa custa R$${Math.round(cheapPrice as number)} (${cheapName}).\n\nSe quiser explorar outra faixa:`
           : `Não encontrei opções dentro de R$${presupuestoMaxBudget} para esse perfil. Se quiser explorar outra faixa:`
         debugRef.value.hardcodedText = hardcoded
         priceAskPendingRef.value = true
