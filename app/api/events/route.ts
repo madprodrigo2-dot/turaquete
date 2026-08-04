@@ -14,7 +14,11 @@ const VALID_TYPES = new Set([
   'timeout_retry',
   'whatsapp_shown',
   'whatsapp_click',
+  'compartilhar_click',
 ])
+
+// Eventos que não têm session_id (disparam fora do fluxo de chat)
+const SESSION_OPTIONAL = new Set(['compartilhar_click', 'busca_sem_resultado'])
 
 export async function POST(req: NextRequest) {
   const ip =
@@ -34,12 +38,12 @@ export async function POST(req: NextRequest) {
     const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
     const isTest  = isAdmin || cookieStore.get('turaquete_test_mode')?.value === '1'
 
-    const { event_type, session_id, motivo, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body
+    const { event_type, session_id, motivo, racket_slug, comentario, decision_trace, intencao, turnos_ate_recomendacao, racket_id } = body
 
     if (typeof event_type !== 'string' || !VALID_TYPES.has(event_type)) {
       return NextResponse.json({ error: 'event_type inválido' }, { status: 400 })
     }
-    if (typeof session_id !== 'string' || !session_id) {
+    if (!SESSION_OPTIONAL.has(event_type) && (typeof session_id !== 'string' || !session_id)) {
       return NextResponse.json({ error: 'session_id obrigatório' }, { status: 400 })
     }
 
@@ -47,10 +51,10 @@ export async function POST(req: NextRequest) {
     getSupabaseAdmin()
       .from('feedback_events')
       .insert({
-        session_id,
+        session_id:               typeof session_id === 'string' && session_id ? session_id : null,
         event_type,
         is_test:                  isTest,
-        motivo:                   typeof motivo === 'string'                   ? motivo : null,
+        motivo:                   typeof motivo === 'string' ? motivo : (typeof racket_slug === 'string' ? racket_slug : null),
         comentario:               typeof comentario === 'string'               ? comentario.slice(0, 1000) : null,
         decision_trace:           decision_trace != null                        ? decision_trace : null,
         intencao:                 typeof intencao === 'string'                  ? intencao : null,
