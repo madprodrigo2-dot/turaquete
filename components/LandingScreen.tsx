@@ -1023,6 +1023,50 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
         <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-8 md:py-12 flex flex-col gap-6 md:gap-8">
 
+          {/* Explorar por perfil */}
+          <RevealDiv>
+          <div id="explorar" className="flex flex-col gap-3 scroll-mt-20 md:scroll-mt-28">
+            <div className="flex flex-col gap-0.5">
+              <p className="font-heading font-bold text-tinta text-base md:text-lg">Explorar por perfil</p>
+              <p className="text-tinta/50 text-xs">encontre pelo que você precisa</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              <DiscoveryTile
+                href="/raquetes/iniciante"
+                label="Para iniciantes"
+                sub="Fáceis de controlar, alto perdão de erro"
+                chipClass="bg-aqua/12"
+                hoverBorderClass="hover:border-aqua"
+                icon={<ChartBar weight="duotone" size={24} color="#0CC0BE" />}
+              />
+              <DiscoveryTile
+                href="/raquetes/intermediario"
+                label="Intermediários"
+                sub="Versáteis, para evoluir o seu jogo"
+                chipClass="bg-yellow/12"
+                hoverBorderClass="hover:border-yellow"
+                icon={<Target weight="duotone" size={24} color="#FFC42E" />}
+              />
+              <DiscoveryTile
+                href="/raquetes/avancado"
+                label="Avançados"
+                sub="Potência máxima, exige mais técnica"
+                chipClass="bg-coral/12"
+                hoverBorderClass="hover:border-coral"
+                icon={<Lightning weight="duotone" size={24} color="#FF5E3A" />}
+              />
+              <DiscoveryTile
+                href="/raquetes/conforto"
+                label="Leve nas articulações"
+                sub="Cotovelo, ombro e punho protegidos"
+                chipClass="bg-tinta/10"
+                hoverBorderClass="hover:border-tinta"
+                icon={<ShieldCheck weight="duotone" size={24} color="#0E3A40" />}
+              />
+            </div>
+          </div>
+          </RevealDiv>
+
           {/* Como funciona */}
           <RevealDiv>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
@@ -1187,51 +1231,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
           </div>
         )}
-
-        {/* Explorar por perfil */}
-        <RevealDiv>
-        <div id="explorar" className="flex flex-col gap-3 scroll-mt-20 md:scroll-mt-28">
-          <div className="flex flex-col gap-0.5">
-            <p className="font-heading font-bold text-tinta text-base md:text-lg">Explorar por perfil</p>
-            <p className="text-tinta/50 text-xs">encontre pelo que você precisa</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            <DiscoveryTile
-              href="/raquetes/iniciante"
-              label="Para iniciantes"
-              sub="Fáceis de controlar, alto perdão de erro"
-              chipClass="bg-aqua/12"
-              hoverBorderClass="hover:border-aqua"
-              icon={<ChartBar weight="duotone" size={24} color="#0CC0BE" />}
-            />
-            <DiscoveryTile
-              href="/raquetes/intermediario"
-              label="Intermediários"
-              sub="Versáteis, para evoluir o seu jogo"
-              chipClass="bg-yellow/12"
-              hoverBorderClass="hover:border-yellow"
-              icon={<Target weight="duotone" size={24} color="#FFC42E" />}
-            />
-            <DiscoveryTile
-              href="/raquetes/avancado"
-              label="Avançados"
-              sub="Potência máxima, exige mais técnica"
-              chipClass="bg-coral/12"
-              hoverBorderClass="hover:border-coral"
-              icon={<Lightning weight="duotone" size={24} color="#FF5E3A" />}
-            />
-            <DiscoveryTile
-              href="/raquetes/conforto"
-              label="Leve nas articulações"
-              sub="Cotovelo, ombro e punho protegidos"
-              chipClass="bg-tinta/10"
-              hoverBorderClass="hover:border-tinta"
-              icon={<ShieldCheck weight="duotone" size={24} color="#0E3A40" />}
-            />
-          </div>
-
-        </div>
-        </RevealDiv>
 
         {/* Compare lado a lado */}
         <div className="flex flex-col gap-3">
