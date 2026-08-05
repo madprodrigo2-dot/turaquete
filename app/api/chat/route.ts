@@ -178,9 +178,14 @@ class ToolCallFilter {
 }
 
 const STARTER_TO_INTENCAO: Record<string, string> = {
+  // starters antigos (pré-v0.3.725, mantidos para histórico)
   'Sou iniciante':              'primeira_raquete',
   'Quero trocar minha raquete': 'troca',
   'Tenho dor no braço':         'lesao_dor',
+  // estilo chips atuais (abertura determinística desde v0.3.725)
+  'Ataque (potência, smash)':   'primeira_raquete',
+  'Defesa e controle':          'primeira_raquete',
+  'Equilibrado':                'primeira_raquete',
 }
 // Estilo chips shown with the opening message — treated as starters even when typed manually
 const ESTILO_STARTERS = ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado']
@@ -353,7 +358,9 @@ export async function POST(req: NextRequest) {
               is_test:            isTest,
               primeira_mensagem: primeiraMensagem ?? (messages.find(m => m.role === 'user')?.content as string | undefined) ?? null,
               starter_usado: starterUsado ?? (primeiraMensagem && ESTILO_STARTERS.includes(primeiraMensagem) ? primeiraMensagem : null),
-              intencao_detectada: intencao ?? (starterUsado ? (STARTER_TO_INTENCAO[starterUsado] ?? null) : null),
+              intencao_detectada: intencao
+                ?? (starterUsado ? (STARTER_TO_INTENCAO[starterUsado] ?? null) : null)
+                ?? (primeiraMensagem ? (STARTER_TO_INTENCAO[primeiraMensagem] ?? null) : null),
               ip_hash: ipHash,
               referrer:   origemReferrer  ? new URL(origemReferrer).hostname.replace(/^www\./, '') : null,
               utm_source: origemUtmSource ?? null,
