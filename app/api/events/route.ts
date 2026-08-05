@@ -15,10 +15,11 @@ const VALID_TYPES = new Set([
   'whatsapp_shown',
   'whatsapp_click',
   'compartilhar_click',
+  'busca_sem_match',
 ])
 
 // Eventos que não têm session_id (disparam fora do fluxo de chat)
-const SESSION_OPTIONAL = new Set(['compartilhar_click', 'busca_sem_resultado'])
+const SESSION_OPTIONAL = new Set(['compartilhar_click', 'busca_sem_resultado', 'busca_sem_match'])
 
 export async function POST(req: NextRequest) {
   const ip =

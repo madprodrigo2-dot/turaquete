@@ -22,6 +22,8 @@ type SessionRow = {
   created_at: string
   starter_usado: string | null
   intencao_detectada: string | null
+  intencao_tags: string[] | null
+  has_sem_match: boolean
   primeira_mensagem: string | null
   custo_brl: number
   custo_usd: number
@@ -39,6 +41,17 @@ type SessionRow = {
   rec_racket_names: string[]
   wa_shown: boolean
   wa_click: boolean
+}
+
+const TAG_CONFIG: Record<string, { emoji: string; label: string; cls: string }> = {
+  'primeira_raquete': { emoji: '🎯', label: 'primeira',   cls: 'bg-blue-50 text-blue-700' },
+  'upgrade_tecnico':  { emoji: '⚡', label: 'upgrade',    cls: 'bg-purple-50 text-purple-700' },
+  'resolver_dor':     { emoji: '🩺', label: 'dor',        cls: 'bg-red-50 text-red-700' },
+  'ticket_alto':      { emoji: '💰', label: 'R$2k+',      cls: 'bg-amber-50 text-amber-700' },
+  'indeciso':         { emoji: '🔄', label: 'indeciso',   cls: 'bg-gray-100 text-gray-600' },
+  'sem_match:faixa':   { emoji: '⚠️', label: 'sem/faixa',  cls: 'bg-orange-50 text-orange-700' },
+  'sem_match:orcamento': { emoji: '⚠️', label: 'sem/orç', cls: 'bg-orange-50 text-orange-700' },
+  'sem_match:marca':   { emoji: '⚠️', label: 'sem/marca', cls: 'bg-orange-50 text-orange-700' },
 }
 
 function fmtBrl(v: number) {
@@ -86,7 +99,7 @@ export default async function ConversasPage({
   // Latest snapshot per session (most messages = last row per session_id)
   let base = sb
     .from('conversations')
-    .select('session_id, created_at, starter_usado, intencao_detectada, primeira_mensagem, custo_brl, custo_usd, is_test, messages, recommended_racket_ids, ip_hash, utm_source, utm_medium, referrer')
+    .select('session_id, created_at, starter_usado, intencao_detectada, intencao_tags, primeira_mensagem, custo_brl, custo_usd, is_test, messages, recommended_racket_ids, ip_hash, utm_source, utm_medium, referrer')
     .gte('created_at', cutoffDate)
     .order('created_at', { ascending: false })
     .limit(500)
@@ -142,6 +155,8 @@ export default async function ConversasPage({
       created_at: r.created_at,
       starter_usado: r.starter_usado,
       intencao_detectada: r.intencao_detectada,
+      intencao_tags: (r as { intencao_tags?: string[] | null }).intencao_tags ?? null,
+      has_sem_match: false,
       primeira_mensagem: r.primeira_mensagem,
       custo_brl: sessionCostMap.get(r.session_id) ?? 0,
       custo_usd: Number(r.custo_usd ?? 0),
@@ -223,13 +238,14 @@ export default async function ConversasPage({
     }
   }
 
-  // Query: fetch ver_na_loja clicks, timeout_retry, rating and WA events per session
+  // Query: fetch ver_na_loja clicks, timeout_retry, rating, WA and sem_match events per session
   if (sessionIds.length > 0) {
-    const [{ data: clickRows }, { data: retryRows }, { data: ratingRows }, { data: waRows }] = await Promise.all([
+    const [{ data: clickRows }, { data: retryRows }, { data: ratingRows }, { data: waRows }, { data: semMatchRows }] = await Promise.all([
       sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'ver_na_loja'),
       sb.from('feedback_events').select('session_id').in('session_id', sessionIds).eq('event_type', 'timeout_retry'),
       sb.from('feedback_events').select('session_id, event_type').in('session_id', sessionIds).in('event_type', ['rating_positive', 'rating_negative']),
       sb.from('feedback_events').select('session_id, event_type').in('session_id', sessionIds).in('event_type', ['whatsapp_shown', 'whatsapp_click']),
+      sb.from('feedback_events').select('session_id, motivo').in('session_id', sessionIds).eq('event_type', 'busca_sem_match'),
     ])
     if (clickRows) {
       const clickSet = new Set(clickRows.map(r => r.session_id))
@@ -260,6 +276,23 @@ export default async function ConversasPage({
       for (const s of sessions) {
         if (waShownSet.has(s.session_id)) s.wa_shown = true
         if (waClickSet.has(s.session_id)) s.wa_click = true
+      }
+    }
+    if (semMatchRows) {
+      // Merge sem_match cause into intencao_tags (cumulative — feedback_events persists across turns)
+      const semMatchMap = new Map<string, string>()
+      for (const r of semMatchRows) {
+        if (!semMatchMap.has(r.session_id)) semMatchMap.set(r.session_id, r.motivo ?? 'unknown')
+      }
+      for (const s of sessions) {
+        const causa = semMatchMap.get(s.session_id)
+        if (causa) {
+          s.has_sem_match = true
+          const semTag = `sem_match:${causa}`
+          if (s.intencao_tags && !s.intencao_tags.includes(semTag)) {
+            s.intencao_tags = [...s.intencao_tags, semTag]
+          }
+        }
       }
     }
   }
@@ -338,8 +371,25 @@ export default async function ConversasPage({
                     )
                   })()}
                 </td>
-                <td className="px-3 py-2 text-gray-500">
-                  {s.intencao_detectada ?? <span className="text-gray-300">—</span>}
+                <td className="px-3 py-2">
+                  {s.intencao_tags && s.intencao_tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {s.intencao_tags.map(tag => {
+                        const cfg = TAG_CONFIG[tag]
+                        return cfg ? (
+                          <span key={tag} className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.cls}`}>
+                            {cfg.emoji} {cfg.label}
+                          </span>
+                        ) : (
+                          <span key={tag} className="text-[10px] text-gray-400 px-1 rounded bg-gray-50">{tag}</span>
+                        )
+                      })}
+                    </div>
+                  ) : s.intencao_detectada ? (
+                    <span className="text-[10px] text-gray-400">{s.intencao_detectada}</span>
+                  ) : (
+                    <span className="text-gray-300">—</span>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-center text-gray-600">{s.turn_count}</td>
                 <td className="px-3 py-2 text-right font-mono text-gray-600">

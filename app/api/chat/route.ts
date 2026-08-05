@@ -190,6 +190,33 @@ const STARTER_TO_INTENCAO: Record<string, string> = {
 // Estilo chips shown with the opening message — treated as starters even when typed manually
 const ESTILO_STARTERS = ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado']
 
+function computeIntencaoTags(opts: {
+  confirmedProfile?: Record<string, unknown> | null
+  orcamento?: { orcamento_min?: number | null; orcamento_label?: string | null } | null
+  messages: Array<{ role: string; content?: string }>
+  semMatchCausa?: { tipo: string } | null
+}): string[] | null {
+  const { confirmedProfile, orcamento, messages, semMatchCausa } = opts
+  if (!confirmedProfile || Object.keys(confirmedProfile).length === 0) return null
+
+  const lesao = !!(confirmedProfile.ombro_sensivel || confirmedProfile.cotovelo_sensivel || confirmedProfile.punho_sensivel)
+  const nivel = confirmedProfile.nivel as string | undefined
+  const principal = lesao ? 'resolver_dor'
+    : (nivel === 'intermediario' || nivel === 'avancado') ? 'upgrade_tecnico'
+    : 'primeira_raquete'
+
+  const tags = [principal]
+
+  if ((orcamento?.orcamento_min ?? 0) >= 2000) tags.push('ticket_alto')
+
+  const verMaisCount = messages.filter(m => m.role === 'user' && m.content === 'Ver mais opções').length
+  if (verMaisCount >= 2) tags.push('indeciso')
+
+  if (semMatchCausa) tags.push(`sem_match:${semMatchCausa.tipo}`)
+
+  return tags
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -341,6 +368,12 @@ export async function POST(req: NextRequest) {
           // Fire-and-forget persistence
           const fullMessages = [...messages, { role: 'assistant', content: cleanText }]
           const orcamento = extractOrcamentoFromHistory(fullMessages)
+          const intencaoTags = computeIntencaoTags({
+            confirmedProfile,
+            orcamento,
+            messages: fullMessages,
+            semMatchCausa: debug?.semMatchCausa ?? null,
+          })
           getSupabase()
             .from('conversations')
             .insert({
@@ -361,6 +394,9 @@ export async function POST(req: NextRequest) {
               intencao_detectada: intencao
                 ?? (starterUsado ? (STARTER_TO_INTENCAO[starterUsado] ?? null) : null)
                 ?? (primeiraMensagem ? (STARTER_TO_INTENCAO[primeiraMensagem] ?? null) : null),
+              confirmed_profile: confirmedProfile ?? null,
+              confirmed_profile_source: confirmedProfile && Object.keys(confirmedProfile).length > 0 ? 'captured' : null,
+              intencao_tags: intencaoTags,
               ip_hash: ipHash,
               referrer:   origemReferrer  ? new URL(origemReferrer).hostname.replace(/^www\./, '') : null,
               utm_source: origemUtmSource ?? null,
@@ -369,6 +405,20 @@ export async function POST(req: NextRequest) {
             .then(({ error }) => {
               if (error) console.error('Conversations insert error:', error.message)
             })
+
+          // Capture sem_match events server-side so they persist even without a subsequent turn
+          if (debug?.semMatchCausa) {
+            getSupabaseAdmin()
+              .from('feedback_events')
+              .insert({
+                session_id: sessionId,
+                event_type: 'busca_sem_match',
+                is_test: isTest,
+                motivo: debug.semMatchCausa.tipo,
+                comentario: debug.semMatchCausa.detalhe ?? null,
+              })
+              .then(({ error }) => { if (error) console.error('busca_sem_match insert:', error.message) })
+          }
 
           if (recommendations && recommendations.length > 0) {
             getSupabaseAdmin()

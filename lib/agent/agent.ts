@@ -96,6 +96,7 @@ export type AgentDebugInfo = {
   confidenceInfo?: ConfidenceInfo
   filteredPoolSize?: number  // candidates available after shownIds filter (used to decide if "Ver mais" should appear)
   hardcodedText?: string    // set by ZERO_NA_FAIXA to bypass streamResponse (zero LLM credits)
+  semMatchCausa?: { tipo: 'faixa' | 'orcamento'; detalhe?: string }
 }
 
 export type AgentResult = {
@@ -927,6 +928,7 @@ async function executeTool(
               `A que melhor encaixa é a ${bestDesc}.\n\nSe quiser explorar outras faixas, escolha abaixo:`
           }
           debugRef.value.hardcodedText = hardcoded
+          debugRef.value.semMatchCausa = { tipo: 'faixa', detalhe: String(minPreco) }
           // Pre-populate price chips so the user can pick a different range.
           const priceChips = computePrecoChips([])
           priceAskPendingRef.value = true
@@ -950,6 +952,7 @@ async function executeTool(
             : `Dentro de R$${presupuestoMaxBudget} não tenho opções para esse perfil — a mais acessível que encaixa custa R$${Math.round(cheapPrice as number)} (${cheapName}).\n\nSe quiser explorar outra faixa:`
           : `Não encontrei opções dentro de R$${presupuestoMaxBudget} para esse perfil. Se quiser explorar outra faixa:`
         debugRef.value.hardcodedText = hardcoded
+        debugRef.value.semMatchCausa = { tipo: 'orcamento', detalhe: String(presupuestoMaxBudget) }
         priceAskPendingRef.value = true
         const priceChips = computePrecoChips([])
         precoChipsRef.value = priceChips
