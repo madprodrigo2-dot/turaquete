@@ -189,12 +189,15 @@ export default function ChatMessage({
 
         {isAssistant && turyConfig && (
           <Image
+            key={turyConfig.p.src}
             src={turyConfig.p.src}
             alt={turyConfig.p.alt}
             width={turyConfig.p.nW}
             height={turyConfig.p.nH}
             priority={showTury}
-            className="flex-shrink-0 self-end"
+            className={`flex-shrink-0 self-end ${
+              loading ? 'tury-breathe' : hasRecs ? 'tury-float' : 'tury-enter'
+            }`}
             style={{ height: `${turyConfig.h}px`, width: 'auto' }}
           />
         )}
