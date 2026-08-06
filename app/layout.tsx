@@ -26,7 +26,7 @@ const DESCRIPTION = 'Conta como você joga e Tury indica a raquete ideal para o 
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#EAF7F6' },
+    { media: '(prefers-color-scheme: light)', color: '#F7F3EC' },
     { media: '(prefers-color-scheme: dark)',  color: '#0E3A40' },
   ],
 }

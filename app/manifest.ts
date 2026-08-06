@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description:      'Especialista em raquetes de beach tennis',
     start_url:        '/',
     display:          'standalone',
-    background_color: '#EAF7F6',
+    background_color: '#F7F3EC',
     theme_color:      '#0CC0BE',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
