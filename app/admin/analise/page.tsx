@@ -119,17 +119,19 @@ export default async function AnaliseAdmin({
 
     (() => {
       const q = sb.from('conversations')
-        .select('session_id, intencao_detectada')
-        .not('intencao_detectada', 'is', null)
+        .select('session_id, intencao_tags')
+        .not('intencao_tags', 'is', null)
         .gte('created_at', cutoffDate)
         .limit(3000)
       return (includeTest ? q : q.eq('is_test', false)).then(r => {
         const seen = new Set<string>()
         const c: Record<string, number> = {}
-        for (const row of (r.data ?? []) as { session_id: string; intencao_detectada: string }[]) {
+        for (const row of (r.data ?? []) as { session_id: string; intencao_tags: string[] | null }[]) {
           if (seen.has(row.session_id)) continue
           seen.add(row.session_id)
-          c[row.intencao_detectada] = (c[row.intencao_detectada] ?? 0) + 1
+          const principal = (row.intencao_tags ?? [])[0]
+          if (!principal || principal === 'indefinido') continue
+          c[principal] = (c[principal] ?? 0) + 1
         }
         return Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total)
       })
