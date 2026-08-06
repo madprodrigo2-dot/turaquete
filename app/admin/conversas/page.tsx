@@ -183,9 +183,11 @@ export default async function ConversasPage({
   }
 
   // Second query: fetch FIRST row per session to get turn-1 metadata
+  // Also fetches the most recent non-null intencao_tags per session — rec turns don't carry
+  // confirmedProfile so their intencao_tags is null; the correct tags come from earlier turns.
   const sessionIds = sessions.map(s => s.session_id)
   if (sessionIds.length > 0) {
-    const [{ data: firstRows }, { data: intencaoRows }] = await Promise.all([
+    const [{ data: firstRows }, { data: intencaoRows }, { data: intencaoTagRows }] = await Promise.all([
       sb.from('conversations')
         .select('session_id, starter_usado, primeira_mensagem')
         .in('session_id', sessionIds)
@@ -198,6 +200,13 @@ export default async function ConversasPage({
         .not('intencao_detectada', 'is', null)
         .order('created_at', { ascending: true })
         .limit(sessionIds.length),
+      // DESC order so we get the most-refined tags (profile questions come before rec turns)
+      sb.from('conversations')
+        .select('session_id, intencao_tags')
+        .in('session_id', sessionIds)
+        .not('intencao_tags', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(sessionIds.length * 6),
     ])
 
     if (firstRows) {
@@ -224,6 +233,28 @@ export default async function ConversasPage({
       for (const s of sessions) {
         const intencao = intencaoMap.get(s.session_id)
         if (intencao) s.intencao_detectada = intencao
+      }
+    }
+
+    // Override intencao_tags from last row (which is a rec turn with null tags)
+    // with the most recent row that has a meaningful intent tag.
+    if (intencaoTagRows) {
+      const tagsMap = new Map<string, string[]>()
+      for (const r of intencaoTagRows) {
+        if (tagsMap.has(r.session_id)) continue
+        const tags = r.intencao_tags as string[] | null
+        if (!tags || tags.length === 0) continue
+        // Skip 'indefinido'-only — that's the starter-turn placeholder before profile is known
+        if (tags.length === 1 && tags[0] === 'indefinido') continue
+        tagsMap.set(r.session_id, tags)
+      }
+      for (const s of sessions) {
+        const current = s.intencao_tags
+        const isBlank = !current || current.length === 0 || (current.length === 1 && current[0] === 'indefinido')
+        if (isBlank) {
+          const tags = tagsMap.get(s.session_id)
+          if (tags) s.intencao_tags = tags
+        }
       }
     }
   }
