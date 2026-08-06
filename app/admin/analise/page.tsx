@@ -327,8 +327,17 @@ export default async function AnaliseAdmin({
   } else {
     const totalInt = intencoes.reduce((a, r) => a + r.total, 0)
     const topIntent = intencoes[0] ?? null
+    const INTENT_LABEL: Record<string, string> = {
+      'primeira_raquete': 'primeira raquete',
+      'upgrade_tecnico':  'upgrade técnico',
+      'resolver_dor':     'resolver dor',
+      'indefinido':       'indefinido',
+      'troca':            'troca',
+      'lesao_dor':        'lesão/dor',
+    }
     if (topIntent && totalInt > 0) {
-      insights.push({ level: 'info', text: `"${topIntent.intencao_detectada}" é a intenção #1 (${pct(topIntent.total, totalInt)} das sessões). Vale priorizar esse fluxo no copy e starters.` })
+      const label = INTENT_LABEL[topIntent.intencao_detectada ?? ''] ?? topIntent.intencao_detectada ?? '?'
+      insights.push({ level: 'info', text: `Intenção #1: "${label}" (${pct(topIntent.total, totalInt)} das sessões com quiz no período).` })
     }
     if (taxaRec !== null) {
       insights.push({ level: taxaRec >= 0.5 ? 'ok' : 'warn', text: `${pct(sessionsWithRec.length, totalConv)} das sessões chegaram a uma recomendação (${daysLabel}).${taxaRec < 0.5 ? ' Abaixo de 50% — verificar abandono.' : ''}` })
