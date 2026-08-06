@@ -202,8 +202,9 @@ function computeIntencaoTags(opts: {
   const lesao = !!(confirmedProfile.ombro_sensivel || confirmedProfile.cotovelo_sensivel || confirmedProfile.punho_sensivel)
   const nivel = confirmedProfile.nivel as string | undefined
   const principal = lesao ? 'resolver_dor'
+    : nivel === 'iniciante' ? 'primeira_raquete'
     : (nivel === 'intermediario' || nivel === 'avancado') ? 'upgrade_tecnico'
-    : 'primeira_raquete'
+    : 'indefinido'
 
   const tags = [principal]
 

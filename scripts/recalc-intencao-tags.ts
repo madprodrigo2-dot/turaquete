@@ -24,7 +24,11 @@ const sb = createClient(
 // ── Chip detection maps ────────────────────────────────────────────────────
 
 const NIVEL_MAP: Record<string, string> = {
+  // Chips atuais
   'Estou começando (cat. E/D)': 'iniciante',
+  'Intermediário (cat. C/B)':   'intermediario',
+  'Avançado (cat. A/Pro)':      'avancado',
+  // Chips antigos (fallback histórico)
   'Intermediário (cat. C)':     'intermediario',
   'Avançado (cat. B ou acima)': 'avancado',
 }
@@ -69,8 +73,9 @@ function computeTags(opts: {
   const { nivel, lesao, orcamentoMin, verMaisCount = 0 } = opts
   const isLesao = lesao === true
   const principal = isLesao ? 'resolver_dor'
+    : nivel === 'iniciante' ? 'primeira_raquete'
     : (nivel === 'intermediario' || nivel === 'avancado') ? 'upgrade_tecnico'
-    : 'primeira_raquete'
+    : 'indefinido'
 
   const tags = [principal]
   if ((orcamentoMin ?? 0) >= 2000) tags.push('ticket_alto')
@@ -83,12 +88,11 @@ function computeTags(opts: {
 async function main() {
   console.log('Fetching sessions since 2026-07-01 without intencao_tags...')
 
-  // Fetch all rows since Jul 1 that don't have intencao_tags yet
+  // Fetch ALL rows since Jul 1 — full recalc (not just IS NULL)
   const { data: rows, error } = await sb
     .from('conversations')
     .select('id, session_id, messages, profile, created_at')
     .gte('created_at', '2026-07-01T00:00:00Z')
-    .is('intencao_tags', null)
     .order('created_at', { ascending: false })
     .limit(10000)
 
@@ -108,8 +112,8 @@ async function main() {
     const msgs: Array<{ role: string; content?: string }> = Array.isArray(row.messages) ? row.messages : []
     const { nivel, lesao, estilo, verMaisCount } = parseProfile(msgs)
 
-    // Skip if we can't determine anything meaningful
-    if (!nivel && lesao === undefined && !estilo) { skipped++; continue }
+    // Skip only if absolutely nothing is parseable (empty messages)
+    if (!nivel && lesao === undefined && !estilo && verMaisCount === 0) { skipped++; continue }
 
     const profile = (row.profile ?? {}) as Record<string, unknown>
     const orcamentoMin = profile.orcamento_min as number | null | undefined
@@ -122,7 +126,7 @@ async function main() {
       ...(lesao === false ? { ombro_sensivel: false } : {}),
     }
 
-    // Update all rows for this session (UPDATE WHERE session_id = X AND intencao_tags IS NULL)
+    // Full recalc: update regardless of existing intencao_tags value
     const { error: upErr } = await sb
       .from('conversations')
       .update({
@@ -131,7 +135,6 @@ async function main() {
         confirmed_profile_source: 'parsed',
       })
       .eq('session_id', sessionId)
-      .is('intencao_tags', null)
 
     if (upErr) {
       console.error(`  ❌ ${sessionId}: ${upErr.message}`)

@@ -47,6 +47,7 @@ const TAG_CONFIG: Record<string, { emoji: string; label: string; cls: string }> 
   'primeira_raquete': { emoji: '🎯', label: 'primeira',   cls: 'bg-blue-50 text-blue-700' },
   'upgrade_tecnico':  { emoji: '⚡', label: 'upgrade',    cls: 'bg-purple-50 text-purple-700' },
   'resolver_dor':     { emoji: '🩺', label: 'dor',        cls: 'bg-red-50 text-red-700' },
+  'indefinido':       { emoji: '❓', label: 'indefinido', cls: 'bg-gray-50 text-gray-400' },
   'ticket_alto':      { emoji: '💰', label: 'R$2k+',      cls: 'bg-amber-50 text-amber-700' },
   'indeciso':         { emoji: '🔄', label: 'indeciso',   cls: 'bg-gray-100 text-gray-600' },
   'sem_match:faixa':   { emoji: '⚠️', label: 'sem/faixa',  cls: 'bg-orange-50 text-orange-700' },
@@ -339,18 +340,21 @@ export default async function ConversasPage({
                   Intenção
                   <span className="relative group cursor-default">
                     <span className="text-[9px] text-gray-300 border border-gray-200 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center hover:text-gray-500 hover:border-gray-400 leading-none select-none">?</span>
-                    <div className="absolute left-0 top-5 z-50 hidden group-hover:block w-64 bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-[11px] text-gray-600 leading-relaxed font-normal normal-case tracking-normal whitespace-normal">
-                      <p className="font-semibold text-gray-800 mb-2 text-[11px]">Como são calculadas as tags:</p>
+                    <div className="absolute left-0 top-5 z-50 hidden group-hover:block w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-3 text-[11px] text-gray-600 leading-relaxed font-normal normal-case tracking-normal whitespace-normal">
+                      <p className="font-semibold text-gray-800 mb-2 text-[11px]">Principal (1 obrigatória, prioridade ↓)</p>
+                      <div className="space-y-1 mb-3">
+                        <p><span className="text-red-700 font-semibold">🩺 dor</span> — lesão = true (ombro/cotovelo/punho), qualquer nível</p>
+                        <p><span className="text-blue-700 font-semibold">🎯 primeira</span> — nível = iniciante E sem lesão</p>
+                        <p><span className="text-purple-700 font-semibold">⚡ upgrade</span> — nível = intermediário ou avançado E sem lesão</p>
+                        <p><span className="text-gray-400 font-semibold">❓ indefinido</span> — nível não capturado (usuário saiu antes)</p>
+                      </div>
+                      <p className="font-semibold text-gray-800 mb-1 text-[11px]">Modificadores (0 a N)</p>
                       <div className="space-y-1">
-                        <p><span className="text-blue-700 font-semibold">🎯 primeira</span> — nível iniciante ou chip de estilo (Ataque/Defesa/Equilibrado)</p>
-                        <p><span className="text-purple-700 font-semibold">⚡ upgrade</span> — nível intermediário ou avançado sem lesão</p>
-                        <p><span className="text-red-700 font-semibold">🩺 dor</span> — marcou ombro, cotovelo ou punho sensível</p>
                         <p><span className="text-amber-700 font-semibold">💰 R$2k+</span> — orçamento mínimo ≥ R$ 2.000</p>
                         <p><span className="text-gray-600 font-semibold">🔄 indeciso</span> — clicou &quot;Ver mais opções&quot; ≥ 2×</p>
-                        <p><span className="text-orange-700 font-semibold">⚠️ sem/faixa</span> — pediu acima de X mas catálogo não chega</p>
-                        <p><span className="text-orange-700 font-semibold">⚠️ sem/orç</span> — opções existem mas custam mais que o limite</p>
+                        <p><span className="text-orange-700 font-semibold">⚠️ sem/faixa</span> — pediu faixa de preço sem match no catálogo</p>
+                        <p><span className="text-orange-700 font-semibold">⚠️ sem/orç</span> — opções existem mas acima do limite</p>
                       </div>
-                      <p className="mt-2 text-[10px] text-gray-400 border-t border-gray-100 pt-2">Principal = 1 tag obrigatória · Modificadores = 0 a N</p>
                     </div>
                   </span>
                 </span>
