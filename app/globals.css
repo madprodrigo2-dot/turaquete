@@ -54,9 +54,9 @@ body.chat-active [data-site-footer] {
 }
 
 @layer utilities {
-  /* Page background — subtle mint-to-white gradient for depth */
+  /* Page background — creme-to-white gradient, harmonizes with warm header (#FBF6EF) */
   .sand-texture {
-    background: linear-gradient(165deg, #EAF7F6 0%, rgba(234,247,246,0.45) 28%, #ffffff 58%);
+    background: linear-gradient(165deg, #F7F3EC 0%, rgba(247,243,236,0.45) 28%, #ffffff 58%);
   }
 
   .font-heading {

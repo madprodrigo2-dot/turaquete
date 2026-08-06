@@ -1206,7 +1206,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           preserveAspectRatio="none"
           className="w-full h-12 md:h-14 block"
         >
-          <path d="M0,22 C480,40 960,14 1440,32 L1440,50 L0,50 Z" fill="#EAF7F6" />
+          <path d="M0,22 C480,40 960,14 1440,32 L1440,50 L0,50 Z" fill="#F7F3EC" />
         </svg>
       </div>
 
