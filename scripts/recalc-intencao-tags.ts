@@ -143,21 +143,8 @@ async function main() {
 
   console.log(`\nDone. Updated: ${updated}, Skipped (no profile data): ${skipped}`)
 
-  // Distribution summary
-  const { data: dist } = await sb.rpc('exec', { sql: `
-    SELECT intencao_tags, COUNT(*) as n
-    FROM (
-      SELECT DISTINCT ON (session_id) session_id, intencao_tags
-      FROM conversations
-      WHERE created_at >= '2026-07-01'
-        AND intencao_tags IS NOT NULL
-      ORDER BY session_id, created_at DESC
-    ) t
-    GROUP BY intencao_tags
-    ORDER BY n DESC
-    LIMIT 30
-  ` }).catch(() => ({ data: null }))
-
+  // Distribution summary (fallback query — simple enough for Supabase client)
+  const dist = null
   if (!dist) {
     // Fallback: manual query
     const { data: tags } = await sb
