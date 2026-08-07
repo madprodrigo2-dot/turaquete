@@ -129,11 +129,12 @@ function SocialProof({ recsCount }: { recsCount: number }) {
       }}
     >
       <span
+        className="font-heading"
         style={{
           fontSize: 'clamp(2.4rem, 9vw, 3.2rem)',
           fontVariantNumeric: 'tabular-nums',
           fontWeight: 800,
-          color: '#FF5E3A',
+          color: '#0E3A40',
           lineHeight: 1,
           letterSpacing: '-0.02em',
         }}
@@ -878,7 +879,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             {recsCount >= RECS_THRESHOLD && <SocialProof recsCount={recsCount} />}
 
             {/* Franja */}
-            <div className="bg-white border-l-[3px] border-coral rounded-r-[var(--radius-md)] px-4 py-4 md:px-5 md:py-5 shadow-card">
+            <div className="bg-white border-l-[3px] border-tinta/20 rounded-r-[var(--radius-md)] px-4 py-4 md:px-5 md:py-5 shadow-card">
               <p className="text-tinta font-semibold text-sm md:text-base leading-relaxed">
                 O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
               </p>
@@ -892,7 +893,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                   style={{ animationDelay: `${i * 80}ms` }}
                   className="bg-aqua/[0.12] text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-aqua/20 reveal-up"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-coral shrink-0" aria-hidden="true" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-aqua shrink-0" aria-hidden="true" />
                   {badge}
                 </span>
               ))}
