@@ -1076,16 +1076,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           {/* Quem é a Tury? — transparência */}
           <RevealDiv delay={100}>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
-            <div className="flex items-start gap-3 mb-4">
+            <div className="flex items-end gap-4 mb-4">
               <Image
                 src="/tury-explicando.png"
                 alt="Tury"
                 width={80}
                 height={100}
-                className="h-12 w-auto object-contain shrink-0"
+                className="h-24 md:h-28 w-auto object-contain shrink-0"
                 style={{ width: 'auto' }}
               />
-              <div>
+              <div className="pb-1">
                 <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Quem é a Tury?</p>
                 <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual, não uma pessoa</p>
               </div>
