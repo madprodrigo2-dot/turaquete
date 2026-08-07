@@ -1076,33 +1076,33 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           {/* Quem é a Tury? — transparência */}
           <RevealDiv delay={100}>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
-            <div className="flex items-end gap-4 mb-4">
+            <div className="grid grid-cols-[auto_1fr] gap-x-4 md:gap-x-6 gap-y-4 md:gap-y-3">
               <Image
                 src="/tury-explicando.png"
                 alt="Tury"
                 width={80}
                 height={100}
-                className="h-24 md:h-28 w-auto object-contain shrink-0"
+                className="h-24 md:h-20 w-auto object-contain shrink-0 self-end md:row-span-2 md:self-center"
                 style={{ width: 'auto' }}
               />
-              <div className="pb-1">
+              <div className="self-end pb-1 md:pb-0 md:self-start">
                 <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Quem é a Tury?</p>
                 <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual, não uma pessoa</p>
               </div>
-            </div>
-            <div className="flex flex-col gap-2.5 mb-4">
-              {[
-                'Analisa dados reais de cada raquete: peso, balance, material e pontuações técnicas',
-                'Sem patrocínio: nenhuma marca paga para aparecer primeiro',
-                'Explica o porquê de cada recomendação, não só o resultado',
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 w-4 h-4 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0">
-                    <Check size={8} weight="bold" color="#0CC0BE" aria-hidden="true" />
-                  </span>
-                  <p className="text-tinta/70 text-sm leading-snug">{item}</p>
-                </div>
-              ))}
+              <div className="col-span-2 md:col-span-1 md:self-start flex flex-col gap-2.5">
+                {[
+                  'Analisa dados reais de cada raquete: peso, balance, material e pontuações técnicas',
+                  'Sem patrocínio: nenhuma marca paga para aparecer primeiro',
+                  'Explica o porquê de cada recomendação, não só o resultado',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <span className="mt-0.5 w-4 h-4 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0">
+                      <Check size={8} weight="bold" color="#0CC0BE" aria-hidden="true" />
+                    </span>
+                    <p className="text-tinta/70 text-sm leading-snug">{item}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           </RevealDiv>
