@@ -23,7 +23,7 @@ export default async function ConfortoPage() {
   const rackets = await getRaquetasConforto().catch(() => [])
   return (
     <DiscoveryPageLayout
-      icon={<IconConforto />}
+      imageUrl="/ilustracoes/perfil-articulacoes.webp"
       title="Leve nas articulações"
       subtitle="Raquetes indicadas para quem tem sensibilidade no cotovelo ou ombro. Modelos com absorção de vibração e saída de bola suave."
       rackets={rackets}

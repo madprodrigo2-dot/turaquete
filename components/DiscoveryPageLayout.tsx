@@ -5,7 +5,8 @@ import DiscoveryFilters, { type SortKey } from './DiscoveryFilters'
 import SiteNav from './SiteNav'
 
 interface Props {
-  icon: ReactNode
+  icon?: ReactNode
+  imageUrl?: string
   title: string
   subtitle: string
   rackets: RacketWithInsights[]
@@ -18,6 +19,7 @@ interface Props {
 
 export default function DiscoveryPageLayout({
   icon,
+  imageUrl,
   title,
   subtitle,
   rackets,
@@ -34,13 +36,25 @@ export default function DiscoveryPageLayout({
       <div className="max-w-4xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
 
         {/* Header */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2.5 mb-1">
-            {icon}
-            <h1 className="text-2xl md:text-3xl font-bold text-tinta">{title}</h1>
+        {imageUrl ? (
+          <div className="flex items-center gap-4">
+            <div className="shrink-0 w-20 h-20 rounded-2xl overflow-hidden bg-[#EAF7F6]">
+              <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-tinta">{title}</h1>
+              <p className="text-tinta/60 text-sm">{subtitle}</p>
+            </div>
           </div>
-          <p className="text-tinta/60 text-sm">{subtitle}</p>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2.5 mb-1">
+              {icon}
+              <h1 className="text-2xl md:text-3xl font-bold text-tinta">{title}</h1>
+            </div>
+            <p className="text-tinta/60 text-sm">{subtitle}</p>
+          </div>
+        )}
 
         {/* Filters + grid — or empty base message */}
         {rackets.length === 0 ? (

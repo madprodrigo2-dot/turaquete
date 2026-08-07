@@ -24,7 +24,7 @@ export default async function IntermediarioPage() {
   const rackets = await getRaquetasPorNivel('intermediario').catch(() => [])
   return (
     <DiscoveryPageLayout
-      icon={<IconIntermediario />}
+      imageUrl="/ilustracoes/perfil-intermediario.webp"
       title="Intermediários"
       subtitle="Equilíbrio entre controle e potência. Para quem já domina o básico e quer evoluir sem abrir mão da consistência."
       rackets={rackets}

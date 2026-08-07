@@ -24,7 +24,7 @@ export default async function AvancadoPage() {
   const rackets = await getRaquetasPorNivel('avancado').catch(() => [])
   return (
     <DiscoveryPageLayout
-      icon={<IconAvancado />}
+      imageUrl="/ilustracoes/perfil-avancado.webp"
       title="Avançados"
       subtitle="Alta performance para quem joga no limite. Modelos com materiais premium e saída de bola exigente — exigem técnica para aproveitar o máximo."
       rackets={rackets}
