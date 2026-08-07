@@ -12,6 +12,7 @@ import SpecsGrid, { buildSpecRows } from './SpecsGrid'
 import ScoreSection from './ScoreSection'
 import RacketKeyStats from './RacketKeyStats'
 import RacketHexagon from './RacketHexagon'
+import { X, CaretDown } from '@phosphor-icons/react'
 
 interface Props {
   racket: RacketWithInsights
@@ -76,9 +77,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
             className="text-tinta/40 hover:text-tinta transition-colors p-1 -mr-1 mt-0.5 shrink-0"
             aria-label="Fechar"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <X size={18} weight="regular" aria-hidden="true" />
           </button>
         </div>
 
@@ -117,12 +116,7 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               }}
             >
               <span>Anatomia da raquete</span>
-              <svg
-                width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"
-                className={`transition-transform duration-150 ${anatomiaOpen ? 'rotate-180' : ''}`}
-              >
-                <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <CaretDown size={12} weight="regular" aria-hidden="true" className={`transition-transform duration-150 ${anatomiaOpen ? 'rotate-180' : ''}`} />
             </button>
             {anatomiaOpen && (
               <div className="border-t border-aqua/10">

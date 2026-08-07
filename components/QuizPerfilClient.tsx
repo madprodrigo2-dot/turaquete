@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Check, Article, DownloadSimple } from '@phosphor-icons/react'
 import {
   PERGUNTAS,
   ARQUETIPOS,
@@ -351,9 +352,7 @@ function Question({
                     }}
                   >
                     {isSel ? (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                        <polyline points="3,8.5 6.5,12 13,5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <Check size={16} weight="bold" aria-hidden="true" />
                     ) : LETTERS[i]}
                   </div>
                   <span className="font-medium text-sm leading-snug" style={{ color: '#0E3A40' }}>
@@ -622,11 +621,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               {isSharing
                 ? <span className="animate-pulse text-xs">…</span>
                 : <>
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                      <rect x="2.5" y="1" width="9" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
-                      <rect x="4" y="3.5" width="6" height="4.5" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
-                      <line x1="4" y1="9.5" x2="10" y2="9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
+                    <Article size={12} weight="regular" aria-hidden="true" />
                     Story
                   </>}
             </button>
@@ -639,10 +634,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               {isSharing
                 ? <span className="animate-pulse text-xs">…</span>
                 : <>
-                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                      <path d="M7 1.5v7M4.5 6l2.5 2.5L9.5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M2 11.5h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
+                    <DownloadSimple size={12} weight="regular" aria-hidden="true" />
                     Baixar
                   </>}
             </button>

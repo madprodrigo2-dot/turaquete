@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 // WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import type { GlossarioEntry } from '@/lib/glossario'
+import { X, ArrowUpRight } from '@phosphor-icons/react'
 
 interface Props {
   entry: GlossarioEntry
@@ -45,9 +46,7 @@ function AnatomiaOverlay({ onClose }: { onClose: () => void }) {
           className="absolute top-3 right-3 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
           aria-label="Fechar"
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-          </svg>
+          <X size={12} weight="regular" />
         </button>
       </div>
     </div>,
@@ -116,10 +115,7 @@ function Tooltip({ entry, triggerRef, onClose }: {
             onClick={() => setShowAnatomia(true)}
             className="mt-2 text-[10px] font-medium text-aqua hover:text-aqua/70 transition-colors flex items-center gap-1"
           >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.2"/>
-              <path d="M5 3v2.5L6.5 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
+            <ArrowUpRight size={10} weight="regular" />
             ver no desenho da raquete
           </button>
         )}

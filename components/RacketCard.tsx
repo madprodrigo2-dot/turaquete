@@ -8,6 +8,7 @@ import AthleteBadge from './AthleteBadge'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 import { getDisplayName } from '@/lib/displayName'
+import { Hexagon } from '@phosphor-icons/react'
 
 interface Props {
   racket: RacketWithInsights
@@ -106,12 +107,12 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
                 </div>
               )}
               {custoBeneficio && (
-                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-yellow/10 text-tinta/65 border border-yellow/30 shadow-sm">
                   Melhor custo-benefício
                 </div>
               )}
               {racket.weight_g != null && racket.weight_g >= 340 && (
-                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-slate-100 text-slate-600 border border-slate-200 shadow-sm">
+                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-tinta/6 text-tinta/45 border border-tinta/10 shadow-sm">
                   Peso alto de fábrica
                 </div>
               )}
@@ -128,7 +129,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
             )}
           </div>
 
-          <p className="text-gray-600 text-xs leading-relaxed break-words">{razao}</p>
+          <p className="text-tinta/65 text-xs leading-relaxed break-words">{razao}</p>
 
           {/* Pra quem — hide when the racket is above the user's level to avoid
               contradiction ("recomendamos esta" + "mas não é pra você"). */}
@@ -150,7 +151,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               {topDims.map(d => (
                 <span
                   key={d.label}
-                  className="bg-[#FBF6EF] text-tinta text-xs font-semibold px-2 py-0.5 rounded-full border border-aqua/20"
+                  className="bg-tinta/5 text-tinta text-xs font-semibold px-2 py-0.5 rounded-full border border-tinta/10"
                 >
                   {d.label} {d.v}
                 </span>
@@ -172,7 +173,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               Ver na loja →
             </a>
           ) : (
-            <span className="mt-1 w-full text-center rounded-full bg-gray-100 text-gray-400 text-xs font-heading font-semibold py-2 px-3 cursor-not-allowed select-none block">
+            <span className="mt-1 w-full text-center rounded-full bg-tinta/5 text-tinta/30 text-xs font-heading font-semibold py-2 px-3 cursor-not-allowed select-none block">
               Em breve nas lojas
             </span>
           )}
@@ -183,13 +184,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               onClick={handleOpenModal}
               className="flex items-center gap-1.5 text-xs font-medium text-aqua underline underline-offset-2 hover:text-aqua/70 active:scale-[0.97] transition-colors mt-1 w-fit"
             >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-                <polygon points="6.5,1 11.5,3.8 11.5,9.2 6.5,12 1.5,9.2 1.5,3.8"
-                  stroke="currentColor" strokeWidth="1.2" fill="none" />
-                <line x1="6.5" y1="4" x2="6.5" y2="9" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
-                <line x1="3.7" y1="5.5" x2="9.3" y2="7.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
-                <line x1="3.7" y1="7.5" x2="9.3" y2="5.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
-              </svg>
+              <Hexagon size={13} weight="regular" aria-hidden="true" />
               Por que essa combina? Ver radar
             </button>
           )}

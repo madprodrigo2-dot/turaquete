@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from './RacketImageTile'
+import { ArrowRight } from '@phosphor-icons/react'
 
 const COLORS: Record<'A' | 'B', string> = { A: '#FF5E3A', B: '#0CC0BE' }
 
@@ -331,9 +332,7 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                       <span className="text-tinta/35 mx-1.5">vs</span>
                       <span className="font-medium">{b.name}</span>
                     </span>
-                    <svg className="shrink-0 ml-2 text-aqua/50" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path d="M3.5 8h9M9 4.5L12.5 8 9 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ArrowRight size={14} weight="regular" aria-hidden="true" className="shrink-0 ml-2 text-aqua/50" />
                   </Link>
                 )
               })}

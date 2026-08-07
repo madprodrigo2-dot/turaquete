@@ -66,6 +66,12 @@ body.chat-active [data-site-footer] {
   .font-body {
     font-family: var(--font-sans), system-ui, sans-serif;
   }
+
+  /* Override Tailwind's default gray shadows with petróleo-tinted branded versions */
+  .shadow-sm { box-shadow: var(--shadow-sm); }
+  .shadow-md { box-shadow: var(--shadow-md); }
+  .shadow-lg { box-shadow: var(--shadow-lg); }
+
   /* Teal-tinted card shadow — ambient + contact layers */
   .shadow-card {
     box-shadow: var(--shadow-md);

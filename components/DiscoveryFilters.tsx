@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useMemo, useRef } from 'react'
+import { MagnifyingGlass, X } from '@phosphor-icons/react'
 import type { RacketWithInsights } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import RacketImageTile from './RacketImageTile'
@@ -116,13 +117,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
       <div className="flex flex-col gap-3">
         {showTextSearch && (
           <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-tinta/30 pointer-events-none"
-              width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"
-            >
-              <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
+            <MagnifyingGlass size={16} weight="regular" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-tinta/30 pointer-events-none" />
             <input
               ref={searchRef}
               type="search"
@@ -139,9 +134,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
                 aria-label="Limpar busca"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-tinta/30 hover:text-tinta/60 transition-colors"
               >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <X size={14} weight="regular" aria-hidden="true" />
               </button>
             )}
           </div>

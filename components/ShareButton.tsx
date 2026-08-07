@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { track } from '@vercel/analytics/react'
+import { Check, Export } from '@phosphor-icons/react'
 
 interface Props {
   racketName: string
@@ -55,17 +56,12 @@ export default function ShareButton({ racketName, slug }: Props) {
     >
       {copied ? (
         <>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-emerald-500">
-            <path d="M2.5 8.5l3.5 3.5 7-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span className="text-emerald-600">Copiado</span>
+          <Check size={14} weight="bold" aria-hidden="true" className="shrink-0 text-aqua" />
+          <span className="text-aqua">Copiado</span>
         </>
       ) : (
         <>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#0CC0BE]">
-            <path d="M8 1v9M5 4l3-3 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M3 9.5V13a1 1 0 001 1h8a1 1 0 001-1V9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-          </svg>
+          <Export size={14} weight="regular" aria-hidden="true" className="shrink-0 text-aqua" />
           <span>Compartilhar</span>
         </>
       )}

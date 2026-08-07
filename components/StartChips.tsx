@@ -15,7 +15,7 @@ export default function StartChips({ onSelect }: Props) {
         <button
           key={chip}
           onClick={() => onSelect(chip)}
-          className="px-4 py-2 bg-white border border-emerald-200 text-emerald-700 text-sm rounded-full hover:bg-emerald-50 active:scale-95 transition-all"
+          className="px-4 py-2 bg-white border border-aqua/35 text-tinta/70 text-sm rounded-full hover:bg-aqua/10 hover:border-aqua/55 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua focus-visible:ring-offset-1 transition-all"
         >
           {chip}
         </button>

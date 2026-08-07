@@ -3,12 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-
-const ArrowLeft = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
+import { CaretLeft } from '@phosphor-icons/react'
 
 const cls = 'flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit'
 
@@ -23,7 +18,7 @@ export default function BackButton({ fallbackHref }: { fallbackHref: string }) {
   if (canGoBack) {
     return (
       <button onClick={() => router.back()} className={cls}>
-        <ArrowLeft />
+        <CaretLeft size={16} weight="regular" aria-hidden="true" />
         Voltar
       </button>
     )
@@ -31,7 +26,7 @@ export default function BackButton({ fallbackHref }: { fallbackHref: string }) {
 
   return (
     <Link href={fallbackHref} className={cls}>
-      <ArrowLeft />
+      <CaretLeft size={16} weight="regular" aria-hidden="true" />
       Voltar
     </Link>
   )

@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShieldCheck, ChartBar, Target, Lightning, ChatText, type Icon as PhosphorIcon } from '@phosphor-icons/react' // MIT license
+import { CaretLeft, CaretRight, CaretDown, ArrowRight, Check, MagnifyingGlass, Hexagon } from '@phosphor-icons/react' // MIT license
 // WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
@@ -41,11 +41,10 @@ const CURATED_QUESTIONS = [
 
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
-const STEPS: { label: string; desc?: string; Icon: PhosphorIcon }[] = [
-  { Icon: ChatText,   label: 'Conte como você joga, do seu jeito' },
-  { Icon: Target,     label: 'O especialista entende seu perfil' },
+const STEPS: { label: string; desc?: string }[] = [
+  { label: 'Conte como você joga, do seu jeito' },
+  { label: 'O especialista entende seu perfil' },
   {
-    Icon: Lightning,
     label: 'Receba seu perfil e as raquetes certas',
     desc: 'O especialista te diz o peso e balance ideais pro seu jogo, e indica as raquetes que batem exatamente com esse perfil.',
   },
@@ -192,29 +191,25 @@ function RevealDiv({ children, className = '', delay = 0 }: { children: ReactNod
 }
 
 function DiscoveryTile({
-  href, label, sub, icon, chipClass, hoverBorderClass,
+  href, label, sub, hoverBorderClass, imageUrl,
 }: {
-  href: string; label: string; sub: string; icon: ReactNode; chipClass: string; hoverBorderClass: string
+  href: string; label: string; sub: string; hoverBorderClass: string; imageUrl?: string
 }) {
   return (
     <Link
       href={href}
       className={`group bg-white rounded-xl p-4 flex items-center gap-3.5 shadow-card border border-[rgba(14,58,64,0.06)] ${hoverBorderClass} active:scale-[0.98] transition-all`}
     >
-      <div className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center ${chipClass}`}>
-        {icon}
-      </div>
+      {imageUrl && (
+        <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden">
+          <img src={imageUrl} alt="" className="w-full h-full object-contain" />
+        </div>
+      )}
       <div className="flex flex-col gap-1 flex-1 min-w-0">
         <p className="font-heading font-bold text-tinta text-sm leading-snug">{label}</p>
         <p className="text-tinta/50 text-xs leading-snug">{sub}</p>
       </div>
-      <svg
-        width="14" height="14" viewBox="0 0 14 14" fill="none"
-        className="text-tinta/25 shrink-0 transition-transform motion-safe:group-hover:translate-x-0.5"
-        aria-hidden="true"
-      >
-        <path d="M5 2.5l4.5 4.5L5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <CaretRight size={14} weight="regular" className="text-tinta/25 shrink-0 transition-transform motion-safe:group-hover:translate-x-0.5" aria-hidden="true" />
     </Link>
   )
 }
@@ -309,9 +304,7 @@ function BrandCard({ brand }: { brand: Brand }) {
       <div className="flex items-center gap-2 shrink-0">
         <StatusIndicator status={brand.status} />
         {isAvailable && (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-aqua shrink-0" aria-hidden="true">
-            <path d="M5 2.5l4.5 4.5L5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <CaretRight size={14} weight="regular" className="text-aqua shrink-0" aria-hidden="true" />
         )}
       </div>
     </>
@@ -357,7 +350,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
         <Link href={`/raquetes/${racket.slug}`} className="block">
           <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} />
         </Link>
-        <div className="p-3 flex flex-col gap-2 flex-1">
+        <div className="p-4 flex flex-col gap-2.5 flex-1">
           <Link href={`/raquetes/${racket.slug}`}>
             <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors min-h-[33px]">
               {getDisplayName(racket)}
@@ -383,7 +376,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
               target="_blank"
               rel={`noopener noreferrer${linkTipo === 'afiliado' ? ' sponsored' : ''}`}
               onClick={() => sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })}
-              className="mt-auto w-full text-center border border-aqua text-tinta text-xs font-semibold py-2 rounded-xl hover:bg-aqua/10 active:bg-aqua/20 active:scale-[0.98] transition-all leading-tight"
+              className="mt-auto w-full text-center border border-coral/50 text-coral text-xs font-semibold py-2 rounded-xl hover:bg-coral/5 active:bg-coral/10 active:scale-[0.98] transition-all leading-tight"
             >
               Ver na loja →
             </a>
@@ -397,12 +390,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
               onClick={() => setModalOpen(true)}
               className="flex items-center gap-1 text-[10px] text-tinta/40 hover:text-aqua transition-colors w-fit"
             >
-              <svg width="11" height="11" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-                <polygon points="6.5,1 11.5,3.8 11.5,9.2 6.5,12 1.5,9.2 1.5,3.8" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-                <line x1="6.5" y1="4" x2="6.5" y2="9" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
-                <line x1="3.7" y1="5.5" x2="9.3" y2="7.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
-                <line x1="3.7" y1="7.5" x2="9.3" y2="5.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5"/>
-              </svg>
+              <Hexagon size={11} weight="regular" aria-hidden="true" />
               Ver análise
             </button>
           )}
@@ -498,9 +486,7 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
         aria-label="Raquetes anteriores"
         className={`${arrowCls(atStart)} left-0 -translate-x-full -ml-2`}
       >
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-          <path d="M8.5 2L4 6.5l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <CaretLeft size={13} weight="regular" aria-hidden="true" />
       </button>
 
       {/* Track — breaks out of parent padding on mobile, contained on desktop */}
@@ -529,9 +515,7 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
         aria-label="Próximas raquetes"
         className={`${arrowCls(atEnd)} right-0 translate-x-full ml-2`}
       >
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-          <path d="M4.5 2L9 6.5 4.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <CaretRight size={13} weight="regular" aria-hidden="true" />
       </button>
 
       {/* Dots — only as many as positions that are actually reachable */}
@@ -597,9 +581,7 @@ function AthleteCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
         aria-label="Raquetes anteriores"
         className={`${arrowCls(atStart)} left-0 -translate-x-full -ml-2`}
       >
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-          <path d="M8.5 2L4 6.5l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <CaretLeft size={13} weight="regular" aria-hidden="true" />
       </button>
 
       <div className="-mx-5 md:mx-0">
@@ -621,9 +603,7 @@ function AthleteCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
         aria-label="Próximas raquetes"
         className={`${arrowCls(atEnd)} right-0 translate-x-full ml-2`}
       >
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-          <path d="M4.5 2L9 6.5 4.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <CaretRight size={13} weight="regular" aria-hidden="true" />
       </button>
     </div>
   )
@@ -864,7 +844,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <div className="flex flex-col md:grid md:grid-cols-[1fr_300px] md:gap-6 md:items-stretch gap-5">
 
           {/* Coluna texto */}
-          <div className="flex flex-col gap-5 md:gap-5">
+          <div className="flex flex-col gap-6 md:gap-8">
 
             {/* H1 + subtítulo */}
             <div className="flex flex-col gap-3">
@@ -1021,7 +1001,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         {/* 4: gutter direito topo — desktop only */}
         <SandMound width={82} height={17} className="hidden md:block top-[18%] right-[1.5%]" />
 
-        <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-8 md:py-12 flex flex-col gap-6 md:gap-8">
+        <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-10 md:py-16 flex flex-col gap-8 md:gap-12">
 
           {/* Explorar por perfil */}
           <RevealDiv>
@@ -1035,33 +1015,25 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 href="/raquetes/iniciante"
                 label="Para iniciantes"
                 sub="Fáceis de controlar, alto perdão de erro"
-                chipClass="bg-aqua/12"
                 hoverBorderClass="hover:border-aqua"
-                icon={<ChartBar weight="duotone" size={24} color="#0CC0BE" />}
               />
               <DiscoveryTile
                 href="/raquetes/intermediario"
                 label="Intermediários"
                 sub="Versáteis, para evoluir o seu jogo"
-                chipClass="bg-yellow/12"
                 hoverBorderClass="hover:border-yellow"
-                icon={<Target weight="duotone" size={24} color="#FFC42E" />}
               />
               <DiscoveryTile
                 href="/raquetes/avancado"
                 label="Avançados"
                 sub="Potência máxima, exige mais técnica"
-                chipClass="bg-coral/12"
                 hoverBorderClass="hover:border-coral"
-                icon={<Lightning weight="duotone" size={24} color="#FF5E3A" />}
               />
               <DiscoveryTile
                 href="/raquetes/conforto"
                 label="Leve nas articulações"
                 sub="Cotovelo, ombro e punho protegidos"
-                chipClass="bg-tinta/10"
                 hoverBorderClass="hover:border-tinta"
-                icon={<ShieldCheck weight="duotone" size={24} color="#0E3A40" />}
               />
             </div>
           </div>
@@ -1083,8 +1055,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                     )}
                   </div>
                   <div className={`flex flex-col pt-1${i < STEPS.length - 1 ? ' pb-5' : ''}`}>
-                    <p className="text-tinta text-sm md:text-base leading-relaxed flex items-center gap-2">
-                      <step.Icon size={16} weight="duotone" className="shrink-0 text-aqua" />
+                    <p className="text-tinta text-sm md:text-base leading-relaxed">
                       {step.label}
                     </p>
                     {step.desc && (
@@ -1122,9 +1093,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-2.5">
                   <span className="mt-0.5 w-4 h-4 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0">
-                    <svg width="8" height="8" viewBox="0 0 9 9" fill="none" aria-hidden="true">
-                      <path d="M1.5 4.5l2 2 4-4" stroke="#0CC0BE" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Check size={8} weight="bold" color="#0CC0BE" aria-hidden="true" />
                   </span>
                   <p className="text-tinta/70 text-sm leading-snug">{item}</p>
                 </div>
@@ -1211,7 +1180,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       </div>
 
       {/* ── Seção menta: marcas + FAQ + CTA + footer ── */}
-      <div className="w-full max-w-sm md:max-w-4xl flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-5 md:pt-6">
+      <div className="w-full max-w-sm md:max-w-4xl flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
@@ -1253,10 +1222,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                   </>
                 ) : (
                   <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/40 bg-[#FBF6EF] flex flex-col items-center justify-center gap-2">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-aqua/55">
-                      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.75"/>
-                      <path d="M17 17L21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
-                    </svg>
+                    <MagnifyingGlass size={22} weight="regular" aria-hidden="true" className="text-aqua/55" />
                     <span className="text-[10px] font-semibold text-tinta/50 text-center px-2 leading-snug">Escolher raquete</span>
                   </div>
                 )}
@@ -1265,18 +1231,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
               </div>
               <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/40 bg-[#FBF6EF] flex flex-col items-center justify-center gap-2">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-aqua/55">
-                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.75"/>
-                  <path d="M17 17L21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
-                </svg>
+                <MagnifyingGlass size={22} weight="regular" aria-hidden="true" className="text-aqua/55" />
                 <span className="text-[10px] font-semibold text-tinta/50 text-center px-2 leading-snug">Escolher raquete</span>
               </div>
             </div>
             <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between">
               <span className="text-sm font-semibold text-aqua">Comparar raquetes</span>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M3.5 8h9M9 4.5L12.5 8 9 11.5" stroke="#0CC0BE" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <ArrowRight size={14} weight="regular" color="#0CC0BE" aria-hidden="true" />
             </div>
           </Link>
         </div>
@@ -1301,13 +1262,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <details key={i} className="group" open={i === 0}>
                 <summary className="flex items-center justify-between cursor-pointer px-5 py-4 text-tinta font-heading font-semibold text-sm md:text-base [list-style:none] select-none [&::-webkit-details-marker]:hidden">
                   {q}
-                  <svg
-                    width="16" height="16" viewBox="0 0 16 16" fill="none"
-                    className="shrink-0 ml-3 text-aqua transition-transform duration-200 group-open:rotate-180"
-                    aria-hidden="true"
-                  >
-                    <path d="M3 6l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <CaretDown size={16} weight="regular" className="shrink-0 ml-3 text-aqua transition-transform duration-200 group-open:rotate-180" aria-hidden="true" />
                 </summary>
                 <p className="px-5 pb-4 text-tinta/70 text-sm md:text-base leading-relaxed">
                   {a}

@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import BackButton from './BackButton'
 import SearchBar from './SearchBar'
+import { CaretLeft } from '@phosphor-icons/react'
 
 interface Props {
   useHistory?: boolean
@@ -27,9 +30,7 @@ export default function SiteNav({
             href={backHref}
             className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit shrink-0"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <CaretLeft size={16} weight="regular" aria-hidden="true" />
             {backLabel}
           </Link>
         )}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, KeyboardEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import NaoAcheiWidget from './NaoAcheiWidget'
+import { MagnifyingGlass, X } from '@phosphor-icons/react'
 
 type Item = { name: string; slug: string; brand: string | null; price: number | null }
 
@@ -106,21 +107,12 @@ export default function SearchBar() {
         aria-label="Abrir busca"
         className={`md:hidden p-1.5 text-tinta/40 hover:text-aqua transition-colors rounded-lg ${expanded ? 'hidden' : 'flex'}`}
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-          <circle cx="7.5" cy="7.5" r="5" stroke="currentColor" strokeWidth="1.6" />
-          <path d="M12 12l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
+        <MagnifyingGlass size={18} weight="regular" aria-hidden="true" />
       </button>
 
       {/* Input — sempre visível em desktop, condicional em mobile */}
       <div className={`${expanded ? 'flex' : 'hidden'} md:flex items-center relative`}>
-        <svg
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-tinta/30 pointer-events-none shrink-0"
-          width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"
-        >
-          <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.4" />
-          <path d="M9 9l3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
+        <MagnifyingGlass size={14} weight="regular" aria-hidden="true" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-tinta/30 pointer-events-none shrink-0" />
         <input
           ref={inputRef}
           type="search"
@@ -141,9 +133,7 @@ export default function SearchBar() {
             aria-label="Limpar busca"
             className="absolute right-2 top-1/2 -translate-y-1/2 text-tinta/30 hover:text-tinta/60 transition-colors"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-              <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
+            <X size={12} weight="regular" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -194,10 +184,7 @@ export default function SearchBar() {
                   }}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-aqua hover:bg-aqua/6 transition-colors border-t border-tinta/6 font-medium"
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                    <circle cx="5" cy="5" r="3.5" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M8 8l2.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
+                  <MagnifyingGlass size={12} weight="regular" aria-hidden="true" />
                   Ver todos os resultados para &ldquo;{query.trim()}&rdquo;
                 </button>
               )}

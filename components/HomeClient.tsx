@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { CaretLeft, ArrowCounterClockwise, X } from '@phosphor-icons/react'
 // WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import LandingScreen from '@/components/LandingScreen'
@@ -524,9 +525,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                   aria-label="Voltar à página inicial"
                   className="flex items-center gap-1 text-tinta/40 hover:text-aqua transition-colors p-1.5 rounded-lg hover:bg-aqua/5 shrink-0"
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <CaretLeft size={16} weight="regular" aria-hidden="true" />
                   <span className="hidden sm:block text-xs font-medium">Início</span>
                 </button>
                 <div className="flex flex-col items-start">
@@ -587,13 +586,10 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                 ) : (
                   <button
                     onClick={() => setConfirmReset(true)}
-                    className="flex items-center gap-1.5 text-tinta/40 hover:text-tinta/70 transition-colors py-1.5 px-2 rounded-lg hover:bg-gray-50"
+                    className="flex items-center gap-1.5 text-tinta/40 hover:text-tinta/70 transition-colors py-1.5 px-2 rounded-xl hover:bg-tinta/5"
                     aria-label="Nova conversa"
                   >
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-                      <path d="M13 7.5a5.5 5.5 0 1 1-1.6-3.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                      <path d="M11.4 2.4v3h-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ArrowCounterClockwise size={15} weight="regular" aria-hidden="true" />
                     <span className="hidden sm:block text-xs font-medium">Nova conversa</span>
                   </button>
                 )}
@@ -725,10 +721,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                     onClick={resetConversation}
                     className="flex items-center gap-1.5 bg-tinta text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-tinta/80 active:scale-[0.98] transition-all"
                   >
-                    <svg width="14" height="14" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-                      <path d="M13 7.5a5.5 5.5 0 1 1-1.6-3.8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                      <path d="M11.4 2.4v3h-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <ArrowCounterClockwise size={14} weight="regular" aria-hidden="true" />
                     Recomeçar
                   </button>
                   <a
@@ -788,9 +781,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
                 className="p-1.5 rounded-lg text-tinta/40 hover:text-tinta/70 hover:bg-gray-100 transition-colors"
                 aria-label="Fechar"
               >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
+                <X size={16} weight="regular" aria-hidden="true" />
               </button>
             </div>
             <div className="overflow-y-auto flex-1 px-2 py-2">
