@@ -841,7 +841,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       </div>
 
       {/* ── Seção menta: hero ── */}
-      <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8 pb-2 md:pb-3">
+      <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8">
         <div className="flex flex-col md:grid md:grid-cols-[1fr_300px] md:gap-6 md:items-stretch gap-5">
 
           {/* Coluna texto */}
@@ -965,14 +965,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         </div>
       </div>{/* end seção menta */}
 
-      {/* ── Onda de entrada: menta → arena ── */}
+      {/* ── Onda de entrada: menta → arena — arco único full-width ── */}
       <svg
-        viewBox="0 0 1440 50"
+        viewBox="0 0 1440 56"
         preserveAspectRatio="none"
         aria-hidden="true"
-        className="w-full h-12 md:h-14 block"
+        className="w-full h-14 md:h-16 block"
       >
-        <path d="M0,32 C480,16 960,42 1440,24 L1440,50 L0,50 Z" fill="#F7EDDC" />
+        <path d="M0,56 L0,42 C480,4 960,4 1440,42 L1440,56 Z" fill="#F7EDDC" />
       </svg>
 
       {/* ── Seção arena: chat preview + conteúdo sobre areia ── */}
@@ -982,7 +982,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         <ArenaBall size={36} rotation={0} className="hidden md:block left-[2.5%] bottom-10" />
 
         {/* Bola B: 22px, rotation 40°, mobile topo-esquerdo / desktop gutter direito */}
-        <ArenaBall size={22} rotation={40} className="top-[7px] left-4 md:top-9 md:left-auto md:right-[2%]" />
+        <ArenaBall size={22} rotation={40} className="top-16 left-4 md:top-12 md:left-auto md:right-[2%]" />
 
         {/* Bola C: 28px, rotation -25°, animada (1x), rodapé — mobile + desktop */}
         <ArenaBall size={28} rotation={-25} settled={ballSettled} className="bottom-[6px] right-5 md:bottom-8 md:right-[3%]" />
@@ -995,8 +995,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         {/* ── Montes de areia decorativos ── */}
         {/* 1: rodapé centro — visível em todos */}
         <SandMound width={115} height={22} className="bottom-3 left-1/2 -translate-x-1/2" />
-        {/* 2: topo esquerdo — padding superior, não cobre card */}
-        <SandMound width={78} height={16} className="top-2 left-[8%]" />
+        {/* 2: topo esquerdo — removido; la onda de entrada ya crea la transición curva */}
         {/* 3: gutter esquerdo meio — desktop only */}
         <SandMound width={98} height={20} className="hidden md:block top-[42%] left-[1.5%]" />
         {/* 4: gutter direito topo — desktop only */}

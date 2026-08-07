@@ -56,7 +56,7 @@ body.chat-active [data-site-footer] {
 @layer utilities {
   /* Page background — creme-to-white gradient, harmonizes with warm header (#FBF6EF) */
   .sand-texture {
-    background: linear-gradient(165deg, #F7F3EC 0%, rgba(247,243,236,0.45) 28%, #ffffff 58%);
+    background: linear-gradient(165deg, #F7F3EC 0%, rgba(247,243,236,0.45) 30%, #F7EDDC 75%);
   }
 
   .font-heading {
@@ -101,7 +101,6 @@ body.chat-active [data-site-footer] {
 
   /* Arena texture: fine grain + coarse speckles + tonal dunes + wet-sand top shadow */
   .arena-grain {
-    box-shadow: inset 0 22px 32px -10px rgba(128,92,46,0.14);
     background-image:
       radial-gradient(ellipse 80% 50% at 72% 20%, rgba(175,128,65,0.09) 0%, transparent 65%),
       radial-gradient(ellipse 65% 45% at 18% 72%, rgba(160,115,58,0.08) 0%, transparent 60%),
