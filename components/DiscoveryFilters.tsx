@@ -17,6 +17,12 @@ function normalize(s: string) {
 
 export type SortKey = 'menor-preco' | 'maior-preco'
 
+const NIVEL_SHORT: Record<string, string> = {
+  iniciante: 'Iniciante',
+  intermediario: 'Intermediário',
+  avancado: 'Avançado',
+}
+
 function RacketCard({ racket }: { racket: RacketWithInsights }) {
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
@@ -34,9 +40,13 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
     >
       <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
       <div className="p-3 flex flex-col gap-1 flex-1">
+        {nivel && (
+          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-tinta/[0.06] text-tinta/50 w-fit leading-none">
+            {NIVEL_SHORT[nivel] ?? nivel}
+          </span>
+        )}
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
-        {nivel && <p className="text-tinta/50 text-xs">{NIVEL_LABEL[nivel] ?? nivel}</p>}
       </div>
     </Link>
   )
@@ -140,7 +150,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
           </div>
         )}
         {showPrecoFilter && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setPrecoKey('todas')}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
@@ -174,7 +184,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
               <select
                 value={marca}
                 onChange={e => setMarca(e.target.value)}
-                className="text-xs border border-tinta/15 rounded-lg px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
+                className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
               >
                 <option value="todas">Todas</option>
                 {brands.map(b => (
@@ -189,7 +199,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
             <select
               value={sort}
               onChange={e => setSort(e.target.value as SortKey)}
-              className="text-xs border border-tinta/15 rounded-lg px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
+              className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
               <option value="menor-preco">Menor preço</option>
               <option value="maior-preco">Maior preço</option>
