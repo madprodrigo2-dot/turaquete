@@ -201,8 +201,8 @@ function DiscoveryTile({
       className={`group bg-white rounded-xl p-4 flex items-center gap-3.5 shadow-card border border-[rgba(14,58,64,0.06)] ${hoverBorderClass} active:scale-[0.98] transition-all`}
     >
       {imageUrl && (
-        <div className="shrink-0 w-14 h-14 rounded-xl overflow-hidden">
-          <img src={imageUrl} alt="" className="w-full h-full object-contain" />
+        <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-[#EAF7F6]">
+          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
         </div>
       )}
       <div className="flex flex-col gap-1 flex-1 min-w-0">
@@ -1016,24 +1016,28 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 label="Para iniciantes"
                 sub="Fáceis de controlar, alto perdão de erro"
                 hoverBorderClass="hover:border-aqua"
+                imageUrl="/ilustracoes/perfil-iniciante.webp"
               />
               <DiscoveryTile
                 href="/raquetes/intermediario"
                 label="Intermediários"
                 sub="Versáteis, para evoluir o seu jogo"
                 hoverBorderClass="hover:border-yellow"
+                imageUrl="/ilustracoes/perfil-intermediario.webp"
               />
               <DiscoveryTile
                 href="/raquetes/avancado"
                 label="Avançados"
                 sub="Potência máxima, exige mais técnica"
                 hoverBorderClass="hover:border-coral"
+                imageUrl="/ilustracoes/perfil-avancado.webp"
               />
               <DiscoveryTile
                 href="/raquetes/conforto"
                 label="Leve nas articulações"
                 sub="Cotovelo, ombro e punho protegidos"
                 hoverBorderClass="hover:border-tinta"
+                imageUrl="/ilustracoes/perfil-articulacoes.webp"
               />
             </div>
           </div>
