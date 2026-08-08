@@ -1739,8 +1739,9 @@ export async function runAgentTurn(
     // CASE 2: profile/brand chip reaches confidence, budget still unknown → pref step → price question
     if ((isProfileChip || isBrandAnswerInPref) && confidence.willRecommend && !budgetAnsweredRef.value) {
       const prefSt = getPrefState(history)
+      const hasLesao = !!(confirmedProfile.cotovelo_sensivel || confirmedProfile.ombro_sensivel || confirmedProfile.punho_sensivel)
 
-      if (prefSt.state === 'not_shown' || prefSt.state === 'pending_level1') {
+      if (!hasLesao && (prefSt.state === 'not_shown' || prefSt.state === 'pending_level1')) {
         // First time: show pref question
         const txt = reaction ? reaction + '\n\n' + PREF_QUESTION_TEXT : PREF_QUESTION_TEXT
         if (onToken) onToken(txt)
