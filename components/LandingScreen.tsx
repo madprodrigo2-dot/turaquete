@@ -965,43 +965,22 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
         </div>
       </div>{/* end seção menta */}
 
-      {/* ── Onda de entrada: menta → arena — arco único full-width ── */}
-      <svg
-        viewBox="0 0 1440 56"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-        className="w-full h-14 md:h-16 block"
-      >
-        <path d="M0,56 L0,42 C480,4 960,4 1440,42 L1440,56 Z" fill="#F7EDDC" />
-      </svg>
-
       {/* ── Seção arena: chat preview + conteúdo sobre areia ── */}
       <div ref={arenaRef} className="w-full bg-arena arena-grain relative">
-        {/* ── Pelotas decorativas ── */}
-        {/* Bola A: 36px, rotation 0°, desktop-only, gutter esquerdo */}
-        <ArenaBall size={36} rotation={0} className="hidden md:block left-[2.5%] bottom-10" />
 
-        {/* Bola B: 22px, rotation 40°, mobile topo-esquerdo / desktop gutter direito */}
-        <ArenaBall size={22} rotation={40} className="top-16 left-4 md:top-12 md:left-auto md:right-[2%]" />
+        {/* ── Onda de entrada — absolute dentro da arena para que arena-grain flua atrás da curva ── */}
+        <svg
+          viewBox="0 0 1440 56"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          className="absolute top-0 left-0 w-full h-14 md:h-16 block pointer-events-none"
+          style={{ zIndex: 1 }}
+        >
+          {/* path invertido: fill na zona do hero (acima da curva) = grain não aparece lá */}
+          <path d="M0,0 L1440,0 L1440,42 C960,4 480,4 0,42 Z" fill="#F7EDDC" />
+        </svg>
 
-        {/* Bola C: 28px, rotation -25°, animada (1x), rodapé — mobile + desktop */}
-        <ArenaBall size={28} rotation={-25} settled={ballSettled} className="bottom-[6px] right-5 md:bottom-8 md:right-[3%]" />
-
-        {/* ── Bolas extras — gutter desktop (lg+) ── */}
-        {ARENA_EXTRA_BALLS.map((b, i) => (
-          <ArenaBall key={i} size={b.size} rotation={b.rotation} opacity={b.opacity} className={b.className} />
-        ))}
-
-        {/* ── Montes de areia decorativos ── */}
-        {/* 1: rodapé centro — visível em todos */}
-        <SandMound width={115} height={22} className="bottom-3 left-1/2 -translate-x-1/2" />
-        {/* 2: topo esquerdo — removido; la onda de entrada ya crea la transición curva */}
-        {/* 3: gutter esquerdo meio — desktop only */}
-        <SandMound width={98} height={20} className="hidden md:block top-[42%] left-[1.5%]" />
-        {/* 4: gutter direito topo — desktop only */}
-        <SandMound width={82} height={17} className="hidden md:block top-[18%] right-[1.5%]" />
-
-        <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-10 md:py-16 flex flex-col gap-8 md:gap-12">
+        <div className="relative max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 pt-14 pb-10 md:py-16 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
 
           {/* Explorar por perfil */}
           <RevealDiv>
