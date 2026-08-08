@@ -226,9 +226,6 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
               <RacketCard key={r.id} racket={r} />
             ))}
           </div>
-          <p className="text-[10px] text-tinta/40 mt-1">
-            Preços de referência, podem variar. Links de afiliado — podemos receber comissão sem custo para você.
-          </p>
           {showTextSearch && query.trim() && (
             <NaoAcheiWidget key={query.trim()} termoInicial={query.trim()} origem="lista" />
           )}
