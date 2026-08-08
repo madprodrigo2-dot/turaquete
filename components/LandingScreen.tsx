@@ -1205,10 +1205,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                   </>
                 ) : (
                   <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">
-                    <div className="relative w-10 h-10">
-                      <Image src="/Gemini_Generated_Image_dirqzmdirqzmdirq.png" alt="" fill className="object-contain" sizes="40px" />
+                    <div className="relative w-20 h-20">
+                      <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
                     </div>
-                    <span className="text-[10px] font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
+                    <span className="text-xs font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
                   </div>
                 )}
               </div>
@@ -1216,10 +1216,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
               </div>
               <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">
-                <div className="relative w-10 h-10">
-                  <Image src="/Gemini_Generated_Image_dirqzmdirqzmdirq.png" alt="" fill className="object-contain" sizes="40px" />
+                <div className="relative w-20 h-20">
+                  <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
                 </div>
-                <span className="text-[10px] font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
+                <span className="text-xs font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
               </div>
             </div>
             <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between">

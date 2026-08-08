@@ -62,7 +62,7 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
     setQuery('')
   }
 
-  function clearSlot(slot: 'A' | 'B', e: React.MouseEvent) {
+  function clearSlot(slot: 'A' | 'B', e: React.SyntheticEvent) {
     e.stopPropagation()
     if (slot === 'A') { setSlotA(null); setFocusedSlot('A') }
     else { setSlotB(null); setFocusedSlot('B') }
@@ -138,32 +138,35 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                           </p>
                         )}
                       </div>
-                      <button
+                      <span
+                        role="button"
+                        tabIndex={0}
                         onClick={e => clearSlot(slot, e)}
-                        className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/40 text-white text-xs font-bold flex items-center justify-center hover:bg-black/60 z-10 leading-none"
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); clearSlot(slot, e) } }}
+                        className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/40 text-white text-xs font-bold flex items-center justify-center hover:bg-black/60 z-10 leading-none cursor-pointer select-none"
                         aria-label={`Remover raquete ${slot}`}
                       >
                         ×
-                      </button>
+                      </span>
                     </>
                   ) : (
                     /* Empty slot */
                     <div
-                      className="h-24 flex flex-col items-center justify-center gap-1.5"
+                      className="h-full flex flex-col items-center justify-center gap-1.5"
                       style={{ backgroundColor: '#EAF7F6' }}
                     >
-                      <div className="relative w-11 h-11">
+                      <div className="relative w-24 h-24">
                         <Image
-                          src="/Gemini_Generated_Image_dirqzmdirqzmdirq.png"
+                          src="/lupa-comparar.webp"
                           alt=""
                           fill
                           className="object-contain"
-                          sizes="44px"
+                          sizes="96px"
                         />
                       </div>
                       <div className="flex flex-col items-center gap-0.5 px-3">
-                        <span className="text-xs font-semibold text-tinta/80 text-center leading-snug">Escolher raquete</span>
-                        <span className="text-[10px] text-tinta/50 text-center leading-snug">toque para comparar</span>
+                        <span className="text-sm font-semibold text-tinta/80 text-center leading-snug">Escolher raquete</span>
+                        <span className="text-xs text-tinta/50 text-center leading-snug">toque para comparar</span>
                       </div>
                     </div>
                   )}
