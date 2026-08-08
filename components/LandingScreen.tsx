@@ -897,7 +897,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
 
             {/* CTA hero — IntersectionObserver target */}
-            <div className="flex flex-col items-center gap-3 md:flex-row md:items-end md:gap-3">
+            <div className="flex flex-col items-start gap-3 md:flex-row md:items-end md:gap-3">
               {/* Tury + bolha de fala */}
               <div className="max-[359px]:hidden relative shrink-0 flex flex-col items-center" style={{ marginBottom: '-4px' }}>
                 <div className="mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-2.5 py-1.5 shadow-sm whitespace-nowrap">
