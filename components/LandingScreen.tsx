@@ -875,25 +875,22 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </p>
             </div>
 
-            {/* Prova social — numero animado, visivel antes de rolar */}
-            {recsCount >= RECS_THRESHOLD && <SocialProof recsCount={recsCount} />}
+            {/* Prova social — desktop only; mobile: abaixo da imagem */}
+            {recsCount >= RECS_THRESHOLD && (
+              <div className="hidden md:block">
+                <SocialProof recsCount={recsCount} />
+              </div>
+            )}
 
-            {/* Franja */}
-            <div className="bg-white border-l-[3px] border-tinta/20 rounded-r-[var(--radius-md)] px-4 py-4 md:px-5 md:py-5 shadow-card">
-              <p className="text-tinta font-semibold text-sm md:text-base leading-relaxed">
-                O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
-              </p>
-            </div>
-
-            {/* Badges */}
-            <div className="flex gap-2 flex-wrap">
+            {/* Badges — compactos, linha única */}
+            <div className="flex gap-2">
               {BADGES.map((badge, i) => (
                 <span
                   key={badge}
                   style={{ animationDelay: `${i * 80}ms` }}
-                  className="bg-aqua/[0.12] text-tinta text-xs md:text-sm font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-aqua/20 reveal-up"
+                  className="bg-aqua/[0.12] text-tinta text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 border border-aqua/20 reveal-up whitespace-nowrap"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-aqua shrink-0" aria-hidden="true" />
+                  <span className="w-1 h-1 rounded-full bg-aqua shrink-0" aria-hidden="true" />
                   {badge}
                 </span>
               ))}
@@ -925,6 +922,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 Começar agora
               </button>
             </div>
+
+            {/* Franja — texto discreto, abaixo do CTA */}
+            <p className="text-xs text-tinta/50 leading-relaxed text-center">
+              O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
+            </p>
 
             {/* Segunda porta — explorar sem quiz */}
             <p className="text-center text-sm text-tinta/50">
@@ -961,6 +963,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               sizes="300px"
             />
           </div>
+
+          {/* Prova social — mobile only, abaixo da imagem */}
+          {recsCount >= RECS_THRESHOLD && (
+            <div className="md:hidden mt-4 mb-4">
+              <SocialProof recsCount={recsCount} />
+            </div>
+          )}
 
         </div>
       </div>{/* end seção menta */}
