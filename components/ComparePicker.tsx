@@ -147,28 +147,23 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                       </button>
                     </>
                   ) : (
-                    /* Empty slot — reduzido a ~40% da altura original */
+                    /* Empty slot */
                     <div
-                      className="h-24 flex flex-col items-center justify-center gap-2"
-                      style={{ backgroundColor: `${color}07` }}
+                      className="h-24 flex flex-col items-center justify-center gap-1.5"
+                      style={{ backgroundColor: '#EAF7F6' }}
                     >
-                      {/* Silhueta de raquete de beach tennis em linha pontilhada */}
-                      <svg width="30" height="50" viewBox="0 0 30 50" fill="none" aria-hidden="true">
-                        <ellipse cx="15" cy="17" rx="12" ry="15" stroke={color} strokeWidth="1.5" strokeDasharray="3 2.5" strokeOpacity="0.38"/>
-                        <rect x="11" y="31" width="8" height="16" rx="4" stroke={color} strokeWidth="1.5" strokeDasharray="3 2.5" strokeOpacity="0.38"/>
-                        <circle cx="9.5" cy="12" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="15" cy="12" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="20.5" cy="12" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="9.5" cy="19" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="15" cy="19" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="20.5" cy="19" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="9.5" cy="26" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="15" cy="26" r="1.6" fill={color} fillOpacity="0.28"/>
-                        <circle cx="20.5" cy="26" r="1.6" fill={color} fillOpacity="0.28"/>
-                      </svg>
+                      <div className="relative w-11 h-11">
+                        <Image
+                          src="/Gemini_Generated_Image_dirqzmdirqzmdirq.png"
+                          alt=""
+                          fill
+                          className="object-contain"
+                          sizes="44px"
+                        />
+                      </div>
                       <div className="flex flex-col items-center gap-0.5 px-3">
-                        <span className="text-xs font-semibold text-tinta/65 text-center leading-snug">Escolher raquete</span>
-                        <span className="text-[10px] text-tinta/35 text-center leading-snug">toque para comparar</span>
+                        <span className="text-xs font-semibold text-tinta/80 text-center leading-snug">Escolher raquete</span>
+                        <span className="text-[10px] text-tinta/50 text-center leading-snug">toque para comparar</span>
                       </div>
                     </div>
                   )}
