@@ -150,30 +150,33 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
           </div>
         )}
         {showPrecoFilter && (
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <button
-              onClick={() => setPrecoKey('todas')}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
-                precoKey === 'todas'
-                  ? 'bg-aqua text-white border-aqua'
-                  : 'bg-white text-tinta/70 border-tinta/15 hover:border-aqua/50'
-              }`}
-            >
-              Todas as faixas
-            </button>
-            {PRECO_BUCKETS.map(b => (
+          <div className="-mr-5 md:mr-0 relative">
+            <div className="flex gap-2 overflow-x-auto pb-1 pr-5 md:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
-                key={b.label}
-                onClick={() => setPrecoKey(b.label)}
+                onClick={() => setPrecoKey('todas')}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
-                  precoKey === b.label
+                  precoKey === 'todas'
                     ? 'bg-aqua text-white border-aqua'
                     : 'bg-white text-tinta/70 border-tinta/15 hover:border-aqua/50'
                 }`}
               >
-                {b.label}
+                Todas as faixas
               </button>
-            ))}
+              {PRECO_BUCKETS.map(b => (
+                <button
+                  key={b.label}
+                  onClick={() => setPrecoKey(b.label)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
+                    precoKey === b.label
+                      ? 'bg-aqua text-white border-aqua'
+                      : 'bg-white text-tinta/70 border-tinta/15 hover:border-aqua/50'
+                  }`}
+                >
+                  {b.label}
+                </button>
+              ))}
+            </div>
+            <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
           </div>
         )}
 
