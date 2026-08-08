@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CaretLeft, CaretRight, CaretDown, ArrowRight, Check, MagnifyingGlass, Hexagon } from '@phosphor-icons/react' // MIT license
+import { CaretLeft, CaretRight, CaretDown, ArrowRight, Check, Hexagon } from '@phosphor-icons/react' // MIT license
 // WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
@@ -1204,18 +1204,22 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                     <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
                   </>
                 ) : (
-                  <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/40 bg-[#FBF6EF] flex flex-col items-center justify-center gap-2">
-                    <MagnifyingGlass size={22} weight="regular" aria-hidden="true" className="text-aqua/55" />
-                    <span className="text-[10px] font-semibold text-tinta/50 text-center px-2 leading-snug">Escolher raquete</span>
+                  <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">
+                    <div className="relative w-10 h-10">
+                      <Image src="/Gemini_Generated_Image_dirqzmdirqzmdirq.png" alt="" fill className="object-contain" sizes="40px" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
                   </div>
                 )}
               </div>
               <div className="px-1 flex items-center justify-center">
                 <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
               </div>
-              <div className="aspect-[800/1020] rounded-xl border border-dashed border-aqua/40 bg-[#FBF6EF] flex flex-col items-center justify-center gap-2">
-                <MagnifyingGlass size={22} weight="regular" aria-hidden="true" className="text-aqua/55" />
-                <span className="text-[10px] font-semibold text-tinta/50 text-center px-2 leading-snug">Escolher raquete</span>
+              <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">
+                <div className="relative w-10 h-10">
+                  <Image src="/Gemini_Generated_Image_dirqzmdirqzmdirq.png" alt="" fill className="object-contain" sizes="40px" />
+                </div>
+                <span className="text-[10px] font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
               </div>
             </div>
             <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between">
