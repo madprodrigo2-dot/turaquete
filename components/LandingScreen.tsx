@@ -1195,7 +1195,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99]"
           >
             <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 self-start">
                 {compareRacket ? (
                   <>
                     <div className="rounded-xl overflow-hidden border border-coral/20">
@@ -1215,7 +1215,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <div className="px-1 flex items-center justify-center">
                 <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
               </div>
-              <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">
+              <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5 self-start">
                 <div className="relative w-20 h-20">
                   <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
                 </div>
