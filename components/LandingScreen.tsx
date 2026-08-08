@@ -1002,28 +1002,28 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <DiscoveryTile
                 href="/raquetes/iniciante"
                 label="Para iniciantes"
-                sub="Fáceis de controlar, alto perdão de erro"
+                sub="Fáceis de controlar e com muito perdão de erro"
                 hoverBorderClass="hover:border-aqua"
                 imageUrl="/ilustracoes/perfil-iniciante.webp"
               />
               <DiscoveryTile
                 href="/raquetes/intermediario"
                 label="Intermediários"
-                sub="Versáteis, para evoluir o seu jogo"
+                sub="Equilíbrio entre controle e potência, para quem já domina o básico e quer evoluir"
                 hoverBorderClass="hover:border-yellow"
                 imageUrl="/ilustracoes/perfil-intermediario.webp"
               />
               <DiscoveryTile
                 href="/raquetes/avancado"
                 label="Avançados"
-                sub="Potência máxima, exige mais técnica"
+                sub="Exigem técnica e oferecem potência máxima. Para quem já joga no limite"
                 hoverBorderClass="hover:border-coral"
                 imageUrl="/ilustracoes/perfil-avancado.webp"
               />
               <DiscoveryTile
                 href="/raquetes/conforto"
                 label="Leve nas articulações"
-                sub="Cotovelo, ombro e punho protegidos"
+                sub="Absorvem melhor o impacto e protegem cotovelo, ombro e punho"
                 hoverBorderClass="hover:border-tinta"
                 imageUrl="/ilustracoes/perfil-articulacoes.webp"
               />

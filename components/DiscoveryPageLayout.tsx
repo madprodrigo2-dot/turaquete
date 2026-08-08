@@ -43,7 +43,7 @@ export default function DiscoveryPageLayout({
             </div>
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl md:text-3xl font-bold text-tinta">{title}</h1>
-              <p className="text-tinta/60 text-sm line-clamp-2 md:line-clamp-none">{subtitle}</p>
+              <p className="text-tinta/60 text-sm">{subtitle}</p>
             </div>
           </div>
         ) : (
@@ -52,7 +52,7 @@ export default function DiscoveryPageLayout({
               {icon}
               <h1 className="text-2xl md:text-3xl font-bold text-tinta">{title}</h1>
             </div>
-            <p className="text-tinta/60 text-sm line-clamp-2 md:line-clamp-none">{subtitle}</p>
+            <p className="text-tinta/60 text-sm">{subtitle}</p>
           </div>
         )}
 

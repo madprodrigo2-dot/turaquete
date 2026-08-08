@@ -26,7 +26,7 @@ export default async function InicirantePage() {
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-iniciante.webp"
       title="Para iniciantes"
-      subtitle="Raquetes com alto perdão de erro, controle fácil e saída de bola amigável — ideais para quem está começando no beach tennis."
+      subtitle="Fáceis de controlar e com muito perdão de erro. Ideais para quem está começando."
       rackets={rackets}
       emptyMessage="Nenhuma raquete iniciante catalogada ainda."
       defaultSort="menor-preco"

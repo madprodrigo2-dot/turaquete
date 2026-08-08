@@ -25,7 +25,7 @@ export default async function ConfortoPage() {
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-articulacoes.webp"
       title="Leve nas articulações"
-      subtitle="Raquetes indicadas para quem tem sensibilidade no cotovelo ou ombro. Modelos com absorção de vibração e saída de bola suave."
+      subtitle="Absorvem melhor o impacto e protegem cotovelo, ombro e punho."
       rackets={rackets}
       emptyMessage="Nenhuma raquete com esse perfil catalogada ainda."
     />

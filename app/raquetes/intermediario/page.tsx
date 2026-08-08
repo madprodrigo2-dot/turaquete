@@ -26,7 +26,7 @@ export default async function IntermediarioPage() {
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-intermediario.webp"
       title="Intermediários"
-      subtitle="Equilíbrio entre controle e potência. Para quem já domina o básico e quer evoluir sem abrir mão da consistência."
+      subtitle="Equilíbrio entre controle e potência, para quem já domina o básico e quer evoluir."
       rackets={rackets}
       emptyMessage="Nenhuma raquete intermediária catalogada ainda."
     />
