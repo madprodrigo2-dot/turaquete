@@ -897,7 +897,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
 
             {/* CTA hero — IntersectionObserver target */}
-            <div className="flex items-end gap-2 md:gap-3">
+            <div className="flex flex-col items-center gap-3 md:flex-row md:items-end md:gap-3">
               {/* Tury + bolha de fala */}
               <div className="max-[359px]:hidden relative shrink-0 flex flex-col items-center" style={{ marginBottom: '-4px' }}>
                 <div className="mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-2.5 py-1.5 shadow-sm whitespace-nowrap">
@@ -917,7 +917,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <button
                 ref={heroCtaRef}
                 onClick={onStart}
-                className="flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-full shadow-cta hover:scale-[1.02] hover:shadow-[0_10px_32px_rgba(255,94,58,0.44)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
+                className="w-full md:flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-full shadow-cta hover:scale-[1.02] hover:shadow-[0_10px_32px_rgba(255,94,58,0.44)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
               >
                 Começar agora
               </button>
