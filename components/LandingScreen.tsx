@@ -870,6 +870,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                     />
                   </svg>
                 </span>
+                {' '}<Check
+                  size="0.85em"
+                  weight="bold"
+                  color="#0CC0BE"
+                  aria-hidden={true}
+                  className="inline align-middle"
+                  style={{ marginLeft: '0.12em' }}
+                />
               </h1>
               <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
                 Raquete errada custa caro. Conte como você joga e nossa especialista virtual te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
