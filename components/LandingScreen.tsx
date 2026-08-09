@@ -121,7 +121,7 @@ function SocialProof({ recsCount }: { recsCount: number }) {
   return (
     <div
       ref={ref}
-      className="flex items-center gap-4"
+      className="flex items-center gap-3"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
@@ -131,7 +131,7 @@ function SocialProof({ recsCount }: { recsCount: number }) {
       <span
         className="font-heading"
         style={{
-          fontSize: 'clamp(2.4rem, 9vw, 3.2rem)',
+          fontSize: 'clamp(1.75rem, 5.5vw, 2.2rem)',
           fontVariantNumeric: 'tabular-nums',
           fontWeight: 800,
           color: '#0E3A40',
@@ -141,10 +141,11 @@ function SocialProof({ recsCount }: { recsCount: number }) {
       >
         {count.toLocaleString('pt-BR')}
       </span>
+      <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(14,58,64,0.18)', flexShrink: 0, marginBlock: '0.1em' }} />
       <span
         style={{
           fontSize: '0.8125rem',
-          lineHeight: 1.35,
+          lineHeight: 1.25,
           color: '#0E3A40',
           opacity: 0.65,
         }}
