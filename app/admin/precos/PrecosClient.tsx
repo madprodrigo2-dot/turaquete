@@ -13,6 +13,7 @@ function staleDaysClient(updatedAt: string | null): number {
 export interface PriceRowData {
   id: number
   name: string
+  slug: string | null
   brandName: string
   price: number | null
   price_updated_at: string | null
@@ -97,16 +98,30 @@ function PriceRow({ row }: { row: PriceRowData }) {
       <td className="px-4 py-3">
         <div className="font-medium text-gray-800 text-sm leading-tight">{row.name}</div>
         <div className="text-[11px] text-gray-400 mt-0.5">{row.brandName}</div>
-        {row.affiliate_url && (
-          <a
-            href={stripAffiliateParams(row.affiliate_url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[10px] text-teal-600 hover:underline mt-0.5 inline-block"
-          >
-            ↗ ver no ML
-          </a>
-        )}
+        <div className="flex items-center gap-2 mt-0.5">
+          {row.affiliate_url && (
+            <a
+              href={stripAffiliateParams(row.affiliate_url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-teal-600 hover:underline"
+            >
+              ↗ ver no ML
+            </a>
+          )}
+          {row.slug ? (
+            <a
+              href={`/raquetes/${row.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-indigo-500 hover:underline"
+            >
+              ↗ ver no site
+            </a>
+          ) : (
+            <span className="text-[10px] text-gray-300 cursor-default">↗ ver no site</span>
+          )}
+        </div>
       </td>
       <td className="px-4 py-3 text-center whitespace-nowrap">
         {row.clicks30d > 0

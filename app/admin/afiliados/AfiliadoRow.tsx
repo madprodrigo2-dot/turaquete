@@ -141,12 +141,12 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
           <p className="text-[10px] text-orange-500 mt-1 font-medium">⚠ Link ML sem tag de afiliado — comissão não rastreada</p>
         )}
         {affiliateUrl && (
-          <p className="text-[10px] text-gray-400 mt-1 truncate font-mono" title={affiliateUrl}>
+          <p className="text-[10px] text-gray-400 mt-1 overflow-x-auto whitespace-nowrap font-mono" title={affiliateUrl}>
             afiliado: <a href={affiliateUrl} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 underline">{affiliateUrl}</a>
           </p>
         )}
         {sourceUrl && (
-          <p className="text-[10px] text-gray-400 mt-1 truncate font-mono" title={sourceUrl}>
+          <p className="text-[10px] text-gray-400 mt-1 overflow-x-auto whitespace-nowrap font-mono" title={sourceUrl}>
             source: <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 underline">{sourceUrl}</a>
           </p>
         )}

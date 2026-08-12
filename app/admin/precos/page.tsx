@@ -17,7 +17,7 @@ export default async function PrecosPage() {
   const [{ data: rackets }, { data: brands }, { data: clicks }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, price, price_updated_at, affiliate_url, is_active, brand_id')
+      .select('id, name, slug, price, price_updated_at, affiliate_url, is_active, brand_id')
       .eq('publicada', true)
       .order('name'),
     sb.from('brands').select('id, name'),
@@ -37,7 +37,7 @@ export default async function PrecosPage() {
   }
 
   type RacketRow = {
-    id: number; name: string; price: number | null
+    id: number; name: string; slug: string | null; price: number | null
     price_updated_at: string | null; affiliate_url: string | null
     is_active: boolean | null; brand_id: number | null
   }
@@ -55,6 +55,7 @@ export default async function PrecosPage() {
     return {
       id:               r.id,
       name:             r.name,
+      slug:             r.slug,
       brandName:        brandById.get(r.brand_id ?? -1) ?? '—',
       price:            r.price,
       price_updated_at: r.price_updated_at,
