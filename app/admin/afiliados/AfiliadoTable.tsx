@@ -168,35 +168,40 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
           <thead className="bg-gray-50">
             <tr className="text-[11px] text-gray-500 uppercase tracking-wide">
               <th
                 className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none"
+                style={{ width: 180 }}
                 onClick={() => toggleSort('name')}
               >
                 Raquete <SortIcon col="name" current={sort.col} dir={sort.dir} />
               </th>
               <th
-                className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none whitespace-nowrap"
+                className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none"
+                style={{ width: 50 }}
                 onClick={() => toggleSort('year')}
               >
                 Ano <SortIcon col="year" current={sort.col} dir={sort.dir} />
               </th>
               <th
-                className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none whitespace-nowrap"
+                className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none"
+                style={{ width: 80 }}
                 onClick={() => toggleSort('price')}
               >
                 Preço <SortIcon col="price" current={sort.col} dir={sort.dir} />
               </th>
               <th
                 className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none"
+                style={{ width: 80 }}
                 onClick={() => toggleSort('status')}
               >
                 Status <SortIcon col="status" current={sort.col} dir={sort.dir} />
               </th>
               <th
                 className="text-left px-4 py-2.5 font-semibold cursor-pointer hover:text-gray-800 select-none"
+                style={{ width: 90 }}
                 onClick={() => toggleSort('tipo')}
               >
                 Tipo <SortIcon col="tipo" current={sort.col} dir={sort.dir} />

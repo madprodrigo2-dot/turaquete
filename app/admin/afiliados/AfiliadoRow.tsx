@@ -114,12 +114,12 @@ export default function AfiliadoRow({ id, name, brandName, price, publicada, isA
           <button
             onClick={save}
             disabled={status === 'saving' || !dirty}
-            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors shrink-0 ${
+            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors shrink-0 border ${
               status === 'saving'
-                ? 'bg-gray-100 text-gray-400 cursor-wait'
+                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
                 : dirty
-                  ? 'bg-teal-600 text-white hover:bg-teal-700 active:bg-teal-800'
-                  : 'bg-gray-100 text-gray-300 cursor-default'
+                  ? 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700 active:bg-teal-800'
+                  : 'bg-gray-50 text-gray-400 border-gray-200 cursor-default'
             }`}
           >
             {status === 'saving' ? '...' : 'Salvar'}
