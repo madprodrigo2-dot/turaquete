@@ -1167,7 +1167,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
       </div>{/* end seção arena */}
 
       {/* ── Onda de saída: arena → menta ── */}
-      <div className="w-full bg-arena" aria-hidden="true">
+      <div className="w-full bg-arena arena-grain" aria-hidden="true">
         <svg
           viewBox="0 0 1440 50"
           preserveAspectRatio="none"
