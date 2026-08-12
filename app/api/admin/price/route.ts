@@ -45,7 +45,7 @@ export async function PATCH(req: Request) {
 
   const { error } = await getAdmin()
     .from('rackets')
-    .update({ price, price_updated_at: now })
+    .update({ price, price_updated_at: now, price_source: 'manual' })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

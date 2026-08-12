@@ -14,7 +14,7 @@ export default async function PrecosPage() {
   const sb = getSupabase()
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [{ data: rackets }, { data: brands }, { data: clicks }] = await Promise.all([
+  const [{ data: rackets }, { data: brands }, { data: clicks }, { data: lastSyncRow }] = await Promise.all([
     sb
       .from('rackets')
       .select('id, name, slug, price, price_updated_at, affiliate_url, is_active, brand_id')
@@ -27,6 +27,13 @@ export default async function PrecosPage() {
       .eq('tipo', 'afiliado')
       .eq('is_test', false)
       .gte('created_at', thirtyDaysAgo),
+    sb
+      .from('rackets')
+      .select('price_updated_at')
+      .eq('price_source', 'geckoapi')
+      .order('price_updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const brandById = new Map((brands ?? []).map(b => [b.id as number, b.name as string]))
@@ -81,24 +88,38 @@ export default async function PrecosPage() {
   const staleCount  = rows.filter(r => r.group !== 'C' && r.price_updated_at !== null && staleDays(r.price_updated_at) > 30).length
   const neverCount  = rows.filter(r => r.group !== 'C' && r.price_updated_at === null).length
 
+  const lastGeckoSync = (lastSyncRow as { price_updated_at: string } | null)?.price_updated_at ?? null
+  const lastSyncLabel = lastGeckoSync
+    ? new Date(lastGeckoSync).toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric',
+      })
+    : null
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Preços — Atualização Manual</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Preços</h1>
         <p className="text-gray-400 text-xs mt-0.5">
-          Busca o preço atual no ML, cola aqui e salva · price_updated_at atualiza para hoje
+          Sync automático via GeckoAPI (segundas 9h UTC) · edição manual disponível como fallback
         </p>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 leading-relaxed">
-        <p>
-          <span className="font-semibold">⛔ Sync automático desativado</span> — preços atualizados manualmente.
-          ML bloqueou leitura automática em jul/2026 (challenge <code className="text-xs bg-amber-100 px-1 rounded">/gz/account-verification</code> em todas as páginas de produto sem sessão ativa).
-        </p>
-        <p className="mt-1 text-amber-700 text-xs">
-          Fluxo manual: abra o link ML ao lado → copie o preço → cole no campo → Salvar.
-        </p>
-      </div>
+      {lastSyncLabel ? (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-800 leading-relaxed">
+          <p>
+            <span className="font-semibold">✓ Sync automático ativo</span> via GeckoAPI —
+            último sync: <span className="font-semibold">{lastSyncLabel}</span>.
+            Raquetes sem URL de produto específico continuam com edição manual.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 leading-relaxed">
+          <p>
+            <span className="font-semibold">⏳ Sync automático configurado</span> — ainda não rodou.
+            Agendado para segundas 9h UTC via GeckoAPI. Edição manual disponível enquanto isso.
+          </p>
+        </div>
+      )}
 
       <PrecosClient
         rows={rows}
