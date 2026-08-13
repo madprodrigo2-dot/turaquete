@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import { setFaraLinha } from './actions'
 
 type SortKey = 'name' | 'clicks' | 'staleness' | 'price'
 type SortDir = 'asc' | 'desc'
@@ -23,6 +24,7 @@ export interface PriceRowData {
   group: 'A' | 'B' | 'C'
   last_sync_status: string | null
   last_sync_at: string | null
+  fora_de_linha: boolean
 }
 
 interface Summary {
@@ -67,6 +69,8 @@ function PriceRow({ row }: { row: PriceRowData }) {
   const [priceStr, setPriceStr] = useState(row.price?.toString() ?? '')
   const [status, setStatus]     = useState<null | 'saving' | 'ok' | 'touched' | string>(null)
   const [savedAt, setSavedAt]   = useState(row.price_updated_at)
+  const [foraLinha, setForaLinha] = useState(row.fora_de_linha)
+  const [flPending, setFlPending] = useState(false)
 
   const currentStr = row.price?.toString() ?? ''
   const dirty = priceStr.trim() !== currentStr
@@ -115,6 +119,18 @@ function PriceRow({ row }: { row: PriceRowData }) {
     }
   }
 
+  async function toggleForaLinha() {
+    setFlPending(true)
+    try {
+      await setFaraLinha(row.id, !foraLinha)
+      setForaLinha(v => !v)
+    } catch {
+      // falha silenciosa — estado local não muda
+    } finally {
+      setFlPending(false)
+    }
+  }
+
   return (
     <tr className="border-t border-gray-100 hover:bg-gray-50/60">
       <td className="px-4 py-3">
@@ -154,7 +170,31 @@ function PriceRow({ row }: { row: PriceRowData }) {
       <td className="px-4 py-3 whitespace-nowrap">
         <div className="flex flex-col gap-0.5">
           <StalenessLabel updatedAt={savedAt} />
-          <SyncStatusBadge status={row.last_sync_status} />
+          {foraLinha ? (
+            <>
+              <span className="text-[10px] bg-gray-100 text-gray-500 border border-gray-200 rounded px-1.5 py-0.5 font-medium">⛔ fora de linha</span>
+              <button
+                onClick={toggleForaLinha}
+                disabled={flPending}
+                className="text-[10px] text-gray-400 hover:text-teal-600 transition-colors text-left disabled:opacity-40"
+              >
+                {flPending ? '...' : '↩ reativar'}
+              </button>
+            </>
+          ) : (
+            <>
+              <SyncStatusBadge status={row.last_sync_status} />
+              {row.last_sync_status && row.last_sync_status !== 'ok' && (
+                <button
+                  onClick={toggleForaLinha}
+                  disabled={flPending}
+                  className="text-[10px] text-gray-400 hover:text-orange-500 transition-colors text-left disabled:opacity-40"
+                >
+                  {flPending ? '...' : '⛔ fora de linha'}
+                </button>
+              )}
+            </>
+          )}
         </div>
       </td>
       <td className="px-4 py-3">
@@ -252,7 +292,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     priority: rows.filter(r => r.group === 'A').length,
     afiliado: rows.filter(r => r.group === 'A' || r.group === 'B').length,
     all:      rows.length,
-    failed:   rows.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok').length,
+    failed:   rows.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha).length,
   }), [rows])
 
   const displayed = useMemo(() => {
@@ -263,7 +303,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     )
     if (filter === 'priority') out = out.filter(r => r.group === 'A')
     if (filter === 'afiliado') out = out.filter(r => r.group !== 'C')
-    if (filter === 'failed')   out = out.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok')
+    if (filter === 'failed')   out = out.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha)
     if (sortKey) {
       out = [...out].sort((a, b) => {
         let diff = 0

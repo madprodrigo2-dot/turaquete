@@ -104,6 +104,7 @@ export async function GET(req: NextRequest) {
     .eq('publicada', true)
     .not('is_active', 'eq', false)
     .not('affiliate_url', 'is', null)
+    .not('fora_de_linha', 'eq', true)
     .order('price_updated_at', { ascending: true, nullsFirst: true })
 
   if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
