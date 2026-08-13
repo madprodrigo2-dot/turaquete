@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, after } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendTelegram } from '@/lib/telegram'
 
@@ -10,6 +10,7 @@ const DELAY_MS        = 1200
 const RETRY_DELAYS_MS = [2000, 4000, 6000] // só para 429
 const CHUNK_SIZE      = 25
 const BUDGET_MS       = 230_000 // corte explícito a 230s — 70s de margem antes do kill de 300s do Vercel
+const SIX_DAYS_MS     = 6 * 24 * 60 * 60 * 1000 // janela de elegibilidade
 
 function stripParams(url: string): string {
   try { const u = new URL(url); return u.origin + u.pathname } catch { return url }
@@ -57,7 +58,7 @@ async function fetchGecko(
     } catch (e) {
       clearTimeout(t)
       if (e instanceof Error && e.name === 'AbortError') {
-        // Timeout: falha explícita sem retry — não toca price nem price_updated_at
+        // Timeout: falha explícita sem retry
         return { ok: false, status: 408, body: null, retries, credits: retries + 1 }
       }
       throw e // outros erros de rede propagam para o handler externo
@@ -80,10 +81,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const dry          = req.nextUrl.searchParams.get('dry') === 'true'
-  const single       = req.nextUrl.searchParams.get('single') === 'true' // processa chunk, não encadeia
-  const chunkSize    = Math.max(1, parseInt(req.nextUrl.searchParams.get('chunk') ?? String(CHUNK_SIZE), 10) || CHUNK_SIZE)
-  const runStartedAt = req.nextUrl.searchParams.get('run_started_at') ?? new Date().toISOString()
+  const dry       = req.nextUrl.searchParams.get('dry') === 'true'
+  const chunkSize = Math.max(1, parseInt(req.nextUrl.searchParams.get('chunk') ?? String(CHUNK_SIZE), 10) || CHUNK_SIZE)
 
   const geckoKey = process.env.GECKOAPI_KEY
   if (!geckoKey) return NextResponse.json({ error: 'GECKOAPI_KEY não configurada' }, { status: 500 })
@@ -94,9 +93,26 @@ export async function GET(req: NextRequest) {
     { auth: { persistSession: false } }
   )
 
-  // Busca candidatas ordenadas por desatualização (mais velhas primeiro, NULL first).
-  // Filtragem por URL específica e exclusão das já processadas nesta rodada (price_updated_at >= runStartedAt)
-  // são feitas no cliente — dataset pequeno (~266 linhas), sem risco de performance.
+  // Lê estado atual do run (run_started_at persiste entre chunks via Supabase)
+  const { data: stateRows } = await sb.from('sync_state').select('key, value')
+  const syncState = Object.fromEntries((stateRows ?? []).map(r => [r.key, r.value ?? null]))
+  let storedRunStartedAt = syncState['run_started_at'] as string | null
+
+  // Se run_started_at tiver mais de 7 dias, é um run abandonado — descarta e começa novo
+  if (!dry && storedRunStartedAt) {
+    const storedAge = Date.now() - new Date(storedRunStartedAt).getTime()
+    if (storedAge > 7 * 24 * 60 * 60 * 1000) {
+      console.log('[sync] run_started_at obsoleto — descartando e iniciando novo run')
+      storedRunStartedAt = null
+      await sb.from('sync_state').update({ value: null, updated_at: new Date().toISOString() }).eq('key', 'run_started_at')
+    }
+  }
+
+  const sixDaysAgo = new Date(Date.now() - SIX_DAYS_MS).toISOString()
+
+  // Busca candidatas ordenadas por desatualização de preço (mais velhas primeiro, NULL first).
+  // Filtragem por URL específica e janela de elegibilidade são feitas no cliente
+  // — dataset pequeno (~266 linhas), sem risco de performance.
   const { data: all, error: fetchErr } = await sb
     .from('rackets')
     .select('id, name, price, price_updated_at, affiliate_url, last_sync_at')
@@ -110,10 +126,93 @@ export async function GET(req: NextRequest) {
   const items = (all ?? [])
     .filter(r =>
       isSpecificMlUrl(r.affiliate_url) &&
-      (r.price_updated_at === null || r.price_updated_at < runStartedAt) &&
-      (r.last_sync_at    === null || r.last_sync_at    < runStartedAt)
+      (r.price_updated_at === null || r.price_updated_at < sixDaysAgo) &&
+      (r.last_sync_at    === null || r.last_sync_at    < sixDaysAgo)
     )
     .slice(0, chunkSize)
+
+  // Fila vazia — fim de run ou período silencioso
+  if (items.length === 0) {
+    if (!dry && storedRunStartedAt) {
+      // Fim de run: coleta stats e envia Telegram consolidado
+      console.log('[sync] fila vazia — enviando Telegram consolidado, runStartedAt:', storedRunStartedAt)
+
+      let statsRows: { price: number | null; price_previous: number | null }[] | null = null
+      let failedRows: { name: string; last_sync_status: string | null }[] | null = null
+      try {
+        const [statsRes, failedRes] = await Promise.all([
+          sb.from('rackets')
+            .select('price, price_previous')
+            .eq('price_source', 'geckoapi')
+            .gte('price_updated_at', storedRunStartedAt),
+          sb.from('rackets')
+            .select('name, last_sync_status')
+            .gte('last_sync_at', storedRunStartedAt)
+            .not('last_sync_status', 'is', null)
+            .neq('last_sync_status', 'ok')
+            .neq('last_sync_status', 'no_price'),
+        ])
+        statsRows  = statsRes.data
+        failedRows = failedRes.data
+      } catch (statsErr) {
+        console.error('[sync] query consolidada falhou:', statsErr instanceof Error ? statsErr.message : String(statsErr))
+      }
+
+      const totalUpdated = statsRows?.length ?? 0
+      const totalChanged = (statsRows ?? []).filter(
+        r => r.price_previous !== null && r.price !== r.price_previous
+      ).length
+      const totalFailed = failedRows?.length ?? 0
+
+      const totalDurSec = Math.round((Date.now() - new Date(storedRunStartedAt).getTime()) / 1000)
+      const durLabel    = totalDurSec >= 60
+        ? `${Math.floor(totalDurSec / 60)}m ${totalDurSec % 60}s`
+        : `${totalDurSec}s`
+      const dateLabel = new Date().toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric',
+      })
+
+      const failRate = totalFailed / Math.max(totalUpdated + totalFailed, 1)
+      const isAlert  = totalFailed > 0 && failRate > 0.15
+      const icon     = isAlert ? '⚠️' : '✅'
+
+      const lines = [
+        `${icon} <b>Sync de Preços — ${dateLabel}</b>`,
+        '',
+        `📦 ${totalUpdated} atualizadas`,
+        `🔄 ${totalChanged} mudaram de preço`,
+      ]
+      if (totalFailed > 0) {
+        lines.push(
+          `❌ ${totalFailed} falha${totalFailed !== 1 ? 's' : ''}${isAlert ? ` — ${(failRate * 100).toFixed(1)}%` : ''}`
+        )
+        if (isAlert && failedRows && failedRows.length > 0) {
+          const shown = failedRows.slice(0, 5).map(r => r.name)
+          const extra = failedRows.length - shown.length
+          lines.push(`  → ${shown.join(', ')}${extra > 0 ? ` e mais ${extra}` : ''}`)
+        }
+      }
+      lines.push(`⏱ ${durLabel}`)
+
+      console.log('[sync] chamando sendTelegram consolidado')
+      await sendTelegram(lines.join('\n')).catch((e: unknown) => {
+        console.error('[sync] telegram falhou:', e instanceof Error ? e.message : String(e))
+      })
+
+      // Reseta sync_state
+      await sb.from('sync_state').update({ value: null,                       updated_at: new Date().toISOString() }).eq('key', 'run_started_at')
+      await sb.from('sync_state').update({ value: new Date().toISOString(),   updated_at: new Date().toISOString() }).eq('key', 'telegram_sent_at')
+    }
+    // Se !storedRunStartedAt: período silencioso entre runs, nada a fazer
+    return NextResponse.json({ dry, chunk: 0, processed: 0, runStartedAt: storedRunStartedAt })
+  }
+
+  // Há itens — inicia ou continua run
+  if (!dry && !storedRunStartedAt) {
+    storedRunStartedAt = new Date().toISOString()
+    await sb.from('sync_state').update({ value: storedRunStartedAt, updated_at: new Date().toISOString() }).eq('key', 'run_started_at')
+  }
+  const runStartedAt = storedRunStartedAt ?? new Date().toISOString()
 
   const results: {
     id: number; name: string; priceBefore: number | null; priceAfter: number | null
@@ -132,11 +231,17 @@ export async function GET(req: NextRequest) {
   try {
     for (let i = 0; i < items.length; i++) {
       // Sai antes de começar a próxima raquete se o orçamento de tempo acabou.
-      // As não processadas ficam com price_updated_at inalterado → topo da fila da próxima chunk.
       if (Date.now() - startTime > BUDGET_MS) { budgetExhausted = true; break }
 
-      const racket       = items[i]
-      const cleanUrl     = stripParams(racket.affiliate_url!)
+      const racket   = items[i]
+      const cleanUrl = stripParams(racket.affiliate_url!)
+
+      // Claim pessimista: marca last_sync_at antes de chamar o Gecko para evitar sobreposição
+      // entre invocações concorrentes do cron. O update final sobrescreve com o status real.
+      if (!dry) {
+        await sb.from('rackets').update({ last_sync_at: new Date().toISOString() }).eq('id', racket.id)
+      }
+
       let priceAfter: number | null = null
       let itemStatus     = 'ok'
       let itemRetries    = 0
@@ -153,7 +258,7 @@ export async function GET(req: NextRequest) {
         } else {
           priceAfter = extractPrice(body)
           if (priceAfter === null) {
-            // no_price: NÃO tocar price_updated_at — mantém a raquete no topo da fila de prioridade
+            // no_price: NÃO toca price_updated_at — mantém raquete prioritária na próxima janela de elegibilidade
             itemStatus = 'no_price'
             noPrice++
           } else {
@@ -221,7 +326,6 @@ export async function GET(req: NextRequest) {
       '',
       `Parou em: <b>${stoppedAt}</b> (item ${results.length + 1} de ${items.length} nesta chunk)`,
       `Motivo: ${e instanceof Error ? e.message : String(e)}`,
-      `run_started_at: ${runStartedAt}`,
       '',
       'Próxima segunda retoma automaticamente das mais desatualizadas.',
     ].join('\n')).catch((err: unknown) => {
@@ -230,136 +334,13 @@ export async function GET(req: NextRequest) {
     throw e
   }
 
-  // Fim do run = zero raquetes elegíveis restantes (não inferido pelo tamanho do chunk,
-  // pois um chunk cortado por budget retorna 25 cheios mas há mais na fila)
-  let remaining  = 0
-  let countFailed = false
-  try {
-    const { count } = await sb
-      .from('rackets')
-      .select('*', { count: 'exact', head: true })
-      .eq('publicada', true)
-      .not('is_active', 'eq', false)
-      .not('affiliate_url', 'is', null)
-      .or('affiliate_url.like.%/up/MLBU%,affiliate_url.like.%/p/MLB%,affiliate_url.like.%produto.mercadolivre.com.br/MLB%')
-      .or(`price_updated_at.is.null,price_updated_at.lt.${runStartedAt}`)
-      .or(`last_sync_at.is.null,last_sync_at.lt.${runStartedAt}`)
-    remaining = count ?? 0
-  } catch (countErr) {
-    countFailed = true
-    console.error('[sync] count query falhou:', countErr instanceof Error ? countErr.message : String(countErr))
-  }
-  const isLastChunk = remaining === 0 || countFailed
-  console.log('[sync] fim do loop:', { isLastChunk, remaining, countFailed, itemsLen: items.length, budgetExhausted, chunkSize, processed: results.length })
-
-  const siteUrl     = process.env.SITE_URL ?? ''
-  const nextChunkUrl = siteUrl
-    ? `${siteUrl}/api/cron/sync-precos?chunk=${chunkSize}&run_started_at=${encodeURIComponent(runStartedAt)}`
-    : null
-
-  if (!dry) {
-    if (!isLastChunk) {
-      if (single) {
-        // single=true: não encadeia — apenas reporta o que teria disparado
-      } else {
-        // after() mantém a função viva até o request para chunk 2 ser despachado;
-        // sem after(), o Vercel encerra o processo antes do TCP ser estabelecido.
-        if (nextChunkUrl) {
-          const url    = nextChunkUrl
-          const secret = process.env.CRON_SECRET
-          after(() => {
-            const ac = new AbortController()
-            const t  = setTimeout(() => ac.abort(), 15_000) // aborta só nossa espera; chunk 2 já recebeu
-            return fetch(url, {
-              signal:  ac.signal,
-              headers: { Authorization: `Bearer ${secret}` },
-            }).catch(() => {}).finally(() => clearTimeout(t))
-          })
-        }
-      }
-    } else if (countFailed) {
-      // Contagem falhou — não sabe se ficaram raquetes; avisa em vez de simular sucesso
-      console.log('[sync] count falhou — enviando alerta de fim incerto')
-      await sendTelegram([
-        '⚠️ <b>Sync de Preços — fim incerto</b>',
-        '',
-        'A query de contagem falhou após este chunk.',
-        'Pode ter raquetes sem sync neste run.',
-        '',
-        `run_started_at: ${runStartedAt}`,
-      ].join('\n')).catch((e: unknown) => {
-        console.error('[sync] telegram falhou (alerta):', e instanceof Error ? e.message : String(e))
-      })
-    } else {
-      // Fim normal: zero raquetes elegíveis restantes → resumo consolidado
-      console.log('[sync] último chunk — executando query consolidada e Telegram')
-
-      let statsRows: { price: number | null; price_previous: number | null }[] | null = null
-      try {
-        const { data } = await sb
-          .from('rackets')
-          .select('price, price_previous')
-          .eq('price_source', 'geckoapi')
-          .gte('price_updated_at', runStartedAt)
-        statsRows = data
-      } catch (statsErr) {
-        console.error('[sync] query consolidada falhou:', statsErr instanceof Error ? statsErr.message : String(statsErr))
-      }
-
-      const totalUpdated = statsRows?.length ?? 0
-      // Conta mudanças só onde price_previous era conhecido (não NULL)
-      const totalChanged = (statsRows ?? []).filter(
-        r => r.price_previous !== null && r.price !== r.price_previous
-      ).length
-
-      const totalDurSec = Math.round((Date.now() - new Date(runStartedAt).getTime()) / 1000)
-      const durLabel    = totalDurSec >= 60
-        ? `${Math.floor(totalDurSec / 60)}m ${totalDurSec % 60}s`
-        : `${totalDurSec}s`
-      const dateLabel = new Date().toLocaleDateString('pt-BR', {
-        timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric',
-      })
-
-      const failRate = items.length > 0 ? failed / items.length : 0
-      const isAlert  = failRate > 0.15
-      const icon     = isAlert ? '⚠️' : '✅'
-
-      const lines = [
-        `${icon} <b>Sync de Preços — ${dateLabel}</b>`,
-        '',
-        `📦 ${totalUpdated} atualizadas`,
-        `🔄 ${totalChanged} mudaram de preço`,
-      ]
-
-      if (failed > 0) {
-        lines.push(
-          `❌ ${failed} falha${failed !== 1 ? 's' : ''} nesta chunk${isAlert ? ` — ${(failRate * 100).toFixed(1)}%` : ''}`
-        )
-        if (isAlert && failedNames.length > 0) {
-          const shown = failedNames.slice(0, 5)
-          const extra = failedNames.length - shown.length
-          lines.push(`  → ${shown.join(', ')}${extra > 0 ? ` e mais ${extra}` : ''}`)
-        }
-      }
-
-      lines.push(`⏱ ${durLabel}`)
-
-      console.log('[sync] chamando sendTelegram')
-      await sendTelegram(lines.join('\n')).catch((e: unknown) => {
-        console.error('[sync] telegram falhou:', e instanceof Error ? e.message : String(e))
-      })
-    }
-  }
+  console.log('[sync] chunk completo:', { budgetExhausted, chunkSize, processed: results.length, updated, failed, noPrice })
 
   return NextResponse.json({
     dry,
-    single,
     chunk:           items.length,
     processed:       results.length,
     budgetExhausted,
-    isLastChunk,
-    wouldChain:      !isLastChunk && !dry,
-    nextChunkUrl:    !isLastChunk ? nextChunkUrl : null,
     runStartedAt,
     updated,
     failed,
