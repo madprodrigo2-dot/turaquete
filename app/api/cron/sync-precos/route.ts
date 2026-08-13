@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendTelegram } from '@/lib/telegram'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 min — Vercel Pro limit
@@ -96,7 +97,10 @@ export async function GET(req: NextRequest) {
   let updated      = 0
   let failed       = 0
   let noPrice      = 0
+  let priceChanged = 0
   let creditsTotal = 0
+  const failedNames: string[] = []
+  const startedAt = Date.now()
 
   for (const racket of batch) {
     const cleanUrl = stripParams(racket.affiliate_url!)
@@ -113,12 +117,14 @@ export async function GET(req: NextRequest) {
       if (!ok) {
         itemStatus = status === 429 ? `gecko_429_after_${retries}_retries` : `gecko_${status}`
         failed++
+        failedNames.push(racket.name)
       } else {
         priceAfter = extractPrice(body)
         if (priceAfter === null) {
           itemStatus = 'no_price'
           noPrice++
         } else {
+          if (priceAfter !== racket.price) priceChanged++
           if (!dry) {
             const { error: upsertErr } = await sb
               .from('rackets')
@@ -128,7 +134,7 @@ export async function GET(req: NextRequest) {
                 price_source:     'geckoapi',
               })
               .eq('id', racket.id)
-            if (upsertErr) { itemStatus = `db_err: ${upsertErr.message}`; failed++ }
+            if (upsertErr) { itemStatus = `db_err: ${upsertErr.message}`; failed++; failedNames.push(racket.name) }
             else updated++
           } else {
             updated++ // dry-run count
@@ -138,6 +144,7 @@ export async function GET(req: NextRequest) {
     } catch (e) {
       itemStatus = `exception: ${e instanceof Error ? e.message : String(e)}`
       failed++
+      failedNames.push(racket.name)
       creditsTotal++ // contabiliza tentativa mesmo com exception
     }
 
@@ -151,6 +158,36 @@ export async function GET(req: NextRequest) {
     })
 
     if (batch.indexOf(racket) < batch.length - 1) await delay(DELAY_MS)
+  }
+
+  if (!dry) {
+    const durSec  = Math.round((Date.now() - startedAt) / 1000)
+    const durLabel = durSec >= 60 ? `${Math.floor(durSec / 60)}m ${durSec % 60}s` : `${durSec}s`
+    const failRate = batch.length > 0 ? failed / batch.length : 0
+    const isAlert  = failRate > 0.15
+    const icon     = isAlert ? '⚠️' : '✅'
+    const dateLabel = new Date().toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric',
+    })
+
+    const lines = [
+      `${icon} <b>Sync de Preços — ${dateLabel}</b>`,
+      '',
+      `📦 ${batch.length} processadas · ${updated} atualizadas`,
+      `🔄 ${priceChanged} mudaram de preço`,
+      `⬜ ${noPrice} sem preço (anterior mantido)`,
+      `❌ ${failed} falha${failed !== 1 ? 's' : ''} (após retries)${isAlert ? ` — ${(failRate * 100).toFixed(1)}%` : ''}`,
+    ]
+
+    if (isAlert && failedNames.length > 0) {
+      const shown = failedNames.slice(0, 5)
+      const extra = failedNames.length - shown.length
+      lines.push(`  → ${shown.join(', ')}${extra > 0 ? ` e mais ${extra}` : ''}`)
+    }
+
+    lines.push(`💳 ${creditsTotal} créditos · ⏱ ${durLabel}`)
+
+    sendTelegram(lines.join('\n')).catch(() => {}) // fire-and-forget
   }
 
   return NextResponse.json({

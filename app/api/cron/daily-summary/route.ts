@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendTelegram } from '@/lib/telegram'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,20 +23,6 @@ function brtRange() {
   return { from, to, label, monthFrom }
 }
 
-async function sendTelegram(text: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
-  if (!token || !chatId) throw new Error('TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID não configurados')
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
-  })
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Telegram error: ${err}`)
-  }
-}
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
