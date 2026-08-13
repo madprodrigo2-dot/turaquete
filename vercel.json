@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/sync-precos",
-      "schedule": "*/5 6-9 * * 1"
+      "schedule": "0 9 * * *"
     }
   ]
 }

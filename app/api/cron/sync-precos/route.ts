@@ -5,12 +5,14 @@ import { sendTelegram } from '@/lib/telegram'
 export const dynamic    = 'force-dynamic'
 export const maxDuration = 300 // 5 min — Vercel Pro limit
 
-const GECKO_URL       = 'https://api.geckoapi.com.br/v1/extract'
-const DELAY_MS        = 1200
-const RETRY_DELAYS_MS = [2000, 4000, 6000] // só para 429
-const CHUNK_SIZE      = 25
-const BUDGET_MS       = 230_000 // corte explícito a 230s — 70s de margem antes do kill de 300s do Vercel
-const SIX_DAYS_MS     = 6 * 24 * 60 * 60 * 1000 // janela de elegibilidade
+const GECKO_URL          = 'https://api.geckoapi.com.br/v1/extract'
+const DELAY_MS           = 1200
+const RETRY_DELAYS_MS    = [2000, 4000, 6000] // só para 429
+const CHUNK_SIZE         = 25
+const BUDGET_MS          = 230_000  // 70s de margem antes do kill de 300s do Vercel
+const FOURTEEN_DAYS_MS   = 14 * 24 * 60 * 60 * 1000 // janela de elegibilidade
+// Buffer: ciclo atual (~190 raquetes / 25/dia = 8 dias), janela 14 = 6 dias de buffer.
+// Aguenta até ~350 raquetes antes de precisar ajustar (bump manual).
 
 function stripParams(url: string): string {
   try { const u = new URL(url); return u.origin + u.pathname } catch { return url }
@@ -45,7 +47,7 @@ async function fetchGecko(
   let retries = 0
   for (let attempt = 0; attempt < 1 + RETRY_DELAYS_MS.length; attempt++) {
     const ac = new AbortController()
-    const t  = setTimeout(() => ac.abort(), 15_000) // 15s por tentativa — aborta hang sem retry
+    const t  = setTimeout(() => ac.abort(), 15_000) // 15s por tentativa
     let res: Response
     try {
       res = await fetch(GECKO_URL, {
@@ -58,10 +60,9 @@ async function fetchGecko(
     } catch (e) {
       clearTimeout(t)
       if (e instanceof Error && e.name === 'AbortError') {
-        // Timeout: falha explícita sem retry
         return { ok: false, status: 408, body: null, retries, credits: retries + 1 }
       }
-      throw e // outros erros de rede propagam para o handler externo
+      throw e
     }
     if (res.status !== 429) {
       const body = res.ok ? await res.json().catch(() => null) : null
@@ -93,26 +94,10 @@ export async function GET(req: NextRequest) {
     { auth: { persistSession: false } }
   )
 
-  // Lê estado atual do run (run_started_at persiste entre chunks via Supabase)
-  const { data: stateRows } = await sb.from('sync_state').select('key, value')
-  const syncState = Object.fromEntries((stateRows ?? []).map(r => [r.key, r.value ?? null]))
-  let storedRunStartedAt = syncState['run_started_at'] as string | null
-
-  // Se run_started_at tiver mais de 7 dias, é um run abandonado — descarta e começa novo
-  if (!dry && storedRunStartedAt) {
-    const storedAge = Date.now() - new Date(storedRunStartedAt).getTime()
-    if (storedAge > 7 * 24 * 60 * 60 * 1000) {
-      console.log('[sync] run_started_at obsoleto — descartando e iniciando novo run')
-      storedRunStartedAt = null
-      await sb.from('sync_state').update({ value: null, updated_at: new Date().toISOString() }).eq('key', 'run_started_at')
-    }
-  }
-
-  const sixDaysAgo = new Date(Date.now() - SIX_DAYS_MS).toISOString()
+  const fourteenDaysAgo = new Date(Date.now() - FOURTEEN_DAYS_MS).toISOString()
 
   // Busca candidatas ordenadas por desatualização de preço (mais velhas primeiro, NULL first).
-  // Filtragem por URL específica e janela de elegibilidade são feitas no cliente
-  // — dataset pequeno (~266 linhas), sem risco de performance.
+  // Filtragem por URL e janela de elegibilidade feita no cliente — dataset pequeno (~266 linhas).
   const { data: all, error: fetchErr } = await sb
     .from('rackets')
     .select('id, name, price, price_updated_at, affiliate_url, last_sync_at')
@@ -126,96 +111,26 @@ export async function GET(req: NextRequest) {
   const items = (all ?? [])
     .filter(r =>
       isSpecificMlUrl(r.affiliate_url) &&
-      (r.price_updated_at === null || r.price_updated_at < sixDaysAgo) &&
-      (r.last_sync_at    === null || r.last_sync_at    < sixDaysAgo)
+      (r.price_updated_at === null || r.price_updated_at < fourteenDaysAgo) &&
+      (r.last_sync_at    === null || r.last_sync_at    < fourteenDaysAgo)
     )
     .slice(0, chunkSize)
 
-  // Fila vazia — fim de run ou período silencioso
   if (items.length === 0) {
-    if (!dry && storedRunStartedAt) {
-      // Fim de run: coleta stats e envia Telegram consolidado
-      console.log('[sync] fila vazia — enviando Telegram consolidado, runStartedAt:', storedRunStartedAt)
-
-      let statsRows: { price: number | null; price_previous: number | null }[] | null = null
-      let failedRows: { name: string; last_sync_status: string | null }[] | null = null
-      try {
-        const [statsRes, failedRes] = await Promise.all([
-          sb.from('rackets')
-            .select('price, price_previous')
-            .eq('price_source', 'geckoapi')
-            .gte('price_updated_at', storedRunStartedAt),
-          sb.from('rackets')
-            .select('name, last_sync_status')
-            .gte('last_sync_at', storedRunStartedAt)
-            .not('last_sync_status', 'is', null)
-            .neq('last_sync_status', 'ok')
-            .neq('last_sync_status', 'no_price'),
-        ])
-        statsRows  = statsRes.data
-        failedRows = failedRes.data
-      } catch (statsErr) {
-        console.error('[sync] query consolidada falhou:', statsErr instanceof Error ? statsErr.message : String(statsErr))
-      }
-
-      const totalUpdated = statsRows?.length ?? 0
-      const totalChanged = (statsRows ?? []).filter(
-        r => r.price_previous !== null && r.price !== r.price_previous
-      ).length
-      const totalFailed = failedRows?.length ?? 0
-
-      const totalDurSec = Math.round((Date.now() - new Date(storedRunStartedAt).getTime()) / 1000)
-      const durLabel    = totalDurSec >= 60
-        ? `${Math.floor(totalDurSec / 60)}m ${totalDurSec % 60}s`
-        : `${totalDurSec}s`
-      const dateLabel = new Date().toLocaleDateString('pt-BR', {
-        timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric',
-      })
-
-      const failRate = totalFailed / Math.max(totalUpdated + totalFailed, 1)
-      const isAlert  = totalFailed > 0 && failRate > 0.15
-      const icon     = isAlert ? '⚠️' : '✅'
-
-      const lines = [
-        `${icon} <b>Sync de Preços — ${dateLabel}</b>`,
+    if (!dry) {
+      await sendTelegram([
+        '📭 <b>Sync diário</b> — fila vazia',
         '',
-        `📦 ${totalUpdated} atualizadas`,
-        `🔄 ${totalChanged} mudaram de preço`,
-      ]
-      if (totalFailed > 0) {
-        lines.push(
-          `❌ ${totalFailed} falha${totalFailed !== 1 ? 's' : ''}${isAlert ? ` — ${(failRate * 100).toFixed(1)}%` : ''}`
-        )
-        if (isAlert && failedRows && failedRows.length > 0) {
-          const shown = failedRows.slice(0, 5).map(r => r.name)
-          const extra = failedRows.length - shown.length
-          lines.push(`  → ${shown.join(', ')}${extra > 0 ? ` e mais ${extra}` : ''}`)
-        }
-      }
-      lines.push(`⏱ ${durLabel}`)
-
-      console.log('[sync] chamando sendTelegram consolidado')
-      await sendTelegram(lines.join('\n')).catch((e: unknown) => {
-        console.error('[sync] telegram falhou:', e instanceof Error ? e.message : String(e))
+        'Nenhuma raquete elegível hoje (todas atualizadas nos últimos 14 dias).',
+      ].join('\n')).catch((e: unknown) => {
+        console.error('[sync] telegram falhou (fila vazia):', e instanceof Error ? e.message : String(e))
       })
-
-      // Reseta sync_state
-      await sb.from('sync_state').update({ value: null,                       updated_at: new Date().toISOString() }).eq('key', 'run_started_at')
-      await sb.from('sync_state').update({ value: new Date().toISOString(),   updated_at: new Date().toISOString() }).eq('key', 'telegram_sent_at')
     }
-    // Se !storedRunStartedAt: período silencioso entre runs, nada a fazer
-    return NextResponse.json({ dry, chunk: 0, processed: 0, runStartedAt: storedRunStartedAt })
+    return NextResponse.json({ dry, chunk: 0, processed: 0 })
   }
 
-  // Há itens — inicia ou continua run
-  if (!dry && !storedRunStartedAt) {
-    storedRunStartedAt = new Date().toISOString()
-    await sb.from('sync_state').update({ value: storedRunStartedAt, updated_at: new Date().toISOString() }).eq('key', 'run_started_at')
-  }
-  const runStartedAt = storedRunStartedAt ?? new Date().toISOString()
-
-  // Claim pessimista: marca os 25 de uma vez ANTES do loop para fechar a janela de overlap
-  // entre invocações concorrentes do cron. O update final por item sobrescreve com o status real.
+  // Claim pessimista: 1 UPDATE com todos os IDs ANTES do loop fecha a janela de overlap
+  // entre invocações concorrentes. O update final por item sobrescreve com o status real.
   if (!dry) {
     await sb.from('rackets')
       .update({ last_sync_at: new Date().toISOString() })
@@ -238,7 +153,6 @@ export async function GET(req: NextRequest) {
 
   try {
     for (let i = 0; i < items.length; i++) {
-      // Sai antes de começar a próxima raquete se o orçamento de tempo acabou.
       if (Date.now() - startTime > BUDGET_MS) { budgetExhausted = true; break }
 
       const racket   = items[i]
@@ -260,7 +174,7 @@ export async function GET(req: NextRequest) {
         } else {
           priceAfter = extractPrice(body)
           if (priceAfter === null) {
-            // no_price: NÃO toca price_updated_at — mantém raquete prioritária na próxima janela de elegibilidade
+            // no_price: NÃO toca price_updated_at — mantém raquete prioritária na próxima janela
             itemStatus = 'no_price'
             noPrice++
           } else {
@@ -321,7 +235,6 @@ export async function GET(req: NextRequest) {
       if (i < items.length - 1) await delay(DELAY_MS)
     }
   } catch (e) {
-    // Falha em nível de chunk: alerta Telegram fire-and-forget ANTES do re-throw
     const stoppedAt = items[results.length]?.name ?? '?'
     await sendTelegram([
       '⛔ <b>Sync INTERROMPIDO</b>',
@@ -329,21 +242,62 @@ export async function GET(req: NextRequest) {
       `Parou em: <b>${stoppedAt}</b> (item ${results.length + 1} de ${items.length} nesta chunk)`,
       `Motivo: ${e instanceof Error ? e.message : String(e)}`,
       '',
-      'Próxima segunda retoma automaticamente das mais desatualizadas.',
+      'Amanhã retoma automaticamente das mais desatualizadas.',
     ].join('\n')).catch((err: unknown) => {
       console.error('[sync] telegram falhou (interrupt):', err instanceof Error ? err.message : String(err))
     })
     throw e
   }
 
-  console.log('[sync] chunk completo:', { budgetExhausted, chunkSize, processed: results.length, updated, failed, noPrice })
+  // Telegram diário: resumo do chunk processado hoje
+  if (!dry) {
+    const durSec  = Math.round((Date.now() - startTime) / 1000)
+    const durLabel = durSec >= 60
+      ? `${Math.floor(durSec / 60)}m ${durSec % 60}s`
+      : `${durSec}s`
+    const dateLabel = new Date().toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric',
+    })
+
+    const hasErrors = failed > 0
+    const icon = hasErrors ? '⚠️' : '✅'
+
+    const lines = [
+      `${icon} <b>Sync diário — ${dateLabel}</b>`,
+      '',
+      `📦 ${results.length} processadas`,
+    ]
+
+    const parts: string[] = []
+    if (updated > 0 || (!hasErrors && noPrice === 0)) parts.push(`✓ ${updated} ok`)
+    if (noPrice > 0)  parts.push(`⚠️ ${noPrice} no_price`)
+    if (failed > 0)   parts.push(`❌ ${failed} erro${failed !== 1 ? 's' : ''}`)
+    if (parts.length) lines.push(parts.join('  |  '))
+
+    if (hasErrors && failedNames.length > 0) {
+      const shown = failedNames.slice(0, 5)
+      const extra = failedNames.length - shown.length
+      lines.push(`  → ${shown.join(', ')}${extra > 0 ? ` e mais ${extra}` : ''}`)
+    }
+
+    lines.push(`🔄 ${priceChanged} mudaram de preço`)
+    lines.push(`🪙 ${creditsTotal} crédito${creditsTotal !== 1 ? 's' : ''}`)
+    lines.push(`⏱ ${durLabel}`)
+    if (budgetExhausted) lines.push('⚡ budget esgotado — chunk interrompido')
+
+    console.log('[sync] enviando Telegram diário')
+    await sendTelegram(lines.join('\n')).catch((e: unknown) => {
+      console.error('[sync] telegram falhou:', e instanceof Error ? e.message : String(e))
+    })
+  }
+
+  console.log('[sync] chunk completo:', { budgetExhausted, processed: results.length, updated, failed, noPrice })
 
   return NextResponse.json({
     dry,
     chunk:           items.length,
     processed:       results.length,
     budgetExhausted,
-    runStartedAt,
     updated,
     failed,
     noPrice,
