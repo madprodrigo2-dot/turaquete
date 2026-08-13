@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
   // são feitas no cliente — dataset pequeno (~266 linhas), sem risco de performance.
   const { data: all, error: fetchErr } = await sb
     .from('rackets')
-    .select('id, name, price, price_updated_at, affiliate_url')
+    .select('id, name, price, price_updated_at, affiliate_url, last_sync_at')
     .eq('publicada', true)
     .not('is_active', 'eq', false)
     .not('affiliate_url', 'is', null)
@@ -96,7 +96,8 @@ export async function GET(req: NextRequest) {
   const items = (all ?? [])
     .filter(r =>
       isSpecificMlUrl(r.affiliate_url) &&
-      (r.price_updated_at === null || r.price_updated_at < runStartedAt)
+      (r.price_updated_at === null || r.price_updated_at < runStartedAt) &&
+      (r.last_sync_at    === null || r.last_sync_at    < runStartedAt)
     )
     .slice(0, chunkSize)
 
