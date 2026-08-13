@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
   }
 
   const dry          = req.nextUrl.searchParams.get('dry') === 'true'
+  const single       = req.nextUrl.searchParams.get('single') === 'true' // processa chunk, não encadeia
   const chunkSize    = Math.max(1, parseInt(req.nextUrl.searchParams.get('chunk') ?? String(CHUNK_SIZE), 10) || CHUNK_SIZE)
   const runStartedAt = req.nextUrl.searchParams.get('run_started_at') ?? new Date().toISOString()
 
@@ -193,15 +194,20 @@ export async function GET(req: NextRequest) {
   // Última chunk = devolveu menos itens do que o tamanho do chunk
   const isLastChunk = items.length < chunkSize
 
+  const siteUrl     = process.env.SITE_URL ?? ''
+  const nextChunkUrl = siteUrl
+    ? `${siteUrl}/api/cron/sync-precos?chunk=${chunkSize}&run_started_at=${encodeURIComponent(runStartedAt)}`
+    : null
+
   if (!dry) {
     if (!isLastChunk) {
-      // Encadeia a próxima chunk (fire-and-forget)
-      const siteUrl = process.env.SITE_URL
-      if (siteUrl) {
-        fetch(
-          `${siteUrl}/api/cron/sync-precos?chunk=${chunkSize}&run_started_at=${encodeURIComponent(runStartedAt)}`,
-          { headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } }
-        ).catch(() => {})
+      if (single) {
+        // single=true: não encadeia — apenas reporta o que teria disparado
+      } else {
+        // Encadeia a próxima chunk (fire-and-forget)
+        if (nextChunkUrl) {
+          fetch(nextChunkUrl, { headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } }).catch(() => {})
+        }
       }
     } else {
       // Última chunk: resumo consolidado via query no banco + Telegram
@@ -255,14 +261,17 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     dry,
-    chunk:       items.length,
+    single,
+    chunk:        items.length,
     isLastChunk,
+    wouldChain:   !isLastChunk && !dry,
+    nextChunkUrl: !isLastChunk ? nextChunkUrl : null,
     runStartedAt,
     updated,
     failed,
     noPrice,
     priceChanged,
-    creditsUsed: creditsTotal,
+    creditsUsed:  creditsTotal,
     results,
   })
 }
