@@ -48,10 +48,19 @@ function SyncStatusBadge({ status }: { status: string | null }) {
 
 function StalenessLabel({ updatedAt }: { updatedAt: string | null }) {
   if (!updatedAt) return <span className="text-[10px] text-red-500 font-semibold">⏰ nunca</span>
-  const days = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000)
-  if (days > 30) return <span className="text-[10px] text-red-500 font-medium">⚠️ {days}d atrás</span>
-  if (days > 15) return <span className="text-[10px] text-yellow-600 font-medium">📅 {days}d atrás</span>
-  return <span className="text-[10px] text-green-600 font-medium">✓ {days}d atrás</span>
+
+  const ts   = new Date(updatedAt)
+  const days = Math.floor((Date.now() - ts.getTime()) / 86_400_000)
+  const time = ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const label = days === 0
+    ? `hoje ${time}`
+    : days === 1
+    ? `ontem ${time}`
+    : `${ts.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} ${time}`
+
+  if (days > 30) return <span className="text-[10px] text-red-500 font-medium">⚠️ {label}</span>
+  if (days > 15) return <span className="text-[10px] text-yellow-600 font-medium">📅 {label}</span>
+  return <span className="text-[10px] text-green-600 font-medium">✓ {label}</span>
 }
 
 function PriceRow({ row }: { row: PriceRowData }) {

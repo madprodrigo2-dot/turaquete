@@ -224,12 +224,33 @@ export async function GET(req: NextRequest) {
       `run_started_at: ${runStartedAt}`,
       '',
       'Próxima segunda retoma automaticamente das mais desatualizadas.',
-    ].join('\n')).catch(() => {})
+    ].join('\n')).catch((err: unknown) => {
+      console.error('[sync] telegram falhou (interrupt):', err instanceof Error ? err.message : String(err))
+    })
     throw e
   }
 
-  // Última chunk = devolveu menos itens do que o tamanho do chunk
-  const isLastChunk = items.length < chunkSize
+  // Fim do run = zero raquetes elegíveis restantes (não inferido pelo tamanho do chunk,
+  // pois um chunk cortado por budget retorna 25 cheios mas há mais na fila)
+  let remaining  = 0
+  let countFailed = false
+  try {
+    const { count } = await sb
+      .from('rackets')
+      .select('*', { count: 'exact', head: true })
+      .eq('publicada', true)
+      .not('is_active', 'eq', false)
+      .not('affiliate_url', 'is', null)
+      .or('affiliate_url.like.%/up/MLBU%,affiliate_url.like.%/p/MLB%,affiliate_url.like.%produto.mercadolivre.com.br/MLB%')
+      .or(`price_updated_at.is.null,price_updated_at.lt.${runStartedAt}`)
+      .or(`last_sync_at.is.null,last_sync_at.lt.${runStartedAt}`)
+    remaining = count ?? 0
+  } catch (countErr) {
+    countFailed = true
+    console.error('[sync] count query falhou:', countErr instanceof Error ? countErr.message : String(countErr))
+  }
+  const isLastChunk = remaining === 0 || countFailed
+  console.log('[sync] fim do loop:', { isLastChunk, remaining, countFailed, itemsLen: items.length, budgetExhausted, chunkSize, processed: results.length })
 
   const siteUrl     = process.env.SITE_URL ?? ''
   const nextChunkUrl = siteUrl
@@ -248,7 +269,7 @@ export async function GET(req: NextRequest) {
           const secret = process.env.CRON_SECRET
           after(() => {
             const ac = new AbortController()
-            const t  = setTimeout(() => ac.abort(), 5000) // aborta só nossa espera; chunk 2 já recebeu
+            const t  = setTimeout(() => ac.abort(), 15_000) // aborta só nossa espera; chunk 2 já recebeu
             return fetch(url, {
               signal:  ac.signal,
               headers: { Authorization: `Bearer ${secret}` },
@@ -256,13 +277,34 @@ export async function GET(req: NextRequest) {
           })
         }
       }
+    } else if (countFailed) {
+      // Contagem falhou — não sabe se ficaram raquetes; avisa em vez de simular sucesso
+      console.log('[sync] count falhou — enviando alerta de fim incerto')
+      await sendTelegram([
+        '⚠️ <b>Sync de Preços — fim incerto</b>',
+        '',
+        'A query de contagem falhou após este chunk.',
+        'Pode ter raquetes sem sync neste run.',
+        '',
+        `run_started_at: ${runStartedAt}`,
+      ].join('\n')).catch((e: unknown) => {
+        console.error('[sync] telegram falhou (alerta):', e instanceof Error ? e.message : String(e))
+      })
     } else {
-      // Última chunk: resumo consolidado via query no banco + Telegram
-      const { data: statsRows } = await sb
-        .from('rackets')
-        .select('price, price_previous')
-        .eq('price_source', 'geckoapi')
-        .gte('price_updated_at', runStartedAt)
+      // Fim normal: zero raquetes elegíveis restantes → resumo consolidado
+      console.log('[sync] último chunk — executando query consolidada e Telegram')
+
+      let statsRows: { price: number | null; price_previous: number | null }[] | null = null
+      try {
+        const { data } = await sb
+          .from('rackets')
+          .select('price, price_previous')
+          .eq('price_source', 'geckoapi')
+          .gte('price_updated_at', runStartedAt)
+        statsRows = data
+      } catch (statsErr) {
+        console.error('[sync] query consolidada falhou:', statsErr instanceof Error ? statsErr.message : String(statsErr))
+      }
 
       const totalUpdated = statsRows?.length ?? 0
       // Conta mudanças só onde price_previous era conhecido (não NULL)
@@ -302,7 +344,10 @@ export async function GET(req: NextRequest) {
 
       lines.push(`⏱ ${durLabel}`)
 
-      await sendTelegram(lines.join('\n')).catch(() => {})
+      console.log('[sync] chamando sendTelegram')
+      await sendTelegram(lines.join('\n')).catch((e: unknown) => {
+        console.error('[sync] telegram falhou:', e instanceof Error ? e.message : String(e))
+      })
     }
   }
 
