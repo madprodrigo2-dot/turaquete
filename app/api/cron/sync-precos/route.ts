@@ -9,6 +9,7 @@ const GECKO_URL       = 'https://api.geckoapi.com.br/v1/extract'
 const DELAY_MS        = 1200
 const RETRY_DELAYS_MS = [2000, 4000, 6000] // só para 429
 const CHUNK_SIZE      = 25
+const BUDGET_MS       = 230_000 // corte explícito a 230s — 70s de margem antes do kill de 300s do Vercel
 
 function stripParams(url: string): string {
   try { const u = new URL(url); return u.origin + u.pathname } catch { return url }
@@ -104,15 +105,21 @@ export async function GET(req: NextRequest) {
     status: string; retries: number
   }[] = []
 
-  let updated      = 0
-  let failed       = 0
-  let noPrice      = 0
-  let priceChanged = 0
-  let creditsTotal = 0
+  let updated         = 0
+  let failed          = 0
+  let noPrice         = 0
+  let priceChanged    = 0
+  let creditsTotal    = 0
+  let budgetExhausted = false
   const failedNames: string[] = []
+  const startTime = Date.now()
 
   try {
     for (let i = 0; i < items.length; i++) {
+      // Sai antes de começar a próxima raquete se o orçamento de tempo acabou.
+      // As não processadas ficam com price_updated_at inalterado → topo da fila da próxima chunk.
+      if (Date.now() - startTime > BUDGET_MS) { budgetExhausted = true; break }
+
       const racket       = items[i]
       const cleanUrl     = stripParams(racket.affiliate_url!)
       let priceAfter: number | null = null
@@ -272,16 +279,18 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     dry,
     single,
-    chunk:        items.length,
+    chunk:           items.length,
+    processed:       results.length,
+    budgetExhausted,
     isLastChunk,
-    wouldChain:   !isLastChunk && !dry,
-    nextChunkUrl: !isLastChunk ? nextChunkUrl : null,
+    wouldChain:      !isLastChunk && !dry,
+    nextChunkUrl:    !isLastChunk ? nextChunkUrl : null,
     runStartedAt,
     updated,
     failed,
     noPrice,
     priceChanged,
-    creditsUsed:  creditsTotal,
+    creditsUsed:     creditsTotal,
     results,
   })
 }
