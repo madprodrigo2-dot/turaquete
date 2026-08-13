@@ -41,6 +41,8 @@ function SyncStatusBadge({ status }: { status: string | null }) {
     return <span className="text-[10px] bg-orange-50 text-orange-600 border border-orange-200 rounded px-1.5 py-0.5 font-medium">sem preço</span>
   if (status === 'error_429')
     return <span className="text-[10px] bg-red-50 text-red-600 border border-red-200 rounded px-1.5 py-0.5 font-medium">429</span>
+  if (status === 'timeout')
+    return <span className="text-[10px] bg-red-50 text-red-600 border border-red-200 rounded px-1.5 py-0.5 font-medium">timeout</span>
   return <span className="text-[10px] bg-red-50 text-red-600 border border-red-200 rounded px-1.5 py-0.5 font-medium">erro</span>
 }
 

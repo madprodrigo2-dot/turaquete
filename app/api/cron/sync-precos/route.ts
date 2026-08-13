@@ -43,11 +43,25 @@ async function fetchGecko(
 ): Promise<{ ok: boolean; status: number; body: unknown; retries: number; credits: number }> {
   let retries = 0
   for (let attempt = 0; attempt < 1 + RETRY_DELAYS_MS.length; attempt++) {
-    const res = await fetch(GECKO_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${geckoKey}` },
-      body:    JSON.stringify({ target: 'mercadolivre.com.br', type: 'pdp', url: cleanUrl }),
-    })
+    const ac = new AbortController()
+    const t  = setTimeout(() => ac.abort(), 15_000) // 15s por tentativa — aborta hang sem retry
+    let res: Response
+    try {
+      res = await fetch(GECKO_URL, {
+        signal:  ac.signal,
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${geckoKey}` },
+        body:    JSON.stringify({ target: 'mercadolivre.com.br', type: 'pdp', url: cleanUrl }),
+      })
+      clearTimeout(t)
+    } catch (e) {
+      clearTimeout(t)
+      if (e instanceof Error && e.name === 'AbortError') {
+        // Timeout: falha explícita sem retry — não toca price nem price_updated_at
+        return { ok: false, status: 408, body: null, retries, credits: retries + 1 }
+      }
+      throw e // outros erros de rede propagam para o handler externo
+    }
     if (res.status !== 429) {
       const body = res.ok ? await res.json().catch(() => null) : null
       return { ok: res.ok, status: res.status, body, retries, credits: retries + 1 }
@@ -186,8 +200,9 @@ export async function GET(req: NextRequest) {
       })
 
       if (!dry && itemStatus !== 'ok') {
-        const syncStatus = itemStatus === 'no_price' ? 'no_price'
-          : itemStatus.startsWith('gecko_429') ? 'error_429'
+        const syncStatus = itemStatus === 'no_price'        ? 'no_price'
+          : itemStatus.startsWith('gecko_429')              ? 'error_429'
+          : itemStatus === 'gecko_408'                      ? 'timeout'
           : 'error'
         try {
           await sb.from('rackets')
