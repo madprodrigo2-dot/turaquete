@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     // Falha em nível de chunk: alerta Telegram fire-and-forget ANTES do re-throw
     const stoppedAt = items[results.length]?.name ?? '?'
-    sendTelegram([
+    await sendTelegram([
       '⛔ <b>Sync INTERROMPIDO</b>',
       '',
       `Parou em: <b>${stoppedAt}</b> (item ${results.length + 1} de ${items.length} nesta chunk)`,
@@ -272,7 +272,7 @@ export async function GET(req: NextRequest) {
 
       lines.push(`⏱ ${durLabel}`)
 
-      sendTelegram(lines.join('\n')).catch(() => {})
+      await sendTelegram(lines.join('\n')).catch(() => {})
     }
   }
 
