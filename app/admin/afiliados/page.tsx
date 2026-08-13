@@ -98,10 +98,10 @@ export default async function AfiliadosPage() {
         </div>
       </div>
 
-      {/* Sync disabled banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-800">
-        <span className="font-semibold">⛔ Sync automático de preços desativado</span> — ML bloqueou leitura anônima em jul/2026.
-        {' '}<a href="/admin/precos" className="underline font-medium hover:text-amber-900">Atualizar preços manualmente →</a>
+      {/* Sync status banner */}
+      <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-xs text-green-800">
+        <span className="font-semibold">✅ Sync automático ativo</span> — GeckoAPI (segundas 9h UTC).
+        {' '}<a href="/admin/precos" className="underline font-medium hover:text-green-900">Ver preços →</a>
       </div>
 
       {/* Progress bar */}
