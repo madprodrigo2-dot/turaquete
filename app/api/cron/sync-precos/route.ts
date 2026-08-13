@@ -214,6 +214,14 @@ export async function GET(req: NextRequest) {
   }
   const runStartedAt = storedRunStartedAt ?? new Date().toISOString()
 
+  // Claim pessimista: marca os 25 de uma vez ANTES do loop para fechar a janela de overlap
+  // entre invocações concorrentes do cron. O update final por item sobrescreve com o status real.
+  if (!dry) {
+    await sb.from('rackets')
+      .update({ last_sync_at: new Date().toISOString() })
+      .in('id', items.map(r => r.id))
+  }
+
   const results: {
     id: number; name: string; priceBefore: number | null; priceAfter: number | null
     status: string; retries: number
@@ -235,12 +243,6 @@ export async function GET(req: NextRequest) {
 
       const racket   = items[i]
       const cleanUrl = stripParams(racket.affiliate_url!)
-
-      // Claim pessimista: marca last_sync_at antes de chamar o Gecko para evitar sobreposição
-      // entre invocações concorrentes do cron. O update final sobrescreve com o status real.
-      if (!dry) {
-        await sb.from('rackets').update({ last_sync_at: new Date().toISOString() }).eq('id', racket.id)
-      }
 
       let priceAfter: number | null = null
       let itemStatus     = 'ok'
