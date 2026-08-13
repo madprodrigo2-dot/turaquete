@@ -117,15 +117,7 @@ export async function GET(req: NextRequest) {
     .slice(0, chunkSize)
 
   if (items.length === 0) {
-    if (!dry) {
-      await sendTelegram([
-        '📭 <b>Sync diário</b> — fila vazia',
-        '',
-        'Nenhuma raquete elegível hoje (todas atualizadas nos últimos 14 dias).',
-      ].join('\n')).catch((e: unknown) => {
-        console.error('[sync] telegram falhou (fila vazia):', e instanceof Error ? e.message : String(e))
-      })
-    }
+    console.log('[sync] fila vazia — nenhuma raquete elegível hoje')
     return NextResponse.json({ dry, chunk: 0, processed: 0 })
   }
 
