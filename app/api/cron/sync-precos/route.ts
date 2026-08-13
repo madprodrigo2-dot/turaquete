@@ -144,13 +144,16 @@ export async function GET(req: NextRequest) {
           } else {
             if (priceAfter !== racket.price) priceChanged++
             if (!dry) {
+              const syncNow = new Date().toISOString()
               const { error: upsertErr } = await sb
                 .from('rackets')
                 .update({
                   price_previous:   racket.price,
                   price:            priceAfter,
-                  price_updated_at: new Date().toISOString(),
+                  price_updated_at: syncNow,
                   price_source:     'geckoapi',
+                  last_sync_status: 'ok',
+                  last_sync_at:     syncNow,
                 })
                 .eq('id', racket.id)
               if (upsertErr) {
@@ -180,6 +183,17 @@ export async function GET(req: NextRequest) {
         status:      itemStatus,
         retries:     itemRetries,
       })
+
+      if (!dry && itemStatus !== 'ok') {
+        const syncStatus = itemStatus === 'no_price' ? 'no_price'
+          : itemStatus.startsWith('gecko_429') ? 'error_429'
+          : 'error'
+        try {
+          await sb.from('rackets')
+            .update({ last_sync_status: syncStatus, last_sync_at: new Date().toISOString() })
+            .eq('id', racket.id)
+        } catch { /* status write failure não afeta o fluxo principal */ }
+      }
 
       if (i < items.length - 1) await delay(DELAY_MS)
     }

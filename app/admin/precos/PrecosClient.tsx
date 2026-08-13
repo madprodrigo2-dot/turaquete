@@ -21,6 +21,8 @@ export interface PriceRowData {
   is_active: boolean | null
   clicks30d: number
   group: 'A' | 'B' | 'C'
+  last_sync_status: string | null
+  last_sync_at: string | null
 }
 
 interface Summary {
@@ -31,6 +33,15 @@ interface Summary {
 
 function stripAffiliateParams(url: string): string {
   try { const u = new URL(url); return u.origin + u.pathname } catch { return url }
+}
+
+function SyncStatusBadge({ status }: { status: string | null }) {
+  if (!status || status === 'ok') return null
+  if (status === 'no_price')
+    return <span className="text-[10px] bg-orange-50 text-orange-600 border border-orange-200 rounded px-1.5 py-0.5 font-medium">sem preço</span>
+  if (status === 'error_429')
+    return <span className="text-[10px] bg-red-50 text-red-600 border border-red-200 rounded px-1.5 py-0.5 font-medium">429</span>
+  return <span className="text-[10px] bg-red-50 text-red-600 border border-red-200 rounded px-1.5 py-0.5 font-medium">erro</span>
 }
 
 function StalenessLabel({ updatedAt }: { updatedAt: string | null }) {
@@ -130,7 +141,10 @@ function PriceRow({ row }: { row: PriceRowData }) {
         }
       </td>
       <td className="px-4 py-3 whitespace-nowrap">
-        <StalenessLabel updatedAt={savedAt} />
+        <div className="flex flex-col gap-0.5">
+          <StalenessLabel updatedAt={savedAt} />
+          <SyncStatusBadge status={row.last_sync_status} />
+        </div>
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
@@ -207,7 +221,7 @@ function SortTh({ col, align, active, dir, onSort, className, children }: {
   )
 }
 
-type FilterKey = 'priority' | 'afiliado' | 'all'
+type FilterKey = 'priority' | 'afiliado' | 'all' | 'failed'
 
 export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; summary: Summary }) {
   const [q, setQ]           = useState('')
@@ -227,6 +241,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     priority: rows.filter(r => r.group === 'A').length,
     afiliado: rows.filter(r => r.group === 'A' || r.group === 'B').length,
     all:      rows.length,
+    failed:   rows.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok').length,
   }), [rows])
 
   const displayed = useMemo(() => {
@@ -237,6 +252,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     )
     if (filter === 'priority') out = out.filter(r => r.group === 'A')
     if (filter === 'afiliado') out = out.filter(r => r.group !== 'C')
+    if (filter === 'failed')   out = out.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok')
     if (sortKey) {
       out = [...out].sort((a, b) => {
         let diff = 0
@@ -254,6 +270,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     priority: '🔥 Prioritárias',
     afiliado: '💰 Todas com afiliado',
     all:      'Todas',
+    failed:   '⚠️ Falharam',
   }
 
   return (
@@ -270,7 +287,12 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
         {summary.neverUpdated > 0 && (
           <span className="text-orange-500 font-medium">⏰ {summary.neverUpdated} nunca atualizadas</span>
         )}
-        {summary.stale30d === 0 && summary.neverUpdated === 0 && (
+        {counts.failed > 0 && (
+          <button onClick={() => setFilter('failed')} className="text-red-500 font-medium hover:underline text-sm">
+            ⚠️ {counts.failed} falharam no sync
+          </button>
+        )}
+        {summary.stale30d === 0 && summary.neverUpdated === 0 && counts.failed === 0 && (
           <span className="text-green-600 text-xs">✓ Nenhuma com preço vencido</span>
         )}
       </div>
@@ -291,7 +313,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
           )}
         </div>
 
-        {(['priority', 'afiliado', 'all'] as FilterKey[]).map(f => (
+        {(['priority', 'afiliado', 'all', 'failed'] as FilterKey[]).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
