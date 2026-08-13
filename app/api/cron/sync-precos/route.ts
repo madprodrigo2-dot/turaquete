@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendTelegram } from '@/lib/telegram'
 
@@ -204,9 +204,19 @@ export async function GET(req: NextRequest) {
       if (single) {
         // single=true: não encadeia — apenas reporta o que teria disparado
       } else {
-        // Encadeia a próxima chunk (fire-and-forget)
+        // after() mantém a função viva até o request para chunk 2 ser despachado;
+        // sem after(), o Vercel encerra o processo antes do TCP ser estabelecido.
         if (nextChunkUrl) {
-          fetch(nextChunkUrl, { headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` } }).catch(() => {})
+          const url    = nextChunkUrl
+          const secret = process.env.CRON_SECRET
+          after(() => {
+            const ac = new AbortController()
+            const t  = setTimeout(() => ac.abort(), 5000) // aborta só nossa espera; chunk 2 já recebeu
+            return fetch(url, {
+              signal:  ac.signal,
+              headers: { Authorization: `Bearer ${secret}` },
+            }).catch(() => {}).finally(() => clearTimeout(t))
+          })
         }
       }
     } else {
