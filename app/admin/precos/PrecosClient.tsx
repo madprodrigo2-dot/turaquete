@@ -25,6 +25,7 @@ export interface PriceRowData {
   last_sync_status: string | null
   last_sync_at: string | null
   fora_de_linha: boolean
+  model_year: number | null
 }
 
 interface Summary {
@@ -135,7 +136,9 @@ function PriceRow({ row }: { row: PriceRowData }) {
     <tr className="border-t border-gray-100 hover:bg-gray-50/60">
       <td className="px-4 py-3">
         <div className="font-medium text-gray-800 text-sm leading-tight">{row.name}</div>
-        <div className="text-[11px] text-gray-400 mt-0.5">{row.brandName}</div>
+        <div className="text-[11px] text-gray-400 mt-0.5">
+          {row.brandName}{row.model_year ? <span className="ml-1.5 text-gray-300">{row.model_year}</span> : null}
+        </div>
         <div className="flex items-center gap-2 mt-0.5">
           {row.affiliate_url && (
             <a
