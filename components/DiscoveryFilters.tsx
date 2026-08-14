@@ -151,7 +151,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
         )}
         {showPrecoFilter && (
           <div className="-mr-5 md:mr-0 relative">
-            <div className="flex gap-2 overflow-x-auto pb-1 pr-5 md:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-2 overflow-x-auto pb-1 pr-2 md:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={() => setPrecoKey('todas')}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
@@ -176,7 +176,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
                 </button>
               ))}
             </div>
-            <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-14 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
           </div>
         )}
 
