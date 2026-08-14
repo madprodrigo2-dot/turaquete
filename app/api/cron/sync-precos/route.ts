@@ -10,9 +10,10 @@ const DELAY_MS           = 1200
 const RETRY_DELAYS_MS    = [2000, 4000, 6000] // só para 429
 const CHUNK_SIZE         = 25
 const BUDGET_MS          = 230_000  // 70s de margem antes do kill de 300s do Vercel
-const FOURTEEN_DAYS_MS   = 14 * 24 * 60 * 60 * 1000 // janela de elegibilidade
-// Buffer: ciclo atual (~190 raquetes / 25/dia = 8 dias), janela 14 = 6 dias de buffer.
-// Aguenta até ~350 raquetes antes de precisar ajustar (bump manual).
+const TEN_DAYS_MS        = 10 * 24 * 60 * 60 * 1000 // janela de elegibilidade
+// Janela de 10 dias assume rotação de ~8 dias (25/dia, ~190 raquetes).
+// Se o total passar de ~250 raquetes, a rotação estica além de 10 dias e a janela
+// precisa subir junto — senão as raquetes do fim do ciclo nunca sincronizam.
 
 function stripParams(url: string): string {
   try { const u = new URL(url); return u.origin + u.pathname } catch { return url }
@@ -94,7 +95,7 @@ export async function GET(req: NextRequest) {
     { auth: { persistSession: false } }
   )
 
-  const fourteenDaysAgo = new Date(Date.now() - FOURTEEN_DAYS_MS).toISOString()
+  const tenDaysAgo = new Date(Date.now() - TEN_DAYS_MS).toISOString()
 
   // Busca candidatas ordenadas por desatualização de preço (mais velhas primeiro, NULL first).
   // Filtragem por URL e janela de elegibilidade feita no cliente — dataset pequeno (~266 linhas).
@@ -112,8 +113,8 @@ export async function GET(req: NextRequest) {
   const items = (all ?? [])
     .filter(r =>
       isSpecificMlUrl(r.affiliate_url) &&
-      (r.price_updated_at === null || r.price_updated_at < fourteenDaysAgo) &&
-      (r.last_sync_at    === null || r.last_sync_at    < fourteenDaysAgo)
+      (r.price_updated_at === null || r.price_updated_at < tenDaysAgo) &&
+      (r.last_sync_at    === null || r.last_sync_at    < tenDaysAgo)
     )
     .slice(0, chunkSize)
 
