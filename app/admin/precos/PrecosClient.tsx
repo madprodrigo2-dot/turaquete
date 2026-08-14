@@ -184,7 +184,7 @@ function PriceRow({ row }: { row: PriceRowData }) {
           ) : (
             <>
               <SyncStatusBadge status={row.last_sync_status} />
-              {row.last_sync_status && row.last_sync_status !== 'ok' && (
+              {row.last_sync_status !== 'ok' && (
                 <button
                   onClick={toggleForaLinha}
                   disabled={flPending}
