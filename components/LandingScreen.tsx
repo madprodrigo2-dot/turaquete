@@ -413,12 +413,14 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
   const [shuffled, setShuffled] = useState(rackets)
 
   useEffect(() => {
-    const arr = [...rackets]
-    for (let i = arr.length - 1; i > 0; i--) {
+    // arr[0] é o top da classificação — mantém fixo na primeira posição.
+    // Embaralha só arr[1..n-1] para dar variedade ao resto do carrossel.
+    const tail = rackets.slice(1)
+    for (let i = tail.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]]
+      [tail[i], tail[j]] = [tail[j], tail[i]]
     }
-    setShuffled(arr)
+    setShuffled([rackets[0], ...tail])
   }, [])
 
   // maxIdx = highest index that can actually be scrolled to (varies by viewport).
