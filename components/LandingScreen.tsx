@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CaretLeft, CaretRight, CaretDown, ArrowRight, Check, Hexagon } from '@phosphor-icons/react' // MIT license
+import { CaretLeft, CaretRight, CaretDown, ArrowRight, Check, Hexagon, Play } from '@phosphor-icons/react' // MIT license
 // WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
@@ -1164,6 +1164,58 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <FeaturedCarousel rackets={featuredRackets} />
             </div>
           )}
+
+          {/* Bloco de credibilidade científica — ISEA 2026 */}
+          <RevealDiv delay={100}>
+          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-aqua/[0.08] text-aqua border border-aqua/20 leading-none whitespace-nowrap">
+                Pesquisa científica
+              </span>
+              <span className="text-[10px] text-tinta/40 font-medium">ISEA 2026</span>
+            </div>
+            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-3">
+              O sweet spot tem ciência por trás
+            </p>
+            <p className="text-tinta/70 text-sm leading-relaxed mb-4">
+              No ISEA 2026 (The Engineering of Sport 16, Washington State University), João Lucas Vasconcelos apresentou uma pesquisa usando análise modal e coeficiente de restituição para identificar o sweet spot em raquetes de beach tennis. Os resultados mostram que a posição e o tamanho do sweet spot variam entre modelos e influenciam diretamente o conforto articular e a eficiência do golpe. É a confirmação de que conforto e aproveitamento do sweet spot não são intuições: são mensuráveis.
+            </p>
+            <a
+              href="https://www.instagram.com/reel/DMafZscMWGq/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => sendGAEvent('event', 'isea_reel_clicado', { origem: 'home' })}
+              className="flex items-center gap-3 rounded-xl border border-aqua/20 hover:border-aqua/50 hover:bg-aqua/[0.03] active:scale-[0.98] transition-all group mb-4 overflow-hidden"
+            >
+              <div className="w-[60px] h-[52px] bg-gradient-to-br from-aqua/15 to-[#0E3A40]/15 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-full bg-aqua flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                  <Play size={14} weight="fill" color="white" aria-hidden="true" />
+                </div>
+              </div>
+              <div className="flex flex-col gap-0.5 py-2 pr-3">
+                <p className="text-xs font-semibold text-tinta leading-snug">Assistir ao Reel no Instagram</p>
+                <p className="text-[10px] text-tinta/40 leading-none">abre em nova aba</p>
+              </div>
+            </a>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0 text-aqua text-[10px] font-bold select-none">
+                JL
+              </div>
+              <div className="flex flex-col leading-none gap-0.5 flex-1 min-w-0">
+                <span className="text-xs font-semibold text-tinta/80">João Lucas Vasconcelos</span>
+                <a
+                  href="https://www.instagram.com/joaolucasvasconcelos/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-aqua hover:underline underline-offset-2"
+                >
+                  @joaolucasvasconcelos
+                </a>
+              </div>
+              <span className="text-[10px] text-tinta/35 text-right leading-snug shrink-0">pesquisador e<br/>jogador ranqueado</span>
+            </div>
+          </div>
+          </RevealDiv>
 
         </div>
       </div>{/* end seção arena */}
