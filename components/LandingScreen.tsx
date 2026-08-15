@@ -715,31 +715,50 @@ function SandMound({
 function ISEAReelEmbed() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [failed, setFailed] = useState(false)
+  const started = useRef(false)
 
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
+    const container = containerRef.current
+    if (!container || started.current) return
+    started.current = true
+
     type W = Window & { instgrm?: { Embeds: { process: () => void } } }
+
+    // Inject blockquote imperatively — React renders an empty div so it never
+    // touches innerHTML again, meaning Instagram's iframe survives all re-renders
+    container.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DMafZscMWGq/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:12px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;padding:0;width:100%;"></blockquote>`
+
+    let settled = false
+    // Fallback: if no iframe appears within 12s, show link instead
+    const fallbackTimer = setTimeout(() => {
+      if (!settled && !container.querySelector('iframe')) setFailed(true)
+    }, 12000)
+
+    const tryProcess = () => {
+      settled = true
+      ;(window as W).instgrm?.Embeds.process()
+    }
+
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return
         obs.disconnect()
         const w = window as W
-        if (w.instgrm) { w.instgrm.Embeds.process(); return }
+        if (w.instgrm) { tryProcess(); return }
         if (!document.getElementById('ig-embed-js')) {
           const s = document.createElement('script')
           s.id = 'ig-embed-js'
           s.src = 'https://www.instagram.com/embed.js'
           s.async = true
-          s.onload = () => (window as W).instgrm?.Embeds.process()
+          s.onload = tryProcess
           s.onerror = () => setFailed(true)
           document.body.appendChild(s)
         }
       },
       { threshold: 0.05 }
     )
-    obs.observe(el)
-    return () => obs.disconnect()
+    obs.observe(container)
+    return () => { obs.disconnect(); clearTimeout(fallbackTimer) }
   }, [])
 
   if (failed) {
@@ -748,23 +767,29 @@ function ISEAReelEmbed() {
         href="https://www.instagram.com/reel/DMafZscMWGq/"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 text-xs font-semibold text-aqua hover:underline underline-offset-2"
+        className="flex items-center gap-3 rounded-xl border border-aqua/20 px-4 py-3 hover:bg-aqua/[0.04] active:scale-[0.98] transition-all group"
       >
-        <Play size={13} weight="fill" aria-hidden="true" />
-        Assistir ao Reel no Instagram
+        <div className="w-9 h-9 rounded-full bg-aqua flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+          <Play size={14} weight="fill" color="white" aria-hidden="true" />
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-tinta leading-snug">Assistir ao Reel no Instagram</p>
+          <p className="text-[10px] text-tinta/40">abre em nova aba</p>
+        </div>
       </a>
     )
   }
 
+  // Empty div — React never sets innerHTML here, so the injected blockquote
+  // and Instagram's iframe replacement survive every parent re-render
   return (
     <div
       ref={containerRef}
       className="w-full overflow-hidden rounded-xl"
-      style={{ minHeight: 300 }}
-      // dangerouslySetInnerHTML keeps React from managing this subtree,
-      // so Instagram's DOM replacement (blockquote → iframe) survives re-renders
-      dangerouslySetInnerHTML={{
-        __html: `<blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DMafZscMWGq/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:12px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;padding:0;width:100%;"></blockquote>`,
+      style={{
+        minHeight: 480,
+        background: 'rgba(12,192,190,0.04)',
+        border: '1px solid rgba(12,192,190,0.10)',
       }}
     />
   )
