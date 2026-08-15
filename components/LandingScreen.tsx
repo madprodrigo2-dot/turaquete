@@ -710,6 +710,66 @@ function SandMound({
   )
 }
 
+// ── ISEA 2026 Reel embed (lazy-loaded via IntersectionObserver) ───────────────
+
+function ISEAReelEmbed() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    type W = Window & { instgrm?: { Embeds: { process: () => void } } }
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        obs.disconnect()
+        const w = window as W
+        if (w.instgrm) { w.instgrm.Embeds.process(); return }
+        if (!document.getElementById('ig-embed-js')) {
+          const s = document.createElement('script')
+          s.id = 'ig-embed-js'
+          s.src = 'https://www.instagram.com/embed.js'
+          s.async = true
+          s.onload = () => (window as W).instgrm?.Embeds.process()
+          s.onerror = () => setFailed(true)
+          document.body.appendChild(s)
+        }
+      },
+      { threshold: 0.05 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  if (failed) {
+    return (
+      <a
+        href="https://www.instagram.com/reel/DMafZscMWGq/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-xs font-semibold text-aqua hover:underline underline-offset-2"
+      >
+        <Play size={13} weight="fill" aria-hidden="true" />
+        Assistir ao Reel no Instagram
+      </a>
+    )
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full overflow-hidden rounded-xl"
+      style={{ minHeight: 300 }}
+      // dangerouslySetInnerHTML keeps React from managing this subtree,
+      // so Instagram's DOM replacement (blockquote → iframe) survives re-renders
+      dangerouslySetInnerHTML={{
+        __html: `<blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/reel/DMafZscMWGq/?utm_source=ig_embed&amp;utm_campaign=loading" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:12px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;padding:0;width:100%;"></blockquote>`,
+      }}
+    />
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 // Tune: adicionar/remover entradas para calibrar densidade de bolas na arena
@@ -1178,25 +1238,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               O sweet spot tem ciência por trás
             </p>
             <p className="text-tinta/70 text-sm leading-relaxed mb-4">
-              No ISEA 2026 (The Engineering of Sport 16, Washington State University), João Lucas Vasconcelos apresentou uma pesquisa usando análise modal e coeficiente de restituição para identificar o sweet spot em raquetes de beach tennis. Os resultados mostram que a posição e o tamanho do sweet spot variam entre modelos e influenciam diretamente o conforto articular e a eficiência do golpe. É a confirmação de que conforto e aproveitamento do sweet spot não são intuições: são mensuráveis.
+              No ISEA 2026 (Washington State University), João Lucas Vasconcelos mediu o sweet spot de raquetes de beach tennis com análise modal e coeficiente de restituição. A ciência confirma o que a Turaquete prioriza: conforto e sweet spot não são achismo, são mensuráveis.
             </p>
-            <a
-              href="https://www.instagram.com/reel/DMafZscMWGq/"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => sendGAEvent('event', 'isea_reel_clicado', { origem: 'home' })}
-              className="flex items-center gap-3 rounded-xl border border-aqua/20 hover:border-aqua/50 hover:bg-aqua/[0.03] active:scale-[0.98] transition-all group mb-4 overflow-hidden"
-            >
-              <div className="w-[60px] h-[52px] bg-gradient-to-br from-aqua/15 to-[#0E3A40]/15 flex items-center justify-center shrink-0">
-                <div className="w-8 h-8 rounded-full bg-aqua flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                  <Play size={14} weight="fill" color="white" aria-hidden="true" />
-                </div>
-              </div>
-              <div className="flex flex-col gap-0.5 py-2 pr-3">
-                <p className="text-xs font-semibold text-tinta leading-snug">Assistir ao Reel no Instagram</p>
-                <p className="text-[10px] text-tinta/40 leading-none">abre em nova aba</p>
-              </div>
-            </a>
+            <div className="mb-4">
+              <ISEAReelEmbed />
+            </div>
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0 text-aqua text-[10px] font-bold select-none">
                 JL
@@ -1204,12 +1250,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               <div className="flex flex-col leading-none gap-0.5 flex-1 min-w-0">
                 <span className="text-xs font-semibold text-tinta/80">João Lucas Vasconcelos</span>
                 <a
-                  href="https://www.instagram.com/joaolucasvasconcelos/"
+                  href="https://www.instagram.com/joaolucasmvs/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[10px] text-aqua hover:underline underline-offset-2"
                 >
-                  @joaolucasvasconcelos
+                  @joaolucasmvs
                 </a>
               </div>
               <span className="text-[10px] text-tinta/35 text-right leading-snug shrink-0">pesquisador e<br/>jogador ranqueado</span>
