@@ -671,3 +671,22 @@ export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {
   const all = ((data as unknown[]) ?? []).map(normalizeRacket)
   return all.filter(r => r.racket_insights?.elbow_friendly === true)
 }
+
+const NOVIDADES_MIN = 4
+const NOVIDADES_LIMIT = 8
+
+export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('publicada', true)
+    .eq('model_year', 2026)
+    .neq('is_active', false)
+    .neq('fora_de_linha', true)
+    .order('created_at', { ascending: false })
+    .limit(NOVIDADES_LIMIT)
+
+  if (error) throw new Error(`Supabase: ${error.message}`)
+  const rackets = ((data as unknown[]) ?? []).map(normalizeRacket)
+  return rackets.length >= NOVIDADES_MIN ? rackets : []
+}

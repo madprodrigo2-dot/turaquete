@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { listarMarcas, getTopRaquetas, getRaquetasComAtleta, getRaquetaPorSlug, getRandomExpensiveRacket } from '@/lib/recommend'
+import { listarMarcas, getTopRaquetas, getRaquetasComAtleta, getRaquetaPorSlug, getRandomExpensiveRacket, getNovidadesRaquetas } from '@/lib/recommend'
 import { getRecsCount, getPublishedRacketCount } from '@/lib/stats'
 import HomeClient from '@/components/HomeClient'
 import { SITE_URL } from '@/lib/site'
@@ -91,7 +91,7 @@ const jsonLd = {
 }
 
 export default async function Page() {
-  const [brands, featured, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket] = await Promise.all([
+  const [brands, featured, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades] = await Promise.all([
     listarMarcas().catch(() => []),
     getTopRaquetas().catch(() => ({ rackets: [], source: 'curated' as const })),
     getRaquetasComAtleta().catch(() => []),
@@ -99,6 +99,7 @@ export default async function Page() {
     getPublishedRacketCount().catch(() => 0),
     getRaquetaPorSlug('beast-2023').catch(() => null),
     getRandomExpensiveRacket(2000).catch(() => null),
+    getNovidadesRaquetas().catch(() => []),
   ])
   return (
     <>
@@ -115,6 +116,7 @@ export default async function Page() {
         racketCount={racketCount}
         exampleRacket={exampleRacket ?? undefined}
         compareRacket={compareRacket ?? undefined}
+        novidades={novidades}
       />
     </>
   )

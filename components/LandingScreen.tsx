@@ -23,6 +23,7 @@ interface Props {
   racketCount?: number
   exampleRacket?: RacketWithInsights
   compareRacket?: RacketWithInsights
+  novidades: RacketWithInsights[]
 }
 
 // Threshold definido por Rodrigo — abaixo disso usa texto alternativo sem número
@@ -822,7 +823,7 @@ const ARENA_EXTRA_BALLS: Array<{ size: number; rotation: number; opacity: number
 const SKY_OP = 0.10
 const SKY_RGB = '140, 192, 215'  // desaturated sky blue — doesn't compete with aqua or coral
 
-export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const [mainCtaVisible, setMainCtaVisible] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
@@ -1247,6 +1248,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
               )}
               <FeaturedCarousel rackets={featuredRackets} />
+            </div>
+          )}
+
+          {/* Novidades 2026 */}
+          {novidades.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-0.5">
+                <p className="font-heading font-bold text-tinta text-base md:text-lg">Novidades 2026</p>
+                <p className="text-tinta/50 text-xs">As raquetes recém-chegadas ao catálogo</p>
+              </div>
+              <FeaturedCarousel rackets={novidades} />
             </div>
           )}
 
