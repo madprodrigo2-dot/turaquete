@@ -1128,6 +1128,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>
           </RevealDiv>
 
+          {/* Novidades 2026 */}
+          {novidades.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-0.5">
+                <p className="font-heading font-bold text-tinta text-base md:text-lg">Novidades 2026</p>
+                <p className="text-tinta/50 text-xs">As raquetes recém-chegadas ao catálogo</p>
+              </div>
+              <FeaturedCarousel rackets={novidades} />
+            </div>
+          )}
+
           {/* Como funciona */}
           <RevealDiv>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
@@ -1248,17 +1259,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
               )}
               <FeaturedCarousel rackets={featuredRackets} />
-            </div>
-          )}
-
-          {/* Novidades 2026 */}
-          {novidades.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-0.5">
-                <p className="font-heading font-bold text-tinta text-base md:text-lg">Novidades 2026</p>
-                <p className="text-tinta/50 text-xs">As raquetes recém-chegadas ao catálogo</p>
-              </div>
-              <FeaturedCarousel rackets={novidades} />
             </div>
           )}
 
