@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import { scoreForNivel } from '@/lib/scorer'
 import RaquetasTable from './RaquetasTable'
 
@@ -25,7 +25,7 @@ export default async function AdminRaquetasPage() {
   const session = await auth()
   if (session?.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const sb = getSupabase()
+  const sb = getSupabaseAdmin()
 
   const [{ data, error }, { data: brandsData }] = await Promise.all([
     sb
