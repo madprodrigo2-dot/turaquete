@@ -614,6 +614,81 @@ function AthleteCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
   )
 }
 
+// ── Steps Carousel (mobile-only) ──────────────────────────────────────────────
+
+function StepsCarousel() {
+  const trackRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  const syncIdx = () => {
+    const el = trackRef.current
+    if (!el || el.children.length === 0) return
+    const card = el.children[0] as HTMLElement
+    const step = card.offsetWidth + 12
+    setActiveIdx(Math.round(el.scrollLeft / step))
+  }
+
+  useEffect(() => {
+    syncIdx()
+    const el = trackRef.current
+    if (!el) return
+    const ro = new ResizeObserver(syncIdx)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const scrollToStep = (idx: number) => {
+    const el = trackRef.current
+    if (!el) return
+    const card = el.children[idx] as HTMLElement | null
+    if (!card) return
+    const scrollPad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 20
+    el.scrollTo({ left: card.offsetLeft - scrollPad, behavior: 'smooth' })
+  }
+
+  return (
+    <div>
+      <div className="-mx-5">
+        <div
+          ref={trackRef}
+          onScroll={syncIdx}
+          className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pl-5 pr-5 scroll-pl-5"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+        >
+          {STEPS.map((step, i) => (
+            <div key={i} className="w-[78vw] shrink-0 snap-start">
+              <div className="bg-white rounded-2xl p-4 shadow-card border border-[rgba(14,58,64,0.06)] h-full flex flex-col gap-3">
+                <div className="w-8 h-8 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0 shadow-[0_0_14px_rgba(12,192,190,0.35)]">
+                  {i + 1}
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <p className="text-tinta text-sm leading-relaxed">{step.label}</p>
+                  {step.desc && (
+                    <p className="text-tinta/60 text-xs leading-relaxed mt-0.5">{step.desc}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-center gap-1.5 mt-3" role="group" aria-label="Navegação dos passos">
+        {STEPS.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => scrollToStep(idx)}
+            aria-label={`Passo ${idx + 1}`}
+            aria-current={idx === activeIdx ? 'true' : undefined}
+            className={`h-1.5 rounded-full transition-all duration-200 ${
+              idx === activeIdx ? 'w-4 bg-aqua' : 'w-1.5 bg-tinta/20 hover:bg-tinta/40'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Arena decorative ball ──────────────────────────────────────────────────────
 
 function ArenaBall({
@@ -1141,50 +1216,56 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
 
           {/* Como funciona */}
           <RevealDiv>
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
-            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-5">Como funciona</p>
-            <div className="flex flex-col">
-              {STEPS.map((step, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="flex flex-col items-center w-8 shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0 shadow-[0_0_14px_rgba(12,192,190,0.35)]">
-                      {i + 1}
+            {/* Desktop: lista vertical em card branco */}
+            <div className="hidden md:block bg-white rounded-2xl p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
+              <p className="font-heading font-bold text-tinta text-lg mb-5">Como funciona</p>
+              <div className="flex flex-col">
+                {STEPS.map((step, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="flex flex-col items-center w-8 shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0 shadow-[0_0_14px_rgba(12,192,190,0.35)]">
+                        {i + 1}
+                      </div>
+                      {i < STEPS.length - 1 && (
+                        <div className="w-px flex-1 min-h-4 bg-gradient-to-b from-aqua/50 to-aqua/10" />
+                      )}
                     </div>
-                    {i < STEPS.length - 1 && (
-                      <div className="w-px flex-1 min-h-4 bg-gradient-to-b from-aqua/50 to-aqua/10" />
-                    )}
+                    <div className={`flex flex-col pt-1${i < STEPS.length - 1 ? ' pb-5' : ''}`}>
+                      <p className="text-tinta text-base leading-relaxed">{step.label}</p>
+                      {step.desc && (
+                        <p className="text-tinta/60 text-sm leading-relaxed mt-1">{step.desc}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className={`flex flex-col pt-1${i < STEPS.length - 1 ? ' pb-5' : ''}`}>
-                    <p className="text-tinta text-sm md:text-base leading-relaxed">
-                      {step.label}
-                    </p>
-                    {step.desc && (
-                      <p className="text-tinta/60 text-xs md:text-sm leading-relaxed mt-1">{step.desc}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+            {/* Mobile: carrossel deslizável */}
+            <div className="md:hidden flex flex-col gap-3">
+              <div className="flex flex-col gap-0.5">
+                <p className="font-heading font-bold text-tinta text-base">Como funciona</p>
+              </div>
+              <StepsCarousel />
+            </div>
           </RevealDiv>
 
           {/* Quem é a Tury? — transparência */}
           <RevealDiv delay={100}>
-          <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
-            <div className="grid grid-cols-[auto_1fr] gap-x-4 md:gap-x-6 gap-y-4 md:gap-y-3">
+          <div className="bg-white rounded-2xl p-4 md:p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
+            <div className="grid grid-cols-[auto_1fr] gap-x-4 md:gap-x-6 gap-y-2 md:gap-y-3">
               <Image
                 src="/tury-explicando.png"
                 alt="Tury"
                 width={80}
                 height={100}
-                className="h-24 md:h-20 w-auto object-contain shrink-0 self-end md:row-span-2 md:self-center"
+                className="h-16 md:h-20 w-auto object-contain shrink-0 self-end md:row-span-2 md:self-center"
                 style={{ width: 'auto' }}
               />
-              <div className="self-end pb-1 md:pb-0 md:self-start">
+              <div className="self-end pb-0.5 md:pb-0 md:self-start">
                 <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Quem é a Tury?</p>
                 <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual, não uma pessoa</p>
               </div>
-              <div className="col-span-2 md:col-span-1 md:self-start flex flex-col gap-2.5">
+              <div className="col-span-2 md:col-span-1 md:self-start flex flex-col gap-1.5">
                 {[
                   'Analisa dados reais de cada raquete: peso, balance, material e pontuações técnicas',
                   'Sem patrocínio: nenhuma marca paga para aparecer primeiro',
