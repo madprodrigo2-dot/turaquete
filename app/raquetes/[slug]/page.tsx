@@ -115,6 +115,9 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   }
 
   const extra = (racket.specs_extra as Record<string, unknown> | null) ?? {}
+  const tecnologias = Array.isArray(extra.tecnologias)
+    ? (extra.tecnologias as { nome: string; tipo: string }[])
+    : []
   const athleteRaw = extra.atleta
   const athlete: string | undefined = Array.isArray(athleteRaw)
     ? (athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
@@ -252,6 +255,23 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 <p className="text-tinta font-semibold text-sm mb-3">Especificações</p>
                 <SpecsGrid racket={racket} />
               </div>
+
+              {/* Tecnologias */}
+              {tecnologias.length > 0 && (
+                <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
+                  <p className="text-tinta font-semibold text-sm mb-3">Tecnologias</p>
+                  <div className="flex flex-wrap gap-2">
+                    {tecnologias.map((t, i) => (
+                      <span
+                        key={i}
+                        className="bg-aqua/[0.07] text-tinta text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/15"
+                      >
+                        {t.nome}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Comparar + Compartilhar */}
               <div className="bg-white rounded-2xl px-5 py-4 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">
