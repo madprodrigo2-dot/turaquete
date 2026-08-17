@@ -118,7 +118,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   const tecnologias = (Array.isArray(extra.tecnologias)
     ? (extra.tecnologias as { nome: string; tipo: string }[])
     : []
-  ).filter(t => !['material', 'núcleo', 'nucleo', 'furação', 'furacao'].includes(t.tipo))
+  ).filter(t => !['material', 'núcleo', 'nucleo'].includes(t.tipo))
   const athleteRaw = extra.atleta
   const athlete: string | undefined = Array.isArray(athleteRaw)
     ? (athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
