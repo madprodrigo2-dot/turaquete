@@ -115,9 +115,10 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   }
 
   const extra = (racket.specs_extra as Record<string, unknown> | null) ?? {}
-  const tecnologias = Array.isArray(extra.tecnologias)
+  const tecnologias = (Array.isArray(extra.tecnologias)
     ? (extra.tecnologias as { nome: string; tipo: string }[])
     : []
+  ).filter(t => t.tipo !== 'material' && t.tipo !== 'núcleo' && t.tipo !== 'nucleo')
   const athleteRaw = extra.atleta
   const athlete: string | undefined = Array.isArray(athleteRaw)
     ? (athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
@@ -253,13 +254,13 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               {/* Specs */}
               <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
                 <p className="text-tinta font-semibold text-sm mb-3">Especificações</p>
-                <SpecsGrid racket={racket} />
+                <SpecsGrid racket={racket} hideTechRows />
               </div>
 
               {/* Tecnologias */}
               {tecnologias.length > 0 && (
                 <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
-                  <p className="text-tinta font-semibold text-sm mb-3">Tecnologias</p>
+                  <p className="text-tinta font-semibold text-sm mb-3">Tecnologias e acabamentos</p>
                   <div className="flex flex-wrap gap-2">
                     {tecnologias.map((t, i) => (
                       <span

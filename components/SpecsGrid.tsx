@@ -134,13 +134,17 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
   ] as (SpecRow | null)[]).filter((r): r is SpecRow => r !== null)
 }
 
+const TECH_LABELS = new Set(['Tecnologias', 'Ergonomia', 'Furação', 'Acabamentos'])
+
 interface Props {
   racket: RacketWithInsights
   variant?: 'page' | 'modal'
+  hideTechRows?: boolean
 }
 
-export default function SpecsGrid({ racket, variant = 'page' }: Props) {
-  const rows = buildSpecRows(racket)
+export default function SpecsGrid({ racket, variant = 'page', hideTechRows = false }: Props) {
+  const allRows = buildSpecRows(racket)
+  const rows = hideTechRows ? allRows.filter(r => !TECH_LABELS.has(r.label)) : allRows
   if (rows.length === 0) return null
 
   if (variant === 'modal') {
