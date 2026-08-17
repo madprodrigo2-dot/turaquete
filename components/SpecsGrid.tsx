@@ -30,7 +30,7 @@ export const NIVEL_LABEL: Record<string, string> = {
 
 export interface SpecRow { label: string; value: string; tipo?: string }
 
-export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
+export function buildSpecRows(racket: RacketWithInsights, opts?: { consolidateTech?: boolean }): SpecRow[] {
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
 
   const espessuraMm = extra.espessura_mm as number | null | undefined
@@ -116,6 +116,21 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     ? NIVEL_LABEL[nivelDerivado] ?? cap(nivelDerivado)
     : undefined
 
+  const consolidateTech = opts?.consolidateTech ?? false
+
+  let techRows: (SpecRow | null)[]
+  if (consolidateTech) {
+    const allTechNames = [
+      ...(techFisicasRow  ? techFisicasRow.value.split(', ')  : []),
+      ...(techErgonomiaRow ? techErgonomiaRow.value.split(', ') : []),
+      ...(techFuracaoRow  ? techFuracaoRow.value.split(', ')  : []),
+      ...(techDeclarativasRow ? techDeclarativasRow.value.split(', ') : []),
+    ].filter(Boolean)
+    techRows = [allTechNames.length > 0 ? { label: 'Tecnologias', value: allTechNames.join(', ') } : null]
+  } else {
+    techRows = [techFisicasRow, techErgonomiaRow, techFuracaoRow, techDeclarativasRow]
+  }
+
   return ([
     praQuem              ? { label: 'Pra quem',          value: praQuem }                         : null,
     { label: 'Peso', value: racket.weight_g ? `~${racket.weight_g}g` : 'não informado' },
@@ -127,10 +142,7 @@ export function buildSpecRows(racket: RacketWithInsights): SpecRow[] {
     superficieValue      ? { label: 'Superfície',        value: superficieValue }                 : null,
     racket.model_year    ? { label: 'Ano',               value: String(racket.model_year) }       : null,
     athleteLabel         ? { label: 'Atleta',            value: athleteLabel }                    : null,
-    techFisicasRow,
-    techErgonomiaRow,
-    techFuracaoRow,
-    techDeclarativasRow,
+    ...techRows,
   ] as (SpecRow | null)[]).filter((r): r is SpecRow => r !== null)
 }
 

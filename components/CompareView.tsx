@@ -84,7 +84,7 @@ function melhorPara(
 }
 
 function alignedSpecs(rackets: RacketWithInsights[]) {
-  const allRows = rackets.map(r => buildSpecRows(r))
+  const allRows = rackets.map(r => buildSpecRows(r, { consolidateTech: true }))
   const seen = new Set<string>()
   const labels: string[] = []
   for (const rows of allRows) {
@@ -487,7 +487,7 @@ export default function CompareView({ rackets }: Props) {
               </div>
               {values.map((v, i) => (
                 <div key={i} className="px-3 py-3 text-[12px] text-tinta font-medium border-l border-aqua/10 leading-snug">
-                  {v ?? <span className="text-tinta/20">—</span>}
+                  {v ?? <span className="text-[11px] text-tinta/30 italic">não inf.</span>}
                 </div>
               ))}
             </div>
