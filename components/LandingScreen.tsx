@@ -1343,22 +1343,27 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           {/* Bloco de credibilidade científica — ISEA 2026 */}
           <RevealDiv delay={100}>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-aqua/[0.08] text-aqua border border-aqua/20 leading-none whitespace-nowrap">
-                Pesquisa científica
-              </span>
-              <span className="text-[10px] text-tinta/40 font-medium">ISEA 2026</span>
+            {/* Desktop: texto esquerda, reel direita. Mobile: empilhado */}
+            <div className="md:grid md:grid-cols-[1fr_320px] md:gap-6 md:items-start">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-aqua/[0.08] text-aqua border border-aqua/20 leading-none whitespace-nowrap">
+                    Pesquisa científica
+                  </span>
+                  <span className="text-[10px] text-tinta/40 font-medium">ISEA 2026</span>
+                </div>
+                <p className="font-heading font-bold text-tinta text-base md:text-lg mb-3">
+                  O sweet spot tem ciência por trás
+                </p>
+                <p className="text-tinta/70 text-sm leading-relaxed mb-4 md:mb-0">
+                  No ISEA 2026 (Washington State University), João Lucas Vasconcelos mediu o sweet spot de raquetes de beach tennis com análise modal e coeficiente de restituição. A ciência confirma o que a Turaquete prioriza: conforto e sweet spot não são achismo, são mensuráveis.
+                </p>
+              </div>
+              <div className="mb-4 md:mb-0">
+                <ISEAReelEmbed />
+              </div>
             </div>
-            <p className="font-heading font-bold text-tinta text-base md:text-lg mb-3">
-              O sweet spot tem ciência por trás
-            </p>
-            <p className="text-tinta/70 text-sm leading-relaxed mb-4">
-              No ISEA 2026 (Washington State University), João Lucas Vasconcelos mediu o sweet spot de raquetes de beach tennis com análise modal e coeficiente de restituição. A ciência confirma o que a Turaquete prioriza: conforto e sweet spot não são achismo, são mensuráveis.
-            </p>
-            <div className="mb-4">
-              <ISEAReelEmbed />
-            </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 mt-4">
               <div className="w-7 h-7 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0 text-aqua text-[10px] font-bold select-none">
                 JL
               </div>
