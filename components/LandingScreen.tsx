@@ -663,9 +663,6 @@ function StepsCarousel() {
                 </div>
                 <div className="flex flex-col gap-1 flex-1">
                   <p className="text-tinta text-sm leading-relaxed">{step.label}</p>
-                  {step.desc && (
-                    <p className="text-tinta/60 text-xs leading-relaxed mt-0.5">{step.desc}</p>
-                  )}
                 </div>
               </div>
             </div>
