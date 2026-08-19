@@ -1039,7 +1039,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:h-full">
+          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:h-full md:bg-white md:border md:border-aqua/20 md:shadow-sm">
             {/* Mobile: horizontal completa, sem recorte */}
             <Image
               src="/new_hero_desktop.webp"
@@ -1050,15 +1050,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               priority
               sizes="100vw"
             />
-            {/* Desktop: fill igualando altura do texto, recorta só o céu */}
-            <Image
-              src="/new_hero_mobile.webp"
-              alt="Raquetes de beach tennis na areia"
-              fill
-              className="hidden md:block object-cover object-[center_80%]"
-              priority
-              sizes="300px"
-            />
+            {/* Desktop: wrapper com inset cria a margem — padding no pai relative não
+                funciona pra filho fill (inset:0 ignora padding do container, é limitação
+                do CSS). object-contain (não cover) pra não recortar nada além do que a
+                imagem já tem — só reduz a escala inteira dentro do frame, com fundo
+                branco preenchendo o espaço sobrando (letterbox). */}
+            <div className="hidden md:block md:absolute md:inset-4">
+              <Image
+                src="/new_hero_mobile.webp"
+                alt="Raquetes de beach tennis na areia"
+                fill
+                className="object-contain object-center rounded-xl"
+                priority
+                sizes="300px"
+              />
+            </div>
           </div>
 
           {/* Prova social — mobile only, abaixo da imagem */}
