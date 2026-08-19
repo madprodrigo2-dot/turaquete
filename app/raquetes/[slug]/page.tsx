@@ -257,7 +257,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 <SpecsGrid racket={racket} hideTechRows />
               </div>
 
-              {/* Tecnologias */}
+              {/* Tecnologias e acabamentos */}
               {tecnologias.length > 0 && (
                 <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
                   <p className="text-tinta font-semibold text-sm mb-3">Tecnologias e acabamentos</p>

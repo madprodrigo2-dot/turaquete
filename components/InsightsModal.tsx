@@ -43,6 +43,10 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
   const explicacoes = gerarExplicacoes(racket)
   const specRows = buildSpecRows(racket)
   const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
+  const tecnologias = (Array.isArray(extra.tecnologias)
+    ? (extra.tecnologias as { nome: string; tipo: string }[])
+    : []
+  ).filter(t => !['material', 'núcleo', 'nucleo'].includes(t.tipo))
   const tratamentoFabrica = extra.tratamento_fabrica
   const athleteRaw = extra.atleta
   const athlete: string | undefined = Array.isArray(athleteRaw)
@@ -145,7 +149,24 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
               <p className="text-tinta/40 font-semibold text-[10px] uppercase tracking-wider">
                 Especificações
               </p>
-              <SpecsGrid racket={racket} variant="modal" />
+              <SpecsGrid racket={racket} variant="modal" hideTechRows />
+              {tecnologias.length > 0 && (
+                <div className="flex flex-col gap-2 pt-1">
+                  <p className="text-tinta/40 font-semibold text-[10px] uppercase tracking-wider">
+                    Tecnologias e acabamentos
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tecnologias.map((t, i) => (
+                      <span
+                        key={i}
+                        className="bg-aqua/[0.07] text-tinta text-[11px] font-medium px-2.5 py-1 rounded-full border border-aqua/15"
+                      >
+                        {t.nome}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

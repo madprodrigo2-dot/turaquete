@@ -152,10 +152,11 @@ interface Props {
   racket: RacketWithInsights
   variant?: 'page' | 'modal'
   hideTechRows?: boolean
+  consolidateTech?: boolean
 }
 
-export default function SpecsGrid({ racket, variant = 'page', hideTechRows = false }: Props) {
-  const allRows = buildSpecRows(racket)
+export default function SpecsGrid({ racket, variant = 'page', hideTechRows = false, consolidateTech = false }: Props) {
+  const allRows = buildSpecRows(racket, { consolidateTech })
   const rows = hideTechRows ? allRows.filter(r => !TECH_LABELS.has(r.label)) : allRows
   if (rows.length === 0) return null
 
