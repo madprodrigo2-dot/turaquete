@@ -22,13 +22,6 @@ const nextConfig: NextConfig = {
     BUILD_SHA:               _sha,
     NEXT_PUBLIC_BUILD_LABEL: _buildLabel,
   },
-  async redirects() {
-    return [
-      // the-bull-2026 was the wrong slug for the 2025 product; 15 affiliate clicks on old URL
-      { source: '/raquetes/the-bull-2026', destination: '/raquetes/the-bull-2025', permanent: true },
-      { source: '/ir/the-bull-2026',       destination: '/ir/the-bull-2025',       permanent: true },
-    ]
-  },
 };
 
 export default nextConfig;
