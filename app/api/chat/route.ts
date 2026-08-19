@@ -375,7 +375,7 @@ export async function POST(req: NextRequest) {
             messages: fullMessages,
             semMatchCausa: debug?.semMatchCausa ?? null,
           })
-          getSupabase()
+          getSupabaseAdmin()
             .from('conversations')
             .insert({
               session_id: sessionId,
@@ -404,7 +404,7 @@ export async function POST(req: NextRequest) {
               utm_medium: origemUtmMedium ?? null,
             })
             .then(({ error }) => {
-              if (error) console.error('Conversations insert error:', error.message)
+              if (error) console.error('[chat] falha ao salvar conversa (session=%s): %s', sessionId, error.message)
             })
 
           // Capture sem_match events server-side so they persist even without a subsequent turn
