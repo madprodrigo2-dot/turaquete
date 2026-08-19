@@ -63,71 +63,77 @@ export function CostSection({
 
   return (
     <>
-      {/* ── Custos ── */}
+      {/* ── Custos (detalhe, colapsado — resumo já aparece em Saúde do negócio) ── */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest">
-            Custos (API Anthropic)
-          </h2>
-          <div className="flex gap-1">
-            {(['BRL', 'USD', 'CLP'] as Currency[]).map(c => (
-              <button
-                key={c}
-                onClick={() => setCur(c)}
-                className={`text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors ${
-                  cur === c ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                {c === 'BRL' ? 'R$' : c === 'USD' ? 'US$' : 'CLP'}
-              </button>
-            ))}
-          </div>
-        </div>
+        <details className="group">
+          <summary className="text-xs font-semibold text-gray-600 uppercase tracking-widest cursor-pointer select-none list-none marker:hidden flex items-center gap-1.5">
+            <span className="inline-block transition-transform group-open:rotate-90 text-gray-400">▸</span>
+            Custos (API Anthropic) — detalhe
+          </summary>
 
-        {sessionsCount === 0 ? (
-          <p className="text-gray-400 italic text-xs">Sem dados de custo para o período.</p>
-        ) : (
-          <>
-            {cur === 'CLP' && (
-              <p className="text-[10px] text-gray-400 mb-2">Taxa usada: 1 USD = {USD_TO_CLP.toLocaleString('es-CL')} CLP</p>
-            )}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                {
-                  label: 'Custo médio/sessão',
-                  value: fmt(avgV, cur, d),
-                  sub: cur === 'BRL' ? fmtUsd(avgUsd) : cur === 'USD' ? `R$ ${avgBrl?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) ?? '—'}` : fmtUsd(avgUsd),
-                  highlight: true,
-                  tip: 'Média de custo da API Anthropic por sessão no período.',
-                },
-                {
-                  label: 'Total no período',
-                  value: fmt(totalV, cur, 2),
-                  sub: cur === 'BRL' ? fmtUsd(totalUsd) : `R$ ${totalBrl.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                  tip: 'Soma de todos os custos de API no período selecionado.',
-                },
-                {
-                  label: 'Conversa mais cara',
-                  value: fmt(maxCostV, cur, d),
-                  sub: 'anomalia',
-                  tip: 'Sessão com maior custo individual no período.',
-                },
-                {
-                  label: 'Custo médio / turno',
-                  value: fmt(avgTurnV, cur, d),
-                  sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/sessão` : '',
-                  tip: 'Custo médio por par pergunta/resposta.',
-                },
-              ].map(({ label, value, sub, highlight, tip }) => (
-                <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${highlight ? 'border-teal-200' : 'border-gray-100'}`}>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
-                  <p className={`font-bold ${highlight ? 'text-xl text-gray-900' : 'text-base text-gray-800'}`}>{value}</p>
-                  {sub && <p className="text-[10px] text-gray-300">{sub}</p>}
-                </div>
-              ))}
+          <div className="mt-3">
+            <div className="flex items-center justify-end mb-3">
+              <div className="flex gap-1">
+                {(['BRL', 'USD', 'CLP'] as Currency[]).map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setCur(c)}
+                    className={`text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors ${
+                      cur === c ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  >
+                    {c === 'BRL' ? 'R$' : c === 'USD' ? 'US$' : 'CLP'}
+                  </button>
+                ))}
+              </div>
             </div>
-          </>
-        )}
+
+            {sessionsCount === 0 ? (
+              <p className="text-gray-400 italic text-xs">Sem dados de custo para o período.</p>
+            ) : (
+              <>
+                {cur === 'CLP' && (
+                  <p className="text-[10px] text-gray-400 mb-2">Taxa usada: 1 USD = {USD_TO_CLP.toLocaleString('es-CL')} CLP</p>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    {
+                      label: 'Custo médio/sessão',
+                      value: fmt(avgV, cur, d),
+                      sub: cur === 'BRL' ? fmtUsd(avgUsd) : cur === 'USD' ? `R$ ${avgBrl?.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) ?? '—'}` : fmtUsd(avgUsd),
+                      highlight: true,
+                      tip: 'Média de custo da API Anthropic por sessão no período.',
+                    },
+                    {
+                      label: 'Total no período',
+                      value: fmt(totalV, cur, 2),
+                      sub: cur === 'BRL' ? fmtUsd(totalUsd) : `R$ ${totalBrl.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                      tip: 'Soma de todos os custos de API no período selecionado.',
+                    },
+                    {
+                      label: 'Conversa mais cara',
+                      value: fmt(maxCostV, cur, d),
+                      sub: 'anomalia',
+                      tip: 'Sessão com maior custo individual no período.',
+                    },
+                    {
+                      label: 'Custo médio / turno',
+                      value: fmt(avgTurnV, cur, d),
+                      sub: avgTurns != null ? `≈ ${avgTurns.toFixed(1)} turnos/sessão` : '',
+                      tip: 'Custo médio por par pergunta/resposta.',
+                    },
+                  ].map(({ label, value, sub, highlight, tip }) => (
+                    <div key={label} className={`bg-white rounded-lg border shadow-sm p-3 flex flex-col gap-0.5 ${highlight ? 'border-teal-200' : 'border-gray-100'}`}>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-tight flex items-center gap-0.5">{label}<InfoTooltip text={tip} /></p>
+                      <p className={`font-bold ${highlight ? 'text-xl text-gray-900' : 'text-base text-gray-800'}`}>{value}</p>
+                      {sub && <p className="text-[10px] text-gray-300">{sub}</p>}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </details>
       </section>
 
       {/* ── Rentabilidade ── */}

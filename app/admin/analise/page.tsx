@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
 import { cookies } from 'next/headers'
@@ -14,8 +13,6 @@ import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 export const dynamic = 'force-dynamic'
 
 interface IntencaoRow    { intencao_detectada: string | null; total: number }
-interface StarterRow     { starter: string | null; total: number }
-interface MensagemRow    { created_at: string; starter_usado: string | null; intencao_detectada: string | null; primeira_mensagem: string | null; session_id?: string | null }
 interface SessionCostRow { session_id: string; total_brl: number; total_usd: number; turns: number; had_rec: boolean; first_turn_at: string }
 interface ClickRow       { session_id: string; event_type: string; racket_id: number | null }
 interface RecEventRow    { racket_id: number; conversation_id: string }
@@ -42,12 +39,12 @@ function avg(arr: number[]): number | null {
 export default async function AnaliseAdmin({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string; starter?: string; from?: string; to?: string }>
+  searchParams: Promise<{ days?: string; from?: string; to?: string }>
 }) {
   const session = await auth()
   if (!session || session.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const { days: daysParam = '1', starter: starterParam, from: fromParam, to: toParam } = await searchParams
+  const { days: daysParam = '1', from: fromParam, to: toParam } = await searchParams
   const cookieStore = await cookies()
   const includeTest = cookieStore.get('admin_test_view')?.value === '1'
 
@@ -70,7 +67,6 @@ export default async function AnaliseAdmin({
     cutoffDate = brtCutoff(daysBack)
     daysLabel  = daysParam === '1' ? 'hoje' : daysParam === 'all' ? 'todos os tempos' : `últimos ${daysParam} dias`
   }
-  const filterStarter = starterParam !== undefined ? decodeURIComponent(starterParam) : null
 
   const sb  = getAdmin()
   const now = Date.now()
@@ -88,8 +84,6 @@ export default async function AnaliseAdmin({
     clickRows,
     recEventRows,
     intentRaw,
-    starterRaw,
-    starterDetailRows,
     linkClickCounts,
     fallbackRows,
     opsStats,
@@ -136,44 +130,6 @@ export default async function AnaliseAdmin({
         return Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total)
       })
     })(),
-
-    (() => {
-      const q = sb.from('conversations')
-        .select('session_id, starter_usado')
-        .not('primeira_mensagem', 'is', null)
-        .gte('created_at', cutoffDate)
-        .limit(3000)
-      return (includeTest ? q : q.eq('is_test', false)).then(r => {
-        const sessionMap = new Map<string, string | null>()
-        for (const row of (r.data ?? []) as { session_id: string; starter_usado: string | null }[]) {
-          const prev = sessionMap.get(row.session_id)
-          if (prev === undefined || (prev === null && row.starter_usado !== null))
-            sessionMap.set(row.session_id, row.starter_usado)
-        }
-        const c: Record<string, number> = {}
-        for (const starter of sessionMap.values()) {
-          const k = starter ?? 'livre'
-          c[k] = (c[k] ?? 0) + 1
-        }
-        return Object.entries(c).map(([k, v]) => ({ starter: k === 'livre' ? null : k, total: v })).sort((a, b) => b.total - a.total)
-      })
-    })(),
-
-    filterStarter === null || primeiraMsgColumnMissing
-      ? Promise.resolve([] as MensagemRow[])
-      : (() => {
-          const base = sb.from('conversations')
-            .select('created_at, primeira_mensagem, intencao_detectada, starter_usado')
-            .not('primeira_mensagem', 'is', null)
-            .gte('created_at', cutoffDate)
-            .order('created_at', { ascending: false })
-            .limit(100)
-          const withIsTest = includeTest ? base : base.eq('is_test', false)
-          return (filterStarter === 'livre'
-            ? withIsTest.is('starter_usado', null)
-            : withIsTest.eq('starter_usado', filterStarter)
-          ).then(r => (r.data ?? []) as MensagemRow[])
-        })(),
 
     // link_clicks por tipo no período — só cliques do site (session_id presente)
     (() => {
@@ -248,7 +204,6 @@ export default async function AnaliseAdmin({
   }
 
   const intencoes: IntencaoRow[] = intentRaw
-  const starters: StarterRow[]   = starterRaw
 
   // ── Cost stats ────────────────────────────────────────────────────────────
   const sessions            = sessionCostRows.filter(r => r.total_brl > 0)
@@ -377,19 +332,6 @@ export default async function AnaliseAdmin({
     neutral: 'bg-gray-50 border-gray-200 text-gray-700',
   }
 
-  // ── URL helpers ──────────────────────────────────────────────────────────
-  const starterDetailHref = (s: string | null) => {
-    const p = new URLSearchParams()
-    if (daysParam !== '30') p.set('days', daysParam)
-    p.set('starter', s ?? 'livre')
-    return `?${p.toString()}`
-  }
-  const backHref = (() => {
-    const p = new URLSearchParams()
-    if (daysParam !== '30') p.set('days', daysParam)
-    return p.toString() ? `?${p.toString()}` : '?'
-  })()
-
   // Funil steps — steps 3 e 4 mostram % vs step 2 (não encadeado entre eles)
   const funnelSteps: { label: string; n: number; eventos: number | null; vsStep: number | null }[] = [
     { label: 'Sessões com quiz',       n: sessions.length,             eventos: null,                    vsStep: null },
@@ -451,12 +393,9 @@ export default async function AnaliseAdmin({
 
       {/* ══ SEÇÃO 1 — Saúde do negócio ══════════════════════════════════════ */}
       <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
           Saúde do negócio <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
         </h2>
-        <p className="text-[11px] text-gray-400 mb-3">
-          Cliques de <code className="font-mono">link_clicks</code> — só cliques com session_id (do site, sem bots) · fonte de verdade para métricas de dinheiro
-        </p>
 
         {/* Cliques por tipo */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3">
@@ -518,12 +457,9 @@ export default async function AnaliseAdmin({
 
       {/* ══ SEÇÃO 2 — Funil do quiz ══════════════════════════════════════════ */}
       <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
           Funil do quiz <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
         </h2>
-        <p className="text-[11px] text-gray-400 mb-3">
-          Fonte: <code className="font-mono">feedback_events</code> · apenas sessões que passaram pelo quiz
-        </p>
         {sessions.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Nenhuma sessão com quiz no período.</p>
         ) : (
@@ -580,12 +516,9 @@ export default async function AnaliseAdmin({
       {/* ══ SEÇÃO 3 — Produto ════════════════════════════════════════════════ */}
       <section className="flex flex-col gap-8">
         <div>
-          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">
+          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
             Produto <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
           </h2>
-          <p className="text-[11px] text-gray-400 mb-3">
-            Fonte: <code className="font-mono">recommendation_events</code> · % clicou = sessões que clicaram nessa raquete ÷ sessões que a receberam como recomendação
-          </p>
 
           {topRaquetes.length === 0 ? (
             <p className="text-gray-400 italic text-xs">Nenhuma recomendação no período.</p>
@@ -634,88 +567,6 @@ export default async function AnaliseAdmin({
             </div>
           )}
         </div>
-
-        {/* Starters */}
-        <div>
-          <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-1">Starters usados</h2>
-          <p className="text-[11px] text-gray-400 mb-3">{daysLabel} · clique para ver as primeiras mensagens</p>
-          {starters.length === 0 ? (
-            <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
-          ) : (
-            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden text-xs">
-              <thead className="bg-gray-50 text-gray-400 uppercase">
-                <tr>
-                  <th className="text-left px-4 py-2">Starter</th>
-                  <th className="text-right px-4 py-2">Total</th>
-                  <th className="text-right px-4 py-2">%</th>
-                  <th className="px-4 py-2 w-1/3"></th>
-                  <th className="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {(() => {
-                  const starterTotal = starters.reduce((a, x) => a + x.total, 0)
-                  return starters.filter(r => r.starter !== null).map(r => {
-                    const isActive = filterStarter !== null && filterStarter === (r.starter ?? 'livre')
-                    return (
-                      <tr key={r.starter ?? 'livre'} className={`border-t border-gray-100 ${isActive ? 'bg-teal-50' : ''}`}>
-                        <td className="px-4 py-2">{r.starter ?? <span className="italic text-gray-400">livre (digitou)</span>}</td>
-                        <td className="px-4 py-2 text-right font-semibold">{r.total}</td>
-                        <td className="px-4 py-2 text-right text-gray-400">{pct(r.total, starterTotal)}</td>
-                        <td className="px-4 py-2">
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-300 rounded-full" style={{ width: `${Math.round((r.total / starterTotal) * 100)}%` }} />
-                          </div>
-                        </td>
-                      <td className="px-4 py-2 text-right">
-                        {primeiraMsgColumnMissing ? (
-                          <span className="text-gray-300 text-[10px]">migration pendente</span>
-                        ) : (
-                          <Link href={starterDetailHref(r.starter)} className={`px-2.5 py-1 rounded-full font-medium transition-colors ${isActive ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-700'}`}>
-                            {isActive ? 'Aberto ↓' : 'Ver mensagens'}
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                    )
-                  })
-                })()}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Detalhe de starter */}
-        {filterStarter !== null && !primeiraMsgColumnMissing && (
-          <div className="border-2 border-teal-200 rounded-2xl p-5 bg-teal-50">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-sm font-semibold text-teal-900">
-                  Mensagens: <span className="font-normal italic">&ldquo;{filterStarter === 'livre' ? 'livre (digitou)' : filterStarter}&rdquo;</span>
-                </h2>
-                <p className="text-teal-600 text-xs mt-0.5">
-                  {starterDetailRows.length} mensagem{starterDetailRows.length !== 1 ? 's' : ''}
-                  {filterStarter === 'livre' && ' — texto original, sem edição'}
-                </p>
-              </div>
-              <Link href={backHref} className="text-xs text-teal-600 hover:text-teal-800 border border-teal-300 rounded-lg px-3 py-1.5 transition-colors bg-white">
-                ← Fechar
-              </Link>
-            </div>
-            <div className="flex flex-col gap-2">
-              {starterDetailRows.map((r, i) => (
-                <div key={i} className="bg-white rounded-lg px-4 py-3 border border-teal-100 shadow-sm">
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-1 flex-wrap">
-                    <span>{new Date(r.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</span>
-                    {r.intencao_detectada && <span className="bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">{r.intencao_detectada}</span>}
-                  </div>
-                  <p className="text-gray-800 leading-snug text-sm">{r.primeira_mensagem}</p>
-                </div>
-              ))}
-              {starterDetailRows.length === 0 && <p className="text-teal-600 italic text-sm">Nenhuma mensagem encontrada.</p>}
-            </div>
-          </div>
-        )}
 
         {/* Custos */}
         <CostSection
@@ -805,65 +656,6 @@ export default async function AnaliseAdmin({
               ) : (
                 <span className="text-gray-400 italic">Nenhuma sync registrada</span>
               )}
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* ══ SEÇÃO 5 — Mapa de dados ══════════════════════════════════════════ */}
-      <section>
-        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
-          Mapa de dados
-        </h2>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50 text-xs">
-
-          <div className="px-5 py-4 flex gap-4">
-            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Sessão</span>
-            <div className="flex flex-col gap-1 text-gray-500">
-              <p>Identificador de browser (<code className="bg-gray-100 px-1 rounded text-[11px]">session_id</code>). Criado quando o usuário abre o site pela primeira vez — <strong>não depende de iniciar o quiz</strong>. Quem acessa <code>/raquetes/athena</code> diretamente já tem uma sessão.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>conversations.session_id</code>, <code>link_clicks.session_id</code>, <code>feedback_events.session_id</code></p>
-            </div>
-          </div>
-
-          <div className="px-5 py-4 flex gap-4">
-            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Conversa</span>
-            <div className="flex flex-col gap-1 text-gray-500">
-              <p>Uma chamada de API ao Claude (<code>custo_brl &gt; 0</code>). Uma sessão de quiz pode gerar 1–N conversas conforme o usuário continua interagindo. O contador de <strong>Turnos</strong> no painel = total de linhas com custo &gt; 0 por sessão.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>conversations</code> · 1 linha por chamada de API. Turnos médios tipicamente entre 1–3 (maioria resolve em 1 chamada).</p>
-            </div>
-          </div>
-
-          <div className="px-5 py-4 flex gap-4">
-            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Recomendação</span>
-            <div className="flex flex-col gap-1 text-gray-500">
-              <p>Quando o modelo retorna raquetes sugeridas (<code>recommended_racket_ids</code> não-vazio). Uma sessão tem <code>had_rec = true</code> se qualquer turno gerou recomendações. A <strong>taxa de recomendação</strong> mede sessões com quiz que chegaram a ter pelo menos 1 recomendação.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>recommendation_events</code> (1 linha por raquete recomendada)</p>
-            </div>
-          </div>
-
-          <div className="px-5 py-4 flex gap-4">
-            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Clique quiz</span>
-            <div className="flex flex-col gap-1 text-gray-500">
-              <p>Evento registrado pelo <strong>frontend</strong> quando o usuário clica em um botão dentro da interface do quiz. Tipos: <code className="bg-gray-100 px-1 rounded text-[11px]">ver_na_loja</code> (afiliado), <code className="bg-gray-100 px-1 rounded text-[11px]">ver_analise</code> (página da raquete), <code className="bg-gray-100 px-1 rounded text-[11px]">nova_conversa_pos_rec</code>.</p>
-              <p className="text-[11px] text-gray-400 mt-1"><strong>ver_analise</strong> mede interesse (navega para página interna). <strong>ver_na_loja</strong> mede intenção de compra (afiliado). Nunca somar os dois como métrica de conversão.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>feedback_events</code> · usado para calcular funil e % engajou por raquete.</p>
-            </div>
-          </div>
-
-          <div className="px-5 py-4 flex gap-4">
-            <span className="shrink-0 w-28 font-semibold text-gray-700 pt-0.5">Clique link</span>
-            <div className="flex flex-col gap-1 text-gray-500">
-              <p>Registrado <strong>server-side</strong> ao passar pelo redirect <code>/ir/[slug]</code>. Captura <em>todos</em> os cliques — com ou sem sessão de quiz. Inclui cliques diretos de quem acessa a página da raquete sem ter feito o quiz. Tem <code>tipo</code> (afiliado / busca ML / oficial) e URL de destino.</p>
-              <p className="text-[11px] text-gray-400">Tabela: <code>link_clicks</code> · usado no painel <strong>Cliques</strong> e na Seção 1. <strong>Fonte de verdade para métricas de dinheiro.</strong></p>
-            </div>
-          </div>
-
-          <div className="px-5 py-4 bg-gray-100 rounded-b-xl">
-            <p className="font-semibold text-gray-700 mb-1.5">Diferença entre as duas fontes de clique</p>
-            <div className="text-gray-500 flex flex-col gap-1">
-              <p>Um clique vindo do quiz aparece em <strong>ambas</strong> as tabelas: <code>feedback_events</code> (botão pressionado) + <code>link_clicks</code> (passou pelo redirect). Um clique direto (usuário vai à página da raquete sem quiz) aparece <strong>só em <code>link_clicks</code></strong> — sem <code>session_id</code> na conversa.</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">Use <code>link_clicks</code> para contar dinheiro. Use <code>feedback_events</code> para analisar comportamento dentro do quiz.</p>
             </div>
           </div>
 
