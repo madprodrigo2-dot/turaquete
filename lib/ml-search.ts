@@ -1,4 +1,4 @@
-const AFFILIATE_TAG = 'matt_word=madariagarodrigo20221014140538&matt_tool=94105833'
+const AFFILIATE_TAG = 'matt_word=turaquete&matt_tool=94105833'
 
 export const SEARCH_FALLBACK_UNCOVERED = true
 

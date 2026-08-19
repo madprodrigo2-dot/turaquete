@@ -22,7 +22,7 @@ Após `git push`, não mencionar deploy. O Vercel auto-deploya a cada push no `m
 
 ### Input do usuário
 - Link da ficha do fabricante (e specs adicionais se o link não bastar)
-- Link ML com tag afiliado: `?matt_word=madariagarodrigo20221014140538&matt_tool=94105833`
+- Link ML com tag afiliado: `?matt_word=turaquete&matt_tool=94105833`
 
 ### Extração de specs — REGRA CRÍTICA
 
