@@ -1042,17 +1042,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
           <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:h-full">
             {/* Mobile: horizontal completa, sem recorte */}
             <Image
-              src="/new_hero_mobile.webp"
+              src="/new_hero_desktop.webp"
               alt="Raquetes de beach tennis na areia"
-              width={768}
-              height={1376}
+              width={1376}
+              height={768}
               className="w-full h-auto block md:hidden"
               priority
               sizes="100vw"
             />
             {/* Desktop: fill igualando altura do texto, recorta só o céu */}
             <Image
-              src="/new_hero_desktop.webp"
+              src="/new_hero_mobile.webp"
               alt="Raquetes de beach tennis na areia"
               fill
               className="hidden md:block object-cover object-[center_80%]"
