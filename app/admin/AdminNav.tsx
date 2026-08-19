@@ -54,6 +54,7 @@ export default function AdminNav() {
                 <Link
                   key={tab.href}
                   href={tab.href}
+                  prefetch={false}
                   onClick={() => setOpen(false)}
                   className={`flex items-center px-4 py-2.5 text-xs font-medium transition-colors ${
                     isActive(tab)

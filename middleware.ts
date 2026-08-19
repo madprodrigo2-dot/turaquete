@@ -1,5 +1,5 @@
 import { auth } from '@/auth'
-import { NextResponse } from 'next/server'
+import { NextResponse, type NextRequest, type NextFetchEvent } from 'next/server'
 
 const HOTLINK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60" viewBox="0 0 220 60">
   <rect width="220" height="60" rx="6" fill="#0CC0BE"/>
@@ -22,7 +22,23 @@ function isAllowedReferer(referer: string | null): boolean {
   }
 }
 
-export default auth((req) => {
+// auth() sempre resolve a sessão antes de chamar o callback (getSession() roda
+// incondicionalmente dentro do handleAuth do next-auth) — por isso fica isolado
+// aqui e só é invocado para /admin/*. /raquetes/* (inclui cada .webp de raquete)
+// nunca paga esse custo.
+const authMiddleware = auth((req) => {
+  if (!req.auth) {
+    const res = NextResponse.redirect(new URL('/admin/login', req.url))
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+    return res
+  }
+
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('x-admin-protected', '1')
+  return NextResponse.next({ request: { headers: requestHeaders } })
+}) as unknown as (req: NextRequest, event: NextFetchEvent) => Promise<Response>
+
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl
 
   if (pathname.startsWith('/raquetes/')) {
@@ -35,16 +51,8 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  if (!req.auth) {
-    const res = NextResponse.redirect(new URL('/admin/login', req.url))
-    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
-    return res
-  }
-
-  const requestHeaders = new Headers(req.headers)
-  requestHeaders.set('x-admin-protected', '1')
-  return NextResponse.next({ request: { headers: requestHeaders } })
-})
+  return authMiddleware(req, event)
+}
 
 // Login e reset excluídos do matcher — middleware não roda para essas rotas
 export const config = {
