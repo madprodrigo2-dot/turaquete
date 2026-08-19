@@ -6,15 +6,17 @@ import { useState } from 'react'
 import { useAdminTheme } from './AdminShell'
 
 const TABS = [
-  { label: 'Dados',       href: '/admin/analise'    },
+  // Operação frequente primeiro — afiliados é o gargalo de monetização.
+  { label: 'Afiliados',   href: '/admin/afiliados'  },
+  { label: 'Raquetas',    href: '/admin/rackets'    },
+  { label: 'Preços',      href: '/admin/precos'     },
+  { label: 'Conteúdo',    href: '/admin/qualidade'  },
+  { label: 'Motor',       href: '/admin/motor'      },
+  // Consulta/analytics por último — Dados no final, a pedido.
   { label: 'Cliques',     href: '/admin/cliques'    },
   { label: 'Ranking',     href: '/admin/ranking'    },
-  { label: 'Afiliados',   href: '/admin/afiliados'  },
-  { label: 'Preços',      href: '/admin/precos'     },
   { label: 'Conversas',   href: '/admin/conversas'  },
-  { label: 'Raquetas',    href: '/admin/rackets'    },
-  { label: 'Motor',       href: '/admin/motor'      },
-  { label: 'Conteúdo',    href: '/admin/qualidade'  },
+  { label: 'Dados',       href: '/admin/analise'    },
 ]
 
 export default function AdminNav() {
