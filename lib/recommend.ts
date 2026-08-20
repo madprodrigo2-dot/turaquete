@@ -91,7 +91,7 @@ export interface RacketWithInsights {
   publicada: boolean
   is_active: boolean | null
   racket_insights: Insights | null
-  brands?: { name: string; slug?: string } | null
+  brands?: { name: string; slug?: string; logo_url?: string | null } | null
 }
 
 export interface RecommendedRacket {
@@ -115,7 +115,7 @@ const SELECT_FIELDS = `
   id, name, slug, nome_base, model_year, racket_family_count, weight_g, balance, format,
   face_material, core, price, price_updated_at, updated_at, currency, affiliate_url, source_url, image_url, technologies,
   specs_extra, publicada, is_active,
-  brands ( name, slug ),
+  brands ( name, slug, logo_url ),
   racket_insights (
     power, control, comfort, maneuverability, stability, spin, forgiveness,
     good_for_beginners, good_for_intermediate, good_for_advanced,

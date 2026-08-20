@@ -12,6 +12,7 @@ import { derivarNivel } from '@/lib/nivel'
 import InsightsModal from './InsightsModal'
 import RacketImageTile from './RacketImageTile'
 import AthleteBadge from './AthleteBadge'
+import BrandLogo from './BrandLogo'
 
 interface Props {
   onStart: () => void
@@ -354,8 +355,9 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
           <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} />
         </Link>
         <div className="p-4 flex flex-col gap-2.5 flex-1">
-          <Link href={`/raquetes/${racket.slug}`}>
-            <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors min-h-[33px]">
+          <Link href={`/raquetes/${racket.slug}`} className="flex items-start gap-1.5">
+            <BrandLogo src={racket.brands?.logo_url} alt={racket.brands?.name ?? ''} />
+            <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors min-h-[33px] flex-1 min-w-0">
               {getDisplayName(racket)}
             </p>
           </Link>
@@ -1227,7 +1229,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                        'Jogadores experientes'}
                     </span>
                   )}
-                  <p className="text-tinta font-semibold text-sm leading-snug">{exampleRacket.name}</p>
+                  <div className="flex items-start gap-1.5">
+                    <BrandLogo src={exampleRacket.brands?.logo_url} alt={exampleRacket.brands?.name ?? ''} />
+                    <p className="text-tinta font-semibold text-sm leading-snug flex-1 min-w-0">{exampleRacket.name}</p>
+                  </div>
                   {exampleRacket.price != null && (
                     <p className="text-coral font-bold text-sm">
                       R${exampleRacket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
@@ -1362,7 +1367,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                     <div className="rounded-xl overflow-hidden border border-coral/20">
                       <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} />
                     </div>
-                    <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
+                    <div className="flex items-center justify-center gap-1">
+                      <BrandLogo src={compareRacket.brands?.logo_url} alt={compareRacket.brands?.name ?? ''} />
+                      <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
+                    </div>
                   </>
                 ) : (
                   <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">

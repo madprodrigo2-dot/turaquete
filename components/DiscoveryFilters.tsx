@@ -6,6 +6,7 @@ import { MagnifyingGlass, X } from '@phosphor-icons/react'
 import type { RacketWithInsights } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import RacketImageTile from './RacketImageTile'
+import BrandLogo from './BrandLogo'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 import NaoAcheiWidget from './NaoAcheiWidget'
@@ -45,7 +46,10 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
             {NIVEL_SHORT[nivel] ?? nivel}
           </span>
         )}
-        <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
+        <div className="flex items-start gap-1.5">
+          <BrandLogo src={racket.brands?.logo_url} alt={racket.brands?.name ?? ''} />
+          <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px] flex-1 min-w-0">{getDisplayName(racket)}</p>
+        </div>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
       </div>
     </Link>

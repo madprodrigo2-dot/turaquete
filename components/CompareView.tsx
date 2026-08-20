@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { RacketWithInsights } from '@/lib/recommend'
 import { buildSpecRows, NIVEL_LABEL } from './SpecsGrid'
 import RacketImageTile from './RacketImageTile'
+import BrandLogo from './BrandLogo'
 import CompareHexagon from './CompareHexagon'
 import { derivarNivel } from '@/lib/nivel'
 import TermoGlossario from './TermoGlossario'
@@ -264,9 +265,10 @@ export default function CompareView({ rackets }: Props) {
               <div className="flex flex-col gap-1 px-0.5">
                 <Link
                   href={`/raquetes/${r.slug}`}
-                  className="text-[12px] font-semibold text-tinta leading-snug hover:underline"
+                  className="flex items-start gap-1.5 text-[12px] font-semibold text-tinta leading-snug hover:underline"
                 >
-                  {r.name}
+                  <BrandLogo src={r.brands?.logo_url} alt={r.brands?.name ?? ''} />
+                  <span className="flex-1 min-w-0">{r.name}</span>
                 </Link>
                 {r.brands?.name && (
                   <span className="text-[11px] text-tinta/40">{r.brands.name}</span>

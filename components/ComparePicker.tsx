@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { RacketWithInsights } from '@/lib/recommend'
 import RacketImageTile from './RacketImageTile'
+import BrandLogo from './BrandLogo'
 import { ArrowRight } from '@phosphor-icons/react'
 
 const COLORS: Record<'A' | 'B', string> = { A: '#FF5E3A', B: '#0CC0BE' }
@@ -129,9 +130,12 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                     <>
                       <RacketImageTile src={selected.image_url} alt={selected.name} />
                       <div className="px-2.5 py-2 bg-white">
-                        <p className="text-[11px] font-semibold text-tinta leading-snug line-clamp-2 min-h-[30px]">
-                          {selected.name}
-                        </p>
+                        <div className="flex items-start gap-1">
+                          <BrandLogo src={selected.brands?.logo_url} alt={selected.brands?.name ?? ''} />
+                          <p className="text-[11px] font-semibold text-tinta leading-snug line-clamp-2 min-h-[30px] flex-1 min-w-0">
+                            {selected.name}
+                          </p>
+                        </div>
                         {selected.price != null && (
                           <p className="text-[11px] font-bold mt-0.5" style={{ color }}>
                             R${selected.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
