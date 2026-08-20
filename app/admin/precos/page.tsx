@@ -91,8 +91,8 @@ export default async function PrecosPage() {
   })
 
   const groupACount = rows.filter(r => r.group === 'A').length
-  const staleCount  = rows.filter(r => r.group !== 'C' && r.price_updated_at !== null && staleDays(r.price_updated_at) > 30).length
-  const neverCount  = rows.filter(r => r.group !== 'C' && r.price_updated_at === null).length
+  const staleCount  = rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at !== null && staleDays(r.price_updated_at) > 30).length
+  const neverCount  = rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at === null).length
 
   const lastGeckoSync = (lastSyncRow as { price_updated_at: string } | null)?.price_updated_at ?? null
   const lastSyncLabel = lastGeckoSync
