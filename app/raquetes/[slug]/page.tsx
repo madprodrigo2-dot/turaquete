@@ -9,7 +9,7 @@ import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { SITE_URL } from '@/lib/site'
 import BuyButton from '@/components/BuyButton'
 import SiteNav from '@/components/SiteNav'
-import AthleteBadge from '@/components/AthleteBadge'
+import RacketBadgeOverlay from '@/components/RacketBadgeOverlay'
 import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
 import ScoreSection from '@/components/ScoreSection'
 import RacketKeyStats from '@/components/RacketKeyStats'
@@ -148,12 +148,15 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
             <div className="lg:sticky lg:top-20">
               <div className="bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[220px]">
                 {racket.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={racket.image_url}
-                    alt={racket.name}
-                    className="object-contain max-h-72 lg:max-h-[520px] w-auto"
-                  />
+                  <div className="relative overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={racket.image_url}
+                      alt={racket.name}
+                      className="object-contain max-h-72 lg:max-h-[520px] w-auto"
+                    />
+                    <RacketBadgeOverlay athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} />
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-aqua/30">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -184,7 +187,6 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                   </div>
                 )}
                 <div className="flex gap-2 flex-wrap mt-1">
-                  {athlete && <AthleteBadge athlete={athlete} />}
                   {(() => {
                     const nivel = derivarNivel(racket)
                     return nivel ? (

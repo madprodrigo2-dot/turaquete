@@ -1,5 +1,4 @@
-import AthleteBadge from './AthleteBadge'
-import BrandLogo from './BrandLogo'
+import RacketBadgeOverlay from './RacketBadgeOverlay'
 
 interface Props {
   src?: string | null
@@ -20,18 +19,10 @@ function Placeholder() {
   )
 }
 
-// Single source of truth for the racket image tile + athlete badge overlay.
-// Always uses relative + overflow-hidden so the badge is clipped to the tile
+// Single source of truth for the racket image tile + badge overlay.
+// Always uses relative + overflow-hidden so the badges are clipped to the tile
 // and can never escape card bounds or bleed over a sticky header (z-10 < z-30).
 export default function RacketImageTile({ src, alt, athlete, brandLogo, brandName, hoverScale, loading = 'lazy' }: Props) {
-  // When a brand badge shares the tile, reserve room on the right so the athlete
-  // badge never reaches it: two co-signed athletes wrap to a second line, and a
-  // single unusually long name (still one flex item, so it can't wrap against
-  // itself) gets hard-clipped by overflow-hidden as the last-resort guarantee.
-  const athleteMaxW = brandLogo
-    ? 'max-w-[calc(100%-96px)] md:max-w-[calc(100%-126px)] overflow-hidden'
-    : 'max-w-[calc(100%-12px)]'
-
   return (
     <div className="relative aspect-[800/1020] bg-white overflow-hidden shrink-0">
       {src ? (
@@ -45,16 +36,7 @@ export default function RacketImageTile({ src, alt, athlete, brandLogo, brandNam
       ) : (
         <Placeholder />
       )}
-      {athlete && (
-        <div className={`absolute top-1.5 left-1.5 z-10 ${athleteMaxW}`}>
-          <AthleteBadge athlete={athlete} />
-        </div>
-      )}
-      {brandLogo && (
-        <div className="absolute top-1.5 right-1.5 z-10 max-w-[calc(100%-12px)] rounded-md bg-white/95 border border-tinta/10 shadow-sm px-1.5 py-1 md:px-2 md:py-1.5">
-          <BrandLogo src={brandLogo} alt={brandName ?? ''} />
-        </div>
-      )}
+      <RacketBadgeOverlay athlete={athlete} brandLogo={brandLogo} brandName={brandName} />
     </div>
   )
 }
