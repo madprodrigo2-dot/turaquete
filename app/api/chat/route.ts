@@ -2,13 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { runAgentTurn, ChatMessage, PostRecContext, extractOrcamentoFromHistory } from '@/lib/agent/agent'
 import { calcCost, PRICING } from '@/lib/agent/pricing'
-import { getSupabase, getSupabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit, getRateLimitState } from '@/lib/rate-limit'
 import { auth } from '@/auth'
+import { sendTelegram } from '@/lib/telegram'
 
 // In-memory dedup: rejects the same message arriving twice within 2s for the same session.
 const dedupCache = new Map<string, { lastMsg: string; ts: number }>()
 const DEDUP_WINDOW_MS = 2_000
+
+// Alert cooldown for conversation-insert failures — this insert fires on every chat
+// turn, so without a cooldown a recurring failure (e.g. RLS blocking the insert again)
+// would spam Telegram once per turn instead of once per incident.
+let lastConversationInsertAlertAt = 0
+const CONVERSATION_INSERT_ALERT_COOLDOWN_MS = 30 * 60_000
+
+function alertConversationInsertFailure(sessionId: string, message: string) {
+  const now = Date.now()
+  if (now - lastConversationInsertAlertAt < CONVERSATION_INSERT_ALERT_COOLDOWN_MS) return
+  lastConversationInsertAlertAt = now
+  sendTelegram(
+    `⚠️ <b>Falha ao salvar conversa</b>\n\nsession=${sessionId}\n${message}\n\n(alertas repetidos ficam em cooldown por 30min — ver logs do servidor para o volume real)`
+  ).catch((e: unknown) => {
+    console.error('[chat] telegram alert falhou:', e instanceof Error ? e.message : String(e))
+  })
+}
 
 const MAX_MESSAGE_CHARS = 1_000
 
@@ -404,7 +422,10 @@ export async function POST(req: NextRequest) {
               utm_medium: origemUtmMedium ?? null,
             })
             .then(({ error }) => {
-              if (error) console.error('[chat] falha ao salvar conversa (session=%s): %s', sessionId, error.message)
+              if (error) {
+                console.error('[chat] falha ao salvar conversa (session=%s): %s', sessionId, error.message)
+                alertConversationInsertFailure(sessionId, error.message)
+              }
             })
 
           // Capture sem_match events server-side so they persist even without a subsequent turn
