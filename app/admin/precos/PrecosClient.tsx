@@ -275,7 +275,7 @@ function SortTh({ col, align, active, dir, onSort, className, children }: {
   )
 }
 
-type FilterKey = 'priority' | 'afiliado' | 'all' | 'failed'
+type FilterKey = 'priority' | 'afiliado' | 'all' | 'failed' | 'stale' | 'never'
 
 export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; summary: Summary }) {
   const [q, setQ]           = useState('')
@@ -296,6 +296,8 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     afiliado: rows.filter(r => r.group === 'A' || r.group === 'B').length,
     all:      rows.length,
     failed:   rows.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha).length,
+    stale:    rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at !== null && staleDaysClient(r.price_updated_at) > 30).length,
+    never:    rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at === null).length,
   }), [rows])
 
   const displayed = useMemo(() => {
@@ -307,6 +309,8 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     if (filter === 'priority') out = out.filter(r => r.group === 'A')
     if (filter === 'afiliado') out = out.filter(r => r.group !== 'C')
     if (filter === 'failed')   out = out.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha)
+    if (filter === 'stale')    out = out.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at !== null && staleDaysClient(r.price_updated_at) > 30)
+    if (filter === 'never')    out = out.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at === null)
     if (sortKey) {
       out = [...out].sort((a, b) => {
         let diff = 0
@@ -325,6 +329,8 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
     afiliado: '💰 Todas com afiliado',
     all:      'Todas',
     failed:   '⚠️ Falharam',
+    stale:    '⚠️ Preço >30d',
+    never:    '⏰ Nunca atualizadas',
   }
 
   return (
@@ -336,10 +342,14 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
           🔥 {summary.groupA} prioritárias a revisar
         </span>
         {summary.stale30d > 0 && (
-          <span className="text-red-500 font-medium">⚠️ {summary.stale30d} com preço &gt;30d</span>
+          <button onClick={() => setFilter('stale')} className="text-red-500 font-medium hover:underline text-sm">
+            ⚠️ {summary.stale30d} com preço &gt;30d
+          </button>
         )}
         {summary.neverUpdated > 0 && (
-          <span className="text-orange-500 font-medium">⏰ {summary.neverUpdated} nunca atualizadas</span>
+          <button onClick={() => setFilter('never')} className="text-orange-500 font-medium hover:underline text-sm">
+            ⏰ {summary.neverUpdated} nunca atualizadas
+          </button>
         )}
         {counts.failed > 0 && (
           <button onClick={() => setFilter('failed')} className="text-red-500 font-medium hover:underline text-sm">
@@ -367,7 +377,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
           )}
         </div>
 
-        {(['priority', 'afiliado', 'all', 'failed'] as FilterKey[]).map(f => (
+        {(['priority', 'afiliado', 'all', 'failed', 'stale', 'never'] as FilterKey[]).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
