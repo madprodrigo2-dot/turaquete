@@ -38,6 +38,7 @@ export default async function AfiliadosPage() {
     sb
       .from('rackets')
       .select('id, name, price, currency, publicada, is_active, affiliate_url, source_url, brand_id, price_updated_at, model_year')
+      .eq('publicada', true)
       .order('name'),
     sb
       .from('brands')
