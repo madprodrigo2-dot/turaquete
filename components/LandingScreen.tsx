@@ -12,7 +12,6 @@ import { derivarNivel } from '@/lib/nivel'
 import InsightsModal from './InsightsModal'
 import RacketImageTile from './RacketImageTile'
 import AthleteBadge from './AthleteBadge'
-import BrandLogo from './BrandLogo'
 
 interface Props {
   onStart: () => void
@@ -352,12 +351,11 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
     <>
       <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-arena flex flex-col h-full">
         <Link href={`/raquetes/${racket.slug}`} className="block">
-          <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} />
+          <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} />
         </Link>
         <div className="p-4 flex flex-col gap-2.5 flex-1">
-          <Link href={`/raquetes/${racket.slug}`} className="flex items-start gap-1.5">
-            <BrandLogo src={racket.brands?.logo_url} alt={racket.brands?.name ?? ''} />
-            <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors min-h-[33px] flex-1 min-w-0">
+          <Link href={`/raquetes/${racket.slug}`}>
+            <p className="font-heading text-tinta text-xs font-semibold leading-snug line-clamp-2 hover:text-aqua transition-colors min-h-[33px]">
               {getDisplayName(racket)}
             </p>
           </Link>
@@ -1219,7 +1217,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               </p>
               <div className="flex gap-4 items-start">
                 <div className="w-20 shrink-0 rounded-xl overflow-hidden border border-aqua/20">
-                  <RacketImageTile src={exampleRacket.image_url} alt={exampleRacket.name} />
+                  <RacketImageTile src={exampleRacket.image_url} alt={exampleRacket.name} brandLogo={exampleRacket.brands?.logo_url} brandName={exampleRacket.brands?.name} />
                 </div>
                 <div className="flex flex-col gap-1.5 flex-1 min-w-0">
                   {derivarNivel(exampleRacket) && (
@@ -1229,10 +1227,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                        'Jogadores experientes'}
                     </span>
                   )}
-                  <div className="flex items-start gap-1.5">
-                    <BrandLogo src={exampleRacket.brands?.logo_url} alt={exampleRacket.brands?.name ?? ''} />
-                    <p className="text-tinta font-semibold text-sm leading-snug flex-1 min-w-0">{exampleRacket.name}</p>
-                  </div>
+                  <p className="text-tinta font-semibold text-sm leading-snug">{exampleRacket.name}</p>
                   {exampleRacket.price != null && (
                     <p className="text-coral font-bold text-sm">
                       R${exampleRacket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
@@ -1365,12 +1360,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
                 {compareRacket ? (
                   <>
                     <div className="rounded-xl overflow-hidden border border-coral/20">
-                      <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} />
+                      <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} brandLogo={compareRacket.brands?.logo_url} brandName={compareRacket.brands?.name} />
                     </div>
-                    <div className="flex items-center justify-center gap-1">
-                      <BrandLogo src={compareRacket.brands?.logo_url} alt={compareRacket.brands?.name ?? ''} />
-                      <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
-                    </div>
+                    <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
                   </>
                 ) : (
                   <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">

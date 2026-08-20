@@ -6,7 +6,6 @@ import { MagnifyingGlass, X } from '@phosphor-icons/react'
 import type { RacketWithInsights } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import RacketImageTile from './RacketImageTile'
-import BrandLogo from './BrandLogo'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 import NaoAcheiWidget from './NaoAcheiWidget'
@@ -39,17 +38,14 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
       href={`/raquetes/${racket.slug}`}
       className="group bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 hover:border-aqua/30 transition-all duration-200 flex flex-col"
     >
-      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
+      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} hoverScale />
       <div className="p-3 flex flex-col gap-1 flex-1">
         {nivel && (
           <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-tinta/[0.06] text-tinta/50 w-fit leading-none">
             {NIVEL_SHORT[nivel] ?? nivel}
           </span>
         )}
-        <div className="flex items-start gap-1.5">
-          <BrandLogo src={racket.brands?.logo_url} alt={racket.brands?.name ?? ''} />
-          <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px] flex-1 min-w-0">{getDisplayName(racket)}</p>
-        </div>
+        <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
       </div>
     </Link>
