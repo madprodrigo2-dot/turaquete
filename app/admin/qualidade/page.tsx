@@ -242,24 +242,26 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
         {motivoEntries.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
         ) : (
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-2">Motivo</th>
-                <th className="text-right px-4 py-2">Qtd</th>
-                <th className="text-right px-4 py-2">%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {motivoEntries.map(([motivo, count]) => (
-                <tr key={motivo} className="border-t border-gray-100">
-                  <td className="px-4 py-2">{motivo}</td>
-                  <td className="px-4 py-2 text-right font-semibold">{count}</td>
-                  <td className="px-4 py-2 text-right text-gray-400">{pct(count, negatives.length)}</td>
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-2">Motivo</th>
+                  <th className="text-right px-4 py-2">Qtd</th>
+                  <th className="text-right px-4 py-2">%</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {motivoEntries.map(([motivo, count]) => (
+                  <tr key={motivo} className="border-t border-gray-100">
+                    <td className="px-4 py-2">{motivo}</td>
+                    <td className="px-4 py-2 text-right font-semibold">{count}</td>
+                    <td className="px-4 py-2 text-right text-gray-400">{pct(count, negatives.length)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -288,22 +290,24 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
         {buscaTermos.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
         ) : (
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-2">Termo buscado</th>
-                <th className="text-right px-4 py-2">Buscas</th>
-              </tr>
-            </thead>
-            <tbody>
-              {buscaTermos.map(([termo, count]) => (
-                <tr key={termo} className="border-t border-gray-100">
-                  <td className="px-4 py-2 font-mono text-sm">{termo}</td>
-                  <td className="px-4 py-2 text-right font-semibold">{count}</td>
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-2">Termo buscado</th>
+                  <th className="text-right px-4 py-2">Buscas</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {buscaTermos.map(([termo, count]) => (
+                  <tr key={termo} className="border-t border-gray-100">
+                    <td className="px-4 py-2 font-mono text-sm">{termo}</td>
+                    <td className="px-4 py-2 text-right font-semibold">{count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
@@ -315,28 +319,30 @@ create index if not exists idx_feedback_events_created_at on feedback_events(cre
         {intencaoEntries.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Sem dados ainda.</p>
         ) : (
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-            <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="text-left px-4 py-2">Intenção</th>
-                <th className="text-right px-4 py-2">Total</th>
-                <th className="text-right px-4 py-2">👍</th>
-                <th className="text-right px-4 py-2">👎</th>
-                <th className="text-right px-4 py-2">% positivo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {intencaoEntries.map(([intencao, { pos, neg }]) => (
-                <tr key={intencao} className="border-t border-gray-100">
-                  <td className="px-4 py-2 font-mono">{intencao}</td>
-                  <td className="px-4 py-2 text-right font-semibold">{pos + neg}</td>
-                  <td className="px-4 py-2 text-right text-emerald-600">{pos}</td>
-                  <td className="px-4 py-2 text-right text-red-400">{neg}</td>
-                  <td className="px-4 py-2 text-right">{pct(pos, pos + neg)}</td>
+          <div className="bg-white shadow-sm rounded-lg overflow-hidden overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-100 text-xs text-gray-500 uppercase">
+                <tr>
+                  <th className="text-left px-4 py-2">Intenção</th>
+                  <th className="text-right px-4 py-2">Total</th>
+                  <th className="text-right px-4 py-2">👍</th>
+                  <th className="text-right px-4 py-2">👎</th>
+                  <th className="text-right px-4 py-2">% positivo</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {intencaoEntries.map(([intencao, { pos, neg }]) => (
+                  <tr key={intencao} className="border-t border-gray-100">
+                    <td className="px-4 py-2 font-mono">{intencao}</td>
+                    <td className="px-4 py-2 text-right font-semibold">{pos + neg}</td>
+                    <td className="px-4 py-2 text-right text-emerald-600">{pos}</td>
+                    <td className="px-4 py-2 text-right text-red-400">{neg}</td>
+                    <td className="px-4 py-2 text-right">{pct(pos, pos + neg)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

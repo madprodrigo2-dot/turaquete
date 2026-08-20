@@ -523,7 +523,7 @@ export default async function AnaliseAdmin({
           {topRaquetes.length === 0 ? (
             <p className="text-gray-400 italic text-xs">Nenhuma recomendação no período.</p>
           ) : (
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden overflow-x-auto border border-gray-100">
               <table className="w-full border-collapse text-xs">
                 <thead className="bg-gray-50 text-gray-400 uppercase">
                   <tr>

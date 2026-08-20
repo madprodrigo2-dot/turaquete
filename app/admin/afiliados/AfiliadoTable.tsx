@@ -167,8 +167,8 @@ export default function AfiliadoTable({ rows, brands, searchFallbackActive = fal
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full border-collapse min-w-[760px]" style={{ tableLayout: 'fixed' }}>
           <thead className="bg-gray-50">
             <tr className="text-[11px] text-gray-500 uppercase tracking-wide">
               <th

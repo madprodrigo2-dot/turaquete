@@ -209,7 +209,7 @@ export default async function CliquesAdmin({
         {slugs.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Ainda nao ha cliques registrados neste periodo.</p>
         ) : (
-          <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+          <div className="bg-white shadow-sm rounded-xl overflow-hidden overflow-x-auto border border-gray-100">
             <table className="w-full border-collapse text-xs">
               <thead className="bg-gray-50 text-gray-400 uppercase">
                 <tr>
@@ -302,7 +302,7 @@ export default async function CliquesAdmin({
           <h2 className="text-xs font-semibold text-amber-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
             ⚠️ Origens com 5+ clics hoje
           </h2>
-          <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-amber-200">
+          <div className="bg-white shadow-sm rounded-xl overflow-hidden overflow-x-auto border border-amber-200">
             <table className="w-full border-collapse text-xs">
               <thead className="bg-amber-50 text-amber-700 uppercase">
                 <tr>
@@ -333,7 +333,7 @@ export default async function CliquesAdmin({
         {referrers.length === 0 ? (
           <p className="text-gray-400 italic text-xs">Ainda nao ha dados de origem neste periodo.</p>
         ) : (
-          <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+          <div className="bg-white shadow-sm rounded-xl overflow-hidden overflow-x-auto border border-gray-100">
             <table className="w-full border-collapse text-xs">
               <thead className="bg-gray-50 text-gray-400 uppercase">
                 <tr>
