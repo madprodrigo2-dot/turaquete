@@ -383,8 +383,8 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full border-collapse">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full border-collapse min-w-[640px]">
           <thead className="bg-gray-50">
             <tr className="text-[11px] text-gray-500 uppercase tracking-wide">
               <SortTh col="name"      align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5">Raquete</SortTh>
