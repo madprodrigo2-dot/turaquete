@@ -155,7 +155,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                       alt={racket.name}
                       className="object-contain max-h-72 lg:max-h-[520px] w-auto"
                     />
-                    <RacketBadgeOverlay athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} />
+                    <RacketBadgeOverlay athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} size="detail" />
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-aqua/30">
