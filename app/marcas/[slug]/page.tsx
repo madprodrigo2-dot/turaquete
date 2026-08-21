@@ -334,55 +334,53 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
       <div className="max-w-6xl mx-auto px-5 md:px-10 py-8 flex flex-col gap-6">
 
         {/* Header da marca */}
-        <div className="bg-white rounded-2xl border border-aqua/15 shadow-sm px-6 py-5 flex flex-col md:flex-row md:items-center gap-5">
+        <div className="bg-white rounded-2xl border border-aqua/15 shadow-sm px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-5">
           {/* Logo */}
           <div className="shrink-0">
             {logoSrc ? (
               <>
-                <div className="inline-flex items-center justify-center bg-white border border-gray-100 rounded-xl px-6 py-4">
+                <div className="inline-flex items-center justify-center bg-white border border-gray-100 rounded-lg px-3 py-2 md:px-5 md:py-3">
                   <Image
                     src={logoSrc}
                     alt={brand.name}
                     width={200}
                     height={64}
-                    className="h-10 md:h-14 w-auto max-w-[200px] object-contain"
+                    className="h-8 md:h-12 w-auto max-w-[160px] md:max-w-[200px] object-contain"
                     unoptimized
                   />
                 </div>
                 <h1 className="sr-only">{brand.name}</h1>
               </>
             ) : (
-              <h1 className="text-2xl md:text-3xl font-bold text-tinta">{brand.name}</h1>
+              <h1 className="text-xl md:text-3xl font-bold text-tinta">{brand.name}</h1>
             )}
           </div>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+          {/* Info — descrição + linha de metadados/link, tudo compacto junto */}
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
             {brandIntro && (
-              <p className="text-tinta/70 text-sm leading-relaxed">{brandIntro}</p>
+              <p className="text-tinta/70 text-xs md:text-sm leading-snug">{brandIntro}</p>
             )}
-            <div className="flex items-center gap-3 flex-wrap mt-1">
-              <span className="text-tinta/50 text-xs">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</span>
-              {brand.country && (
-                <div className="inline-flex items-center gap-1.5">
-                  <CountryFlag country={brand.country} />
-                  <span className="text-tinta/50 text-xs">{countryName(brand.country)}</span>
-                </div>
-              )}
+            <div className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-tinta/50 text-xs">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</span>
+                {brand.country && (
+                  <div className="inline-flex items-center gap-1.5">
+                    <CountryFlag country={brand.country} />
+                    <span className="text-tinta/50 text-xs">{countryName(brand.country)}</span>
+                  </div>
+                )}
+              </div>
+              <Link
+                href="/#marcas"
+                className="inline-flex items-center gap-1 text-xs font-medium text-tinta/40 hover:text-aqua transition-colors whitespace-nowrap shrink-0"
+              >
+                Ver outras marcas
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                  <path d="M2 5.5h7M6 2.5l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
             </div>
-          </div>
-
-          {/* Link */}
-          <div className="shrink-0 self-start md:self-center">
-            <Link
-              href="/#marcas"
-              className="inline-flex items-center gap-1 text-xs font-medium text-tinta/40 hover:text-aqua transition-colors whitespace-nowrap"
-            >
-              Ver outras marcas
-              <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                <path d="M2 5.5h7M6 2.5l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
           </div>
         </div>
 
