@@ -1733,7 +1733,7 @@ export async function runAgentTurn(
       const text = reaction + '\n\n' + questionText
       if (onToken) onToken(text)
       const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
-      return { text, suggestions: [...q.chips], diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
+      return { text, suggestions: [...q.chips], confirmedProfile: cpSnap, usage, debug: debugRef.value }
     }
 
     // CASE 2: profile/brand chip reaches confidence, budget still unknown → pref step → price question
@@ -1746,7 +1746,7 @@ export async function runAgentTurn(
         const txt = reaction ? reaction + '\n\n' + PREF_QUESTION_TEXT : PREF_QUESTION_TEXT
         if (onToken) onToken(txt)
         const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
-        return { text: txt, suggestions: PREF_CHIPS, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
+        return { text: txt, suggestions: PREF_CHIPS, confirmedProfile: cpSnap, usage, debug: debugRef.value }
       }
 
       if (prefSt.state === 'pending_level2') {
@@ -1770,7 +1770,7 @@ export async function runAgentTurn(
         if (onToken) onToken(levelText)
         pendingSuggestions.splice(0, pendingSuggestions.length, ...levelChips)
         const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
-        return { text: levelText, suggestions: levelChips, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
+        return { text: levelText, suggestions: levelChips, confirmedProfile: cpSnap, usage, debug: debugRef.value }
       }
 
       // prefSt.state === 'done' → proceed to budget
@@ -1780,7 +1780,7 @@ export async function runAgentTurn(
       const txt = reaction ? reaction + '\n\n' + PRECO_QUESTION_TEXT : PRECO_QUESTION_TEXT
       if (onToken) onToken(txt)
       const cpSnap = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
-      return { text: txt, suggestions: chips, diagnostico: faixa, confirmedProfile: cpSnap, usage, debug: debugRef.value }
+      return { text: txt, suggestions: chips, confirmedProfile: cpSnap, usage, debug: debugRef.value }
     }
 
     // CASE 3: price chip (or profile chip with confidence+budget known) →
