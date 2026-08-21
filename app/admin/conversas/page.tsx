@@ -41,6 +41,14 @@ type SessionRow = {
   rec_racket_names: string[]
   wa_shown: boolean
   wa_click: boolean
+  orcamento_label: string | null
+  nivel: string | null
+}
+
+const NIVEL_CONFIG: Record<string, { label: string; cls: string }> = {
+  iniciante:      { label: 'Iniciante',     cls: 'bg-emerald-50 text-emerald-700' },
+  intermediario:  { label: 'Intermediário', cls: 'bg-amber-50 text-amber-700' },
+  avancado:       { label: 'Avançado',      cls: 'bg-red-50 text-red-700' },
 }
 
 const TAG_CONFIG: Record<string, { emoji: string; label: string; cls: string }> = {
@@ -175,6 +183,8 @@ export default async function ConversasPage({
       utm_medium: sessionUtmMedium.get(r.session_id) ?? null,
       referrer: sessionReferrer.get(r.session_id) ?? null,
       rec_racket_names: [],
+      orcamento_label: null,
+      nivel: null,
     })
     if (sessions.length >= 50) break
   }
@@ -187,7 +197,7 @@ export default async function ConversasPage({
   // confirmedProfile so their intencao_tags is null; the correct tags come from earlier turns.
   const sessionIds = sessions.map(s => s.session_id)
   if (sessionIds.length > 0) {
-    const [{ data: firstRows }, { data: intencaoRows }, { data: intencaoTagRows }] = await Promise.all([
+    const [{ data: firstRows }, { data: intencaoRows }, { data: intencaoTagRows }, { data: profileRows }, { data: confirmedProfileRows }] = await Promise.all([
       sb.from('conversations')
         .select('session_id, starter_usado, primeira_mensagem')
         .in('session_id', sessionIds)
@@ -205,6 +215,22 @@ export default async function ConversasPage({
         .select('session_id, intencao_tags')
         .in('session_id', sessionIds)
         .not('intencao_tags', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(sessionIds.length * 6),
+      // Faixa de preço — mesmo problema: rec turns não carregam orçamento, então
+      // pega o mais recente entre todos os turnos que efetivamente tem o dado.
+      sb.from('conversations')
+        .select('session_id, profile')
+        .in('session_id', sessionIds)
+        .not('profile', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(sessionIds.length * 6),
+      // Nível/categoria — mesmo padrão: confirmed_profile de um rec turn pode vir
+      // sem nivel (só com o que sobreviveu daquele turno específico).
+      sb.from('conversations')
+        .select('session_id, confirmed_profile')
+        .in('session_id', sessionIds)
+        .not('confirmed_profile', 'is', null)
         .order('created_at', { ascending: false })
         .limit(sessionIds.length * 6),
     ])
@@ -255,6 +281,34 @@ export default async function ConversasPage({
           const tags = tagsMap.get(s.session_id)
           if (tags) s.intencao_tags = tags
         }
+      }
+    }
+
+    if (profileRows) {
+      const orcamentoMap = new Map<string, string>()
+      for (const r of profileRows) {
+        if (orcamentoMap.has(r.session_id)) continue
+        const p = r.profile as { orcamento_label?: string | null } | null
+        if (!p?.orcamento_label) continue
+        orcamentoMap.set(r.session_id, p.orcamento_label)
+      }
+      for (const s of sessions) {
+        const label = orcamentoMap.get(s.session_id)
+        if (label) s.orcamento_label = label
+      }
+    }
+
+    if (confirmedProfileRows) {
+      const nivelMap = new Map<string, string>()
+      for (const r of confirmedProfileRows) {
+        if (nivelMap.has(r.session_id)) continue
+        const cp = r.confirmed_profile as { nivel?: string | null } | null
+        if (!cp?.nivel) continue
+        nivelMap.set(r.session_id, cp.nivel)
+      }
+      for (const s of sessions) {
+        const nivel = nivelMap.get(s.session_id)
+        if (nivel) s.nivel = nivel
       }
     }
   }
@@ -390,6 +444,8 @@ export default async function ConversasPage({
                   </span>
                 </span>
               </th>
+              <th className="text-left px-3 py-2">Faixa de preço</th>
+              <th className="text-left px-3 py-2">Nível</th>
               <th className="text-center px-3 py-2">Turnos</th>
               <th className="text-right px-3 py-2">Custo</th>
               <th className="text-center px-3 py-2">Rec?</th>
@@ -445,6 +501,23 @@ export default async function ConversasPage({
                   ) : (
                     <span className="text-gray-300">—</span>
                   )}
+                </td>
+                <td className="px-3 py-2 max-w-[140px]">
+                  {s.orcamento_label ? (
+                    <span className="text-gray-600 truncate block">{s.orcamento_label}</span>
+                  ) : <span className="text-gray-300">—</span>}
+                </td>
+                <td className="px-3 py-2">
+                  {s.nivel ? (
+                    (() => {
+                      const cfg = NIVEL_CONFIG[s.nivel]
+                      return cfg ? (
+                        <span className={`inline-flex text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.cls}`}>{cfg.label}</span>
+                      ) : (
+                        <span className="text-[10px] text-gray-400">{s.nivel}</span>
+                      )
+                    })()
+                  ) : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-3 py-2 text-center text-gray-600">{s.turn_count}</td>
                 <td className="px-3 py-2 text-right font-mono text-gray-600">
