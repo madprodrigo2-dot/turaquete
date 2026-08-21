@@ -364,12 +364,6 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
             <div className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap">
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-tinta/50 text-xs">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</span>
-                {brand.country && (
-                  <div className="inline-flex items-center gap-1.5">
-                    <CountryFlag country={brand.country} />
-                    <span className="text-tinta/50 text-xs">{countryName(brand.country)}</span>
-                  </div>
-                )}
               </div>
               <Link
                 href="/#marcas"
