@@ -21,6 +21,38 @@ interface Props {
 
 const NIVEL_ORDER: Record<string, number> = { iniciante: 0, intermediario: 1, avancado: 2 }
 
+type ScoreDim = 'power' | 'control' | 'comfort' | 'maneuverability' | 'stability'
+
+// Benefício em linguagem humana por faixa de score. Traduz literalmente as
+// definições de lib/glossario.ts — não inventa característica nova.
+function fraseConforto(v: number): string {
+  if (v >= 9) return 'proteção máxima pro braço, quase sem vibração'
+  return 'menos vibração, mais proteção pro braço'
+}
+function fraseManuseio(v: number): string {
+  if (v >= 9) return 'extremamente ágil pra reagir e defender'
+  return 'fácil de manejar, reage rápido nas trocas'
+}
+function fraseControle(v: number): string {
+  if (v >= 9) return 'precisão de sobra pra colocar a bola onde quer'
+  return 'bom controle pra mirar onde você quer'
+}
+function frasePotencia(v: number): string {
+  if (v >= 9) return 'potência de sobra pra atacar sem esforço'
+  return 'boa potência sem precisar forçar o braço'
+}
+function fraseEstabilidade(v: number): string {
+  if (v >= 9) return 'muito firme, não torce nem em bolas fortes'
+  return 'firme, não torce na mão'
+}
+const DIM_FRASE: Record<ScoreDim, (v: number) => string> = {
+  comfort: fraseConforto,
+  maneuverability: fraseManuseio,
+  control: fraseControle,
+  power: frasePotencia,
+  stability: fraseEstabilidade,
+}
+
 function fireEvent(body: Record<string, unknown>) {
   const payload = JSON.stringify(body)
   if (navigator.sendBeacon) {
@@ -40,7 +72,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
   const linkTipo = racket.affiliate_url ? 'afiliado' : 'oficial'
 
   const price = racket.price
-    ? `R$ ${racket.price.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`
+    ? `R$ ${racket.price.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
     : null
 
   const nameDisplay = getDisplayName(racket)
@@ -51,18 +83,22 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
     : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
 
   const ins = racket.racket_insights
+  // Candidate pool excludes spin (weight 0 in every scorer.ts profile — never
+  // influences match_score, see lib/scorer.ts baseWeights) and forgiveness
+  // (internal — agent uses it in reasoning but never shown as a visible score).
+  // Threshold >=7 so the card only ever highlights an actual strength, never a
+  // middling/weak score dressed up as one (24/264 rackets had a 2nd-highest
+  // score <=6 under the old top-2-no-floor rule).
   const topDims = ins
-    ? [
-        { label: 'Potência',     v: ins.power           },
-        { label: 'Controle',     v: ins.control         },
-        { label: 'Conforto',     v: ins.comfort         },
-        { label: 'Manuseio',     v: ins.maneuverability },
-        { label: 'Spin',         v: ins.spin            },
-        { label: 'Estabilidade', v: ins.stability       },
-        // forgiveness is internal — agent uses it in reasoning but never shown as a visible score
-      ]
-        .filter(d => d.v != null)
-        .sort((a, b) => (b.v as number) - (a.v as number))
+    ? ([
+        { dim: 'power' as const,           v: ins.power },
+        { dim: 'control' as const,         v: ins.control },
+        { dim: 'comfort' as const,         v: ins.comfort },
+        { dim: 'maneuverability' as const, v: ins.maneuverability },
+        { dim: 'stability' as const,       v: ins.stability },
+      ] as { dim: ScoreDim; v: number | null }[])
+        .filter((d): d is { dim: ScoreDim; v: number } => d.v != null && d.v >= 7)
+        .sort((a, b) => b.v - a.v)
         .slice(0, 2)
     : []
 
@@ -145,17 +181,19 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
             )
           })()}
 
-          {/* Top-2 dimensões */}
+          {/* Top-2 dimensões — score em destaque + benefício em linguagem humana */}
           {topDims.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-tinta/40 text-xs">Destaques:</span>
+            <div className="flex flex-col gap-1.5">
               {topDims.map(d => (
-                <span
-                  key={d.label}
-                  className="bg-tinta/5 text-tinta text-xs font-semibold px-2 py-0.5 rounded-full border border-tinta/10"
+                <div
+                  key={d.dim}
+                  className="flex items-center gap-2 bg-tinta/5 rounded-full px-2.5 py-1.5 border border-tinta/10"
                 >
-                  {d.label} {d.v}
-                </span>
+                  <span className="bg-tinta text-white text-[10px] font-bold w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0">
+                    {d.v}
+                  </span>
+                  <span className="text-tinta text-xs">{DIM_FRASE[d.dim](d.v)}</span>
+                </div>
               ))}
             </div>
           )}
