@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { sendGAEvent } from '@next/third-parties/google'
 import { RacketWithInsights } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
-import AthleteBadge from './AthleteBadge'
+import RacketBadgeOverlay from './RacketBadgeOverlay'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
 import { getDisplayName } from '@/lib/displayName'
@@ -90,11 +90,12 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               <rect x="10.5" y="16" width="3" height="7" rx="1.5" fill="#0CC0BE" opacity="0.3" />
             </svg>
           )}
-          {athlete && (
-            <div className="absolute top-2 left-2 z-10 max-w-[calc(100%-1rem)]">
-              <AthleteBadge athlete={athlete} />
-            </div>
-          )}
+          <RacketBadgeOverlay
+            athlete={athlete}
+            brandLogo={racket.brands?.logo_url}
+            brandName={racket.brands?.name}
+            brandCorner="left"
+          />
           {(calce || custoBeneficio || (racket.weight_g != null && racket.weight_g >= 340)) && (
             <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
               {calce && (

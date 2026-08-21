@@ -21,6 +21,11 @@ interface Props {
   // to stay proportionally prominent there. Brand stays uniformly small (see
   // BrandLogo.tsx) since it's deliberately secondary in this design.
   size?: 'card' | 'detail'
+  // The chat recommendation card already stacks up to 3 badges ('Calce ideal',
+  // 'Melhor custo-benefício', 'Peso alto de fábrica') in the top-right corner.
+  // Rather than pile a 4th on top, that caller passes 'left' — safe because the
+  // athlete badge no longer lives in that corner either (moved to the bottom).
+  brandCorner?: 'left' | 'right'
 }
 
 // Athlete badge (bottom, prominent) + brand logo badge (top-right corner,
@@ -30,7 +35,7 @@ interface Props {
 // Single source of truth so the pair always matches wherever a photo shows
 // both — card tiles (via RacketImageTile) and the product detail hero alike.
 // Caller's image wrapper must be `relative` (and ideally `overflow-hidden`).
-export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size = 'card' }: Props) {
+export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size = 'card', brandCorner = 'right' }: Props) {
   const isDetail = size === 'detail'
   // Co-signed athletes and unusually long names truncate to one line with an
   // ellipsis rather than wrapping — the badge sits at the photo's bottom edge,
@@ -42,7 +47,7 @@ export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size
   return (
     <>
       {brandLogo && (
-        <div className="absolute top-1.5 right-1.5 z-10 h-5 flex items-center justify-center rounded-md bg-white/70 border border-tinta/10 px-1.5">
+        <div className={`absolute top-1.5 ${brandCorner === 'left' ? 'left-1.5' : 'right-1.5'} z-10 h-5 flex items-center justify-center rounded-md bg-white/70 border border-tinta/10 px-1.5`}>
           <BrandLogo src={brandLogo} alt={brandName ?? ''} />
         </div>
       )}
