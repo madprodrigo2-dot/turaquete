@@ -317,9 +317,8 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
 
       <div className="max-w-6xl mx-auto px-5 md:px-10 py-8 flex flex-col gap-6">
 
-        {/* Header da marca — compacto: logo e descrição sempre lado a lado, pra
-            a primeira fila de raquetes aparecer o mais cedo possível no mobile. */}
-        <div className="bg-white rounded-2xl border border-aqua/15 shadow-sm px-3 py-2 md:px-5 md:py-2.5 flex flex-row items-center gap-2.5 md:gap-4">
+        {/* Header da marca */}
+        <div className="bg-white rounded-2xl border border-aqua/15 shadow-sm px-3 py-2 md:px-5 md:py-2.5 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
           {/* Logo */}
           <div className="shrink-0">
             {logoSrc ? (
@@ -344,7 +343,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
           {/* Info — descrição + linha de metadados/link, tudo compacto junto */}
           <div className="flex-1 min-w-0 flex flex-col gap-0.5">
             {brandIntro && (
-              <p className="text-tinta/70 text-[11px] md:text-xs leading-snug line-clamp-1">{brandIntro}</p>
+              <p className="text-tinta/70 text-[11px] md:text-xs leading-snug">{brandIntro}</p>
             )}
             <div className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap">
               <div className="flex items-center gap-3 flex-wrap">
