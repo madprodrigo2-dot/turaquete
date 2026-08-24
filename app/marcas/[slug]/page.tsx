@@ -97,31 +97,18 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
   return intro + '.'
 }
 
-// ── Score tag (derived from racket_insights scores) ───────────────────────────
-// spin excluído: peso=0 em todos os perfis de baseWeights() (lib/scorer.ts) —
-// incluir spin aqui contradiria o recomendador. Não reintegrar sem alterar o scorer.
+// ── Spec line (specs duras — núcleo · espessura · material da face) ──────────
+// Só o que já existe no banco, sem reformular nomenclatura. Substitui o antigo
+// score-tag (heurística de score único) por dados reais que nunca se repetem
+// artificialmente entre raquetes distintas.
 
-const SCORE_TAGS: Record<string, string> = {
-  control:         'Ótima pra controle',
-  power:           'Pra quem ataca',
-  stability:       'Estável e firme',
-  maneuverability: 'Leve e ágil',
-  comfort:         'Confortável',
-  forgiveness:     'Fácil de jogar',
-}
-const SCORE_PRIORITY = ['control','power','stability','maneuverability','comfort','forgiveness'] as const
-
-function deriveScoreTag(ins: RacketWithInsights['racket_insights']): string | null {
-  if (!ins) return null
-  type Dim = typeof SCORE_PRIORITY[number]
-  const dims = SCORE_PRIORITY.filter((k): k is Dim => ins[k] != null)
-  if (dims.length === 0) return null
-  const vals = dims.map(k => ins[k] as number)
-  const max = Math.max(...vals)
-  const min = Math.min(...vals)
-  if (max - min <= 1 && max <= 7) return 'Equilibrada'
-  const winner = SCORE_PRIORITY.find(k => ins[k] === max)
-  return winner ? (SCORE_TAGS[winner] ?? null) : null
+function buildSpecLine(racket: RacketWithInsights): string | null {
+  const parts: string[] = []
+  if (racket.core) parts.push(racket.core)
+  const esp = (racket.specs_extra as Record<string, unknown> | null)?.espessura_mm
+  if (typeof esp === 'number') parts.push(`${esp}mm`)
+  if (racket.face_material) parts.push(racket.face_material)
+  return parts.length > 0 ? parts.join(' · ') : null
 }
 
 const BRAND_LOGOS: Record<string, string> = {
@@ -284,12 +271,11 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
-  const ins = racket.racket_insights
   const _athleteRaw = (racket.specs_extra as Record<string, unknown> | null)?.atleta
   const athlete: string | undefined = Array.isArray(_athleteRaw)
     ? (_athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
     : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
-  const scoreTag = deriveScoreTag(ins)
+  const specLine = buildSpecLine(racket)
   const nivel = derivarNivel(racket)
 
   return (
@@ -301,10 +287,8 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
       <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
-        {scoreTag && (
-          <span className="text-[10px] font-medium text-aqua bg-aqua/10 rounded-full px-2 py-0.5 w-fit leading-tight">
-            {scoreTag}
-          </span>
+        {specLine && (
+          <p className="text-tinta/50 text-[10.5px] leading-snug">{specLine}</p>
         )}
         {nivel && NIVEL_CARD[nivel] && (
           <span className={`text-[10px] font-medium rounded-full px-2 py-0.5 w-fit leading-tight ${NIVEL_CARD[nivel].cls}`}>
@@ -333,41 +317,42 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
 
       <div className="max-w-6xl mx-auto px-5 md:px-10 py-8 flex flex-col gap-6">
 
-        {/* Header da marca */}
-        <div className="bg-white rounded-2xl border border-aqua/15 shadow-sm px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-5">
+        {/* Header da marca — compacto: logo e descrição sempre lado a lado, pra
+            a primeira fila de raquetes aparecer o mais cedo possível no mobile. */}
+        <div className="bg-white rounded-2xl border border-aqua/15 shadow-sm px-3 py-2 md:px-5 md:py-2.5 flex flex-row items-center gap-2.5 md:gap-4">
           {/* Logo */}
           <div className="shrink-0">
             {logoSrc ? (
               <>
-                <div className="inline-flex items-center justify-center bg-white border border-gray-100 rounded-lg px-3 py-2 md:px-5 md:py-3">
+                <div className="inline-flex items-center justify-center bg-white border border-gray-100 rounded-lg px-2 py-1.5 md:px-3.5 md:py-2">
                   <Image
                     src={logoSrc}
                     alt={brand.name}
                     width={200}
                     height={64}
-                    className="h-8 md:h-12 w-auto max-w-[160px] md:max-w-[200px] object-contain"
+                    className="h-6 md:h-9 w-auto max-w-[110px] md:max-w-[150px] object-contain"
                     unoptimized
                   />
                 </div>
                 <h1 className="sr-only">{brand.name}</h1>
               </>
             ) : (
-              <h1 className="text-xl md:text-3xl font-bold text-tinta">{brand.name}</h1>
+              <h1 className="text-base md:text-2xl font-bold text-tinta">{brand.name}</h1>
             )}
           </div>
 
           {/* Info — descrição + linha de metadados/link, tudo compacto junto */}
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
             {brandIntro && (
-              <p className="text-tinta/70 text-xs md:text-sm leading-snug">{brandIntro}</p>
+              <p className="text-tinta/70 text-[11px] md:text-xs leading-snug line-clamp-1">{brandIntro}</p>
             )}
             <div className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-tinta/50 text-xs">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</span>
+                <span className="text-tinta/50 text-[11px]">{rackets.length} {rackets.length === 1 ? 'raquete disponível' : 'raquetes disponíveis'}</span>
               </div>
               <Link
                 href="/#marcas"
-                className="inline-flex items-center gap-1 text-xs font-medium text-tinta/40 hover:text-aqua transition-colors whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-tinta/40 hover:text-aqua transition-colors whitespace-nowrap shrink-0"
               >
                 Ver outras marcas
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">

@@ -23,6 +23,17 @@ const NIVEL_SHORT: Record<string, string> = {
   avancado: 'Avançado',
 }
 
+// Specs duras — núcleo · espessura · material da face. Só o que já existe no
+// banco, mesma lógica de app/marcas/[slug]/page.tsx (buildSpecLine).
+function buildSpecLine(racket: RacketWithInsights): string | null {
+  const parts: string[] = []
+  if (racket.core) parts.push(racket.core)
+  const esp = (racket.specs_extra as Record<string, unknown> | null)?.espessura_mm
+  if (typeof esp === 'number') parts.push(`${esp}mm`)
+  if (racket.face_material) parts.push(racket.face_material)
+  return parts.length > 0 ? parts.join(' · ') : null
+}
+
 function RacketCard({ racket }: { racket: RacketWithInsights }) {
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
@@ -32,6 +43,7 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
     ? (_athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
     : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
   const nivel = derivarNivel(racket)
+  const specLine = buildSpecLine(racket)
 
   return (
     <Link
@@ -47,6 +59,7 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
         )}
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}
+        {specLine && <p className="text-tinta/45 text-[10px] leading-snug">{specLine}</p>}
       </div>
     </Link>
   )
