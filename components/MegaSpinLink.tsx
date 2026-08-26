@@ -31,7 +31,7 @@ export default function MegaSpinLink({ racketId, racketSlug, racketName }: Props
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => fireParceriaClick({ racket_id: racketId, slug: racketSlug, destination_url: href })}
+      onClick={() => fireParceriaClick({ racket_id: racketId, slug: racketSlug, racket_name: racketName, destination_url: href })}
       className="mt-3 pt-3 border-t border-aqua/10 flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 transition-colors"
     >
       <WhatsappLogo size={14} weight="fill" aria-hidden="true" className="shrink-0" />
