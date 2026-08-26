@@ -674,6 +674,8 @@ export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {
 
 const NOVIDADES_MIN = 4
 const NOVIDADES_LIMIT = 8
+// Marca nova sem logo/links confirmados ainda — não aparece em destaque até fechar o cadastro.
+const ALMA_GENIUS_BRAND_ID = 30
 
 export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
   const { data, error } = await getSupabase()
@@ -683,6 +685,7 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
     .eq('model_year', 2026)
     .neq('is_active', false)
     .neq('fora_de_linha', true)
+    .neq('brand_id', ALMA_GENIUS_BRAND_ID)
     .order('created_at', { ascending: false })
     .limit(NOVIDADES_LIMIT)
 
