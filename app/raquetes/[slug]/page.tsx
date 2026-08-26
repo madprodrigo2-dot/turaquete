@@ -17,6 +17,7 @@ import RacketHexagon from '@/components/RacketHexagon'
 import { derivarNivel } from '@/lib/nivel'
 import PriceNote from '@/components/PriceNote'
 import ShareButton from '@/components/ShareButton'
+import MegaSpinLink from '@/components/MegaSpinLink'
 
 export async function generateStaticParams() {
   const rackets = await listarRaquetas().catch(() => [])
@@ -257,6 +258,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
                 <p className="text-tinta font-semibold text-sm mb-3">Especificações</p>
                 <SpecsGrid racket={racket} hideTechRows />
+                <MegaSpinLink racketId={racket.id} racketSlug={racket.slug} racketName={racket.name} />
               </div>
 
               {/* Tecnologias e acabamentos */}
