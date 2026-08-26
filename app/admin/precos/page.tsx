@@ -106,7 +106,7 @@ export default async function PrecosPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Preços</h1>
         <p className="text-gray-400 text-xs mt-0.5">
-          Sync automático via GeckoAPI (segundas 9h UTC) · edição manual disponível como fallback
+          Sync automático via GeckoAPI (diariamente às 9h UTC) · edição manual disponível como fallback
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export default async function PrecosPage() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 leading-relaxed">
           <p>
             <span className="font-semibold">⏳ Sync automático configurado</span> — ainda não rodou.
-            Agendado para segundas 9h UTC via GeckoAPI. Edição manual disponível enquanto isso.
+            Agendado para todos os dias às 9h UTC via GeckoAPI. Edição manual disponível enquanto isso.
           </p>
         </div>
       )}

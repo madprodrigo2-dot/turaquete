@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendTelegram } from '@/lib/telegram'
 
 export const dynamic    = 'force-dynamic'
-export const maxDuration = 300 // 5 min — Vercel Pro limit
+export const maxDuration = 300 // 5 min — teto do plano Hobby com Fluid Compute
 
 const GECKO_URL          = 'https://api.geckoapi.com.br/v1/extract'
 const DELAY_MS           = 1200
@@ -123,14 +123,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ dry, chunk: 0, processed: 0 })
   }
 
-  // Claim pessimista: 1 UPDATE com todos os IDs ANTES do loop fecha a janela de overlap
-  // entre invocações concorrentes. O update final por item sobrescreve com o status real.
-  if (!dry) {
-    await sb.from('rackets')
-      .update({ last_sync_at: new Date().toISOString() })
-      .in('id', items.map(r => r.id))
-  }
-
   const results: {
     id: number; name: string; priceBefore: number | null; priceAfter: number | null
     status: string; retries: number
@@ -151,6 +143,16 @@ export async function GET(req: NextRequest) {
 
       const racket   = items[i]
       const cleanUrl = stripParams(racket.affiliate_url!)
+
+      // Claim por item, no momento em que entra em processamento — não antes.
+      // Se o budget cortar o loop mais adiante, os itens ainda não alcançados ficam
+      // com o last_sync_at de antes (ou null) e continuam elegíveis amanhã, em vez de
+      // serem marcados como "sincronizados hoje" sem terem sido de fato processados.
+      if (!dry) {
+        await sb.from('rackets')
+          .update({ last_sync_at: new Date().toISOString() })
+          .eq('id', racket.id)
+      }
 
       let priceAfter: number | null = null
       let itemStatus     = 'ok'
