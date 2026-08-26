@@ -7,10 +7,10 @@ type Origem = 'zero_results' | 'lista'
 // Module-level dedup — persists for the duration of the browser session
 const sessionSent = new Set<string>()
 
-function sendEvent(termo: string, origem: Origem) {
+function sendEvent(termo: string, origem: Origem): boolean {
   const t = termo.trim().toLowerCase().slice(0, 80)
   const key = `${origem}:${t}`
-  if (sessionSent.has(key)) return
+  if (sessionSent.has(key)) return false
   sessionSent.add(key)
 
   try {
@@ -42,6 +42,7 @@ function sendEvent(termo: string, origem: Origem) {
       comentario: t,
     }),
   }).catch(() => {})
+  return true
 }
 
 interface Props {
@@ -56,8 +57,7 @@ export default function NaoAcheiWidget({ termoInicial, origem, compact }: Props)
 
   function handleSend() {
     if (termo.trim().length < 2) return
-    sendEvent(termo, origem)
-    setState('sent')
+    if (sendEvent(termo, origem)) setState('sent')
   }
 
   if (state === 'sent') {
