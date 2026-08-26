@@ -12,6 +12,7 @@ import { derivarNivel } from '@/lib/nivel'
 import InsightsModal from './InsightsModal'
 import RacketImageTile from './RacketImageTile'
 import AthleteBadge from './AthleteBadge'
+import SearchBar from './SearchBar'
 
 interface Props {
   onStart: () => void
@@ -914,18 +915,28 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
               />
             </div>
           </Link>
-          <button
-            onClick={handleHeaderCta}
-            aria-hidden={!showHeaderCta}
-            tabIndex={showHeaderCta ? 0 : -1}
-            className={`font-heading font-bold bg-coral text-white text-sm px-4 py-2 rounded-full shadow-sm transition-all duration-200 ${
-              showHeaderCta
-                ? 'opacity-100 translate-y-0 pointer-events-auto'
-                : 'opacity-0 -translate-y-1 pointer-events-none'
-            }`}
-          >
-            Começar
-          </button>
+          <div className="relative flex items-center">
+            <div
+              aria-hidden={showHeaderCta}
+              className={`absolute inset-y-0 right-0 flex items-center transition-opacity duration-200 ${
+                showHeaderCta ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}
+            >
+              <SearchBar />
+            </div>
+            <button
+              onClick={handleHeaderCta}
+              aria-hidden={!showHeaderCta}
+              tabIndex={showHeaderCta ? 0 : -1}
+              className={`font-heading font-bold bg-coral text-white text-sm px-4 py-2 rounded-full shadow-sm transition-all duration-200 ${
+                showHeaderCta
+                  ? 'opacity-100 translate-y-0 pointer-events-auto'
+                  : 'opacity-0 -translate-y-1 pointer-events-none'
+              }`}
+            >
+              Começar
+            </button>
+          </div>
         </div>
       </div>
 
