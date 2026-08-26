@@ -6,6 +6,7 @@ import AdminPeriodFilter from '../AdminPeriodFilter'
 import { Suspense } from 'react'
 import { InfoTooltip } from '../InfoTooltip'
 import { brtCutoff } from '@/lib/brt'
+import RankingTable from './RankingTable'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,18 @@ function getAdmin() {
 interface RecRow    { racket_id: number; confidence: number | null; rank: number | null }
 interface ClickRow  { racket_id: number; destination_type: string | null; tipo: string }
 interface RacketRow { id: number; name: string; slug: string; affiliate_url: string | null }
+
+export type RowData = {
+  id: number
+  name: string
+  slug: string
+  hasAffiliate: boolean
+  recs: number
+  clicks: number
+  mlClicks: number
+  avgConfidence: number | null
+  avgRank: number | null
+}
 
 function pct(num: number, den: number): string {
   return den === 0 ? '—' : `${Math.round((num / den) * 100)}%`
@@ -81,17 +94,6 @@ export default async function RankingPage({
     ...clickRows.map(r => r.racket_id),
   ])
 
-  type RowData = {
-    id: number
-    name: string
-    slug: string
-    hasAffiliate: boolean
-    recs: number
-    clicks: number
-    mlClicks: number
-    avgConfidence: number | null
-    avgRank: number | null
-  }
 
   const rows: RowData[] = []
   for (const id of racketIds) {
@@ -119,6 +121,18 @@ export default async function RankingPage({
   const affiliateRows = rows.filter(r => r.hasAffiliate)
   const totalRecs     = recRows.length
   const totalClicks   = clickRows.length
+
+  // Destaques de conversão (Passo 2) — só leitura dos mesmos rows, nenhum cálculo novo.
+  const recommendedRows  = rows.filter(r => r.recs > 0)
+  const topTaxa = [...recommendedRows]
+    .sort((a, b) => (b.clicks / b.recs) - (a.clicks / a.recs) || b.recs - a.recs)
+    .slice(0, 10)
+
+  const LOW_TAXA_THRESHOLD = 0.15 // 15% — "muito baixa"
+  const topVolumeLowTaxa = recommendedRows
+    .filter(r => (r.clicks / r.recs) <= LOW_TAXA_THRESHOLD)
+    .sort((a, b) => b.recs - a.recs)
+    .slice(0, 10)
 
   return (
     <div className="flex flex-col gap-8">
@@ -157,70 +171,57 @@ export default async function RankingPage({
         <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
           Por raquete — {daysLabel}
         </h2>
-        {rows.length === 0 ? (
-          <p className="text-gray-400 italic text-xs">Sem dados no período.</p>
-        ) : (
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden overflow-x-auto border border-gray-100">
-            <table className="w-full border-collapse text-xs">
-              <thead className="bg-gray-50 text-gray-400 uppercase">
-                <tr>
-                  <th className="text-left px-4 py-2">#</th>
-                  <th className="text-left px-4 py-2">Raquete</th>
-                  <th className="text-right px-4 py-2">
-                    Recs
-                    <InfoTooltip text="Vezes que esta raquete foi incluída numa recomendação do assistente no período." />
-                  </th>
-                  <th className="text-right px-4 py-2">
-                    Cliques
-                    <InfoTooltip text='Cliques em "Ver na loja" (rota /ir/) para esta raquete no período.' />
-                  </th>
-                  <th className="text-right px-4 py-2">
-                    Taxa
-                    <InfoTooltip text="Conversão: % de recomendações que geraram pelo menos um clique (Cliques ÷ Recs)." />
-                  </th>
-                  <th className="text-right px-4 py-2">
-                    Score med.
-                    <InfoTooltip text="Média do score de confiança calculado pelo scorer no momento da recomendação (escala 0–10). Quanto maior, mais alinhada estava a raquete com o perfil do usuário." />
-                  </th>
-                  <th className="text-right px-4 py-2">
-                    Rank med.
-                    <InfoTooltip text="Posição média desta raquete nas recomendações (1 = sempre sugerida primeiro). Quanto menor, mais frequentemente aparece no topo." />
-                  </th>
-                  <th className="text-center px-4 py-2">
-                    ML
-                    <InfoTooltip text="Indica se a raquete tem URL de afiliado do Mercado Livre cadastrada (rastreável)." />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50/60">
-                    <td className="px-4 py-2 text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-2 font-medium text-gray-800">
-                      <div>
-                        <a href={`/raquetes/${r.slug}`} target="_blank" rel="noopener noreferrer" className="hover:text-teal-600 hover:underline">
-                          {r.name}
-                        </a>
-                      </div>
-                      <div className="text-[10px] text-gray-400 font-mono">{r.slug}</div>
-                    </td>
-                    <td className="px-4 py-2 text-right font-semibold">{r.recs}</td>
-                    <td className="px-4 py-2 text-right">{r.clicks}</td>
-                    <td className="px-4 py-2 text-right text-gray-500">{pct(r.clicks, r.recs)}</td>
-                    <td className="px-4 py-2 text-right text-gray-500">{r.avgConfidence ?? '—'}</td>
-                    <td className="px-4 py-2 text-right text-gray-500">{r.avgRank ?? '—'}</td>
-                    <td className="px-4 py-2 text-center">
-                      {r.hasAffiliate
-                        ? <span className="text-green-500 text-base" title="Tem afiliado ML">✓</span>
-                        : <span className="text-gray-300">—</span>}
-                    </td>
-                  </tr>
+        <RankingTable rows={rows} />
+      </section>
+
+      {/* Destaques de conversão */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Destaques de conversão — {daysLabel}
+        </h2>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4">
+            <p className="text-[11px] font-semibold text-teal-700 mb-2.5 flex items-center">
+              🏆 Maior taxa de conversão
+              <InfoTooltip text="Top 10 raquetes com recomendações no período, ordenadas pela maior taxa Cliques ÷ Recs." />
+            </p>
+            {topTaxa.length === 0 ? (
+              <p className="text-gray-400 italic text-xs">Sem dados no período.</p>
+            ) : (
+              <ol className="flex flex-col gap-1.5">
+                {topTaxa.map((r, i) => (
+                  <li key={r.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-gray-700 truncate">{i + 1}. {r.name}</span>
+                    <span className="shrink-0 text-teal-600 font-semibold">
+                      {pct(r.clicks, r.recs)} <span className="text-gray-400 font-normal">({r.recs} recs)</span>
+                    </span>
+                  </li>
                 ))}
-              </tbody>
-            </table>
-            <p className="text-[10px] text-gray-300 px-4 py-2">{rows.length} raquetes com atividade no período</p>
+              </ol>
+            )}
           </div>
-        )}
+
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-4">
+            <p className="text-[11px] font-semibold text-amber-700 mb-2.5 flex items-center">
+              ⚠️ Alto volume, baixa conversão — investigar
+              <InfoTooltip text={`Top 10 por Recs entre as raquetes com taxa ≤ ${Math.round(LOW_TAXA_THRESHOLD * 100)}% — recomendadas bastante mas convertendo pouco.`} />
+            </p>
+            {topVolumeLowTaxa.length === 0 ? (
+              <p className="text-gray-400 italic text-xs">Nenhuma raquete nessa faixa no período.</p>
+            ) : (
+              <ol className="flex flex-col gap-1.5">
+                {topVolumeLowTaxa.map((r, i) => (
+                  <li key={r.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-gray-700 truncate">{i + 1}. {r.name}</span>
+                    <span className="shrink-0 text-amber-600 font-semibold">
+                      {r.recs} recs <span className="text-gray-400 font-normal">({pct(r.clicks, r.recs)})</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* Seção filtrada: só afiliados ML */}
