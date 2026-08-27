@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { setFaraLinha } from './actions'
+import { InfoTooltip } from '../InfoTooltip'
 
 type SortKey = 'name' | 'clicks' | 'staleness' | 'price'
 type SortDir = 'asc' | 'desc'
@@ -27,6 +28,8 @@ export interface PriceRowData {
   fora_de_linha: boolean
   model_year: number | null
   store: string | null
+  sellerLevel: string | null
+  sellerPowerStatus: string | null
 }
 
 interface Summary {
@@ -48,6 +51,32 @@ function SyncStatusBadge({ status }: { status: string | null }) {
   if (status === 'timeout')
     return <span className="text-[10px] bg-red-50 text-red-600 border border-red-200 rounded px-1.5 py-0.5 font-medium">timeout</span>
   return <span className="text-[10px] bg-red-50 text-red-600 border border-red-200 rounded px-1.5 py-0.5 font-medium">erro</span>
+}
+
+const REPUTATION_COLOR: Record<string, string> = {
+  green:  'bg-emerald-500',
+  yellow: 'bg-yellow-400',
+  orange: 'bg-orange-500',
+  red:    'bg-red-500',
+}
+
+const POWER_LABEL: Record<string, string> = {
+  silver:   'Líder',
+  gold:     'Líder Gold',
+  platinum: 'Líder Platinum',
+}
+
+function SellerReputation({ level, power }: { level: string | null; power: string | null }) {
+  if (!level && !power) return null
+  const color = level ? REPUTATION_COLOR[level.split('_').pop() ?? ''] ?? 'bg-gray-300' : null
+  return (
+    <span className="inline-flex items-center gap-1">
+      {color && <span className={`w-2 h-2 rounded-full shrink-0 ${color}`} title={`Reputação ML: ${level}`} />}
+      {power && (
+        <span className="text-[9px] text-gray-400 font-medium">{POWER_LABEL[power] ?? power}</span>
+      )}
+    </span>
+  )
 }
 
 function StalenessLabel({ updatedAt }: { updatedAt: string | null }) {
@@ -251,7 +280,14 @@ function PriceRow({ row }: { row: PriceRowData }) {
         )}
       </td>
       <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-        {row.store ?? <span className="text-gray-300">—</span>}
+        {row.store ? (
+          <div className="flex items-center gap-1.5">
+            <span>{row.store}</span>
+            <SellerReputation level={row.sellerLevel} power={row.sellerPowerStatus} />
+          </div>
+        ) : (
+          <span className="text-gray-300">—</span>
+        )}
       </td>
     </tr>
   )
@@ -405,7 +441,10 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
               <SortTh col="clicks"    align="center" active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Cliques 30d</SortTh>
               <SortTh col="staleness" align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Últ. revisão</SortTh>
               <SortTh col="price"     align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5">Preço</SortTh>
-              <th className="px-4 py-2.5 text-left font-semibold">Loja</th>
+              <th className="px-4 py-2.5 text-left font-semibold">
+                Loja
+                <InfoTooltip text="Vendedor do Mercado Livre na última sync via GeckoAPI. Ponto colorido = reputação (verde bom, amarelo/laranja/vermelho requer atenção). 'Líder' = selo MercadoLíder (power seller)." />
+              </th>
             </tr>
           </thead>
           <tbody>

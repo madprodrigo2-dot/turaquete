@@ -17,7 +17,7 @@ export default async function PrecosPage() {
   const [{ data: rackets }, { data: brands }, { data: clicks }, { data: lastSyncRow }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, slug, price, price_updated_at, affiliate_url, is_active, brand_id, last_sync_status, last_sync_at, fora_de_linha, model_year, store')
+      .select('id, name, slug, price, price_updated_at, affiliate_url, is_active, brand_id, last_sync_status, last_sync_at, fora_de_linha, model_year, store, seller_level, seller_power_status')
       .eq('publicada', true)
       .order('name'),
     sb.from('brands').select('id, name'),
@@ -49,7 +49,7 @@ export default async function PrecosPage() {
     is_active: boolean | null; brand_id: number | null
     last_sync_status: string | null; last_sync_at: string | null
     fora_de_linha: boolean | null; model_year: number | null
-    store: string | null
+    store: string | null; seller_level: string | null; seller_power_status: string | null
   }
 
   const now = Date.now()
@@ -78,6 +78,8 @@ export default async function PrecosPage() {
       fora_de_linha:    r.fora_de_linha ?? false,
       model_year:       r.model_year,
       store:            r.store,
+      sellerLevel:      r.seller_level,
+      sellerPowerStatus: r.seller_power_status,
     }
   })
 

@@ -50,6 +50,17 @@ function extractSeller(body: unknown): string | null {
   return null
 }
 
+function extractStringField(body: unknown, field: string): string | null {
+  if (!body || typeof body !== 'object') return null
+  const b = body as Record<string, unknown>
+  if (typeof b[field] === 'string' && (b[field] as string).trim()) return (b[field] as string).trim()
+  if (b.data && typeof b.data === 'object') {
+    const d = b.data as Record<string, unknown>
+    if (typeof d[field] === 'string' && (d[field] as string).trim()) return (d[field] as string).trim()
+  }
+  return null
+}
+
 function delay(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
 async function fetchGecko(
@@ -187,8 +198,10 @@ export async function GET(req: NextRequest) {
           } else {
             if (priceAfter !== racket.price) priceChanged++
             if (!dry) {
-              const syncNow = new Date().toISOString()
-              const seller  = extractSeller(body)
+              const syncNow    = new Date().toISOString()
+              const seller     = extractSeller(body)
+              const sellerLvl  = extractStringField(body, 'sellerLevel')
+              const powerLvl   = extractStringField(body, 'powerSellerStatusTitle')
               const { error: upsertErr } = await sb
                 .from('rackets')
                 .update({
@@ -198,7 +211,9 @@ export async function GET(req: NextRequest) {
                   price_source:     'geckoapi',
                   last_sync_status: 'ok',
                   last_sync_at:     syncNow,
-                  ...(seller ? { store: seller } : {}),
+                  ...(seller    ? { store: seller }               : {}),
+                  ...(sellerLvl ? { seller_level: sellerLvl }      : {}),
+                  ...(powerLvl  ? { seller_power_status: powerLvl } : {}),
                 })
                 .eq('id', racket.id)
               if (upsertErr) {
