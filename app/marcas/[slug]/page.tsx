@@ -3,11 +3,10 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
-import { getDisplayName } from '@/lib/displayName'
 import { SITE_URL } from '@/lib/site'
-import RacketImageTile from '@/components/RacketImageTile'
 import { derivarNivel } from '@/lib/nivel'
 import SiteNav from '@/components/SiteNav'
+import MarcaGrid from './MarcaGrid'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,20 +94,6 @@ function buildBrandIntro(brandName: string, rackets: RacketWithInsights[]): stri
     intro += `, com modelos assinados por ${listed}${rest > 0 ? ` e mais ${rest}` : ''}`
   }
   return intro + '.'
-}
-
-// ── Spec line (specs duras — núcleo · espessura · material da face) ──────────
-// Só o que já existe no banco, sem reformular nomenclatura. Substitui o antigo
-// score-tag (heurística de score único) por dados reais que nunca se repetem
-// artificialmente entre raquetes distintas.
-
-function buildSpecLine(racket: RacketWithInsights): string | null {
-  const parts: string[] = []
-  if (racket.core) parts.push(racket.core)
-  const esp = (racket.specs_extra as Record<string, unknown> | null)?.espessura_mm
-  if (typeof esp === 'number') parts.push(`${esp}mm`)
-  if (racket.face_material) parts.push(racket.face_material)
-  return parts.length > 0 ? parts.join(' · ') : null
 }
 
 const BRAND_LOGOS: Record<string, string> = {
@@ -257,49 +242,6 @@ function CountryFlag({ country }: { country: string }) {
   return null
 }
 
-// ── Nivel labels for brand-page cards (shorter than SpecsGrid's NIVEL_LABEL) ──
-
-const NIVEL_CARD: Record<string, { label: string; cls: string }> = {
-  iniciante:    { label: 'Iniciante',    cls: 'text-emerald-600 bg-emerald-50' },
-  intermediario:{ label: 'Intermediário',cls: 'text-amber-600  bg-amber-50'   },
-  avancado:     { label: 'Avançado',     cls: 'text-coral      bg-coral/10'   },
-}
-
-// ── Sub-components ─────────────────────────────────────────────────────────────
-
-function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
-  const price = racket.price
-    ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
-    : null
-  const _athleteRaw = (racket.specs_extra as Record<string, unknown> | null)?.atleta
-  const athlete: string | undefined = Array.isArray(_athleteRaw)
-    ? (_athleteRaw as string[]).filter(Boolean).join(' & ') || undefined
-    : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
-  const specLine = buildSpecLine(racket)
-  const nivel = derivarNivel(racket)
-
-  return (
-    <Link
-      href={`/raquetes/${racket.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 transition-all flex flex-col"
-    >
-      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
-      <div className="p-3 flex flex-col gap-1 flex-1">
-        <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
-        {price && <p className="text-coral font-bold text-sm">{price}</p>}
-        {specLine && (
-          <p className="text-tinta/50 text-[10.5px] leading-snug">{specLine}</p>
-        )}
-        {nivel && NIVEL_CARD[nivel] && (
-          <span className={`text-[10px] font-medium rounded-full px-2 py-0.5 w-fit leading-tight ${NIVEL_CARD[nivel].cls}`}>
-            {NIVEL_CARD[nivel].label}
-          </span>
-        )}
-      </div>
-    </Link>
-  )
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function MarcaPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -362,13 +304,9 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
           </div>
         </div>
 
-        {/* Grid de raquetes */}
+        {/* Grid de raquetes — sort/filtro cliente, reusa padrão de DiscoveryFilters */}
         {rackets.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {rackets.map(r => (
-              <RacketGridCard key={r.id} racket={r} />
-            ))}
-          </div>
+          <MarcaGrid rackets={rackets} />
         ) : (
           <p className="text-tinta/50 text-sm">Nenhuma raquete disponível no momento.</p>
         )}

@@ -82,6 +82,7 @@ export interface RacketWithInsights {
   price: number | null
   price_updated_at: string | null
   updated_at: string | null
+  created_at: string | null
   currency: string
   affiliate_url: string | null
   source_url: string | null
@@ -113,7 +114,7 @@ function normalizeRacket(raw: unknown): RacketWithInsights {
 
 const SELECT_FIELDS = `
   id, name, slug, nome_base, model_year, racket_family_count, weight_g, balance, format,
-  face_material, core, price, price_updated_at, updated_at, currency, affiliate_url, source_url, image_url, technologies,
+  face_material, core, price, price_updated_at, updated_at, created_at, currency, affiliate_url, source_url, image_url, technologies,
   specs_extra, publicada, is_active,
   brands ( name, slug, logo_url ),
   racket_insights (
