@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { setFaraLinha } from './actions'
 import { InfoTooltip } from '../InfoTooltip'
 
-type SortKey = 'name' | 'clicks' | 'staleness' | 'price'
+type SortKey = 'name' | 'clicks' | 'staleness' | 'price' | 'loja'
 type SortDir = 'asc' | 'desc'
 
 function staleDaysClient(updatedAt: string | null): number {
@@ -358,6 +358,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
         if (sortKey === 'clicks')    diff = a.clicks30d - b.clicks30d
         if (sortKey === 'staleness') diff = staleDaysClient(b.price_updated_at) - staleDaysClient(a.price_updated_at)
         if (sortKey === 'price')     diff = (a.price ?? 0) - (b.price ?? 0)
+        if (sortKey === 'loja')      diff = (a.store ?? '').localeCompare(b.store ?? '', 'pt-BR')
         return sortDir === 'asc' ? diff : -diff
       })
     }
@@ -441,10 +442,10 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
               <SortTh col="clicks"    align="center" active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Cliques 30d</SortTh>
               <SortTh col="staleness" align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Últ. revisão</SortTh>
               <SortTh col="price"     align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5">Preço</SortTh>
-              <th className="px-4 py-2.5 text-left font-semibold">
+              <SortTh col="loja" align="left" active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5">
                 Loja
                 <InfoTooltip text="Vendedor do Mercado Livre na última sync via GeckoAPI. Ponto colorido = reputação (verde bom, amarelo/laranja/vermelho requer atenção). 'Líder' = selo MercadoLíder (power seller)." />
-              </th>
+              </SortTh>
             </tr>
           </thead>
           <tbody>
