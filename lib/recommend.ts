@@ -674,8 +674,7 @@ export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {
 
 const NOVIDADES_MIN = 4
 const NOVIDADES_LIMIT = 8
-// Marca nova sem logo/links confirmados ainda — não aparece em destaque até fechar o cadastro.
-const ALMA_GENIUS_BRAND_ID = 30
+const NOVIDADES_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
 
 export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
   const { data, error } = await getSupabase()
@@ -685,11 +684,26 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
     .eq('model_year', 2026)
     .neq('is_active', false)
     .neq('fora_de_linha', true)
-    .neq('brand_id', ALMA_GENIUS_BRAND_ID)
     .order('created_at', { ascending: false })
-    .limit(NOVIDADES_LIMIT)
+    .limit(NOVIDADES_POOL)
 
   if (error) throw new Error(`Supabase: ${error.message}`)
-  const rackets = ((data as unknown[]) ?? []).map(normalizeRacket)
+  const candidates = ((data as unknown[]) ?? []).map(normalizeRacket)
+
+  // Teto de 1 raquete por marca — evita que uma marca com vários lançamentos
+  // recentes ocupe todos os lugares do carrossel (caso que antes exigia
+  // excluir Alma Genius na mão; agora resolvido de forma genérica).
+  const seenBrands = new Set<string>()
+  const rackets: RacketWithInsights[] = []
+  for (const r of candidates) {
+    const brandKey = r.brands?.slug
+    if (brandKey) {
+      if (seenBrands.has(brandKey)) continue
+      seenBrands.add(brandKey)
+    }
+    rackets.push(r)
+    if (rackets.length >= NOVIDADES_LIMIT) break
+  }
+
   return rackets.length >= NOVIDADES_MIN ? rackets : []
 }
