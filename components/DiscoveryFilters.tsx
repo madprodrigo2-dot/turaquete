@@ -15,7 +15,7 @@ function normalize(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 }
 
-export type SortKey = 'menor-preco' | 'maior-preco'
+export type SortKey = 'lancamentos' | 'menor-preco' | 'maior-preco'
 
 const NIVEL_SHORT: Record<string, string> = {
   iniciante: 'Iniciante',
@@ -119,8 +119,15 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
 
     if (sort === 'menor-preco') {
       out.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
-    } else {
+    } else if (sort === 'maior-preco') {
       out.sort((a, b) => (b.price ?? 0) - (a.price ?? 0))
+    } else {
+      // Lançamentos primeiro: model_year desc, created_at desc como desempate dentro do mesmo ano.
+      out.sort((a, b) => {
+        const anoDiff = (b.model_year ?? 0) - (a.model_year ?? 0)
+        if (anoDiff !== 0) return anoDiff
+        return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+      })
     }
 
     return out
@@ -193,16 +200,16 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
           </div>
         )}
 
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex gap-2 md:gap-3 items-center">
           {brands.length > 1 && (
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-tinta/50 shrink-0">Marca</label>
+            <div className="flex items-center gap-1.5 md:gap-2 min-w-0 flex-1 md:flex-initial">
+              <label className="hidden md:inline text-xs text-tinta/50 shrink-0">Marca</label>
               <select
                 value={marca}
                 onChange={e => setMarca(e.target.value)}
-                className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
+                className="w-full min-w-0 text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
               >
-                <option value="todas">Todas</option>
+                <option value="todas">Todas as marcas</option>
                 {brands.map(b => (
                   <option key={b} value={b}>{b}</option>
                 ))}
@@ -210,13 +217,14 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-tinta/50 shrink-0">Ordenar</label>
+          <div className="flex items-center gap-1.5 md:gap-2 min-w-0 flex-1 md:flex-initial">
+            <label className="hidden md:inline text-xs text-tinta/50 shrink-0">Ordenar</label>
             <select
               value={sort}
               onChange={e => setSort(e.target.value as SortKey)}
-              className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
+              className="w-full min-w-0 text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
+              <option value="lancamentos">Lançamentos primeiro</option>
               <option value="menor-preco">Menor preço</option>
               <option value="maior-preco">Maior preço</option>
             </select>

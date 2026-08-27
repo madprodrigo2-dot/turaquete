@@ -29,7 +29,7 @@ export default async function InicirantePage() {
       subtitle="Fáceis de controlar e com muito perdão de erro. Ideais para quem está começando."
       rackets={rackets}
       emptyMessage="Nenhuma raquete iniciante catalogada ainda."
-      defaultSort="menor-preco"
+      defaultSort="lancamentos"
     />
   )
 }

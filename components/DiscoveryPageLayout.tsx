@@ -24,7 +24,7 @@ export default function DiscoveryPageLayout({
   subtitle,
   rackets,
   emptyMessage,
-  defaultSort = 'menor-preco',
+  defaultSort = 'lancamentos',
   showPrecoFilter = true,
   showTextSearch,
   initialQuery,

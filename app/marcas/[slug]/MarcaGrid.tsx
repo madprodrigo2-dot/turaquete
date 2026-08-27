@@ -9,10 +9,6 @@ import { derivarNivel } from '@/lib/nivel'
 import { PRECO_BUCKETS } from '@/lib/agent/preco-buckets'
 import type { SortKey } from '@/components/DiscoveryFilters'
 
-// Estende o SortKey de menor/maior preço (reusado tal qual de DiscoveryFilters)
-// com uma opção própria da página de marca, sem tocar no tipo compartilhado.
-type MarcaSortKey = SortKey | 'lancamentos'
-
 // Specs duras — núcleo · espessura · material da face. Mesma lógica de
 // DiscoveryFilters.tsx / SpecsGrid, só o que já existe no banco.
 function buildSpecLine(racket: RacketWithInsights): string | null {
@@ -73,7 +69,7 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
 export default function MarcaGrid({ rackets }: { rackets: RacketWithInsights[] }) {
   const [precoKey, setPrecoKey] = useState<string>('todas')
   const [nivelKey, setNivelKey] = useState<NivelKey>('todos')
-  const [sort, setSort] = useState<MarcaSortKey>('lancamentos')
+  const [sort, setSort] = useState<SortKey>('lancamentos')
 
   const filtered = useMemo(() => {
     let out = [...rackets]
@@ -149,38 +145,25 @@ export default function MarcaGrid({ rackets }: { rackets: RacketWithInsights[] }
         </div>
 
         <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <label className="text-xs text-tinta/50 shrink-0">Nível</label>
-            <button
-              onClick={() => setNivelKey('todos')}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
-                nivelKey === 'todos'
-                  ? 'bg-aqua text-white border-aqua'
-                  : 'bg-white text-tinta/70 border-tinta/15 hover:border-aqua/50'
-              }`}
+            <select
+              value={nivelKey}
+              onChange={e => setNivelKey(e.target.value as NivelKey)}
+              className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
-              Todos
-            </button>
-            {NIVEL_FILTROS.map(n => (
-              <button
-                key={n.key}
-                onClick={() => setNivelKey(n.key)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
-                  nivelKey === n.key
-                    ? 'bg-aqua text-white border-aqua'
-                    : 'bg-white text-tinta/70 border-tinta/15 hover:border-aqua/50'
-                }`}
-              >
-                {n.label}
-              </button>
-            ))}
+              <option value="todos">Todos</option>
+              {NIVEL_FILTROS.map(n => (
+                <option key={n.key} value={n.key}>{n.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
             <label className="text-xs text-tinta/50 shrink-0">Ordenar</label>
             <select
               value={sort}
-              onChange={e => setSort(e.target.value as MarcaSortKey)}
+              onChange={e => setSort(e.target.value as SortKey)}
               className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
               <option value="lancamentos">Lançamentos primeiro</option>
