@@ -144,29 +144,29 @@ export default function MarcaGrid({ rackets }: { rackets: RacketWithInsights[] }
           <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-14 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
         </div>
 
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-tinta/50 shrink-0">Nível</label>
+        <div className="flex gap-2 md:gap-3 items-center">
+          <div className="flex items-center gap-1.5 md:gap-2 min-w-0 flex-1 md:flex-initial">
+            <label className="hidden md:inline text-xs text-tinta/50 shrink-0">Nível</label>
             <select
               value={nivelKey}
               onChange={e => setNivelKey(e.target.value as NivelKey)}
-              className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
+              className="w-full min-w-0 text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
-              <option value="todos">Todos</option>
+              <option value="todos">Todos os níveis</option>
               {NIVEL_FILTROS.map(n => (
                 <option key={n.key} value={n.key}>{n.label}</option>
               ))}
             </select>
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            <label className="text-xs text-tinta/50 shrink-0">Ordenar</label>
+          <div className="flex items-center gap-1.5 md:gap-2 min-w-0 flex-1 md:flex-initial md:ml-auto">
+            <label className="hidden md:inline text-xs text-tinta/50 shrink-0">Ordenar</label>
             <select
               value={sort}
               onChange={e => setSort(e.target.value as SortKey)}
-              className="text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
+              className="w-full min-w-0 text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
-              <option value="lancamentos">Lançamentos primeiro</option>
+              <option value="lancamentos">Lançamentos</option>
               <option value="menor-preco">Menor preço</option>
               <option value="maior-preco">Maior preço</option>
             </select>

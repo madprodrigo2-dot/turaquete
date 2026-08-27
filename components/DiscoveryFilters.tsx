@@ -224,7 +224,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
               onChange={e => setSort(e.target.value as SortKey)}
               className="w-full min-w-0 text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
-              <option value="lancamentos">Lançamentos primeiro</option>
+              <option value="lancamentos">Lançamentos</option>
               <option value="menor-preco">Menor preço</option>
               <option value="maior-preco">Maior preço</option>
             </select>
