@@ -39,6 +39,17 @@ function extractPrice(body: unknown): number | null {
   return null
 }
 
+function extractSeller(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null
+  const b = body as Record<string, unknown>
+  if (typeof b.sellerName === 'string' && b.sellerName.trim()) return b.sellerName.trim()
+  if (b.data && typeof b.data === 'object') {
+    const d = b.data as Record<string, unknown>
+    if (typeof d.sellerName === 'string' && d.sellerName.trim()) return d.sellerName.trim()
+  }
+  return null
+}
+
 function delay(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
 async function fetchGecko(
@@ -177,6 +188,7 @@ export async function GET(req: NextRequest) {
             if (priceAfter !== racket.price) priceChanged++
             if (!dry) {
               const syncNow = new Date().toISOString()
+              const seller  = extractSeller(body)
               const { error: upsertErr } = await sb
                 .from('rackets')
                 .update({
@@ -186,6 +198,7 @@ export async function GET(req: NextRequest) {
                   price_source:     'geckoapi',
                   last_sync_status: 'ok',
                   last_sync_at:     syncNow,
+                  ...(seller ? { store: seller } : {}),
                 })
                 .eq('id', racket.id)
               if (upsertErr) {

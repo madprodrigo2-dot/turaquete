@@ -26,6 +26,7 @@ export interface PriceRowData {
   last_sync_at: string | null
   fora_de_linha: boolean
   model_year: number | null
+  store: string | null
 }
 
 interface Summary {
@@ -249,6 +250,9 @@ function PriceRow({ row }: { row: PriceRowData }) {
           <p className="text-[10px] text-red-500 mt-1">{status}</p>
         )}
       </td>
+      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+        {row.store ?? <span className="text-gray-300">—</span>}
+      </td>
     </tr>
   )
 }
@@ -401,13 +405,14 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
               <SortTh col="clicks"    align="center" active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Cliques 30d</SortTh>
               <SortTh col="staleness" align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5 whitespace-nowrap">Últ. revisão</SortTh>
               <SortTh col="price"     align="left"   active={sortKey} dir={sortDir} onSort={handleSort} className="px-4 py-2.5">Preço</SortTh>
+              <th className="px-4 py-2.5 text-left font-semibold">Loja</th>
             </tr>
           </thead>
           <tbody>
             {displayed.map(r => <PriceRow key={r.id} row={r} />)}
             {displayed.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400 italic text-sm">
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-400 italic text-sm">
                   Nenhuma raquete com este filtro.
                 </td>
               </tr>
