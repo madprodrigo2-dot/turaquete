@@ -497,7 +497,6 @@ export async function listarRaquetasPorMarca(
 
 export interface TopRaquetasResult {
   rackets: RacketWithInsights[]
-  source: 'real' | 'curated'
 }
 
 export async function getRandomExpensiveRacket(minPrice = 2000): Promise<RacketWithInsights | null> {
@@ -527,63 +526,85 @@ export async function getRaquetasPorSlug(slugs: readonly string[]): Promise<Rack
 }
 
 // ── Featured carousel config ─────────────────────────────────────────────────
-// Change slugs here to update the cold-start fallback order.
-const CURATED_SLUGS = [
-  'beast-2023', 'ceu', 'harley-25', 'rebel-25', 'starlight-ruby', 'kronos-25',
-] as const
-
 const TOP_N = 6
-// Once this many recommendations are recorded in the last 30 days, real data
-// fully drives the carousel (with fallback filling any remaining slots).
-const COLD_START_THRESHOLD = 30
+const TOP_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
 
 export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   const supabase = getSupabase()
 
-  // Fetch top N by recommendation count in rolling 30-day window
-  const { data: topRows } = await supabase.rpc('get_top_rackets_30d', { lim: TOP_N })
-  const rows = (topRows as { racket_id: number; cnt: number }[] | null) ?? []
-  const totalInWindow = rows.reduce((sum, r) => sum + r.cnt, 0)
+  // Nível 1 — clicks reais em /ir/ nos últimos 30 dias (exclui is_test na
+  // própria função SQL). Pool maior que TOP_N pra sobrar candidatas depois
+  // do teto de 1 por marca.
+  const { data: clickRows } = await supabase.rpc('get_top_rackets_30d', { lim: TOP_POOL })
+  const clickIds = ((clickRows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => r.racket_id)
 
-  // Cold-start: not enough real signal yet — return curated fallback
-  if (totalInWindow < COLD_START_THRESHOLD || rows.length === 0) {
-    const rackets = await getRaquetasPorSlug(CURATED_SLUGS)
-    return { rackets, source: 'curated' }
+  // Nível 2 — recomendações reais do chat nos últimos 30 dias, usado só pra
+  // completar os slots que o nível 1 não preencheu (pouco clique ou marca
+  // repetida). Nunca substitui uma raquete que já entrou por clique real.
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: recRows } = await supabase
+    .from('recommendation_events')
+    .select('racket_id')
+    .eq('is_test', false)
+    .gte('created_at', thirtyDaysAgo)
+    .limit(5000)
+
+  const recCounts = new Map<number, number>()
+  for (const r of (recRows as { racket_id: number }[] | null) ?? []) {
+    recCounts.set(r.racket_id, (recCounts.get(r.racket_id) ?? 0) + 1)
+  }
+  const recIds = [...recCounts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id)
+
+  const allIds = [...new Set([...clickIds, ...recIds])]
+  const racketsById = new Map((await getRaquetasByIds(allIds)).map(r => [r.id, r]))
+
+  const seenBrands = new Set<string>()
+  const finalRackets: RacketWithInsights[] = []
+
+  function tryAdd(id: number): void {
+    const r = racketsById.get(id)
+    if (!r) return
+    const brandKey = r.brands?.slug
+    if (brandKey) {
+      if (seenBrands.has(brandKey)) return
+      seenBrands.add(brandKey)
+    }
+    finalRackets.push(r)
   }
 
-  // Fetch real rackets (getRaquetasByIds already filters publicada=true)
-  const realIds = rows.map(r => r.racket_id)
-  const unordered = await getRaquetasByIds(realIds)
-  // Preserve leaderboard order
-  const byId = new Map(unordered.map(r => [r.id, r]))
-  const realRackets = realIds
-    .map(id => byId.get(id))
-    .filter((r): r is RacketWithInsights => r !== undefined)
-
-  let finalRackets: RacketWithInsights[]
-
-  // Fill remaining slots from fallback, skipping already included slugs
-  if (realRackets.length < TOP_N) {
-    const realSlugSet = new Set(realRackets.map(r => r.slug))
-    const gapSlugs = (CURATED_SLUGS as readonly string[])
-      .filter(s => !realSlugSet.has(s))
-      .slice(0, TOP_N - realRackets.length)
-    const gapRackets = await getRaquetasPorSlug(gapSlugs)
-    finalRackets = [...realRackets, ...gapRackets]
-  } else {
-    finalRackets = realRackets.slice(0, TOP_N)
+  for (const id of clickIds) {
+    if (finalRackets.length >= TOP_N) break
+    tryAdd(id)
   }
-
-  // Ensure at least one entry-level racket in the carousel
-  const hasEntry = finalRackets.some(r => computeNivelFormula(r) === 'iniciante')
-  if (!hasEntry) {
-    const [entry] = await getRaquetasPorSlug(['beast-2023'])
-    if (entry && !finalRackets.some(r => r.slug === 'beast-2023')) {
-      finalRackets[finalRackets.length - 1] = entry
+  if (finalRackets.length < TOP_N) {
+    const usedIds = new Set(finalRackets.map(r => r.id))
+    for (const id of recIds) {
+      if (finalRackets.length >= TOP_N) break
+      if (usedIds.has(id)) continue
+      tryAdd(id)
     }
   }
 
-  return { rackets: finalRackets, source: 'real' }
+  // Garante ao menos uma raquete de nível iniciante — troca o último slot
+  // pela melhor candidata real (clique, depois recs) que não repita marca.
+  const hasEntry = finalRackets.some(r => computeNivelFormula(r) === 'iniciante')
+  if (!hasEntry && finalRackets.length > 0) {
+    const usedIds = new Set(finalRackets.map(r => r.id))
+    const usedBrands = new Set(
+      finalRackets.slice(0, -1).map(r => r.brands?.slug).filter((s): s is string => !!s)
+    )
+    for (const id of [...clickIds, ...recIds]) {
+      if (usedIds.has(id)) continue
+      const r = racketsById.get(id)
+      if (!r || computeNivelFormula(r) !== 'iniciante') continue
+      const brandKey = r.brands?.slug
+      if (brandKey && usedBrands.has(brandKey)) continue
+      finalRackets[finalRackets.length - 1] = r
+      break
+    }
+  }
+
+  return { rackets: finalRackets }
 }
 
 // Brand chips for pref step — top N by model count, independent of fitting profile.

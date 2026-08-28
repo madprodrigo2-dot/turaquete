@@ -18,7 +18,6 @@ interface Props {
   onStart: () => void
   brands: Brand[]
   featuredRackets: RacketWithInsights[]
-  featuredSource: 'real' | 'curated'
   athleteRackets: RacketWithInsights[]
   recsCount: number
   racketCount?: number
@@ -824,7 +823,7 @@ const ARENA_EXTRA_BALLS: Array<{ size: number; rotation: number; opacity: number
 const SKY_OP = 0.10
 const SKY_RGB = '140, 192, 215'  // desaturated sky blue — doesn't compete with aqua or coral
 
-export default function LandingScreen({ onStart, brands, featuredRackets, featuredSource, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades }: Props) {
+export default function LandingScreen({ onStart, brands, featuredRackets, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const [mainCtaVisible, setMainCtaVisible] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
@@ -1260,19 +1259,15 @@ export default function LandingScreen({ onStart, brands, featuredRackets, featur
             </div>
           )}
 
-          {/* Raquetes em destaque / mais recomendadas */}
+          {/* Mais recomendadas pelo especialista */}
           {featuredRackets.length > 0 && (
             <div className="flex flex-col gap-3">
-              {featuredSource === 'real' ? (
-                <div className="flex flex-col gap-0.5">
-                  <p className="font-heading font-bold text-tinta text-base md:text-lg">
-                    As mais recomendadas pelo especialista
-                  </p>
-                  <p className="text-tinta/50 text-xs">com base nas consultorias recentes</p>
-                </div>
-              ) : (
-                <p className="font-heading font-bold text-tinta text-base md:text-lg">Raquetes em destaque</p>
-              )}
+              <div className="flex flex-col gap-0.5">
+                <p className="font-heading font-bold text-tinta text-base md:text-lg">
+                  As mais recomendadas pelo especialista
+                </p>
+                <p className="text-tinta/50 text-xs">com base nas consultorias recentes</p>
+              </div>
               <FeaturedCarousel rackets={featuredRackets} />
             </div>
           )}

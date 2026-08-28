@@ -66,7 +66,6 @@ type Message = {
 interface Props {
   brands: Brand[]
   featuredRackets: RacketWithInsights[]
-  featuredSource: 'real' | 'curated'
   athleteRackets: RacketWithInsights[]
   recsCount: number
   racketCount?: number
@@ -75,7 +74,7 @@ interface Props {
   novidades: RacketWithInsights[]
 }
 
-export default function HomeClient({ brands, featuredRackets, featuredSource, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades }: Props) {
+export default function HomeClient({ brands, featuredRackets, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades }: Props) {
   const [view, setView] = useState<'landing' | 'chat'>('landing')
   const [fading, setFading] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
@@ -513,7 +512,7 @@ export default function HomeClient({ brands, featuredRackets, featuredSource, at
   return (
     <div className={`transition-opacity duration-150 ${fading ? 'opacity-0' : 'opacity-100'}`}>
       {view === 'landing' ? (
-        <LandingScreen brands={brands} featuredRackets={featuredRackets} featuredSource={featuredSource} athleteRackets={athleteRackets} recsCount={recsCount} racketCount={racketCount} exampleRacket={exampleRacket} compareRacket={compareRacket} novidades={novidades} onStart={handleStart} />
+        <LandingScreen brands={brands} featuredRackets={featuredRackets} athleteRackets={athleteRackets} recsCount={recsCount} racketCount={racketCount} exampleRacket={exampleRacket} compareRacket={compareRacket} novidades={novidades} onStart={handleStart} />
       ) : (
         <div className="h-screen flex flex-col bg-gray-50 md:bg-aqua-light">
           <div className="flex flex-col flex-1 min-h-0 w-full md:max-w-[760px] md:mx-auto md:bg-white md:shadow-sm">

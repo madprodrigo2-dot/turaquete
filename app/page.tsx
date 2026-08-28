@@ -93,7 +93,7 @@ const jsonLd = {
 export default async function Page() {
   const [brands, featured, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades] = await Promise.all([
     listarMarcas().catch(() => []),
-    getTopRaquetas().catch(() => ({ rackets: [], source: 'curated' as const })),
+    getTopRaquetas().catch(() => ({ rackets: [] })),
     getRaquetasComAtleta().catch(() => []),
     getRecsCount().catch(() => 0),
     getPublishedRacketCount().catch(() => 0),
@@ -110,7 +110,6 @@ export default async function Page() {
       <HomeClient
         brands={brands}
         featuredRackets={featured.rackets}
-        featuredSource={featured.source}
         athleteRackets={athleteRackets}
         recsCount={recsCount}
         racketCount={racketCount}
