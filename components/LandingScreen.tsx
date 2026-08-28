@@ -1095,13 +1095,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 imagem já tem — só reduz a escala inteira dentro do frame, com fundo
                 branco preenchendo o espaço sobrando (letterbox). */}
             <div className="hidden md:block md:absolute md:inset-4">
-              <Image
-                src="/new_hero_mobile.webp"
-                alt="Raquetes de beach tennis na areia"
-                fill
-                className="object-contain object-center rounded-xl"
-                priority
-                sizes="300px"
+              <video
+                src="/scan-raquete-desktop.mp4"
+                poster="/new_hero_mobile.webp"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-contain object-center rounded-xl"
               />
             </div>
           </div>
