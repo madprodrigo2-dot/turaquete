@@ -526,7 +526,7 @@ export async function getRaquetasPorSlug(slugs: readonly string[]): Promise<Rack
 }
 
 // ── Featured carousel config ─────────────────────────────────────────────────
-const TOP_N = 6
+const TOP_N = 8
 const TOP_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
 
 // Piso de qualidade técnica — equivale ao top 70% do catálogo publicado por

@@ -412,6 +412,8 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
   const [atStart, setAtStart] = useState(true)
   const [atEnd, setAtEnd] = useState(false)
   const [shuffled, setShuffled] = useState(rackets)
+  const [paused, setPaused] = useState(false)
+  const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     // arr[0] é o top da classificação — mantém fixo na primeira posição.
@@ -475,6 +477,29 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
     el.scrollTo({ left: card.offsetLeft - scrollPadding, behavior: 'smooth' })
   }
 
+  // Pausa o auto-avanço ao interagir; no touch reanuda com uma folga (o
+  // usuário pode ainda estar decidindo o que olhar), no hover reanuda na hora
+  // (sair do hover já é um sinal claro de "terminei").
+  const pauseAndScheduleResume = (delayMs: number) => {
+    setPaused(true)
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current)
+    resumeTimeoutRef.current = setTimeout(() => setPaused(false), delayMs)
+  }
+
+  useEffect(() => {
+    if (maxIdx < 1) return // nada pra avançar
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const id = setInterval(() => {
+      if (paused || document.hidden) return
+      scrollToIdx(activeIdx >= maxIdx ? 0 : activeIdx + 1)
+    }, 5000)
+    return () => clearInterval(id)
+  }, [paused, activeIdx, maxIdx])
+
+  useEffect(() => {
+    return () => { if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current) }
+  }, [])
+
   const arrowCls = (disabled: boolean) =>
     `hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border shadow-sm items-center justify-center transition-all
      ${disabled ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
@@ -499,6 +524,10 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
         <div
           ref={trackRef}
           onScroll={syncState}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onTouchStart={() => setPaused(true)}
+          onTouchEnd={() => pauseAndScheduleResume(3000)}
           className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pl-5 pr-5 md:pl-0 md:pr-0 scroll-pl-5 md:scroll-pl-0"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
         >
