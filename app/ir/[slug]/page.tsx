@@ -245,16 +245,7 @@ export default async function IrPage({
   const clientId   = gaClientId(cookieStore.get('_ga')?.value)
   // Derive _ga_STREAM_ID cookie name from measurement ID (e.g. G-ABC123 → _ga_ABC123)
   const streamCookieName = process.env.NEXT_PUBLIC_GA_ID?.replace(/^G-/, '_ga_') ?? null
-  const rawSessionCookie = streamCookieName ? cookieStore.get(streamCookieName)?.value : undefined
-  const sessionInfo = gaSessionInfo(rawSessionCookie)
-  // TEMP DEBUG — remover depois de confirmar o fix GS2 (v0.4.124)
-  console.log('[ga4-debug]', JSON.stringify({
-    slug,
-    streamCookieName,
-    hasGaCookie: !!cookieStore.get('_ga')?.value,
-    rawSessionCookie: rawSessionCookie ?? null,
-    sessionInfo,
-  }))
+  const sessionInfo = gaSessionInfo(streamCookieName ? cookieStore.get(streamCookieName)?.value : undefined)
 
   const price = racket.price ? Number(racket.price) : null
 
