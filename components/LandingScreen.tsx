@@ -1080,14 +1080,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           {/* Coluna visual — foto hero */}
           <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:h-full md:bg-white md:border md:border-aqua/20 md:shadow-sm">
             {/* Mobile: horizontal completa, sem recorte */}
-            <Image
-              src="/new_hero_desktop.webp"
-              alt="Raquetes de beach tennis na areia"
-              width={1376}
-              height={768}
+            <video
+              src="/scan-raquete-mobile.mp4"
+              poster="/new_hero_desktop.webp"
+              autoPlay
+              loop
+              muted
+              playsInline
               className="w-full h-auto block md:hidden"
-              priority
-              sizes="100vw"
             />
             {/* Desktop: wrapper com inset cria a margem — padding no pai relative não
                 funciona pra filho fill (inset:0 ignora padding do container, é limitação
