@@ -529,18 +529,30 @@ export async function getRaquetasPorSlug(slugs: readonly string[]): Promise<Rack
 const TOP_N = 6
 const TOP_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
 
+// Piso de qualidade técnica — equivale ao top 70% do catálogo publicado por
+// scoreGeral no snapshot usado pra calibrar (286 raquetes, 2026-08). Não é
+// recalculado em runtime pra não pesar a home a cada load; revisar o valor
+// se o catálogo mudar muito. Mesma fórmula do "Grl" em /admin/motor.
+const SCORE_GERAL_FLOOR = 5.8
+
+function scoreGeral(ins: RacketWithInsights['racket_insights'] | undefined): number | null {
+  const vals = [ins?.power, ins?.control, ins?.maneuverability, ins?.stability].filter((v): v is number => v != null)
+  return vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null
+}
+
 export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   const supabase = getSupabase()
 
   // Nível 1 — clicks reais em /ir/ nos últimos 30 dias (exclui is_test na
   // própria função SQL). Pool maior que TOP_N pra sobrar candidatas depois
-  // do teto de 1 por marca.
+  // do teto de 1 por marca e do piso de qualidade.
   const { data: clickRows } = await supabase.rpc('get_top_rackets_30d', { lim: TOP_POOL })
-  const clickIds = ((clickRows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => r.racket_id)
+  const rawClickIds = ((clickRows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => r.racket_id)
 
   // Nível 2 — recomendações reais do chat nos últimos 30 dias, usado só pra
-  // completar os slots que o nível 1 não preencheu (pouco clique ou marca
-  // repetida). Nunca substitui uma raquete que já entrou por clique real.
+  // completar os slots que o nível 1 não preencheu (pouco clique, marca
+  // repetida ou abaixo do piso). Nunca substitui uma raquete que já entrou
+  // por clique real.
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
   const { data: recRows } = await supabase
     .from('recommendation_events')
@@ -553,10 +565,20 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   for (const r of (recRows as { racket_id: number }[] | null) ?? []) {
     recCounts.set(r.racket_id, (recCounts.get(r.racket_id) ?? 0) + 1)
   }
-  const recIds = [...recCounts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id)
+  const rawRecIds = [...recCounts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id)
 
-  const allIds = [...new Set([...clickIds, ...recIds])]
+  const allIds = [...new Set([...rawClickIds, ...rawRecIds])]
   const racketsById = new Map((await getRaquetasByIds(allIds)).map(r => [r.id, r]))
+
+  // Piso de qualidade: descarta candidatas com scoreGeral abaixo do corte
+  // antes de rankear por clique/recs — resolve a queixa de raquetes de gama
+  // baixa aparecendo só por volume de clique, sem abandonar o dado real.
+  const passesFloor = (id: number) => {
+    const s = scoreGeral(racketsById.get(id)?.racket_insights)
+    return s != null && s >= SCORE_GERAL_FLOOR
+  }
+  const clickIds = rawClickIds.filter(passesFloor)
+  const recIds = rawRecIds.filter(passesFloor)
 
   const seenBrands = new Set<string>()
   const finalRackets: RacketWithInsights[] = []
