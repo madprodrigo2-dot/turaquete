@@ -24,17 +24,34 @@ function gaClientId(raw: string | undefined): string {
   return crypto.randomUUID()
 }
 
-// _ga_STREAM_ID cookie format: GS1.1.<session_id>.<session_number>... or GS2.1...
+// _ga_STREAM_ID cookie format:
+//   GS1 (legado): GS1.1.<session_id>.<session_number>...
+//   GS2 (atual):  GS2.1.s<session_id>$o<session_number>$g<engaged>$t<last_event>$j<...>$l<...>$h<...>
 // Returns null when absent or malformed — caller omits session params in that case.
 function gaSessionInfo(raw: string | undefined): { session_id: string; session_number: number } | null {
   if (!raw) return null
   const parts = raw.split('.')
-  if (parts.length < 4) return null
-  if (parts[0] !== 'GS1' && parts[0] !== 'GS2') return null
-  const session_id     = parts[2]
-  const session_number = parseInt(parts[3], 10)
-  if (!session_id || isNaN(session_number)) return null
-  return { session_id, session_number }
+  if (parts.length < 3) return null
+
+  if (parts[0] === 'GS1') {
+    if (parts.length < 4) return null
+    const session_id     = parts[2]
+    const session_number = parseInt(parts[3], 10)
+    if (!session_id || isNaN(session_number)) return null
+    return { session_id, session_number }
+  }
+
+  if (parts[0] === 'GS2') {
+    const fields  = parts[2].split('$')
+    const sField  = fields.find(f => f.startsWith('s'))
+    const oField  = fields.find(f => f.startsWith('o'))
+    const session_id     = sField?.slice(1)
+    const session_number = oField ? parseInt(oField.slice(1), 10) : NaN
+    if (!session_id || isNaN(session_number)) return null
+    return { session_id, session_number }
+  }
+
+  return null
 }
 
 function summarizeReferrer(ref: string | null): string {
