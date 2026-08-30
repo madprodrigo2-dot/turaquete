@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const { from, to, label, monthFrom } = brtRange()
 
-  const [convsRes, recsRes, clicksRes, afiliRes, ipRes, externalRes, afiliMesRes, precoQuebradoRes, semMatchRes] = await Promise.all([
+  const [convsRes, recsRes, clicksRes, afiliRes, ipRes, externalRes, afiliMesRes, semMatchRes] = await Promise.all([
     sb.from('conversations').select('session_id, custo_brl').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('recommendation_events').select('racket_id').gte('created_at', from).lt('created_at', to).eq('is_test', false),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', from).lt('created_at', to).eq('is_test', false).not('session_id', 'is', null),
@@ -46,8 +46,6 @@ export async function GET(req: NextRequest) {
     sb.from('link_clicks').select('ip_hash, pais').gte('created_at', from).lt('created_at', to).eq('is_test', false).not('ip_hash', 'is', null),
     sb.from('link_clicks').select('pais').gte('created_at', from).lt('created_at', to).eq('is_test', false).is('session_id', null),
     sb.from('link_clicks').select('id', { count: 'exact', head: true }).gte('created_at', monthFrom).lt('created_at', to).eq('is_test', false).eq('tipo', 'afiliado').not('session_id', 'is', null),
-    // Snapshot atual (não só o que rodou hoje no sync) — pega raquetes publicadas/ativas travadas em preço.
-    sb.from('rackets').select('id, name').eq('publicada', true).not('is_active', 'eq', false).not('fora_de_linha', 'eq', true).in('last_sync_status', ['no_price', 'error_429', 'timeout', 'error']),
     sb.from('feedback_events').select('motivo').eq('event_type', 'busca_sem_match').gte('created_at', from).lt('created_at', to).eq('is_test', false),
   ])
 
@@ -56,7 +54,6 @@ export async function GET(req: NextRequest) {
   const totalClicks = clicksRes.count ?? 0
   const totalAfiliado = afiliRes.count ?? 0
   const totalAfiliaoMes = afiliMesRes.count ?? 0
-  const precosQuebrados = precoQuebradoRes.data ?? []
 
   const externalRows = externalRes.data ?? []
   const externalCount = externalRows.length
@@ -118,10 +115,6 @@ export async function GET(req: NextRequest) {
     : ''
   const mesLine = `📅 Mês corrente: <b>${totalAfiliaoMes}</b> cliques monetizáveis`
 
-  const precoQuebradoLine = precosQuebrados.length > 0
-    ? `⚠️ <b>${precosQuebrados.length}</b> raquete(s) com preço quebrado agora: ${precosQuebrados.slice(0, 5).map(r => r.name).join(', ')}${precosQuebrados.length > 5 ? ` e mais ${precosQuebrados.length - 5}` : ''}`
-    : ''
-
   const semMatchLine = semMatchCount > 0
     ? `🔍 <b>${semMatchCount}</b> conversa(s) sem raquete encontrada${topSemMatchMotivo ? ` (motivo mais comum: ${topSemMatchMotivo})` : ''}`
     : ''
@@ -138,7 +131,6 @@ export async function GET(req: NextRequest) {
     ].join('\n') : '(sem atividade ontem)',
     monetizableLine,
     mesLine,
-    precoQuebradoLine,
     semAfiliadoLine,
     semMatchLine,
     externalCount > 0 ? `🤖 Acessos externos: <b>${externalCount}</b>${topExternalPais ? ` (top: ${topExternalPais})` : ''}` : '',
@@ -149,7 +141,6 @@ export async function GET(req: NextRequest) {
   await sendTelegram(text)
 
   return NextResponse.json({
-    ok: true, label, totalSessoes, totalRecs, totalAfiliado, conversionRate,
-    precosQuebrados: precosQuebrados.length, semMatch: semMatchCount,
+    ok: true, label, totalSessoes, totalRecs, totalAfiliado, conversionRate, semMatch: semMatchCount,
   })
 }
