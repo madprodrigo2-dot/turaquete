@@ -9,6 +9,7 @@ import { brtCutoff } from '@/lib/brt'
 export const dynamic = 'force-dynamic'
 
 interface TotalsRow  { total: number; afiliado: number; oficial: number; busca: number }
+interface GaTrackingRow { sessao_completa: number; cookie_sessao_ausente: number; sem_cookie_ga: number; total_instrumentado: number }
 interface SlugRow    { slug: string; nome: string | null; total: number; ultimo_tipo: string | null; ultimo_url: string | null }
 interface DayRow     { day: string; total: number }
 interface ReferrerRow{ referrer: string; total: number }
@@ -66,11 +67,12 @@ export default async function CliquesAdmin({
 
   const sessionOnly = !includeExternal
 
-  const [totalsRes, slugsRes, daysRes, referrersRes, origensRawRes] = await Promise.all([
+  const [totalsRes, slugsRes, daysRes, referrersRes, gaTrackingRes, origensRawRes] = await Promise.all([
     sb.rpc('admin_click_totals',       { p_cutoff: cutoffDate, p_include_test: includeTest, p_session_only: sessionOnly }),
     sb.rpc('admin_click_top_slugs',    { p_cutoff: cutoffDate, p_include_test: includeTest, p_limit: 20, p_session_only: sessionOnly }),
     sb.rpc('admin_click_by_day',       { p_include_test: includeTest, p_session_only: sessionOnly }),
     sb.rpc('admin_click_top_referrers',{ p_cutoff: cutoffDate, p_include_test: includeTest, p_session_only: sessionOnly }),
+    sb.rpc('admin_ga_tracking_stats',  { p_cutoff: cutoffDate, p_include_test: includeTest, p_session_only: sessionOnly }),
     (() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q: any = sb.from('link_clicks').select('ip_hash, pais').gte('created_at', todayCutoff).not('ip_hash', 'is', null)
@@ -84,6 +86,7 @@ export default async function CliquesAdmin({
   const slugs     = (slugsRes.data         ?? []) as SlugRow[]
   const days      = (daysRes.data          ?? []) as DayRow[]
   const referrers = (referrersRes.data     ?? []) as ReferrerRow[]
+  const gaTracking = (gaTrackingRes.data?.[0] ?? { sessao_completa: 0, cookie_sessao_ausente: 0, sem_cookie_ga: 0, total_instrumentado: 0 }) as GaTrackingRow
 
   const origemCounts: Record<string, { count: number; pais: string | null }> = {}
   for (const row of (origensRawRes.data ?? [])) {
@@ -197,6 +200,39 @@ export default async function CliquesAdmin({
                 <span className="text-[11px] text-gray-400 w-10 text-right">{pct(count, totals.total)}</span>
               </div>
             ))}
+          </div>
+        )}
+      </section>
+
+      {/* Rastreamento GA4 */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+          Rastreamento GA4 <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+        </h2>
+        {gaTracking.total_instrumentado === 0 ? (
+          <p className="text-gray-400 italic text-xs">
+            Sem dados instrumentados neste período (cookies só passaram a ser gravadas a partir de 31/08/2026).
+          </p>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+            {[
+              { label: 'Sessão completa (atribui certo)',      count: gaTracking.sessao_completa,      color: 'bg-[#0CC0BE]' },
+              { label: 'Cookie de sessão ausente (Unassigned)', count: gaTracking.cookie_sessao_ausente, color: 'bg-amber-400'  },
+              { label: 'Sem cookie GA (nem chega a enviar)',    count: gaTracking.sem_cookie_ga,         color: 'bg-gray-300'   },
+            ].map(({ label, count, color }) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="text-xs text-gray-600 w-64 shrink-0">{label}</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${color}`}
+                    style={{ width: `${gaTracking.total_instrumentado > 0 ? Math.round((count / gaTracking.total_instrumentado) * 100) : 0}%` }}
+                  />
+                </div>
+                <span className="text-xs font-semibold text-gray-800 w-8 text-right">{count}</span>
+                <span className="text-[11px] text-gray-400 w-10 text-right">{pct(count, gaTracking.total_instrumentado)}</span>
+              </div>
+            ))}
+            <p className="text-[10px] text-gray-300 pt-1">{gaTracking.total_instrumentado} clique(s) instrumentado(s) no período</p>
           </div>
         )}
       </section>

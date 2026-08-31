@@ -246,6 +246,10 @@ export default async function IrPage({
   // Derive _ga_STREAM_ID cookie name from measurement ID (e.g. G-ABC123 → _ga_ABC123)
   const streamCookieName = process.env.NEXT_PUBLIC_GA_ID?.replace(/^G-/, '_ga_') ?? null
   const sessionInfo = gaSessionInfo(streamCookieName ? cookieStore.get(streamCookieName)?.value : undefined)
+  // Instrumentação p/ investigar Unassigned no GA4 — grava em link_clicks se as
+  // cookies estavam presentes no momento do clique (ver admin/cliques).
+  const hasGaCookie      = !!cookieStore.get('_ga')?.value
+  const hasSessionCookie = sessionInfo !== null
 
   const price = racket.price ? Number(racket.price) : null
 
@@ -277,8 +281,10 @@ export default async function IrPage({
         user_agent: hdrs.get('user-agent') ?? null,
         ip_hash:    ipHash,
         pais,
+        has_ga_cookie:      hasGaCookie,
+        has_session_cookie: hasSessionCookie,
       }),
-    !isTest && !!cookieStore.get('_ga')?.value
+    !isTest && hasGaCookie
       ? sendGa4ClickEvent({
           clientId,
           sessionInfo,
