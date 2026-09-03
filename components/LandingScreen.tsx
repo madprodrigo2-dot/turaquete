@@ -1238,7 +1238,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         </div>
       )}
 
-      {/* ── Seção arena: chat preview + conteúdo sobre areia ── */}
+      {/* ── Seção arena: da chat preview até o footer inline, fundo arena-grain contínuo (delta 17) ── */}
       <div ref={arenaRef} className="w-full bg-arena arena-grain relative">
 
         {/* ── Onda de entrada — absolute dentro da arena para que arena-grain flua atrás da curva ── */}
@@ -1489,21 +1489,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           </RevealDiv>
 
         </div>
-      </div>{/* end seção arena */}
 
-      {/* ── Onda de saída: arena → menta ── */}
-      <div className="w-full bg-arena arena-grain" aria-hidden="true">
-        <svg
-          viewBox="0 0 1440 50"
-          preserveAspectRatio="none"
-          className="w-full h-12 md:h-14 block"
-        >
-          <path d="M0,22 C480,40 960,14 1440,32 L1440,50 L0,50 Z" fill="#F7F3EC" />
-        </svg>
-      </div>
-
-      {/* ── Seção menta: marcas + FAQ + CTA + footer ── */}
-      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
+        {/* Marcas + Compare + FAQ + CTA + footer inline — segue na mesma superfície arena-grain
+            de cima (delta 17), sem a onda de saída que existia aqui: não há mais troca de fundo
+            pra fazer a transição, então a curva só cortaria a textura ao meio. */}
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
@@ -1684,7 +1674,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           </div>
         </footer>
 
-      </div>{/* end seção 3 */}
+        </div>
+      </div>{/* end seção arena (delta 17: arena + antiga seção menta, um fundo contínuo) */}
 
       {/* Mobile sticky bottom CTA — visible between hero CTA and main CTA */}
       {showBottomCta && (
