@@ -1088,8 +1088,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
             {/* CTA hero — IntersectionObserver target */}
             <div className="flex flex-col items-start gap-3 md:flex-row md:items-end md:gap-3">
-              {/* Tury + bolha de fala */}
-              <div className="max-[359px]:hidden relative shrink-0 flex flex-col items-center" style={{ marginBottom: '-4px' }}>
+              {/* Tury + bolha de fala — mobile only; desktop mostra a versão maior sobre o vídeo */}
+              <div className="max-[359px]:hidden md:hidden relative shrink-0 flex flex-col items-center" style={{ marginBottom: '-4px' }}>
                 <div className="mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-2.5 py-1.5 shadow-sm whitespace-nowrap">
                   <p className="text-[10px] font-semibold text-tinta leading-none">Encontrei 3 raquetes pra você</p>
                   <p className="text-[9px] text-tinta/50 leading-none mt-0.5">baseado no seu perfil →</p>
@@ -1158,6 +1158,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 playsInline
                 className="absolute inset-0 w-full h-full object-contain object-center rounded-xl"
               />
+              {/* Tury + bolha de fala sobreposta ao vídeo — corner, sem tapar o centro */}
+              <div className="absolute left-3 right-3 bottom-3 z-10 flex items-end gap-2.5 pointer-events-none">
+                <Image
+                  src="/tury-explicando.png"
+                  alt="Tury"
+                  width={296}
+                  height={376}
+                  className="tury-float select-none shrink-0"
+                  style={{ height: '96px', width: 'auto' }}
+                />
+                <div className="flex-1 min-w-0 mb-2 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-3 py-2 shadow-md">
+                  <p className="text-[12px] font-semibold text-tinta leading-snug">Encontrei 3 raquetes pra você</p>
+                  <p className="text-[10.5px] text-tinta/50 leading-snug mt-0.5">baseado no seu perfil →</p>
+                </div>
+              </div>
             </div>
           </div>
 
