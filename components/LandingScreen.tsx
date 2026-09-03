@@ -336,12 +336,12 @@ function BrandCard({ brand }: { brand: Brand }) {
   const inner = (
     <>
       {brand.logo_url ? (
-        <div className="h-11 flex items-center">
+        <div className="h-11 flex items-center min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={brand.logo_url}
             alt={brand.name}
-            className={`max-h-full w-auto max-w-[120px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+            className={`max-h-full w-auto max-w-[64px] md:max-w-[120px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
             style={
               brand.slug === 'mormaii'    ? { marginLeft: '-14px' } :
               brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
@@ -352,14 +352,14 @@ function BrandCard({ brand }: { brand: Brand }) {
           />
         </div>
       ) : (
-        <span className={`text-sm font-medium ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
+        <span className={`text-sm font-medium truncate max-w-[64px] md:max-w-none ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
           {brand.name}
         </span>
       )}
       <div className="flex items-center gap-2 shrink-0">
         <StatusIndicator status={brand.status} />
         {isAvailable && (
-          <CaretRight size={14} weight="regular" className="text-aqua shrink-0" aria-hidden="true" />
+          <CaretRight size={14} weight="regular" className="hidden md:inline text-aqua shrink-0" aria-hidden="true" />
         )}
       </div>
     </>
@@ -370,7 +370,7 @@ function BrandCard({ brand }: { brand: Brand }) {
       <Link
         href={`/marcas/${brand.slug}`}
         onClick={() => sendGAEvent('event', 'marca_aberta', { slug: brand.slug })}
-        className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 active:scale-[0.98] active:bg-aqua/5 transition-all"
+        className="bg-white rounded-xl px-2.5 md:px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 active:scale-[0.98] active:bg-aqua/5 transition-all"
       >
         {inner}
       </Link>
@@ -378,7 +378,7 @@ function BrandCard({ brand }: { brand: Brand }) {
   }
 
   return (
-    <div className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-aqua/10 shadow-sm opacity-70 cursor-default select-none">
+    <div className="bg-white rounded-xl px-2.5 md:px-4 py-3 flex items-center justify-between border border-aqua/10 shadow-sm opacity-70 cursor-default select-none">
       {inner}
     </div>
   )
@@ -1473,7 +1473,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {brands.map(brand => (
                 <BrandCard key={brand.id} brand={brand} />
               ))}
