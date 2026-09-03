@@ -1493,6 +1493,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           </Link>
         </div>
 
+        {/* Guia da raquete — desktop only */}
+        <div className="hidden md:flex flex-col gap-3 bg-tinta text-white rounded-2xl p-7">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-aqua">Guia da raquete</p>
+          <p className="font-heading font-bold text-xl leading-snug">Entenda antes de comprar</p>
+          <p className="text-white/65 text-sm leading-relaxed max-w-md">
+            Os 10 fatores que definem uma raquete de beach tennis, explicados para todos os níveis.
+          </p>
+          <Link
+            href="/guia"
+            className="mt-1 text-sm font-semibold text-aqua hover:text-aqua/80 transition-colors w-fit"
+          >
+            Ler o guia →
+          </Link>
+        </div>
+
         {/* Raquetes dos atletas */}
         {SHOW_ATHLETE_SECTION && shuffledAthleteRackets.length > 0 && (
           <div className="flex flex-col gap-3">
