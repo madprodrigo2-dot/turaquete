@@ -1438,10 +1438,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           </div>
           <Link
             href={compareRacket ? `/comparar?a=${compareRacket.slug}` : '/comparar'}
-            className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99]"
+            className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99] md:grid md:grid-cols-[1fr_auto] md:items-stretch"
           >
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3">
-              <div className="flex flex-col gap-2 self-start">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3 md:flex md:gap-4">
+              <div className="flex flex-col gap-2 self-start md:w-32 md:shrink-0">
                 {compareRacket ? (
                   <>
                     <div className="rounded-xl overflow-hidden border border-coral/20">
@@ -1458,18 +1458,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                   </div>
                 )}
               </div>
-              <div className="px-1 flex items-center justify-center">
+              <div className="px-1 flex items-center justify-center md:shrink-0">
                 <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
               </div>
-              <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5 self-start">
+              <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5 self-start md:w-32 md:shrink-0">
                 <div className="relative w-20 h-20">
                   <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
                 </div>
                 <span className="text-xs font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
               </div>
+              <p className="hidden md:block md:flex-1 md:min-w-0 text-tinta/55 text-[13.5px] leading-relaxed">
+                Potência, controle, conforto, peso e preço na mesma tabela — sem precisar abrir duas abas.
+              </p>
             </div>
-            <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between">
-              <span className="text-sm font-semibold text-aqua">Comparar raquetes</span>
+            <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between md:gap-2 md:border-t-0 md:border-l md:border-tinta/7 md:justify-center md:px-6 md:shrink-0">
+              <span className="text-sm font-semibold text-aqua md:whitespace-nowrap">Comparar raquetes</span>
               <ArrowRight size={14} weight="regular" color="#0CC0BE" aria-hidden="true" />
             </div>
           </Link>
