@@ -1028,8 +1028,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
       </div>
 
       {/* ── Seção menta: hero ── */}
-      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-start gap-5">
+      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8 md:pb-10">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-center gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-6 md:gap-8">
@@ -1070,11 +1070,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               </p>
             </div>
 
-            {/* Prova social — desktop only; mobile: abaixo da imagem */}
-            {recsCount >= RECS_THRESHOLD && (
-              <HeroMetrics recsCount={recsCount} racketCount={racketCount} brandsCount={brands.length} />
-            )}
-
             {/* Badges — compactos, linha única */}
             <div className="flex gap-2">
               {BADGES.map((badge, i) => (
@@ -1114,6 +1109,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               >
                 Começar agora
               </button>
+              <span className="hidden md:inline shrink-0 text-xs text-tinta/50">
+                grátis, sem cadastro e sem e-mail
+              </span>
             </div>
 
             {/* Franja — texto discreto, abaixo do CTA */}
@@ -1121,8 +1119,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
             </p>
 
-            {/* Segunda porta — explorar sem quiz */}
-            <p className="text-center text-sm text-tinta/50">
+            {/* Segunda porta — explorar sem quiz; some no desktop (delta 18), mobile mantém */}
+            <p className="text-center text-sm text-tinta/50 md:hidden">
               ou{' '}
               <Link
                 href="/#explorar"
@@ -1132,24 +1130,17 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               </Link>
             </p>
 
+            {/* Prova social — desktop only; vai depois do CTA (delta 18), separada por border-top própria */}
+            {recsCount >= RECS_THRESHOLD && (
+              <HeroMetrics recsCount={recsCount} racketCount={racketCount} brandsCount={brands.length} />
+            )}
+
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:aspect-[16/9] md:bg-white md:border md:border-aqua/20 md:shadow-sm">
-            {/* Mobile: horizontal completa, sem recorte */}
-            <video
-              src="/scan-raquete-mobile.mp4"
-              poster="/new_hero_desktop.webp"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-auto block md:hidden"
-            />
-            {/* Desktop: frame em aspect-[16/9] casa com o aspect real do vídeo (960x540),
-                inset-0 preenche de ponta a ponta sem letterbox. object-contain (não cover)
-                mantido por segurança, mas não deve recortar nada com os aspects já iguais. */}
-            <div className="hidden md:block md:absolute md:inset-0">
+          <div className="relative w-full shrink-0">
+            <div className="relative w-full rounded-2xl overflow-hidden md:aspect-[16/9] md:bg-white md:border md:border-aqua/20 md:shadow-sm">
+              {/* Mobile: horizontal completa, sem recorte */}
               <video
                 src="/scan-raquete-mobile.mp4"
                 poster="/new_hero_desktop.webp"
@@ -1157,49 +1148,66 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 w-full h-full object-contain object-center rounded-xl"
+                className="w-full h-auto block md:hidden"
               />
-              {/* Tury + bolha de fala sobreposta ao vídeo — corner, sem tapar o centro */}
-              <div className="absolute left-3 right-3 bottom-3 z-10 flex items-end gap-2.5 pointer-events-none">
-                <Image
-                  src="/tury-explicando.png"
-                  alt="Tury"
-                  width={296}
-                  height={376}
-                  className="tury-float select-none shrink-0"
-                  style={{ height: '96px', width: 'auto' }}
+              {/* Desktop: frame em aspect-[16/9] casa com o aspect real do vídeo (960x540),
+                  inset-0 preenche de ponta a ponta sem letterbox. object-contain (não cover)
+                  mantido por segurança, mas não deve recortar nada com os aspects já iguais. */}
+              <div className="hidden md:block md:absolute md:inset-0">
+                <video
+                  src="/scan-raquete-mobile.mp4"
+                  poster="/new_hero_desktop.webp"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-contain object-center rounded-xl"
                 />
-                <div className="flex-1 min-w-0 mb-2 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-3 py-2 shadow-md">
-                  <p className="text-[12px] font-semibold text-tinta leading-snug">Encontrei 3 raquetes pra você</p>
-                  <p className="text-[10.5px] text-tinta/50 leading-snug mt-0.5">baseado no seu perfil →</p>
+
+                {/* Badges de score (potência/controle/conforto) — dados reais do exampleRacket, nunca fixos.
+                    3 píldoras separadas: agora que o Tury saiu de dentro do frame (delta 18), sobra
+                    altura de sobra pro formato original. */}
+                {exampleRacket?.racket_insights && (
+                  <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-2 pointer-events-none">
+                    {([
+                      { label: 'Potência', value: exampleRacket.racket_insights.power },
+                      { label: 'Controle', value: exampleRacket.racket_insights.control },
+                      { label: 'Conforto', value: exampleRacket.racket_insights.comfort },
+                    ] as { label: string; value: number | null }[])
+                      .filter((b): b is { label: string; value: number } => b.value != null)
+                      .map(b => (
+                        <div key={b.label} className="bg-white rounded-xl shadow-md px-3 py-1.5 flex flex-col items-center leading-none">
+                          <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/40">{b.label}</span>
+                          <span className="font-heading font-extrabold text-tinta text-xl tabular-nums mt-0.5">{b.value}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+                {/* Tag do vídeo — canto inferior-direito, posição original (livre agora que o Tury saiu do frame) */}
+                <div className="absolute right-3 bottom-3 z-10 bg-white rounded-full shadow-md pl-1.5 pr-3 py-1.5 flex items-center gap-1.5 pointer-events-none">
+                  <span className="w-4 h-4 rounded-full bg-aqua flex items-center justify-center shrink-0">
+                    <Play size={8} weight="fill" color="#fff" aria-hidden="true" />
+                  </span>
+                  <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/70 whitespace-nowrap">Vídeo do scan</span>
                 </div>
               </div>
+            </div>
 
-              {/* Badges de score (potência/controle/conforto) — dados reais do exampleRacket, nunca fixos.
-                  Card único (não 3 pills soltos) pra caber na altura curta do frame 16:9. */}
-              {exampleRacket?.racket_insights && (
-                <div className="absolute right-3 top-3 z-10 bg-white rounded-xl shadow-md px-3 py-2 flex flex-col gap-1 pointer-events-none">
-                  {([
-                    { label: 'Potência', value: exampleRacket.racket_insights.power },
-                    { label: 'Controle', value: exampleRacket.racket_insights.control },
-                    { label: 'Conforto', value: exampleRacket.racket_insights.comfort },
-                  ] as { label: string; value: number | null }[])
-                    .filter((b): b is { label: string; value: number } => b.value != null)
-                    .map(b => (
-                      <div key={b.label} className="flex items-center justify-between gap-3">
-                        <span className="font-mono text-[8px] font-semibold uppercase tracking-widest text-tinta/40">{b.label}</span>
-                        <span className="font-heading font-extrabold text-tinta text-sm tabular-nums">{b.value}</span>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Tag do vídeo — canto oposto aos badges, sempre livre da faixa do Tury (que é bottom-anchored) */}
-              <div className="absolute left-3 top-3 z-10 bg-white rounded-full shadow-md pl-1.5 pr-3 py-1.5 flex items-center gap-1.5 pointer-events-none">
-                <span className="w-4 h-4 rounded-full bg-aqua flex items-center justify-center shrink-0">
-                  <Play size={8} weight="fill" color="#fff" aria-hidden="true" />
-                </span>
-                <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/70 whitespace-nowrap">Vídeo do scan</span>
+            {/* Tury + bolha de fala — fora do frame, pendurado no canto inferior-esquerdo (delta 18:
+                antes ficava sobreposto ao vídeo, agora não tapa mais o conteúdo visual) */}
+            <div className="hidden md:flex absolute left-4 top-full mt-2 z-10 items-end gap-2.5 pointer-events-none max-w-[90%]">
+              <Image
+                src="/tury-explicando.png"
+                alt="Tury"
+                width={296}
+                height={376}
+                className="tury-float select-none shrink-0"
+                style={{ height: '88px', width: 'auto' }}
+              />
+              <div className="min-w-0 mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-3 py-2 shadow-md">
+                <p className="text-[12px] font-semibold text-tinta leading-snug">Encontrei 3 raquetes pra você</p>
+                <p className="text-[10.5px] text-tinta/50 leading-snug mt-0.5">baseado no seu perfil →</p>
               </div>
             </div>
           </div>
@@ -1241,18 +1249,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
       {/* ── Seção arena: da chat preview até o footer inline, fundo arena-grain contínuo (delta 17) ── */}
       <div ref={arenaRef} className="w-full bg-arena arena-grain relative">
 
-        {/* ── Onda de entrada — absolute dentro da arena para que arena-grain flua atrás da curva ── */}
-        <svg
-          viewBox="0 0 1440 56"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-          className="absolute top-0 left-0 w-full h-14 md:h-16 block pointer-events-none"
-          style={{ zIndex: 1 }}
-        >
-          {/* path invertido: fill na zona do hero (acima da curva) = grain não aparece lá */}
-          <path d="M0,0 L1440,0 L1440,42 C960,4 480,4 0,42 Z" fill="#F7EDDC" />
-        </svg>
-
+        {/* Onda de entrada removida — marquee de marcas já separa hero e arena; a curva
+            só cobria a textura com uma cor chapada, virando o "corte" que o delta 17
+            queria eliminar. O pt-14/py-16 abaixo mantém o mesmo respiro, agora com
+            arena-grain visível nele em vez da curva. */}
         <div className="relative max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 pt-14 pb-10 md:py-16 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
 
           {/* Explorar por perfil */}
