@@ -333,35 +333,25 @@ function AthleteRacketCard({ racket }: { racket: RacketWithInsights }) {
 function BrandCard({ brand }: { brand: Brand }) {
   const isAvailable = brand.status === 'disponivel'
 
-  const inner = (
-    <>
-      {brand.logo_url ? (
-        <div className="h-11 flex items-center min-w-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={brand.logo_url}
-            alt={brand.name}
-            className={`max-h-full w-auto max-w-[64px] md:max-w-[120px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'} ${brand.slug === 'mormaii' ? '-ml-[7px] md:-ml-[14px]' : ''}`}
-            style={
-              brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
-              brand.slug === 'adidas'     ? { height: '20px' } :
-              brand.slug === 'kona'       ? { height: '26px' } :
-              undefined
-            }
-          />
-        </div>
-      ) : (
-        <span className={`text-sm font-medium truncate max-w-[64px] md:max-w-none ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
-          {brand.name}
-        </span>
-      )}
-      <div className="flex items-center gap-2 shrink-0">
-        <StatusIndicator status={brand.status} />
-        {isAvailable && (
-          <CaretRight size={14} weight="regular" className="hidden md:inline text-aqua shrink-0" aria-hidden="true" />
-        )}
-      </div>
-    </>
+  const logoOrName = brand.logo_url ? (
+    <div className="h-11 flex items-center min-w-0 max-w-[64px] md:max-w-[120px]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={brand.logo_url}
+        alt={brand.name}
+        className={`max-h-full w-auto max-w-full object-contain ${isAvailable ? '' : 'opacity-40 grayscale'} ${brand.slug === 'mormaii' ? '-ml-[7px] md:-ml-[14px]' : ''}`}
+        style={
+          brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
+          brand.slug === 'adidas'     ? { height: '20px' } :
+          brand.slug === 'kona'       ? { height: '26px' } :
+          undefined
+        }
+      />
+    </div>
+  ) : (
+    <span className={`text-sm font-medium truncate max-w-[64px] md:max-w-none ${isAvailable ? 'text-tinta' : 'text-tinta/50'}`}>
+      {brand.name}
+    </span>
   )
 
   if (isAvailable) {
@@ -371,14 +361,21 @@ function BrandCard({ brand }: { brand: Brand }) {
         onClick={() => sendGAEvent('event', 'marca_aberta', { slug: brand.slug })}
         className="bg-white rounded-xl px-2.5 md:px-4 py-3 flex items-center justify-between border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 active:scale-[0.98] active:bg-aqua/5 transition-all"
       >
-        {inner}
+        {logoOrName}
+        <div className="flex items-center gap-2 shrink-0">
+          <StatusIndicator status={brand.status} />
+          <CaretRight size={14} weight="regular" className="hidden md:inline text-aqua shrink-0" aria-hidden="true" />
+        </div>
       </Link>
     )
   }
 
   return (
     <div className="bg-white rounded-xl px-2.5 md:px-4 py-3 flex items-center justify-between border border-aqua/10 shadow-sm opacity-70 cursor-default select-none">
-      {inner}
+      {logoOrName}
+      <div className="flex items-center gap-2 shrink-0">
+        <StatusIndicator status={brand.status} />
+      </div>
     </div>
   )
 }
@@ -998,34 +995,41 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               />
             </div>
           </Link>
-          <div className="relative flex items-center">
-            <div
-              aria-hidden={showHeaderCta}
-              className={`absolute inset-y-0 right-0 flex items-center transition-opacity duration-200 ${
-                showHeaderCta ? 'opacity-0 pointer-events-none' : 'opacity-100'
-              }`}
-            >
-              <SearchBar />
+          <div className="flex items-center gap-4">
+            {racketCount != null && racketCount > 0 && (
+              <span className="hidden md:inline font-mono text-[10px] font-semibold uppercase tracking-widest text-tinta/40 whitespace-nowrap">
+                {racketCount.toLocaleString('pt-BR')} raquetes no catálogo
+              </span>
+            )}
+            <div className="relative flex items-center md:min-w-[16rem] md:justify-end">
+              <div
+                aria-hidden={showHeaderCta}
+                className={`absolute inset-y-0 right-0 flex items-center transition-opacity duration-200 ${
+                  showHeaderCta ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                }`}
+              >
+                <SearchBar />
+              </div>
+              <button
+                onClick={handleHeaderCta}
+                aria-hidden={!showHeaderCta}
+                tabIndex={showHeaderCta ? 0 : -1}
+                className={`font-heading font-bold bg-coral text-white text-sm px-4 py-2 rounded-full shadow-sm transition-all duration-200 ${
+                  showHeaderCta
+                    ? 'opacity-100 translate-y-0 pointer-events-auto'
+                    : 'opacity-0 -translate-y-1 pointer-events-none'
+                }`}
+              >
+                Começar
+              </button>
             </div>
-            <button
-              onClick={handleHeaderCta}
-              aria-hidden={!showHeaderCta}
-              tabIndex={showHeaderCta ? 0 : -1}
-              className={`font-heading font-bold bg-coral text-white text-sm px-4 py-2 rounded-full shadow-sm transition-all duration-200 ${
-                showHeaderCta
-                  ? 'opacity-100 translate-y-0 pointer-events-auto'
-                  : 'opacity-0 -translate-y-1 pointer-events-none'
-              }`}
-            >
-              Começar
-            </button>
           </div>
         </div>
       </div>
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-stretch gap-5">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-start gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-6 md:gap-8">
@@ -1131,7 +1135,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:h-full md:bg-white md:border md:border-aqua/20 md:shadow-sm">
+          <div className="relative w-full rounded-2xl overflow-hidden shrink-0 md:aspect-[16/9] md:bg-white md:border md:border-aqua/20 md:shadow-sm">
             {/* Mobile: horizontal completa, sem recorte */}
             <video
               src="/scan-raquete-mobile.mp4"
@@ -1142,12 +1146,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               playsInline
               className="w-full h-auto block md:hidden"
             />
-            {/* Desktop: wrapper com inset cria a margem — padding no pai relative não
-                funciona pra filho fill (inset:0 ignora padding do container, é limitação
-                do CSS). object-contain (não cover) pra não recortar nada além do que a
-                imagem já tem — só reduz a escala inteira dentro do frame, com fundo
-                branco preenchendo o espaço sobrando (letterbox). */}
-            <div className="hidden md:block md:absolute md:inset-4">
+            {/* Desktop: frame em aspect-[16/9] casa com o aspect real do vídeo (960x540),
+                inset-0 preenche de ponta a ponta sem letterbox. object-contain (não cover)
+                mantido por segurança, mas não deve recortar nada com os aspects já iguais. */}
+            <div className="hidden md:block md:absolute md:inset-0">
               <video
                 src="/scan-raquete-mobile.mp4"
                 poster="/new_hero_desktop.webp"
@@ -1171,6 +1173,33 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                   <p className="text-[12px] font-semibold text-tinta leading-snug">Encontrei 3 raquetes pra você</p>
                   <p className="text-[10.5px] text-tinta/50 leading-snug mt-0.5">baseado no seu perfil →</p>
                 </div>
+              </div>
+
+              {/* Badges de score (potência/controle/conforto) — dados reais do exampleRacket, nunca fixos.
+                  Card único (não 3 pills soltos) pra caber na altura curta do frame 16:9. */}
+              {exampleRacket?.racket_insights && (
+                <div className="absolute right-3 top-3 z-10 bg-white rounded-xl shadow-md px-3 py-2 flex flex-col gap-1 pointer-events-none">
+                  {([
+                    { label: 'Potência', value: exampleRacket.racket_insights.power },
+                    { label: 'Controle', value: exampleRacket.racket_insights.control },
+                    { label: 'Conforto', value: exampleRacket.racket_insights.comfort },
+                  ] as { label: string; value: number | null }[])
+                    .filter((b): b is { label: string; value: number } => b.value != null)
+                    .map(b => (
+                      <div key={b.label} className="flex items-center justify-between gap-3">
+                        <span className="font-mono text-[8px] font-semibold uppercase tracking-widest text-tinta/40">{b.label}</span>
+                        <span className="font-heading font-extrabold text-tinta text-sm tabular-nums">{b.value}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* Tag do vídeo — canto oposto aos badges, sempre livre da faixa do Tury (que é bottom-anchored) */}
+              <div className="absolute left-3 top-3 z-10 bg-white rounded-full shadow-md pl-1.5 pr-3 py-1.5 flex items-center gap-1.5 pointer-events-none">
+                <span className="w-4 h-4 rounded-full bg-aqua flex items-center justify-center shrink-0">
+                  <Play size={8} weight="fill" color="#fff" aria-hidden="true" />
+                </span>
+                <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/70 whitespace-nowrap">Vídeo do scan</span>
               </div>
             </div>
           </div>
@@ -1479,13 +1508,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
           <div id="marcas" className="flex flex-col gap-3">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <p className="font-heading font-bold text-tinta text-base md:text-lg">Marcas disponíveis</p>
-              {brands.length > 0 && racketCount && racketCount > 0 && (
-                <span className="text-[11px] font-semibold text-tinta/50 bg-tinta/6 border border-tinta/10 rounded-full px-2.5 py-0.5 tracking-wide">
-                  {brands.length} marcas · {racketCount} raquetes analisadas
-                </span>
-              )}
+            <div className="flex flex-col gap-1">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-tinta/40">Marcas disponíveis</p>
+              <p className="font-heading font-bold text-tinta text-base md:text-lg">O catálogo inteiro, sem patrocínio</p>
+              <p className="text-tinta/50 text-xs">Toque numa marca para ver só as raquetes dela</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {brands.map(brand => (
