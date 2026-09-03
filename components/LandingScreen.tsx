@@ -157,6 +157,52 @@ function SocialProof({ recsCount }: { recsCount: number }) {
   )
 }
 
+// Desktop-only 3-metric row (jogadores / raquetes com specs / marcas). Mobile
+// keeps the single-metric SocialProof below the video — untouched by this.
+function HeroMetrics({ recsCount, racketCount, brandsCount }: { recsCount: number; racketCount?: number; brandsCount: number }) {
+  const { count, visible, ref } = useCountUp(recsCount)
+  return (
+    <div
+      ref={ref}
+      className="hidden md:flex items-center gap-5 pt-1.5 border-t border-tinta/10"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
+        transition: 'opacity 0.5s ease, transform 0.5s ease',
+      }}
+    >
+      <div className="flex items-baseline gap-2">
+        <span className="font-heading font-extrabold text-tinta text-3xl tabular-nums" style={{ letterSpacing: '-0.02em' }}>
+          {count.toLocaleString('pt-BR')}
+        </span>
+        <span className="text-tinta/55 text-xs leading-tight">jogadores<br />atendidos</span>
+      </div>
+      {racketCount != null && racketCount > 0 && (
+        <>
+          <div className="w-px h-8 bg-tinta/12 shrink-0" />
+          <div className="flex items-baseline gap-2">
+            <span className="font-heading font-extrabold text-tinta text-3xl tabular-nums" style={{ letterSpacing: '-0.02em' }}>
+              {racketCount.toLocaleString('pt-BR')}
+            </span>
+            <span className="text-tinta/55 text-xs leading-tight">raquetes com<br />specs reais</span>
+          </div>
+        </>
+      )}
+      {brandsCount > 0 && (
+        <>
+          <div className="w-px h-8 bg-tinta/12 shrink-0" />
+          <div className="flex items-baseline gap-2">
+            <span className="font-heading font-extrabold text-tinta text-3xl tabular-nums" style={{ letterSpacing: '-0.02em' }}>
+              {brandsCount}
+            </span>
+            <span className="text-tinta/55 text-xs leading-tight">marcas<br />no catálogo</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function RevealDiv({ children, className = '', delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const ref    = useRef<HTMLDivElement>(null)
   const fired  = useRef(false)
@@ -970,7 +1016,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8">
-        <div className="flex flex-col md:grid md:grid-cols-[1fr_300px] md:gap-6 md:items-stretch gap-5">
+        <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-stretch gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-6 md:gap-8">
@@ -1013,9 +1059,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
             {/* Prova social — desktop only; mobile: abaixo da imagem */}
             {recsCount >= RECS_THRESHOLD && (
-              <div className="hidden md:block">
-                <SocialProof recsCount={recsCount} />
-              </div>
+              <HeroMetrics recsCount={recsCount} racketCount={racketCount} brandsCount={brands.length} />
             )}
 
             {/* Badges — compactos, linha única */}
