@@ -303,12 +303,20 @@ export default function CompareView({ rackets }: Props) {
         })}
       </div>
 
-      {/* Hexagon radar */}
+      {/* Hexagon radar — collapsed by default, both breakpoints */}
       {hasTwoRackets && (
-        <section className="bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] p-5">
-          <SectionLabel>Perfil</SectionLabel>
-          <CompareHexagon rackets={rackets as [RacketWithInsights, RacketWithInsights]} />
-        </section>
+        <details className="group bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] p-5">
+          <summary className="flex items-center justify-between gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+            <span className="text-[10px] font-bold text-tinta/40 uppercase tracking-widest">Perfil</span>
+            <span className="text-xs font-semibold text-aqua shrink-0">
+              <span className="group-open:hidden">Ver detalhes ›</span>
+              <span className="hidden group-open:inline">Ocultar detalhes</span>
+            </span>
+          </summary>
+          <div className="mt-4">
+            <CompareHexagon rackets={rackets as [RacketWithInsights, RacketWithInsights]} />
+          </div>
+        </details>
       )}
 
       {/* Placar — scoreboard */}
@@ -460,9 +468,15 @@ export default function CompareView({ rackets }: Props) {
         </section>
       )}
 
-      {/* Specs */}
-      <section>
-        <SectionLabel>Especificações</SectionLabel>
+      {/* Specs — collapsed by default, both breakpoints */}
+      <details className="group">
+        <summary className="flex items-center justify-between gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+          <span className="text-[10px] font-bold text-tinta/40 uppercase tracking-widest">Especificações</span>
+          <span className="text-xs font-semibold text-aqua shrink-0">
+            <span className="group-open:hidden">Ver detalhes ›</span>
+            <span className="hidden group-open:inline">Ocultar detalhes</span>
+          </span>
+        </summary>
         <div className="rounded-xl border border-aqua/20 overflow-hidden">
           {/* Column headers */}
           <div className="grid grid-cols-[auto_1fr_1fr] bg-gray-50 border-b border-aqua/15">
@@ -493,7 +507,7 @@ export default function CompareView({ rackets }: Props) {
             </div>
           ))}
         </div>
-      </section>
+      </details>
 
       {/* Tury CTA */}
       <div className="rounded-2xl bg-tinta text-white px-5 py-5 flex flex-col gap-3">
