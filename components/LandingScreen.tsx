@@ -1233,23 +1233,28 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           <RevealDiv>
             <div className="hidden md:block bg-white rounded-2xl p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
               <p className="font-heading font-bold text-tinta text-lg mb-5">Como funciona</p>
-              <div className="flex flex-col">
+              <div className="grid grid-cols-3 gap-3.5">
                 {STEPS.map((step, i) => (
-                  <div key={i} className="flex gap-4">
-                    <div className="flex flex-col items-center w-8 shrink-0">
-                      <div className="w-8 h-8 rounded-full bg-aqua text-white text-xs font-heading font-bold flex items-center justify-center shrink-0 shadow-[0_0_14px_rgba(12,192,190,0.35)]">
-                        {i + 1}
-                      </div>
-                      {i < STEPS.length - 1 && (
-                        <div className="w-px flex-1 min-h-4 bg-gradient-to-b from-aqua/50 to-aqua/10" />
-                      )}
-                    </div>
-                    <div className={`flex flex-col pt-1${i < STEPS.length - 1 ? ' pb-5' : ''}`}>
-                      <p className="text-tinta text-base leading-relaxed">{step.label}</p>
-                      {step.desc && (
-                        <p className="text-tinta/60 text-sm leading-relaxed mt-1">{step.desc}</p>
-                      )}
-                    </div>
+                  <div
+                    key={i}
+                    className={`step-cycle rounded-2xl border p-5 ${
+                      i === 0
+                        ? 'bg-tinta text-white border-tinta shadow-[0_10px_26px_rgba(14,58,64,0.2)]'
+                        : 'bg-white text-tinta border-tinta/7 shadow-[0_2px_10px_rgba(14,58,64,0.06)]'
+                    }`}
+                    style={{ animationDelay: `${i * -2.5}s` }}
+                  >
+                    <p className="font-heading font-bold text-aqua text-xl leading-none">
+                      {String(i + 1).padStart(2, '0')}
+                    </p>
+                    <p className="font-heading font-bold text-[15px] leading-snug mt-3">
+                      {step.label}
+                    </p>
+                    {step.desc && (
+                      <p className="text-[13px] leading-relaxed mt-2 opacity-60">
+                        {step.desc}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

@@ -229,6 +229,23 @@ body {
 }
 .reveal-up { animation: reveal-up var(--dur-base) var(--ease-out) both; }
 
+/* ── "Como funciona" — o passo ativo avança em cor entre os 3 (delta 2) ──── */
+@keyframes step-cycle {
+  0%, 27% {
+    background-color: var(--color-tinta);
+    color: #fff;
+    border-color: var(--color-tinta);
+    box-shadow: 0 10px 26px rgba(14, 58, 64, 0.2);
+  }
+  34%, 100% {
+    background-color: #fff;
+    color: var(--color-tinta);
+    border-color: rgba(14, 58, 64, 0.07);
+    box-shadow: 0 2px 10px rgba(14, 58, 64, 0.06);
+  }
+}
+.step-cycle { animation: step-cycle 7.5s ease-in-out infinite; }
+
 /* ── Chip select micro-bounce ────────────────────────────────────────────── */
 @keyframes chip-select {
   0%   { transform: scale(1);     }
@@ -285,6 +302,7 @@ body {
   .quiz-slide,
   .quiz-result,
   .reveal-up,
+  .step-cycle,
   .chip-select,
   .pulse-dot,
   .tury-enter,
