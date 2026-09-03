@@ -1222,12 +1222,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 label="Até R$1.000"
                 sub="Pra jogar sério sem estourar o orçamento"
                 hoverBorderClass="hover:border-aqua"
+                imageUrl="/ilustracoes/ate-1000.webp"
               />
               <DiscoveryTile
                 href="/raquetes/custo-beneficio"
                 label="Melhor custo-benefício"
                 sub="Score alto pelo menor preço da faixa"
                 hoverBorderClass="hover:border-yellow"
+                imageUrl="/ilustracoes/custo-beneficio.webp"
               />
             </div>
           </div>

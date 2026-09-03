@@ -37,7 +37,7 @@ export default async function CompararParPage({ params }: Props) {
   return (
     <div className="min-h-screen sand-texture">
       <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
-        <div className="max-w-4xl mx-auto px-5 md:px-8 py-3">
+        <div className="max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 py-3">
           <Link
             href="/comparar"
             className="flex items-center gap-2 text-tinta text-sm font-medium hover:text-aqua transition-colors w-fit"
@@ -50,7 +50,7 @@ export default async function CompararParPage({ params }: Props) {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-5 md:px-8 py-8">
+      <div className="max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 py-8">
         <CompareView rackets={rackets} />
       </div>
     </div>
