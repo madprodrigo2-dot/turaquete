@@ -976,7 +976,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
       {/* Sticky header — full viewport width */}
       <div className={`sticky top-0 z-30 w-full flex justify-center bg-[#FBF6EF]/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
-        <div className="w-full max-w-sm md:max-w-4xl flex items-center justify-between px-5 md:px-8 py-3 md:py-4">
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl flex items-center justify-between px-5 md:px-8 py-3 md:py-4">
           <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
             <div className="relative h-10 md:h-[3.25rem] aspect-[322/128]">
               <Image
@@ -1015,7 +1015,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
       </div>
 
       {/* ── Seção menta: hero ── */}
-      <div className="w-full max-w-sm md:max-w-4xl px-5 md:px-8">
+      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8">
         <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-stretch gap-5">
 
           {/* Coluna texto */}
@@ -1176,7 +1176,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           <path d="M0,0 L1440,0 L1440,42 C960,4 480,4 0,42 Z" fill="#F7EDDC" />
         </svg>
 
-        <div className="relative max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 pt-14 pb-10 md:py-16 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
+        <div className="relative max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 pt-14 pb-10 md:py-16 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
 
           {/* Explorar por perfil */}
           <RevealDiv>
@@ -1424,7 +1424,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
       </div>
 
       {/* ── Seção menta: marcas + FAQ + CTA + footer ── */}
-      <div className="w-full max-w-sm md:max-w-4xl flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
+      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
