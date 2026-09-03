@@ -1215,6 +1215,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 imageUrl="/ilustracoes/perfil-articulacoes.webp"
               />
             </div>
+            {/* Rango de preço — desktop only */}
+            <div className="hidden md:grid md:grid-cols-2 md:gap-2.5">
+              <DiscoveryTile
+                href="/raquetes/ate-1000"
+                label="Até R$1.000"
+                sub="Pra jogar sério sem estourar o orçamento"
+                hoverBorderClass="hover:border-aqua"
+              />
+              <DiscoveryTile
+                href="/raquetes/custo-beneficio"
+                label="Melhor custo-benefício"
+                sub="Score alto pelo menor preço da faixa"
+                hoverBorderClass="hover:border-yellow"
+              />
+            </div>
           </div>
           </RevealDiv>
 
