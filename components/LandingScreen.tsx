@@ -912,6 +912,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
   const arenaRef = useRef<HTMLDivElement>(null)
   const [ballSettled, setBallSettled] = useState(false)
 
+  // Marquee de marcas só faz sentido com logo de verdade — marcas só-texto ficariam
+  // destoando no meio da fileira de imagens.
+  const brandLogos = useMemo(() => brands.filter(b => b.logo_url), [brands])
+
   const shuffledAthleteRackets = useMemo(() => {
     const arr = [...athleteRackets]
     for (let i = arr.length - 1; i > 0; i--) {
@@ -1166,6 +1170,30 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
         </div>
       </div>{/* end seção menta */}
+
+      {/* Marquee de marcas — loop horizontal sob o hero */}
+      {brandLogos.length > 0 && (
+        <div className="w-full flex justify-center border-t border-tinta/8 bg-white/60">
+          <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl flex items-center gap-6 px-5 md:px-8 py-4">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-tinta/40">
+              {brands.length} marcas no catálogo
+            </span>
+            <div className="flex-1 min-w-0 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)] [-webkit-mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)]">
+              <div className="marquee-track flex items-center gap-10 w-max" aria-hidden="true">
+                {[...brandLogos, ...brandLogos].map((brand, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={`${brand.id}-${i}`}
+                    src={brand.logo_url!}
+                    alt=""
+                    className="h-6 w-auto max-w-[100px] object-contain shrink-0"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Seção arena: chat preview + conteúdo sobre areia ── */}
       <div ref={arenaRef} className="w-full bg-arena arena-grain relative">

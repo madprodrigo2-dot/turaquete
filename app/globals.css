@@ -246,6 +246,13 @@ body {
 }
 .step-cycle { animation: step-cycle 7.5s ease-in-out infinite; }
 
+/* ── Marquee de marcas — loop horizontal sob o hero (delta 13) ────────────── */
+@keyframes marquee {
+  from { transform: translateX(0);     }
+  to   { transform: translateX(-50%);  }
+}
+.marquee-track { animation: marquee 24s linear infinite; }
+
 /* ── Chip select micro-bounce ────────────────────────────────────────────── */
 @keyframes chip-select {
   0%   { transform: scale(1);     }
@@ -303,6 +310,7 @@ body {
   .quiz-result,
   .reveal-up,
   .step-cycle,
+  .marquee-track,
   .chip-select,
   .pulse-dot,
   .tury-enter,
