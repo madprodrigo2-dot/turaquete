@@ -51,6 +51,12 @@ const STEPS: { label: string; desc?: string }[] = [
   },
 ]
 
+// Per-card animation-delay for .step-cycle (7.5s loop, dark window 0-27%).
+// NOT sequential (0, -2.5, -5) — a more-negative delay reaches the next dark
+// phase SOONER, not later, so that naive mapping plays the cards 1→3→2.
+// These values (0, -5, -2.5) are what actually rotates them 1→2→3.
+const STEP_CYCLE_DELAYS = [0, -5, -2.5]
+
 const FAQS: { q: string; a: ReactNode }[] = [
   {
     q: 'É grátis mesmo?',
@@ -1259,7 +1265,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                         ? 'bg-tinta text-white border-tinta shadow-[0_10px_26px_rgba(14,58,64,0.2)]'
                         : 'bg-white text-tinta border-tinta/7 shadow-[0_2px_10px_rgba(14,58,64,0.06)]'
                     }`}
-                    style={{ animationDelay: `${i * -2.5}s` }}
+                    style={{ animationDelay: `${STEP_CYCLE_DELAYS[i]}s` }}
                   >
                     <p className="font-heading font-bold text-aqua text-xl leading-none">
                       {String(i + 1).padStart(2, '0')}
