@@ -341,9 +341,8 @@ function BrandCard({ brand }: { brand: Brand }) {
           <img
             src={brand.logo_url}
             alt={brand.name}
-            className={`max-h-full w-auto max-w-[64px] md:max-w-[120px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'}`}
+            className={`max-h-full w-auto max-w-[64px] md:max-w-[120px] object-contain ${isAvailable ? '' : 'opacity-40 grayscale'} ${brand.slug === 'mormaii' ? '-ml-[7px] md:-ml-[14px]' : ''}`}
             style={
-              brand.slug === 'mormaii'    ? { marginLeft: '-14px' } :
               brand.slug === 'minimalist' ? { marginLeft: '-10px' } :
               brand.slug === 'adidas'     ? { height: '20px' } :
               brand.slug === 'kona'       ? { height: '26px' } :
@@ -1150,8 +1149,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 branco preenchendo o espaço sobrando (letterbox). */}
             <div className="hidden md:block md:absolute md:inset-4">
               <video
-                src="/scan-raquete-desktop.mp4"
-                poster="/new_hero_mobile.webp"
+                src="/scan-raquete-mobile.mp4"
+                poster="/new_hero_desktop.webp"
                 autoPlay
                 loop
                 muted
@@ -1541,21 +1540,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               <span className="text-sm font-semibold text-aqua md:whitespace-nowrap">Comparar raquetes</span>
               <ArrowRight size={14} weight="regular" color="#0CC0BE" aria-hidden="true" />
             </div>
-          </Link>
-        </div>
-
-        {/* Guia da raquete — desktop only */}
-        <div className="hidden md:flex flex-col gap-3 bg-tinta text-white rounded-2xl p-7">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-aqua">Guia da raquete</p>
-          <p className="font-heading font-bold text-xl leading-snug">Entenda antes de comprar</p>
-          <p className="text-white/65 text-sm leading-relaxed max-w-md">
-            Os 10 fatores que definem uma raquete de beach tennis, explicados para todos os níveis.
-          </p>
-          <Link
-            href="/guia"
-            className="mt-1 text-sm font-semibold text-aqua hover:text-aqua/80 transition-colors w-fit"
-          >
-            Ler o guia →
           </Link>
         </div>
 
