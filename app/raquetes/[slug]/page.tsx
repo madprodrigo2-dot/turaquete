@@ -10,6 +10,7 @@ import { SITE_URL } from '@/lib/site'
 import BuyButton from '@/components/BuyButton'
 import SiteNav from '@/components/SiteNav'
 import RacketBadgeOverlay from '@/components/RacketBadgeOverlay'
+import RacketImageTile from '@/components/RacketImageTile'
 import SpecsGrid, { NIVEL_LABEL } from '@/components/SpecsGrid'
 import ScoreSection from '@/components/ScoreSection'
 import RacketKeyStats from '@/components/RacketKeyStats'
@@ -147,18 +148,35 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
 
             {/* ── Coluna esquerda: imagem sticky ── */}
             <div className="lg:sticky lg:top-20">
-              <div className="bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[220px]">
-                {racket.image_url ? (
-                  <div className="relative overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+              {racket.image_url ? (
+                <>
+                  {/* Mobile: caixa com padding, como sempre foi */}
+                  <div className="lg:hidden bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[220px]">
+                    <div className="relative overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={racket.image_url}
+                        alt={racket.name}
+                        className="object-contain max-h-72 w-auto"
+                      />
+                      <RacketBadgeOverlay athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} size="detail" />
+                    </div>
+                  </div>
+                  {/* Desktop: tile edge-to-edge, mesmo padrão usado no resto do site */}
+                  <div className="hidden lg:block rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)]">
+                    <RacketImageTile
                       src={racket.image_url}
                       alt={racket.name}
-                      className="object-contain max-h-72 lg:max-h-[520px] w-auto"
+                      athlete={athlete}
+                      brandLogo={racket.brands?.logo_url}
+                      brandName={racket.brands?.name}
+                      badgeSize="detail"
+                      loading="eager"
                     />
-                    <RacketBadgeOverlay athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} size="detail" />
                   </div>
-                ) : (
+                </>
+              ) : (
+                <div className="bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[220px]">
                   <div className="flex flex-col items-center gap-3 text-aqua/30">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <ellipse cx="12" cy="9.5" rx="6" ry="7.5" fill="currentColor" />
@@ -166,8 +184,8 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                     </svg>
                     <span className="text-xs text-tinta/30">{getDisplayName(racket)}</span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* ── Coluna direita: todo o conteúdo ── */}
@@ -254,29 +272,30 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 </div>
               )}
 
-              {/* Specs */}
-              <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
-                <p className="text-tinta font-semibold text-sm mb-3">Especificações</p>
-                <SpecsGrid racket={racket} hideTechRows />
-                <MegaSpinLink racketId={racket.id} racketSlug={racket.slug} racketName={racket.name} />
-              </div>
-
-              {/* Tecnologias e acabamentos */}
-              {tecnologias.length > 0 && (
+              {/* Specs + Tecnologias — 2 colunas no desktop */}
+              <div className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:gap-3.5">
                 <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
-                  <p className="text-tinta font-semibold text-sm mb-3">Tecnologias e acabamentos</p>
-                  <div className="flex flex-wrap gap-2">
-                    {tecnologias.map((t, i) => (
-                      <span
-                        key={i}
-                        className="bg-aqua/[0.07] text-tinta text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/15"
-                      >
-                        {t.nome}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-tinta font-semibold text-sm mb-3">Especificações</p>
+                  <SpecsGrid racket={racket} hideTechRows />
+                  <MegaSpinLink racketId={racket.id} racketSlug={racket.slug} racketName={racket.name} />
                 </div>
-              )}
+
+                {tecnologias.length > 0 && (
+                  <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
+                    <p className="text-tinta font-semibold text-sm mb-3">Tecnologias e acabamentos</p>
+                    <div className="flex flex-wrap gap-2">
+                      {tecnologias.map((t, i) => (
+                        <span
+                          key={i}
+                          className="bg-aqua/[0.07] text-tinta text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/15"
+                        >
+                          {t.nome}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Comparar + Compartilhar */}
               <div className="bg-white rounded-2xl px-5 py-4 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">
