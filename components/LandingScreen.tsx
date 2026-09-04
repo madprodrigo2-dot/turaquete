@@ -1486,7 +1486,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         {/* Marcas + Compare + FAQ + CTA — segue na mesma superfície arena-grain de cima (delta 17).
             A partir da linha de confiança em diante, o fundo passa a ser claro (delta 20): texto
             de rodapé em cinza tem pouco contraste sobre a arena. */}
-        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 pb-6 md:pt-12 md:pb-10">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
