@@ -1462,6 +1462,54 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             </div>
           )}
 
+          {/* Compare lado a lado — antes da pesquisa científica (pedido do Rodrigo) */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <p className="font-heading font-bold text-tinta text-base md:text-lg">Compare lado a lado</p>
+              <p className="text-tinta/50 text-xs">veja qual raquete ganha em cada quesito</p>
+            </div>
+            <Link
+              href={compareRacket ? `/comparar?a=${compareRacket.slug}` : '/comparar'}
+              className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99] md:grid md:grid-cols-[1fr_auto] md:items-stretch"
+            >
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3 md:flex md:gap-4">
+                <div className="flex flex-col gap-2 self-start md:w-32 md:shrink-0">
+                  {compareRacket ? (
+                    <>
+                      <div className="rounded-xl overflow-hidden border border-coral/20">
+                        <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} brandLogo={compareRacket.brands?.logo_url} brandName={compareRacket.brands?.name} />
+                      </div>
+                      <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
+                    </>
+                  ) : (
+                    <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">
+                      <div className="relative w-20 h-20">
+                        <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
+                      </div>
+                      <span className="text-xs font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
+                    </div>
+                  )}
+                </div>
+                <div className="px-1 flex items-center justify-center md:shrink-0">
+                  <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
+                </div>
+                <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5 self-start md:w-32 md:shrink-0">
+                  <div className="relative w-20 h-20">
+                    <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
+                  </div>
+                  <span className="text-xs font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
+                </div>
+                <p className="hidden md:block md:flex-1 md:min-w-0 text-tinta/55 text-[13.5px] leading-relaxed">
+                  Potência, controle, conforto, peso e preço na mesma tabela — sem precisar abrir duas abas.
+                </p>
+              </div>
+              <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between md:gap-2 md:border-t-0 md:border-l md:border-tinta/7 md:justify-center md:px-6 md:shrink-0">
+                <span className="text-sm font-semibold text-aqua md:whitespace-nowrap">Comparar raquetes</span>
+                <ArrowRight size={14} weight="regular" color="#0CC0BE" aria-hidden="true" />
+              </div>
+            </Link>
+          </div>
+
           {/* Bloco de credibilidade científica — ISEA 2026 */}
           <RevealDiv delay={100}>
           <div className="bg-white rounded-2xl p-5 md:p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
@@ -1507,7 +1555,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
         </div>
 
-        {/* Marcas + Compare + FAQ + CTA — segue na mesma superfície arena-grain de cima (delta 17).
+        {/* Marcas + Atletas + FAQ + CTA — segue na mesma superfície arena-grain de cima (delta 17).
             A partir da linha de confiança em diante, o fundo passa a ser claro (delta 20): texto
             de rodapé em cinza tem pouco contraste sobre a arena. */}
         <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-4 pb-6 md:pt-6 md:pb-10">
@@ -1527,54 +1575,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             </div>
           </div>
         )}
-
-        {/* Compare lado a lado */}
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-0.5">
-            <p className="font-heading font-bold text-tinta text-base md:text-lg">Compare lado a lado</p>
-            <p className="text-tinta/50 text-xs">veja qual raquete ganha em cada quesito</p>
-          </div>
-          <Link
-            href={compareRacket ? `/comparar?a=${compareRacket.slug}` : '/comparar'}
-            className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99] md:grid md:grid-cols-[1fr_auto] md:items-stretch"
-          >
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3 md:flex md:gap-4">
-              <div className="flex flex-col gap-2 self-start md:w-32 md:shrink-0">
-                {compareRacket ? (
-                  <>
-                    <div className="rounded-xl overflow-hidden border border-coral/20">
-                      <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} brandLogo={compareRacket.brands?.logo_url} brandName={compareRacket.brands?.name} />
-                    </div>
-                    <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
-                  </>
-                ) : (
-                  <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5">
-                    <div className="relative w-20 h-20">
-                      <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
-                    </div>
-                    <span className="text-xs font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
-                  </div>
-                )}
-              </div>
-              <div className="px-1 flex items-center justify-center md:shrink-0">
-                <span className="font-heading font-black text-xl text-tinta/20 leading-none select-none">VS</span>
-              </div>
-              <div className="aspect-[800/1020] rounded-xl border border-aqua/20 bg-[#EAF7F6] flex flex-col items-center justify-center gap-1.5 self-start md:w-32 md:shrink-0">
-                <div className="relative w-20 h-20">
-                  <Image src="/lupa-comparar.webp" alt="" fill className="object-contain" sizes="80px" />
-                </div>
-                <span className="text-xs font-semibold text-tinta/70 text-center px-2 leading-snug">Escolher raquete</span>
-              </div>
-              <p className="hidden md:block md:flex-1 md:min-w-0 text-tinta/55 text-[13.5px] leading-relaxed">
-                Potência, controle, conforto, peso e preço na mesma tabela — sem precisar abrir duas abas.
-              </p>
-            </div>
-            <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between md:gap-2 md:border-t-0 md:border-l md:border-tinta/7 md:justify-center md:px-6 md:shrink-0">
-              <span className="text-sm font-semibold text-aqua md:whitespace-nowrap">Comparar raquetes</span>
-              <ArrowRight size={14} weight="regular" color="#0CC0BE" aria-hidden="true" />
-            </div>
-          </Link>
-        </div>
 
         {/* Raquetes dos atletas */}
         {SHOW_ATHLETE_SECTION && shuffledAthleteRackets.length > 0 && (
