@@ -44,6 +44,7 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
     : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
   const nivel = derivarNivel(racket)
   const specLine = buildSpecLine(racket)
+  const priceDropped = racket.price != null && racket.price_previous != null && racket.price < racket.price_previous
 
   return (
     <Link
@@ -58,7 +59,16 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
           </span>
         )}
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
-        {price && <p className="text-coral font-bold text-sm">{price}</p>}
+        {price && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-coral font-bold text-sm">{price}</p>
+            {priceDropped && (
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 leading-none">
+                Preço caiu
+              </span>
+            )}
+          </div>
+        )}
         {specLine && <p className="text-tinta/45 text-[10px] leading-snug">{specLine}</p>}
       </div>
     </Link>

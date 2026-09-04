@@ -80,6 +80,7 @@ export interface RacketWithInsights {
   face_material: string | null
   core: string | null
   price: number | null
+  price_previous: number | null
   price_updated_at: string | null
   updated_at: string | null
   created_at: string | null
@@ -114,7 +115,7 @@ function normalizeRacket(raw: unknown): RacketWithInsights {
 
 const SELECT_FIELDS = `
   id, name, slug, nome_base, model_year, racket_family_count, weight_g, balance, format,
-  face_material, core, price, price_updated_at, updated_at, created_at, currency, affiliate_url, source_url, image_url, technologies,
+  face_material, core, price, price_previous, price_updated_at, updated_at, created_at, currency, affiliate_url, source_url, image_url, technologies,
   specs_extra, publicada, is_active,
   brands ( name, slug, logo_url ),
   racket_insights (
@@ -703,6 +704,61 @@ export async function getRaquetasPorOrcamento(max: number): Promise<RacketWithIn
     .order('price')
   if (error) throw new Error(`Supabase: ${error.message}`)
   return ((data as unknown[]) ?? []).map(normalizeRacket)
+}
+
+// ── "Melhor custo-benefício" ─────────────────────────────────────────────────
+// Corte de preço puro (getRaquetasPorOrcamento) deixava a lista dominada por
+// quem tinha mais modelos baratos cadastrados (Pichau: 41% da faixa <=R$850,
+// 2026-09). Piso de scoreGeral + teto por marca corrigem isso sem tocar
+// getRaquetasPorOrcamento, que /raquetes/ate-1000 usa como filtro de
+// orçamento puro — sem promessa de curadoria por qualidade.
+const CUSTO_BENEFICIO_MAX_PRICE   = 2000
+// Piso crescente por faixa de preço, não um score/preço nem um piso fixo.
+// scoreGeral sobe muito pouco com o preço no catálogo real (médias 5.68 em
+// R$0-600 -> 6.14 em R$1500-1800, span de 13x em preço pra menos de 0.5 ponto
+// de score) — um ratio score/preço ficaria dominado pelo preço e voltaria a
+// favorecer o mais barato, o problema original disfarçado. Cada piso abaixo
+// fica perto da mediana real daquela faixa (2026-09), exceto R$1301-1700 que
+// usa o mesmo SCORE_GERAL_FLOOR (5.8) do carrossel de destacados — a essa
+// faixa de preço, exigimos o mesmo padrão que usamos pra recomendar de verdade.
+function custoBeneficioFloor(price: number): number {
+  if (price <= 850)  return 5.3
+  if (price <= 1300) return 5.5
+  if (price <= 1700) return SCORE_GERAL_FLOOR // 5.8
+  return 6.0
+}
+// Página de listagem completa, não um carrossel de poucos slots — por isso
+// teto 3, não o teto de 1 usado em getTopRaquetas/getNovidadesRaquetas.
+const CUSTO_BENEFICIO_BRAND_CAP   = 3
+
+export async function getRaquetasCustoBeneficio(): Promise<RacketWithInsights[]> {
+  const { data, error } = await getSupabase()
+    .from('rackets')
+    .select(SELECT_FIELDS)
+    .eq('publicada', true)
+    .lte('price', CUSTO_BENEFICIO_MAX_PRICE)
+    .not('price', 'is', null)
+    .order('price') // desempate estável de scoreGeral: entre empatadas, a mais barata primeiro
+  if (error) throw new Error(`Supabase: ${error.message}`)
+
+  const candidates = ((data as unknown[]) ?? []).map(normalizeRacket)
+    .map(r => ({ racket: r, score: scoreGeral(r.racket_insights) }))
+    .filter((c): c is { racket: RacketWithInsights; score: number } =>
+      c.score != null && c.racket.price != null && c.score >= custoBeneficioFloor(c.racket.price)
+    )
+    .sort((a, b) => b.score - a.score)
+
+  const countByBrand = new Map<string, number>()
+  const rackets: RacketWithInsights[] = []
+  for (const { racket } of candidates) {
+    const brandKey = racket.brands?.slug ?? `__no_brand_${racket.id}`
+    const used = countByBrand.get(brandKey) ?? 0
+    if (used >= CUSTO_BENEFICIO_BRAND_CAP) continue
+    countByBrand.set(brandKey, used + 1)
+    rackets.push(racket)
+  }
+
+  return rackets
 }
 
 export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {

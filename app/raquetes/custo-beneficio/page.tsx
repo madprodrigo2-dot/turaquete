@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getRaquetasPorOrcamento } from '@/lib/recommend'
+import { getRaquetasCustoBeneficio } from '@/lib/recommend'
 import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 
 export const revalidate = 300
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function CustoBeneficioPage() {
-  const rackets = await getRaquetasPorOrcamento(850).catch(() => [])
+  const rackets = await getRaquetasCustoBeneficio().catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/custo-beneficio.webp"
