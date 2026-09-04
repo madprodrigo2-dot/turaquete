@@ -276,15 +276,6 @@ export default function ChatMessage({
               </div>
             ))}
           </div>
-          {!isComparison && onSuggestion && suggestions?.includes('Ver mais opções') && (
-            <button
-              onClick={() => onSuggestion('Ver mais opções')}
-              className="flex items-center justify-between gap-3 bg-[#F4F8F7] border border-aqua/25 rounded-2xl px-4 py-3 text-left hover:bg-aqua/10 active:scale-[0.99] transition-all"
-            >
-              <span className="text-tinta/70 text-[12.5px] leading-snug">Nenhuma bateu 100%? Posso buscar mais opções.</span>
-              <span className="text-aqua text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shrink-0">ver mais raquetes →</span>
-            </button>
-          )}
           {!isComparison && recommendations!.some(r => r.racket.price) && (
             <p className="text-[10px] text-tinta/40 mt-0.5">Preços de referência, podem variar por loja.</p>
           )}

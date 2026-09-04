@@ -36,9 +36,8 @@ export default function DiagnosticoBlock({ faixa, nivel }: Props) {
 
   return (
     <div className="mt-2 rounded-2xl overflow-hidden border border-aqua/30">
-      <div className="bg-[#F4F8F7] px-3.5 py-2 flex items-center justify-between border-b border-aqua/20">
+      <div className="bg-[#F4F8F7] px-3.5 py-2 border-b border-aqua/20">
         <span className="text-tinta/50 text-[9px] font-bold uppercase tracking-wider">Seu perfil calculado</span>
-        <span className="hidden md:inline text-aqua text-[9px] font-mono">motor v4</span>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-tinta/[0.09]">
         <div className="bg-white px-3 py-2.5">
@@ -55,7 +54,7 @@ export default function DiagnosticoBlock({ faixa, nivel }: Props) {
         </div>
         <div className="bg-white px-3 py-2.5 min-w-0">
           <p className="text-tinta/40 text-[8px] font-bold uppercase tracking-wider">Prioridade</p>
-          <p className="font-heading font-bold text-tinta text-[14px] md:text-[17px] mt-1 capitalize truncate">{prioridade ?? '—'}</p>
+          <p className="font-heading font-bold text-tinta text-[12px] md:text-[14px] leading-tight mt-1 capitalize break-words">{prioridade ?? '—'}</p>
         </div>
       </div>
       <div className="bg-coral px-3.5 py-1">
