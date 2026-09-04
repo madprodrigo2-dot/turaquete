@@ -287,16 +287,19 @@ export default function ChatMessage({
 
       {/* Quick reply chips — held back until animation finishes */}
       {isAssistant && suggestions && suggestions.length > 0 && onSuggestion && !holdBack && (
-        <div className="mt-3 pl-[46px] md:pl-[68px] flex gap-1.5 overflow-x-auto pb-1 -mr-4 pr-4 md:mr-0 md:pr-0 md:flex-wrap md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {suggestions.map(s => (
-            <button
-              key={s}
-              onClick={() => onSuggestion(s)}
-              className="shrink-0 md:shrink whitespace-nowrap md:whitespace-normal md:text-left text-xs md:text-sm font-medium px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm"
-            >
-              {s}
-            </button>
-          ))}
+        <div className="mt-3 pl-[46px] md:pl-[68px] -mr-4 pr-4 md:mr-0 md:pr-0 w-full relative">
+          <div className="w-full flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {suggestions.map(s => (
+              <button
+                key={s}
+                onClick={() => onSuggestion(s)}
+                className="shrink-0 md:shrink whitespace-nowrap md:whitespace-normal md:text-left text-xs md:text-sm font-medium px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-12 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
         </div>
       )}
 
