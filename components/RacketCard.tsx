@@ -111,7 +111,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
 
   return (
     <>
-      <div className="rounded-2xl bg-white overflow-hidden w-full shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200">
+      <div className="rounded-2xl bg-white overflow-hidden w-full h-full flex flex-col shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200">
         {/* Imagem + badge de atleta */}
         <div className="relative h-40 bg-white flex items-center justify-center overflow-hidden shrink-0">
           {racket.image_url ? (
@@ -154,7 +154,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
         </div>
 
         {/* Conteúdo */}
-        <div className="p-4 flex flex-col gap-2">
+        <div className="p-4 flex flex-col gap-2 flex-1">
           <div className="flex items-start justify-between gap-2 min-w-0">
             <p className="font-heading font-semibold text-tinta text-sm leading-tight flex-1 min-w-0 truncate">{nameDisplay}</p>
             {price && (
@@ -203,12 +203,12 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
                 sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })
                 if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_na_loja', racket_id: racket.id })
               }}
-              className="mt-1 w-full text-center rounded-full bg-coral text-white text-xs font-heading font-semibold py-2 px-3 shadow-cta hover:scale-[1.02] hover:shadow-[0_6px_20px_rgba(255,94,58,0.38)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-1"
+              className="mt-auto w-full text-center rounded-full bg-coral text-white text-xs font-heading font-semibold py-2 px-3 shadow-cta hover:scale-[1.02] hover:shadow-[0_6px_20px_rgba(255,94,58,0.38)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-1"
             >
               Ver na loja →
             </a>
           ) : (
-            <span className="mt-1 w-full text-center rounded-full bg-tinta/5 text-tinta/30 text-xs font-heading font-semibold py-2 px-3 cursor-not-allowed select-none block">
+            <span className="mt-auto w-full text-center rounded-full bg-tinta/5 text-tinta/30 text-xs font-heading font-semibold py-2 px-3 cursor-not-allowed select-none block">
               Em breve nas lojas
             </span>
           )}
