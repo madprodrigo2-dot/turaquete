@@ -1119,7 +1119,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                   (mesmo padrão do delta 15/18 desktop, adaptado pra mobile) */}
               <div className="max-[359px]:hidden md:hidden absolute left-3 -bottom-[26px] z-10 flex items-end gap-2.5 pointer-events-none">
                 <Image
-                  src="/tury-explicando.png"
+                  src="/tury-transparente-explicando.png"
                   alt="Tury apontando para o botão Começar agora"
                   width={296}
                   height={376}
@@ -1221,7 +1221,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 antes ficava sobreposto ao vídeo, agora não tapa mais o conteúdo visual) */}
             <div className="hidden md:flex absolute left-4 top-full mt-2 z-10 items-end gap-2.5 pointer-events-none max-w-[90%]">
               <Image
-                src="/tury-explicando.png"
+                src="/tury-transparente-explicando.png"
                 alt="Tury"
                 width={296}
                 height={376}
