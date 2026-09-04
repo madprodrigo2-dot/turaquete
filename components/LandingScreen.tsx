@@ -582,7 +582,7 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
           {shuffled.map(racket => (
             <div
               key={racket.id}
-              className="w-52 md:w-[calc((100%-24px)/3)] shrink-0 snap-start"
+              className="w-52 md:w-[calc((100%-36px)/4)] shrink-0 snap-start"
             >
               <FeaturedCard racket={racket} />
             </div>
