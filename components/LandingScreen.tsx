@@ -1270,7 +1270,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             só cobria a textura com uma cor chapada, virando o "corte" que o delta 17
             queria eliminar. O pt-14/py-16 abaixo mantém o mesmo respiro, agora com
             arena-grain visível nele em vez da curva. */}
-        <div className="relative max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 pt-14 pb-10 md:py-16 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
+        <div className="relative max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 pt-14 pb-4 md:pt-16 md:pb-6 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
 
           {/* Explorar por perfil */}
           <RevealDiv>
@@ -1510,7 +1510,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         {/* Marcas + Compare + FAQ + CTA — segue na mesma superfície arena-grain de cima (delta 17).
             A partir da linha de confiança em diante, o fundo passa a ser claro (delta 20): texto
             de rodapé em cinza tem pouco contraste sobre a arena. */}
-        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 pb-6 md:pt-12 md:pb-10">
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-4 pb-6 md:pt-6 md:pb-10">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
