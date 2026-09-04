@@ -8,6 +8,15 @@ const BALANCE_SHORT: Record<string, string> = {
   'medio_ou_cabeca': 'méd/cabeça',
 }
 
+// Range em cm por balance_preferido — guia de setup, não um filtro.
+// Derivado do estilo de jogo; todas as raquetes do catálogo são balance médio e nunca são excluídas.
+const BALANCE_CM: Record<string, string> = {
+  'medio_ou_cabo':   '24.5–25.5 cm',
+  'leve_cabo':       '24.0–25.0 cm',
+  'medio':           '25.0–26.0 cm',
+  'medio_ou_cabeca': '25.5–26.5 cm',
+}
+
 const NIVEL_SHORT: Record<string, string> = {
   iniciante: 'Iniciante',
   intermediario: 'Interm.',
@@ -21,6 +30,7 @@ interface Props {
 
 export default function DiagnosticoBlock({ faixa, nivel }: Props) {
   const balanceShort = BALANCE_SHORT[faixa.balance_preferido] ?? 'médio'
+  const balanceRange = BALANCE_CM[faixa.balance_preferido] ?? null
   const pesoIdeal = Math.round((faixa.peso_min + faixa.peso_max) / 2)
   const prioridade = faixa.prioridades[0]
 
@@ -33,10 +43,12 @@ export default function DiagnosticoBlock({ faixa, nivel }: Props) {
         <div className="bg-white px-3 py-2.5">
           <p className="text-tinta/40 text-[8px] font-bold uppercase tracking-wider">Peso ideal</p>
           <p className="font-heading font-bold text-tinta text-[14px] md:text-[17px] mt-1">{pesoIdeal} g</p>
+          <p className="text-tinta/40 text-[9px] mt-0.5">{faixa.peso_min}–{faixa.peso_max}g</p>
         </div>
         <div className="bg-white px-3 py-2.5">
           <p className="text-tinta/40 text-[8px] font-bold uppercase tracking-wider">Balance</p>
           <p className="font-heading font-bold text-tinta text-[14px] md:text-[17px] mt-1">{balanceShort}</p>
+          {balanceRange && <p className="text-tinta/40 text-[9px] mt-0.5">{balanceRange}</p>}
         </div>
         <div className="bg-white px-3 py-2.5">
           <p className="text-tinta/40 text-[8px] font-bold uppercase tracking-wider">Nível</p>
