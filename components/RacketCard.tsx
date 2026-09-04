@@ -62,6 +62,7 @@ function fireEvent(body: Record<string, unknown>) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- calce mantido no prop pra não quebrar o call site; badge desativado, ver comentário abaixo
 export default function RacketCard({ racket, razao, sessionId, calce, custoBeneficio, userNivel }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -132,35 +133,12 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
             brandName={racket.brands?.name}
             brandCorner="left"
           />
-          {(calce || custoBeneficio || (racket.weight_g != null && racket.weight_g >= 340)) && (
+          {/* Badge "Calce ideal" (calce prop) desativado — Rodrigo confirmou em 2026-09-04 que quase
+              toda recomendação batia "ideal" (98.8% dos casos reais, 57% em exatos 100%), tornando o
+              badge sem valor informativo. Lógica de cálculo (calceBadge em ChatMessage.tsx) mantida
+              intacta pra eventual redesenho — só a renderização foi removida daqui. */}
+          {(custoBeneficio || (racket.weight_g != null && racket.weight_g >= 340)) && (
             <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
-              {calce?.tier === 'ideal' && (
-                <>
-                  {/* Desktop: badge circular tipo anel de progresso */}
-                  <div className="hidden md:flex flex-col items-center gap-1">
-                    <div
-                      className="w-[38px] h-[38px] rounded-full flex items-center justify-center shrink-0"
-                      style={{ background: `conic-gradient(#FF5E3A ${calce.percent}%, rgba(255,94,58,.15) 0)` }}
-                    >
-                      <div className="w-[31px] h-[31px] rounded-full bg-white flex items-center justify-center">
-                        <span className="font-heading font-extrabold text-coral text-[10.5px] leading-none">{calce.percent}%</span>
-                      </div>
-                    </div>
-                    <span className="rounded-full text-[8.5px] font-bold px-2 py-[3px] bg-coral text-white leading-none whitespace-nowrap shadow-sm">
-                      Calce ideal
-                    </span>
-                  </div>
-                  {/* Mobile: pílula plana com porcentagem */}
-                  <div className="md:hidden rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-coral text-white shadow-sm whitespace-nowrap">
-                    Calce {calce.percent}%
-                  </div>
-                </>
-              )}
-              {calce?.tier === 'encaixa' && (
-                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-white/90 text-tinta/60 border border-aqua/40">
-                  Também encaixa
-                </div>
-              )}
               {custoBeneficio && (
                 <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-yellow/10 text-tinta/65 border border-yellow/30 shadow-sm">
                   Melhor custo-benefício
