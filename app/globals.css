@@ -101,14 +101,15 @@ body.chat-active [data-site-footer] {
 
   /* Arena texture: fine grain + tonal dunes + wet-sand top shadow.
      As 2 manchas radiais usam tile fixo + repeat-y (não 100% 100%): a seção arena
-     agora é um único container contínuo do fim do hero até o footer (delta 17), então
-     esticar as manchas uma vez sobre a altura inteira as concentrava perto do topo,
-     deixando o final (rodapé) sem variação tonal — só o grão de textura, sem as manchas. */
+     é um único container contínuo do fim do hero até o footer real (delta 17/19), então
+     esticar as manchas uma vez sobre a altura inteira as concentrava perto do topo. Opacidades
+     subidas (manchas 0.09/0.08 -> 0.16/0.14, tinta 0.88 -> 0.78) porque no pico o efeito
+     anterior era sutil demais pra registrar numa faixa curta como a do footer. */
   .arena-grain {
     background-image:
-      radial-gradient(ellipse 80% 50% at 72% 20%, rgba(175,128,65,0.09) 0%, transparent 65%),
-      radial-gradient(ellipse 65% 45% at 18% 72%, rgba(160,115,58,0.08) 0%, transparent 60%),
-      linear-gradient(rgba(247, 237, 220, 0.88), rgba(247, 237, 220, 0.88)),
+      radial-gradient(ellipse 80% 50% at 72% 20%, rgba(175,128,65,0.16) 0%, transparent 65%),
+      radial-gradient(ellipse 65% 45% at 18% 72%, rgba(160,115,58,0.14) 0%, transparent 60%),
+      linear-gradient(rgba(247, 237, 220, 0.78), rgba(247, 237, 220, 0.78)),
       url('/textura-areia.webp');
     background-repeat: repeat-y, repeat-y, no-repeat, repeat;
     background-size: 100% 1400px, 100% 1400px, 100% 100%, 400px auto;

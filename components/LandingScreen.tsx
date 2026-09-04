@@ -904,7 +904,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const [mainCtaVisible, setMainCtaVisible] = useState(false)
   const heroCtaRef = useRef<HTMLButtonElement>(null)
-  const mainCtaRef = useRef<HTMLButtonElement>(null)
+  const mainCtaRef = useRef<HTMLDivElement>(null)
   const arenaRef = useRef<HTMLDivElement>(null)
   const [ballSettled, setBallSettled] = useState(false)
 
@@ -962,7 +962,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
   }
 
   return (
-    <div className="relative min-h-screen sand-texture flex flex-col items-center pb-10 md:pb-16">
+    <div className="relative min-h-screen sand-texture flex flex-col items-center">
 
       {/* ── Sky overlay — diffuse cloud suggestions at top of hero, purely decorative ── */}
       <div
@@ -1028,7 +1028,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
       </div>
 
       {/* ── Seção menta: hero ── */}
-      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8 md:pb-10">
+      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8 pt-6 md:pt-10 md:pb-10">
         <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-center gap-5">
 
           {/* Coluna texto */}
@@ -1183,14 +1183,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                       ))}
                   </div>
                 )}
-
-                {/* Tag do vídeo — canto inferior-direito, posição original (livre agora que o Tury saiu do frame) */}
-                <div className="absolute right-3 bottom-3 z-10 bg-white rounded-full shadow-md pl-1.5 pr-3 py-1.5 flex items-center gap-1.5 pointer-events-none">
-                  <span className="w-4 h-4 rounded-full bg-aqua flex items-center justify-center shrink-0">
-                    <Play size={8} weight="fill" color="#fff" aria-hidden="true" />
-                  </span>
-                  <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/70 whitespace-nowrap">Vídeo do scan</span>
-                </div>
               </div>
             </div>
 
@@ -1246,7 +1238,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         </div>
       )}
 
-      {/* ── Seção arena: da chat preview até o footer inline, fundo arena-grain contínuo (delta 17) ── */}
+      {/* ── Seção arena: da chat preview até o CTA principal, fundo arena-grain contínuo (delta 17,
+          fechada antes do footer no delta 20 — ver bloco claro logo abaixo) ── */}
       <div ref={arenaRef} className="w-full bg-arena arena-grain relative">
 
         {/* Onda de entrada removida — marquee de marcas já separa hero e arena; a curva
@@ -1490,9 +1483,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
         </div>
 
-        {/* Marcas + Compare + FAQ + CTA + footer inline — segue na mesma superfície arena-grain
-            de cima (delta 17), sem a onda de saída que existia aqui: não há mais troca de fundo
-            pra fazer a transição, então a curva só cortaria a textura ao meio. */}
+        {/* Marcas + Compare + FAQ + CTA — segue na mesma superfície arena-grain de cima (delta 17).
+            A partir da linha de confiança em diante, o fundo passa a ser claro (delta 20): texto
+            de rodapé em cinza tem pouco contraste sobre a arena. */}
         <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
 
         {/* Marcas disponíveis */}
@@ -1570,9 +1563,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           </div>
         )}
 
-        {/* Perguntas frequentes */}
+        {/* Perguntas frequentes — ref do CTA principal: removido (delta 21, já tem CTA no hero
+            acima), o observer que controla o CTA flutuante do mobile passa a mirar o fim do FAQ */}
         <RevealDiv delay={50}>
-        <div className="flex flex-col gap-3">
+        <div ref={mainCtaRef} className="flex flex-col gap-3">
           <p className="font-heading font-bold text-tinta text-base md:text-lg">Perguntas frequentes</p>
           <div className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] divide-y divide-tinta/5">
             {FAQS.map(({ q, a }, i) => (
@@ -1590,14 +1584,15 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         </div>
         </RevealDiv>
 
-        {/* CTA principal */}
-        <button
-          ref={mainCtaRef}
-          onClick={onStart}
-          className="w-full font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-full shadow-cta hover:scale-[1.02] hover:shadow-[0_10px_32px_rgba(255,94,58,0.44)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
-        >
-          Começar agora
-        </button>
+        </div>
+      </div>{/* end seção arena (delta 17: arena + antiga seção menta; fechada após o FAQ no delta 21 —
+          CTA principal removido, já tem CTA no hero acima) */}
+
+      {/* ── Linha de confiança + footer inline: fundo claro igual ao header sticky (delta 20) —
+          mesma cor do header (bg-[#FBF6EF]) pra dar contraste ao texto cinza, que ficava apagado
+          sobre a arena. */}
+      <div className="w-full bg-[#FBF6EF]">
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
 
         {/* Linha de confiança */}
         <p className="text-center text-tinta/50 text-xs md:text-sm leading-relaxed">
@@ -1675,7 +1670,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         </footer>
 
         </div>
-      </div>{/* end seção arena (delta 17: arena + antiga seção menta, um fundo contínuo) */}
+      </div>{/* end bloco claro (delta 20): linha de confiança + footer inline */}
 
       {/* Mobile sticky bottom CTA — visible between hero CTA and main CTA */}
       {showBottomCta && (
