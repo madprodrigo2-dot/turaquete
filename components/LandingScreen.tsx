@@ -128,7 +128,7 @@ function SocialProof({ recsCount }: { recsCount: number }) {
   return (
     <div
       ref={ref}
-      className="flex items-center gap-3"
+      className="flex items-center gap-3 bg-aqua/[0.06] border border-aqua/[0.15] rounded-2xl px-4 py-3"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
@@ -138,7 +138,7 @@ function SocialProof({ recsCount }: { recsCount: number }) {
       <span
         className="font-heading"
         style={{
-          fontSize: 'clamp(1.75rem, 5.5vw, 2.2rem)',
+          fontSize: '34px',
           fontVariantNumeric: 'tabular-nums',
           fontWeight: 800,
           color: '#0E3A40',
@@ -1084,24 +1084,58 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               ))}
             </div>
 
-            {/* CTA hero — IntersectionObserver target */}
-            <div className="flex flex-col items-start gap-3 md:flex-row md:items-end md:gap-3">
-              {/* Tury + bolha de fala — mobile only; desktop mostra a versão maior sobre o vídeo */}
-              <div className="max-[359px]:hidden md:hidden relative shrink-0 flex flex-col items-center" style={{ marginBottom: '-4px' }}>
-                <div className="mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-2.5 py-1.5 shadow-sm whitespace-nowrap">
-                  <p className="text-[10px] font-semibold text-tinta leading-none">Encontrei 3 raquetes pra você</p>
-                  <p className="text-[9px] text-tinta/50 leading-none mt-0.5">baseado no seu perfil →</p>
+            {/* Vídeo + píldoras de score + Tury — mobile only, logo após as badges (antes ficava
+                depois do CTA, escondido demais). Espelha o tratamento do frame desktop (delta 18),
+                mas sem aspect-[16/9]/frame forçado — mantém o vídeo mobile no tamanho natural. */}
+            <div className="md:hidden relative w-full mb-5">
+              <video
+                src="/scan-raquete-mobile.mp4"
+                poster="/new_hero_desktop.webp"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-auto block"
+              />
+
+              {exampleRacket?.racket_insights && (
+                <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-2 pointer-events-none">
+                  {([
+                    { label: 'Potência', value: exampleRacket.racket_insights.power },
+                    { label: 'Controle', value: exampleRacket.racket_insights.control },
+                    { label: 'Conforto', value: exampleRacket.racket_insights.comfort },
+                  ] as { label: string; value: number | null }[])
+                    .filter((b): b is { label: string; value: number } => b.value != null)
+                    .map(b => (
+                      <div key={b.label} className="bg-white rounded-xl shadow-md px-3 py-1.5 flex flex-col items-center leading-none">
+                        <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/40">{b.label}</span>
+                        <span className="font-heading font-extrabold text-tinta text-xl tabular-nums mt-0.5">{b.value}</span>
+                      </div>
+                    ))}
                 </div>
+              )}
+
+              {/* Tury + bolha — ancorada no canto inferior-esquerdo do marco, pendurada pra fora
+                  (mesmo padrão do delta 15/18 desktop, adaptado pra mobile) */}
+              <div className="max-[359px]:hidden md:hidden absolute left-3 -bottom-[26px] z-10 flex items-end gap-2.5 pointer-events-none">
                 <Image
                   src="/tury-explicando.png"
                   alt="Tury apontando para o botão Começar agora"
                   width={296}
                   height={376}
                   priority
-                  className="select-none pointer-events-none"
+                  className="select-none pointer-events-none shrink-0"
                   style={{ height: '72px', width: 'auto' }}
                 />
+                <div className="mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-2.5 py-1.5 shadow-sm whitespace-nowrap">
+                  <p className="text-[10px] font-semibold text-tinta leading-none">Encontrei 3 raquetes pra você</p>
+                  <p className="text-[9px] text-tinta/50 leading-none mt-0.5">baseado no seu perfil →</p>
+                </div>
               </div>
+            </div>
+
+            {/* CTA hero — IntersectionObserver target */}
+            <div className="flex flex-col items-start gap-3 md:flex-row md:items-end md:gap-3">
               <button
                 ref={heroCtaRef}
                 onClick={onStart}
@@ -1113,6 +1147,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 grátis, sem cadastro e sem e-mail
               </span>
             </div>
+
+            {/* Prova social — mobile only, agora logo após o CTA (antes ficava depois da imagem) */}
+            {recsCount >= RECS_THRESHOLD && (
+              <div className="md:hidden">
+                <SocialProof recsCount={recsCount} />
+              </div>
+            )}
 
             {/* Franja — texto discreto, abaixo do CTA */}
             <p className="text-xs text-tinta/50 leading-relaxed text-center">
@@ -1140,16 +1181,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           {/* Coluna visual — foto hero */}
           <div className="relative w-full shrink-0">
             <div className="relative w-full rounded-2xl overflow-hidden md:aspect-[16/9] md:bg-white md:border md:border-aqua/20 md:shadow-sm">
-              {/* Mobile: horizontal completa, sem recorte */}
-              <video
-                src="/scan-raquete-mobile.mp4"
-                poster="/new_hero_desktop.webp"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-auto block md:hidden"
-              />
               {/* Desktop: frame em aspect-[16/9] casa com o aspect real do vídeo (960x540),
                   inset-0 preenche de ponta a ponta sem letterbox. object-contain (não cover)
                   mantido por segurança, mas não deve recortar nada com os aspects já iguais. */}
@@ -1203,13 +1234,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               </div>
             </div>
           </div>
-
-          {/* Prova social — mobile only, abaixo da imagem */}
-          {recsCount >= RECS_THRESHOLD && (
-            <div className="md:hidden mt-4 mb-4">
-              <SocialProof recsCount={recsCount} />
-            </div>
-          )}
 
         </div>
       </div>{/* end seção menta */}
