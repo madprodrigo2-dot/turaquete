@@ -1219,7 +1219,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
             {/* Tury + bolha de fala — fora do frame, pendurado no canto inferior-esquerdo (delta 18:
                 antes ficava sobreposto ao vídeo, agora não tapa mais o conteúdo visual) */}
-            <div className="hidden md:flex absolute left-4 top-full mt-2 z-10 items-end gap-2.5 pointer-events-none max-w-[90%]">
+            <div className="hidden md:flex absolute left-4 top-full -mt-3 z-10 items-end gap-2.5 pointer-events-none max-w-[90%]">
               <Image
                 src="/tury-transparente-explicando.png"
                 alt="Tury"
