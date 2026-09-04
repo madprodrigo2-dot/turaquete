@@ -43,11 +43,11 @@ const CURATED_QUESTIONS = [
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
 const STEPS: { label: string; desc?: string }[] = [
-  { label: 'Escolha as opções sobre seu jogo' },
-  { label: 'O especialista entende seu perfil' },
+  { label: 'Escolha as opções sobre seu jogo', desc: 'Nível, dores, estilo — você só toca no que se aplica.' },
+  { label: 'O especialista entende seu perfil', desc: 'Peso e balance ideais, calculados — não opinados.' },
   {
     label: 'Receba seu perfil e as raquetes certas',
-    desc: 'O especialista te diz o peso e balance ideais pro seu jogo, e indica as raquetes que batem exatamente com esse perfil.',
+    desc: 'Com o motivo de cada escolha e onde comprar.',
   },
 ]
 
@@ -1343,7 +1343,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           {/* Como funciona — desktop only */}
           <RevealDiv>
             <div className="hidden md:block bg-white rounded-2xl p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
-              <p className="font-heading font-bold text-tinta text-lg mb-5">Como funciona</p>
+              <div className="mb-5">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-tinta/40">Como funciona</p>
+                <p className="font-heading font-bold text-tinta text-lg mt-1">Perguntas rápidas, sem enrolação</p>
+                <p className="text-tinta/50 text-sm mt-1">Você toca nas opções que combinam com você. A Tury traduz isso em peso, balance e material.</p>
+              </div>
               <div className="grid grid-cols-3 gap-3.5">
                 {STEPS.map((step, i) => (
                   <div
