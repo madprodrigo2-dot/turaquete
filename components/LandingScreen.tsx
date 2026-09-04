@@ -43,7 +43,7 @@ const CURATED_QUESTIONS = [
 const BADGES = ['Grátis', '1 minuto', 'Sem cadastro']
 
 const STEPS: { label: string; desc?: string }[] = [
-  { label: 'Conte como você joga, do seu jeito' },
+  { label: 'Escolha as opções sobre seu jogo' },
   { label: 'O especialista entende seu perfil' },
   {
     label: 'Receba seu perfil e as raquetes certas',
