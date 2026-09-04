@@ -8,7 +8,6 @@ import { CaretLeft, ArrowCounterClockwise, X } from '@phosphor-icons/react'
 import { sendGAEvent } from '@next/third-parties/google'
 import LandingScreen from '@/components/LandingScreen'
 import ChatMessage from '@/components/ChatMessage'
-import ChatInput from '@/components/ChatInput'
 import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
 import DebugPanel, { DebugData } from '@/components/DebugPanel'
@@ -528,7 +527,31 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
                   <CaretLeft size={16} weight="regular" aria-hidden="true" />
                   <span className="hidden sm:block text-xs font-medium">Início</span>
                 </button>
-                <div className="flex flex-col items-start">
+                {/* Mobile: identidade da Tury (avatar + status online) */}
+                <button
+                  onClick={() => history.back()}
+                  aria-label="Voltar à página inicial"
+                  className="flex md:hidden items-center gap-2 cursor-pointer"
+                >
+                  <Image
+                    src="/tury-saludando.png"
+                    alt="Tury"
+                    width={343}
+                    height={398}
+                    priority
+                    className="h-8 w-auto rounded-full"
+                  />
+                  <span className="flex flex-col items-start">
+                    <span className="font-heading font-bold text-tinta text-[13.5px] leading-none">Tury</span>
+                    <span className="flex items-center gap-1 text-[10px] font-semibold mt-1 leading-none">
+                      <span className={`w-1.5 h-1.5 rounded-full ${(loading || isStreaming || isAnimating) ? 'bg-aqua/50' : 'bg-aqua'}`} />
+                      <span className="text-aqua">{(loading || isStreaming || isAnimating) ? 'digitando...' : 'online'}</span>
+                    </span>
+                  </span>
+                </button>
+
+                {/* Desktop: logo Turaquete */}
+                <div className="hidden md:flex flex-col items-start">
                   <Link
                     href="/"
                     aria-label="Voltar à página inicial"
@@ -541,11 +564,11 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
                       width={322}
                       height={128}
                       priority
-                      className="h-9 md:h-12 w-auto"
+                      className="h-12 w-auto"
                       style={{ width: 'auto' }}
                     />
                   </Link>
-                  <span className="hidden md:block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
+                  <span className="block font-heading text-xs mt-0.5 tracking-wide transition-colors duration-300">
                     {(loading || isStreaming || isAnimating)
                       ? <span className="text-aqua/70 italic">digitando...</span>
                       : <span className="text-tinta/50">especialista em raquetes</span>
@@ -612,6 +635,7 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
                       diagnostico={m.diagnostico}
                       debug={m.debug}
                       debugMode={debugMode}
+                      confirmedProfile={m.confirmedProfile}
                       sessionId={sessionId}
                       onSuggestion={
                         isLast && !loading && !isStreaming && !isAnimating && !atLimit
@@ -754,10 +778,6 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
                   </button>
                 ))}
               </div>
-            )}
-
-            {isPostRec && !hasAkinatorChips && !loading && !isStreaming && (
-              <ChatInput onSend={sendMessage} disabled={isAnimating || atLimit} />
             )}
           </div>
         </div>

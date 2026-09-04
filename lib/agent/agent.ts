@@ -1830,8 +1830,10 @@ export async function runAgentTurn(
         messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: fakeRecId, content: recResult } as Anthropic.ToolResultBlockParam] })
         compactOldToolResults(messages)
 
+        const cpFinalRec = Object.keys(confirmedProfile).length ? { ...confirmedProfile } : undefined
         if (onToken) {
-          return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
+          const sr = await streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
+          return { ...sr, confirmedProfile: cpFinalRec }
         }
         // Non-streaming path (rare in production — always streams)
         const finalResp = await anthropic.messages.create({
@@ -1847,6 +1849,7 @@ export async function runAgentTurn(
           isComparison: isComparison || undefined,
           diagnostico: pendingRecommendations.length > 0 ? (diagnosticoRef.value ?? undefined) : undefined,
           intencao: intencaoRef.value ?? undefined,
+          confirmedProfile: cpFinalRec,
           usage, debug: debugRef.value,
         }
       }

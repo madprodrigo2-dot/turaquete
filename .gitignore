@@ -64,3 +64,5 @@ public/raquetes/_normalized/
 docs/normalize-preview/
 docs/image-analysis.json
 docs/image-analysis-report.md
+
+.vercel

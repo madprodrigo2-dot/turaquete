@@ -11,7 +11,7 @@ import { RecommendedRacket } from '@/lib/recommend'
 
 // Calce relativo ao melhor score desta consulta.
 // Só aparece em recomendações (não em comparações) com 2+ opções.
-function calceBadge(recs: RecommendedRacket[], id: number): 'ideal' | 'encaixa' | null {
+function calceBadge(recs: RecommendedRacket[], id: number): { tier: 'ideal' | 'encaixa'; percent: number } | null {
   const scored = recs.filter(r => r.match_score != null)
   if (scored.length < 2) return null
   const maxScore = Math.max(...scored.map(r => r.match_score!))
@@ -19,8 +19,9 @@ function calceBadge(recs: RecommendedRacket[], id: number): 'ideal' | 'encaixa' 
   const rec = recs.find(r => r.racket.id === id)
   if (rec?.match_score == null) return null
   const ratio = rec.match_score / maxScore
-  if (ratio >= 0.92) return 'ideal'
-  if (ratio >= 0.70) return 'encaixa'
+  const percent = Math.round(ratio * 100)
+  if (ratio >= 0.92) return { tier: 'ideal', percent }
+  if (ratio >= 0.70) return { tier: 'encaixa', percent }
   return null
 }
 
@@ -55,6 +56,7 @@ interface Props {
   diagnostico?: FaixaIdeal
   debug?: DebugData
   debugMode?: boolean
+  confirmedProfile?: Record<string, unknown>
   disableGlossary?: boolean
   sessionId?: string
   // Paced animation props (only set on the currently-streaming last message)
@@ -145,12 +147,14 @@ export default function ChatMessage({
   role, content, recommendations, loading = false, showTury = false,
   suggestions, isComparison, onSuggestion, diagnostico,
   debug, debugMode = false,
+  confirmedProfile,
   disableGlossary = false,
   sessionId,
   rawText, streamIsDone, onAnimationChange,
 }: Props) {
   const isAssistant = role === 'assistant'
   const hasRecs = (recommendations?.length ?? 0) > 0
+  const userNivel = (confirmedProfile?.nivel ?? debug?.perfilInput?.nivel) as 'iniciante' | 'intermediario' | 'avancado' | undefined
 
   // The pacing container ref — used only when rawText is provided.
   const containerRef = useRef<HTMLSpanElement>(null)
@@ -241,26 +245,24 @@ export default function ChatMessage({
 
       {/* Diagnóstico de fitting — held back until animation finishes */}
       {isAssistant && diagnostico && !holdBack && (
-        <div className="mt-2 pl-[68px] w-full">
-          <DiagnosticoBlock faixa={diagnostico} />
+        <div className="mt-2 pl-[46px] md:pl-[68px] w-full">
+          <DiagnosticoBlock faixa={diagnostico} nivel={userNivel} />
         </div>
       )}
 
       {/* RacketCards — held back until animation finishes */}
       {isAssistant && hasRecs && !holdBack && (
-        <div className="mt-3 pl-[68px] w-full flex flex-col gap-2">
+        <div className="mt-3 pl-[46px] md:pl-[68px] w-full flex flex-col gap-2 min-w-0">
           {isComparison && <CompareTable recommendations={recommendations!} />}
-          <div className={
+          <div className={`flex gap-3 overflow-x-auto pb-1 -mr-4 pr-4 md:mr-0 md:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:overflow-visible ${
             recommendations!.length === 2
-              ? 'grid grid-cols-2 gap-2'
-              : 'flex flex-col gap-3'
-          }>
-            {(() => {
-              const userNivel = (debug?.perfilInput?.nivel as 'iniciante' | 'intermediario' | 'avancado' | undefined)
-              return recommendations!.map((rec, i) => (
+              ? 'md:grid md:grid-cols-2 md:gap-2'
+              : 'md:flex-col md:gap-3'
+          }`}>
+            {recommendations!.map((rec, i) => (
               <div
                 key={rec.racket.id}
-                className="msg-enter"
+                className="msg-enter shrink-0 w-[72%] max-w-[230px] md:w-auto md:max-w-none md:shrink"
                 style={{ animationDelay: `${60 + i * 80}ms` }}
               >
                 <RacketCard
@@ -272,9 +274,17 @@ export default function ChatMessage({
                 userNivel={userNivel}
               />
               </div>
-            ))
-            })()}
+            ))}
           </div>
+          {!isComparison && onSuggestion && suggestions?.includes('Ver mais opções') && (
+            <button
+              onClick={() => onSuggestion('Ver mais opções')}
+              className="flex items-center justify-between gap-3 bg-[#F4F8F7] border border-aqua/25 rounded-2xl px-4 py-3 text-left hover:bg-aqua/10 active:scale-[0.99] transition-all"
+            >
+              <span className="text-tinta/70 text-[12.5px] leading-snug">Nenhuma bateu 100%? Posso buscar mais opções.</span>
+              <span className="text-aqua text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shrink-0">ver mais raquetes →</span>
+            </button>
+          )}
           {!isComparison && recommendations!.some(r => r.racket.price) && (
             <p className="text-[10px] text-tinta/40 mt-0.5">Preços de referência, podem variar por loja.</p>
           )}
@@ -286,15 +296,12 @@ export default function ChatMessage({
 
       {/* Quick reply chips — held back until animation finishes */}
       {isAssistant && suggestions && suggestions.length > 0 && onSuggestion && !holdBack && (
-        <div className={`mt-3 pl-[68px] flex gap-1.5 ${suggestions.length >= 3 ? 'flex-col sm:flex-row sm:flex-wrap' : 'flex-wrap'}`}>
+        <div className="mt-3 pl-[46px] md:pl-[68px] flex gap-1.5 overflow-x-auto pb-1 -mr-4 pr-4 md:mr-0 md:pr-0 md:flex-wrap md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {suggestions.map(s => (
             <button
               key={s}
               onClick={() => onSuggestion(s)}
-              className={suggestions.length >= 3
-                ? 'text-sm font-medium px-4 py-2 rounded-xl border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm w-full sm:w-auto text-left'
-                : 'text-xs font-medium px-3 py-1.5 rounded-full border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm'
-              }
+              className="shrink-0 md:shrink whitespace-nowrap md:whitespace-normal md:text-left text-xs md:text-sm font-medium px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl border border-aqua/40 text-tinta/70 bg-white hover:bg-aqua/10 hover:border-aqua/60 active:scale-[0.97] transition-all shadow-sm"
             >
               {s}
             </button>

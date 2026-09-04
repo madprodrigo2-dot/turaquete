@@ -14,7 +14,7 @@ interface Props {
   racket: RacketWithInsights
   razao: string
   sessionId?: string
-  calce?: 'ideal' | 'encaixa' | null
+  calce?: { tier: 'ideal' | 'encaixa'; percent: number } | null
   custoBeneficio?: boolean
   userNivel?: 'iniciante' | 'intermediario' | 'avancado'
 }
@@ -134,13 +134,31 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
           />
           {(calce || custoBeneficio || (racket.weight_g != null && racket.weight_g >= 340)) && (
             <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
-              {calce && (
-                <div className={`rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none ${
-                  calce === 'ideal'
-                    ? 'bg-coral text-white shadow-sm'
-                    : 'bg-white/90 text-tinta/60 border border-aqua/40'
-                }`}>
-                  {calce === 'ideal' ? 'Calce ideal' : 'Também encaixa'}
+              {calce?.tier === 'ideal' && (
+                <>
+                  {/* Desktop: badge circular tipo anel de progresso */}
+                  <div className="hidden md:flex flex-col items-center gap-1">
+                    <div
+                      className="w-[38px] h-[38px] rounded-full flex items-center justify-center shrink-0"
+                      style={{ background: `conic-gradient(#FF5E3A ${calce.percent}%, rgba(255,94,58,.15) 0)` }}
+                    >
+                      <div className="w-[31px] h-[31px] rounded-full bg-white flex items-center justify-center">
+                        <span className="font-heading font-extrabold text-coral text-[10.5px] leading-none">{calce.percent}%</span>
+                      </div>
+                    </div>
+                    <span className="rounded-full text-[8.5px] font-bold px-2 py-[3px] bg-coral text-white leading-none whitespace-nowrap shadow-sm">
+                      Calce ideal
+                    </span>
+                  </div>
+                  {/* Mobile: pílula plana com porcentagem */}
+                  <div className="md:hidden rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-coral text-white shadow-sm whitespace-nowrap">
+                    Calce {calce.percent}%
+                  </div>
+                </>
+              )}
+              {calce?.tier === 'encaixa' && (
+                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-white/90 text-tinta/60 border border-aqua/40">
+                  Também encaixa
                 </div>
               )}
               {custoBeneficio && (
