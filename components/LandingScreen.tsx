@@ -1521,9 +1521,12 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                   Potência, controle, conforto, peso e preço na mesma tabela — sem precisar abrir duas abas.
                 </p>
               </div>
-              <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between md:gap-2 md:border-t-0 md:border-l md:border-tinta/7 md:justify-center md:px-6 md:shrink-0">
+              <div className="border-t border-aqua/15 py-3 px-4 flex items-center justify-between md:flex-col md:items-start md:gap-1 md:border-t-0 md:border-l md:border-aqua/15 md:bg-aqua/[0.06] md:justify-center md:px-6 md:py-5 md:min-w-[190px] md:shrink-0">
                 <span className="text-sm font-semibold text-aqua md:whitespace-nowrap">Comparar raquetes</span>
-                <ArrowRight size={14} weight="regular" color="#0CC0BE" aria-hidden="true" />
+                <ArrowRight size={14} weight="regular" color="#0CC0BE" aria-hidden="true" className="md:hidden" />
+                <span className="hidden md:inline-flex md:items-center md:gap-1 text-xs font-medium text-aqua/60">
+                  Ver tabela completa <ArrowRight size={11} weight="regular" color="#0CC0BE" aria-hidden="true" />
+                </span>
               </div>
             </Link>
           </div>
@@ -1546,12 +1549,21 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 <p className="text-tinta/70 text-sm leading-relaxed mb-4 md:mb-0">
                   No ISEA 2026 (Washington State University), João Lucas Vasconcelos mediu o sweet spot de raquetes de beach tennis com análise modal e coeficiente de restituição. A ciência confirma o que a Turaquete prioriza: conforto e sweet spot não são achismo, são mensuráveis.
                 </p>
+                <div className="hidden md:flex items-center gap-2.5 mt-4 bg-aqua/[0.05] border border-aqua/[0.15] rounded-xl px-3 py-2.5">
+                  <div className="w-8 h-8 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0 text-aqua text-[10px] font-bold select-none">
+                    JL
+                  </div>
+                  <div className="flex flex-col leading-tight gap-0.5">
+                    <span className="text-xs font-semibold text-tinta/80">João Lucas Vasconcelos</span>
+                    <span className="text-[10px] text-tinta/50">Pesquisador · Washington State University</span>
+                  </div>
+                </div>
               </div>
-              <div className="mb-4 md:mb-0">
+              <div className="mb-4 md:mb-0 md:h-[480px] md:overflow-hidden">
                 <ISEAReelEmbed />
               </div>
             </div>
-            <div className="flex items-center gap-2.5 mt-4">
+            <div className="md:hidden flex items-center gap-2.5 mt-4">
               <div className="w-7 h-7 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0 text-aqua text-[10px] font-bold select-none">
                 JL
               </div>
