@@ -840,19 +840,33 @@ function ISEAReelEmbed() {
   }, [])
 
   if (failed) {
+    // Fallback visual: frame real do reel (capturado do próprio vídeo) como poster,
+    // já que o embed oficial da Instagram falha de forma intermitente (ad blockers,
+    // rate limit do lado deles) e antes caía só num link de texto sem preview nenhum.
     return (
       <a
         href="https://www.instagram.com/reel/DMafZscMWGq/"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-3 rounded-xl border border-aqua/20 px-4 py-3 hover:bg-aqua/[0.04] active:scale-[0.98] transition-all group"
+        className="relative flex flex-col justify-end w-full overflow-hidden rounded-xl border border-aqua/20 hover:opacity-95 active:scale-[0.98] transition-all group"
+        style={{ minHeight: 480 }}
       >
-        <div className="w-9 h-9 rounded-full bg-aqua flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-          <Play size={14} weight="fill" color="white" aria-hidden="true" />
-        </div>
-        <div>
-          <p className="text-xs font-semibold text-tinta leading-snug">Assistir ao Reel no Instagram</p>
-          <p className="text-[10px] text-tinta/40">abre em nova aba</p>
+        <Image
+          src="/isea-reel-poster.webp"
+          alt="Reel do ISEA 2026 no Instagram"
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 320px"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="relative flex items-center gap-3 p-4">
+          <div className="w-9 h-9 rounded-full bg-aqua flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+            <Play size={14} weight="fill" color="white" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-white leading-snug">Assistir ao Reel no Instagram</p>
+            <p className="text-[10px] text-white/70">abre em nova aba</p>
+          </div>
         </div>
       </a>
     )
