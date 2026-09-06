@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
   const hasDados = totalSessoes > 0 || totalRecs > 0
 
   const monetizableLine = totalAfiliado >= MONETIZABLE_THRESHOLD
-    ? `💵 Ontem: <b>${totalAfiliado}</b> cliques monetizáveis. Vale conferir vendas no painel ML (atualiza a cada 24h).`
+    ? `💵 Ontem: <b>${totalAfiliado}</b> cliques monetizáveis.`
     : ''
   const mesLine = `📅 Mês corrente: <b>${totalAfiliaoMes}</b> cliques monetizáveis`
 
