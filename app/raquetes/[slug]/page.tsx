@@ -3,7 +3,7 @@ export const revalidate = 300
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getRaquetaPorSlug, listarRaquetas } from '@/lib/recommend'
+import { getRaquetaPorSlug, listarRaquetas, suggestComparisons } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { SITE_URL } from '@/lib/site'
@@ -71,21 +71,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   ])
   if (!racket) notFound()
 
-  const sugestoes = allRackets
-    .filter(r => r.slug !== racket.slug)
-    .map(r => ({
-      r,
-      score:
-        (r.nome_base && r.nome_base === racket.nome_base && r.brands?.name === racket.brands?.name ? 20 : 0) +
-        (r.brands?.name === racket.brands?.name ? 10 : 0) +
-        (racket.price && r.price
-          ? Math.abs(r.price - racket.price) / racket.price < 0.3 ? 5 : 0
-          : 0),
-    }))
-    .filter(x => x.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 2)
-    .map(x => x.r)
+  const sugestoes = suggestComparisons(racket, allRackets, 6)
 
   const ins = racket.racket_insights
   const price = racket.price
@@ -321,7 +307,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 {sugestoes.length > 0 && (
                   <div className="flex flex-col gap-2">
                     <p className="text-xs text-tinta/40 font-medium">Comparações populares</p>
-                    <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {sugestoes.map(s => (
                         <Link
                           key={s.slug}

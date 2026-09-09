@@ -526,6 +526,32 @@ export async function getRaquetasPorSlug(slugs: readonly string[]): Promise<Rack
     .filter((r): r is RacketWithInsights => r != null)
 }
 
+// ── Comparações sugeridas ────────────────────────────────────────────────────
+// Mesma regra usada na ficha de produto ("Comparações populares") e no sitemap,
+// pra garantir que toda URL de comparação listada no sitemap tenha um link
+// real (crawlable) apontando pra ela em pelo menos uma ficha de produto.
+export function suggestComparisons(
+  racket: RacketWithInsights,
+  allRackets: RacketWithInsights[],
+  limit = 6
+): RacketWithInsights[] {
+  return allRackets
+    .filter(r => r.slug !== racket.slug)
+    .map(r => ({
+      r,
+      score:
+        (r.nome_base && r.nome_base === racket.nome_base && r.brands?.name === racket.brands?.name ? 20 : 0) +
+        (r.brands?.name === racket.brands?.name ? 10 : 0) +
+        (racket.price && r.price
+          ? Math.abs(r.price - racket.price) / racket.price < 0.3 ? 5 : 0
+          : 0),
+    }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(x => x.r)
+}
+
 // ── Featured carousel config ─────────────────────────────────────────────────
 const TOP_N = 8
 const TOP_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca

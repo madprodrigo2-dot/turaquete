@@ -5,20 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { RacketWithInsights } from '@/lib/recommend'
+import { POPULAR_PAIRS } from '@/lib/popular-pairs'
 import RacketImageTile from './RacketImageTile'
 import { ArrowRight } from '@phosphor-icons/react'
 
 const COLORS: Record<'A' | 'B', string> = { A: '#FF5E3A', B: '#0CC0BE' }
-
-// Fixed popular pairs — slugs verified 2026-07-06
-const POPULAR_PAIRS = [
-  { a: { slug: 'nox-ng17-luxury-2025', short: 'NG17 Luxury 2025' }, b: { slug: 'nox-ng17-2026', short: 'NG17 2026' } },
-  { a: { slug: 'proteo-25', short: 'Proteo 2025' }, b: { slug: 'proteo-2026', short: 'Proteo 2026' } },
-  { a: { slug: 'aura-2026', short: 'Aura 2026' }, b: { slug: 'fierce', short: 'Fierce' } },
-  { a: { slug: 'ceu', short: 'CÉU' }, b: { slug: 'rebel-25', short: 'Rebel 25' } },
-  { a: { slug: 'kronos-6th-generation', short: 'Kronos 6th Gen' }, b: { slug: 'kronos-gold-titanium', short: 'Kronos Gold Ti.' } },
-  { a: { slug: 'z-bruxo-2026', short: 'Z Bruxo 2026' }, b: { slug: 'z-soft', short: 'Z Soft' } },
-]
 
 interface Props {
   rackets: RacketWithInsights[]
@@ -68,13 +59,12 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
     else { setSlotB(null); setFocusedSlot('B') }
   }
 
-  function handlePopularClick(slugA: string, slugB: string) {
+  function trackPopularClick(slugA: string, slugB: string) {
     if (typeof window !== 'undefined') {
       (window as Window & { gtag?: (...args: unknown[]) => void }).gtag?.(
         'event', 'comparacao_popular_click', { par: `${slugA}-vs-${slugB}` }
       )
     }
-    router.push(`/comparar/${slugA}-vs-${slugB}`)
   }
 
   const canCompare = slotA && slotB && slotA.id !== slotB.id
@@ -214,9 +204,10 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
           <p className="text-sm font-semibold text-tinta/60">Ou comece por uma comparação popular</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
             {POPULAR_PAIRS.map((pair) => (
-              <button
+              <Link
                 key={`${pair.a.slug}-${pair.b.slug}`}
-                onClick={() => handlePopularClick(pair.a.slug, pair.b.slug)}
+                href={`/comparar/${pair.a.slug}-vs-${pair.b.slug}`}
+                onClick={() => trackPopularClick(pair.a.slug, pair.b.slug)}
                 className="flex flex-col rounded-2xl border border-aqua/15 bg-white hover:border-aqua/40 hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.97] transition-all duration-200 overflow-hidden text-left"
               >
                 <div className="flex items-center justify-center gap-1 px-2 pt-3 pb-1">
@@ -244,7 +235,7 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                   <span className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-1">{pair.a.short}</span>
                   <span className="text-[10px] text-tinta/38 leading-snug line-clamp-1">{pair.b.short}</span>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         </div>
