@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getRaquetasPorSlug } from '@/lib/recommend'
 import CompareView from '@/components/CompareView'
-import { SITE_URL } from '@/lib/site'
+import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 
 export const revalidate = 300
 
@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const rackets = await getRaquetasPorSlug(slugs)
   if (rackets.length < 2) return { title: 'Comparar Raquetes | Turaquete' }
   return {
-    title: `${rackets[0].name} vs ${rackets[1].name} | Turaquete`,
-    description: `Compare ${rackets[0].name} e ${rackets[1].name}: pontuações, especificações e preços lado a lado.`,
+    title: `${rackets[0].name} vs ${rackets[1].name}: Comparativo e Qual Escolher | Turaquete`,
+    description: `Compare ${rackets[0].name} e ${rackets[1].name} lado a lado: peso, balance, material e preço. Descubra qual é a ideal para o seu jogo.`,
     alternates: { canonical: `${SITE_URL}/comparar/${par}` },
   }
 }
@@ -34,8 +34,18 @@ export default async function CompararParPage({ params }: Props) {
   const rackets = await getRaquetasPorSlug(slugs)
   if (rackets.length < 2) redirect('/comparar')
 
+  const breadcrumb = breadcrumbJsonLd([
+    { name: 'Turaquete', url: SITE_URL },
+    { name: 'Comparar', url: `${SITE_URL}/comparar` },
+    { name: `${rackets[0].name} vs ${rackets[1].name}` },
+  ])
+
   return (
     <div className="min-h-screen sand-texture">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
       <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
         <div className="max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 py-3">
           <Link

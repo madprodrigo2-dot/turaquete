@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
-import { SITE_URL } from '@/lib/site'
+import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 import { derivarNivel } from '@/lib/nivel'
 import SiteNav from '@/components/SiteNav'
 import MarcaGrid from './MarcaGrid'
@@ -253,8 +253,17 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
   const logoSrc = brand.logo_url || BRAND_LOGOS[brand.slug] || null
   const brandIntro = buildBrandIntro(brand.name, rackets)
 
+  const breadcrumb = breadcrumbJsonLd([
+    { name: 'Turaquete', url: SITE_URL },
+    { name: brand.name },
+  ])
+
   return (
     <div className="min-h-screen sand-texture">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
       <SiteNav maxWidth="max-w-6xl" />
 
       <div className="max-w-6xl mx-auto px-5 md:px-10 py-8 flex flex-col gap-6">

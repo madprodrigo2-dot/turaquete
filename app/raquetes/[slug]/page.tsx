@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { getRaquetaPorSlug, listarRaquetas, suggestComparisons } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
-import { SITE_URL } from '@/lib/site'
+import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 import BuyButton from '@/components/BuyButton'
 import SiteNav from '@/components/SiteNav'
 import RacketBadgeOverlay from '@/components/RacketBadgeOverlay'
@@ -113,11 +113,23 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
     : typeof athleteRaw === 'string' ? athleteRaw : undefined
   const tratamentoFabrica = extra.tratamento_fabrica as boolean | undefined
 
+  const breadcrumb = breadcrumbJsonLd([
+    { name: 'Turaquete', url: SITE_URL },
+    ...(racket.brands?.slug
+      ? [{ name: racket.brands.name, url: `${SITE_URL}/marcas/${racket.brands.slug}` }]
+      : []),
+    { name: getDisplayName(racket) },
+  ])
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(product) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
 
       <div className="min-h-screen sand-texture">
