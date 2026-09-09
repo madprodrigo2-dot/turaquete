@@ -163,10 +163,16 @@ function parseYearFromNome(nome: string): { baseName: string; year: number | nul
 
 export async function buscarRaquetas(filtros: RacketFilters): Promise<BuscarResult> {
   // Hard constraints in SQL — never relaxed
+  // is_active=true exigido por decisão explícita do Rodrigo (2026-09):
+  // raquetes de geração anterior/liquidação não devem mais ser recomendadas
+  // pelo chat, mesmo que publicada=true. Reverte parcialmente o fix de
+  // 2026-06 (ff8bbb0) que tirou is_active do gate de visibilidade — aqui é
+  // deliberado, só nesta função.
   let query = getSupabase()
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('publicada', true)
+    .eq('is_active', true)
     .order('name')
 
   // Parse year from nome (e.g., "ison 2024" → baseName="ison", requestedYear=2024)
