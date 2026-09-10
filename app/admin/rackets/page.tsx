@@ -12,6 +12,8 @@ type RacketRow = {
   name: string
   slug: string
   publicada: boolean
+  is_active: boolean | null
+  fora_de_linha: boolean | null
   price: number | null
   affiliate_url: string | null
   source_url: string | null
@@ -30,7 +32,7 @@ export default async function AdminRaquetasPage() {
   const [{ data, error }, { data: brandsData }] = await Promise.all([
     sb
       .from('rackets')
-      .select('id, name, slug, publicada, price, affiliate_url, source_url, core, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_override, perfil_resumo, perfil_resumo_revisar)')
+      .select('id, name, slug, publicada, is_active, fora_de_linha, price, affiliate_url, source_url, core, brand_id, model_year, racket_insights(power, control, comfort, spin, forgiveness, maneuverability, stability, nivel_override, perfil_resumo, perfil_resumo_revisar)')
       .order('name'),
     sb.from('brands').select('id, name').order('name'),
   ])
@@ -62,6 +64,7 @@ export default async function AdminRaquetasPage() {
       name: r.name,
       slug: r.slug,
       publicada: r.publicada,
+      is_active: r.is_active ?? true,
       price: r.price,
       affiliate_url: r.affiliate_url,
       source_url: r.source_url,

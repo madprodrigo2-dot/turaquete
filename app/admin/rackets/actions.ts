@@ -17,3 +17,13 @@ export async function togglePublicada(id: number, publicada: boolean) {
   revalidatePath('/admin/rackets')
   revalidatePath('/')
 }
+
+export async function toggleAtiva(id: number, active: boolean) {
+  await assertAdmin()
+  await getSupabaseAdmin().from('rackets')
+    .update(active ? { is_active: true, fora_de_linha: false } : { is_active: false, fora_de_linha: true })
+    .eq('id', id)
+  revalidatePath('/admin/rackets')
+  revalidatePath('/admin/precos')
+  revalidatePath('/')
+}

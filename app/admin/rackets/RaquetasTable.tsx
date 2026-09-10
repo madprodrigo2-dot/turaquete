@@ -3,13 +3,14 @@
 import { useState, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { togglePublicada } from './actions'
+import { togglePublicada, toggleAtiva } from './actions'
 
 export type RacketData = {
   id: number
   name: string
   slug: string
   publicada: boolean
+  is_active: boolean
   price: number | null
   affiliate_url: string | null
   source_url: string | null
@@ -125,6 +126,34 @@ function PublicadaToggle({ racket }: { racket: RacketData & { publicadaLocal: bo
   )
 }
 
+function AtivaToggle({ racket }: { racket: RacketData }) {
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
+
+  function handle() {
+    startTransition(async () => {
+      await toggleAtiva(racket.id, !racket.is_active)
+      router.refresh()
+    })
+  }
+
+  return (
+    <button
+      onClick={handle}
+      disabled={pending}
+      title={racket.is_active ? 'Clique para marcar fora de linha' : 'Clique para reativar'}
+      className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full border transition-colors disabled:opacity-40 ${
+        racket.is_active
+          ? 'border-teal-200 bg-teal-50 text-teal-600 hover:bg-red-50 hover:border-red-200 hover:text-red-500'
+          : 'border-gray-200 bg-gray-50 text-gray-400 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-600'
+      }`}
+    >
+      <span className={`inline-block w-1.5 h-1.5 rounded-full ${racket.is_active ? 'bg-teal-500' : 'bg-gray-300'}`} />
+      {pending ? '…' : racket.is_active ? 'ativa' : 'fora'}
+    </button>
+  )
+}
+
 export default function RaquetasTable({
   rackets,
   brands,
@@ -142,6 +171,7 @@ export default function RaquetasTable({
   const [filterNivel, setFilterNivel] = useState('')
   const [filterAfiliado, setFilterAfiliado] = useState('')
   const [filterPublicada, setFilterPublicada] = useState('')
+  const [filterAtiva, setFilterAtiva] = useState('')
   const [filterIncompleta, setFilterIncompleta] = useState('')
   const [filterDescricao, setFilterDescricao] = useState('')
   const [pubOverrides] = useState<Record<number, boolean>>({})
@@ -151,7 +181,7 @@ export default function RaquetasTable({
     return [...new Set(years)].sort((a, b) => b - a)
   }, [rackets])
 
-  const hasFilters = !!(search || filterMarca || filterAno || filterNivel || filterAfiliado || filterPublicada || filterIncompleta || filterDescricao)
+  const hasFilters = !!(search || filterMarca || filterAno || filterNivel || filterAfiliado || filterPublicada || filterAtiva || filterIncompleta || filterDescricao)
 
   function handleSort(col: SortCol) {
     if (sortCol === col) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
@@ -161,6 +191,7 @@ export default function RaquetasTable({
   function clearFilters() {
     setSearch(''); setFilterMarca(''); setFilterAno('')
     setFilterNivel(''); setFilterAfiliado(''); setFilterPublicada('')
+    setFilterAtiva('')
     setFilterIncompleta(''); setFilterDescricao('')
   }
 
@@ -182,6 +213,8 @@ export default function RaquetasTable({
     if (filterAfiliado === 'sem') result = result.filter(r => r.affiliate_url == null)
     if (filterPublicada === 'publicada') result = result.filter(r => r.publicadaLocal)
     if (filterPublicada === 'nao')       result = result.filter(r => !r.publicadaLocal)
+    if (filterAtiva === 'ativa') result = result.filter(r => r.is_active)
+    if (filterAtiva === 'fora')  result = result.filter(r => !r.is_active)
     if (filterIncompleta === 'incompleta') result = result.filter(r =>
       r.price == null || (r.affiliate_url == null && r.source_url == null) || r.core == null
     )
@@ -205,7 +238,7 @@ export default function RaquetasTable({
       if (av > bv) return sortDir === 'asc' ? 1 : -1
       return 0
     })
-  }, [racketRows, search, sortCol, sortDir, filterMarca, filterAno, filterNivel, filterAfiliado, filterPublicada, filterIncompleta])
+  }, [racketRows, search, sortCol, sortDir, filterMarca, filterAno, filterNivel, filterAfiliado, filterPublicada, filterAtiva, filterIncompleta])
 
   const selectCls = 'text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500 text-gray-600'
 
@@ -216,7 +249,7 @@ export default function RaquetasTable({
     return `${base} ${pad} ${active}`
   }
 
-  const colCount = 11
+  const colCount = 12
 
   return (
     <div>
@@ -265,6 +298,12 @@ export default function RaquetasTable({
           <option value="">Publicação: todas</option>
           <option value="publicada">Publicadas</option>
           <option value="nao">Não publicadas</option>
+        </select>
+
+        <select value={filterAtiva} onChange={e => setFilterAtiva(e.target.value)} className={selectCls}>
+          <option value="">Ativa: todas</option>
+          <option value="ativa">Ativas</option>
+          <option value="fora">Fora de linha</option>
         </select>
 
         <select value={filterIncompleta} onChange={e => setFilterIncompleta(e.target.value)} className={selectCls}>
@@ -316,6 +355,7 @@ export default function RaquetasTable({
                 Preço <SortIcon col="price" active={sortCol} dir={sortDir} />
               </th>
               <th className="px-3 py-2.5 text-gray-400 font-medium text-center whitespace-nowrap">Pub.</th>
+              <th className="px-3 py-2.5 text-gray-400 font-medium text-center whitespace-nowrap">Ativa</th>
               <th className="px-3 py-2.5" />
             </tr>
           </thead>
@@ -367,6 +407,9 @@ export default function RaquetasTable({
                   <td className="px-3 py-2 text-center">
                     <PublicadaToggle racket={r} />
                   </td>
+                  <td className="px-3 py-2 text-center">
+                    <AtivaToggle racket={r} />
+                  </td>
                   <td className="px-3 py-2 text-right">
                     <Link href={`/admin/rackets/${r.slug}`} className="text-teal-600 hover:text-teal-800 font-medium">
                       Editar →
@@ -383,6 +426,7 @@ export default function RaquetasTable({
         <span>I = Iniciante · M = Intermediario · A = Avancado (match score por perfil)</span>
         <span>· Dados: dot verde = completa · badge laranja = campos faltando (hover) · ⚠ amber = revisar descrição</span>
         <span>· Clique em <strong>pub/nao</strong> para publicar ou despublicar</span>
+        <span>· Clique em <strong>ativa/fora</strong> para reativar ou marcar fora de linha</span>
       </p>
     </div>
   )
