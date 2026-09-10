@@ -10,7 +10,7 @@ export async function setFaraLinha(id: number, value: boolean): Promise<void> {
   }
   const sb = getSupabaseAdmin()
   const { error } = await sb.from('rackets')
-    .update({ fora_de_linha: value })
+    .update(value ? { fora_de_linha: true, is_active: false } : { fora_de_linha: false, is_active: true })
     .eq('id', id)
   if (error) throw new Error(error.message)
 }
