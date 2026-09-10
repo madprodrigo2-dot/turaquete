@@ -315,7 +315,7 @@ function SortTh({ col, align, active, dir, onSort, className, children }: {
   )
 }
 
-type FilterKey = 'priority' | 'afiliado' | 'all' | 'failed' | 'stale' | 'never'
+type FilterKey = 'priority' | 'afiliado' | 'all' | 'ativas' | 'foraDeLinha' | 'failed' | 'stale' | 'never'
 
 export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; summary: Summary }) {
   const [q, setQ]           = useState('')
@@ -332,12 +332,14 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
   }, [])
 
   const counts = useMemo(() => ({
-    priority: rows.filter(r => r.group === 'A').length,
-    afiliado: rows.filter(r => r.group === 'A' || r.group === 'B').length,
-    all:      rows.length,
-    failed:   rows.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha).length,
-    stale:    rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at !== null && staleDaysClient(r.price_updated_at) > 30).length,
-    never:    rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at === null).length,
+    priority:    rows.filter(r => r.group === 'A').length,
+    afiliado:    rows.filter(r => r.group === 'A' || r.group === 'B').length,
+    all:         rows.length,
+    ativas:      rows.filter(r => !r.fora_de_linha).length,
+    foraDeLinha: rows.filter(r => r.fora_de_linha).length,
+    failed:      rows.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha).length,
+    stale:       rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at !== null && staleDaysClient(r.price_updated_at) > 30).length,
+    never:       rows.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at === null).length,
   }), [rows])
 
   const displayed = useMemo(() => {
@@ -346,11 +348,13 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
       r.name.toLowerCase().includes(q.toLowerCase()) ||
       r.brandName.toLowerCase().includes(q.toLowerCase())
     )
-    if (filter === 'priority') out = out.filter(r => r.group === 'A')
-    if (filter === 'afiliado') out = out.filter(r => r.group !== 'C')
-    if (filter === 'failed')   out = out.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha)
-    if (filter === 'stale')    out = out.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at !== null && staleDaysClient(r.price_updated_at) > 30)
-    if (filter === 'never')    out = out.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at === null)
+    if (filter === 'priority')    out = out.filter(r => r.group === 'A')
+    if (filter === 'afiliado')    out = out.filter(r => r.group !== 'C')
+    if (filter === 'ativas')      out = out.filter(r => !r.fora_de_linha)
+    if (filter === 'foraDeLinha') out = out.filter(r => r.fora_de_linha)
+    if (filter === 'failed')      out = out.filter(r => r.last_sync_status !== null && r.last_sync_status !== 'ok' && !r.fora_de_linha)
+    if (filter === 'stale')       out = out.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at !== null && staleDaysClient(r.price_updated_at) > 30)
+    if (filter === 'never')       out = out.filter(r => r.group !== 'C' && !r.fora_de_linha && r.price_updated_at === null)
     if (sortKey) {
       out = [...out].sort((a, b) => {
         let diff = 0
@@ -366,12 +370,14 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
   }, [rows, q, filter, sortKey, sortDir])
 
   const FILTER_LABELS: Record<FilterKey, string> = {
-    priority: '🔥 Prioritárias',
-    afiliado: '💰 Todas com afiliado',
-    all:      'Todas',
-    failed:   '⚠️ Falharam',
-    stale:    '⚠️ Preço >30d',
-    never:    '⏰ Nunca atualizadas',
+    priority:    '🔥 Prioritárias',
+    afiliado:    '💰 Todas com afiliado',
+    all:         'Todas',
+    ativas:      '✓ Ativas',
+    foraDeLinha: '⛔ Fora de linha',
+    failed:      '⚠️ Falharam',
+    stale:       '⚠️ Preço >30d',
+    never:       '⏰ Nunca atualizadas',
   }
 
   return (
@@ -418,7 +424,7 @@ export default function PrecosClient({ rows, summary }: { rows: PriceRowData[]; 
           )}
         </div>
 
-        {(['priority', 'afiliado', 'all', 'failed', 'stale', 'never'] as FilterKey[]).map(f => (
+        {(['priority', 'afiliado', 'all', 'ativas', 'foraDeLinha', 'failed', 'stale', 'never'] as FilterKey[]).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
