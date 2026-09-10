@@ -248,6 +248,7 @@ export async function salvarEditorial(slug: string, data: EditorialData) {
     price: data.price,
     publicada: data.publicada,
     is_active: data.is_active,
+    fora_de_linha: !data.is_active,
     destaque_atleta: data.destaque_atleta,
     specs_extra: newExtra,
   }).eq('slug', slug)
