@@ -13,7 +13,6 @@ const CX   = W / 2
 const MX   = 80
 const CW   = W - MX * 2
 
-const ARENA = '#F7EDDC'   // cor areia — ainda usada nos chips de "Minhas raquetes"
 const TINTA = '#0E3A40'
 
 // ── Identidades ───────────────────────────────────────────────────────────────
@@ -402,10 +401,14 @@ async function drawMinhasRaquetes(
 
     ctx.save()
 
-    // Chip — fundo arena
-    ctx.fillStyle = ARENA
+    // Chip — fundo branco, igual à foto do produto (sem contraste de borda)
+    ctx.fillStyle = '#FFFFFF'
     drawRoundRect(ctx, chipX, chipTopY, CHIP_W, CHIP_H, 20)
     ctx.fill()
+    ctx.strokeStyle = 'rgba(14,58,64,0.08)'
+    ctx.lineWidth   = 1.5
+    drawRoundRect(ctx, chipX, chipTopY, CHIP_W, CHIP_H, 20)
+    ctx.stroke()
 
     // Imagem (contain na parte superior do chip)
     if (img && img.width > 0 && img.height > 0) {
