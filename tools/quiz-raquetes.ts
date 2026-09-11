@@ -71,6 +71,9 @@ function getNomeCurto(r: RacketWithInsights): string {
   return nome || r.name
 }
 
+// Mirrors RacketCard.tsx's topDims exactly: excludes spin (weight 0 in every
+// scorer.ts profile — never influences match_score) and forgiveness (internal),
+// with a >=7 floor so a card never shows a middling stat dressed up as a strength.
 function getDestaques(r: RacketWithInsights) {
   const ins = r.racket_insights
   if (!ins) return []
@@ -79,11 +82,9 @@ function getDestaques(r: RacketWithInsights) {
     { label: 'Controle',     v: ins.control         },
     { label: 'Conforto',     v: ins.comfort         },
     { label: 'Manuseio',     v: ins.maneuverability },
-    { label: 'Spin',         v: ins.spin            },
     { label: 'Estabilidade', v: ins.stability       },
-    // forgiveness is internal — never shown per RacketCard.tsx
   ]
-    .filter((d): d is { label: string; v: number } => d.v != null)
+    .filter((d): d is { label: string; v: number } => d.v != null && d.v >= 7)
     .sort((a, b) => b.v - a.v)
     .slice(0, 2)
 }

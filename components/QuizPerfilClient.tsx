@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Check, Article, DownloadSimple } from '@phosphor-icons/react'
+import { Check, ShareNetwork } from '@phosphor-icons/react'
 import {
   PERGUNTAS,
   ARQUETIPOS,
@@ -38,6 +38,20 @@ const VIS: Record<ArquetipoSlug, {
   'dono-da-rede':    { ac: '#FF5E3A', numero: '01', quote: 'A rede tem dono.'                   },
   finalizador:       { ac: '#FFC42E', numero: '10', quote: 'Ponto curto, papo reto.'            },
   camaleao:          { ac: '#FFC42E', numero: '23', quote: 'Eu jogo o jogo que o jogo pede.'    },
+}
+
+// Dimensões priorizadas por arquétipo — derivado das tabelas de peso reais
+// (baseWeights() em lib/scorer.ts, perfil intermediario usado pelo quiz):
+// dono-da-rede/canhão/finalizador (potencia): power 26 + stability 20, top 2.
+// muralha/contra-atacante (controle): control 25 + comfort 20, top 2.
+// camaleão (equilibrio): control 18 + maneuverability 18, top 2.
+const DIMENSOES_PRIORIZADAS: Record<ArquetipoSlug, string> = {
+  muralha:           'controle e conforto',
+  'contra-atacante': 'controle e conforto',
+  canhao:            'potência e estabilidade',
+  'dono-da-rede':    'potência e estabilidade',
+  finalizador:       'potência e estabilidade',
+  camaleao:          'controle e manuseio',
 }
 
 // Poster name split per archetype
@@ -447,10 +461,15 @@ function RaquetesSection({ winner }: { winner: ArquetipoSlug }) {
   const cards = QUIZ_RAQUETES[winner] ?? []
   if (cards.length === 0) return null
 
+  const nome = ARQUETIPOS[winner].nome
+
   return (
     <div>
-      <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: 'rgba(14,58,64,0.5)' }}>
+      <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: 'rgba(14,58,64,0.5)' }}>
         Raquetes que combinam com esse estilo
+      </p>
+      <p className="text-xs mb-3" style={{ color: 'rgba(14,58,64,0.55)' }}>
+        Como {nome}, priorizamos raquetes com melhor {DIMENSOES_PRIORIZADAS[winner]}.
       </p>
 
       <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
@@ -538,23 +557,6 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
     }
   }
 
-  const handleDownload = async () => {
-    if (isSharing) return
-    setIsSharing(true)
-    try {
-      let blob = blobRef.current
-      if (!blob) {
-        blob = await gerarStoryPNG(winner, scores)
-        blobRef.current = blob
-        setBlobReady(true)
-      }
-      triggerDownload(blob)
-      track('quiz_share_image', { arquetipo: winner, metodo: 'download' })
-    } catch { /* silent */ } finally {
-      setIsSharing(false)
-    }
-  }
-
   return (
     <div className="quiz-result">
       {/* ── HEADER — max 420px desktop / 48vh mobile, fit-content ──────── */}
@@ -604,35 +606,20 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
             lineHeight: 1.22,
           }}>"{vis.quote}"</p>
 
-          {/* 5. Story + Baixar */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleStory}
-              disabled={isSharing}
-              className="flex-1 flex items-center justify-center gap-1.5 font-bold text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-60"
-              style={{ height: '36px', background: '#0E3A40', color: 'white' }}
-            >
-              {isSharing
-                ? <span className="animate-pulse text-xs">…</span>
-                : <>
-                    <Article size={12} weight="regular" aria-hidden="true" />
-                    Story
-                  </>}
-            </button>
-            <button
-              onClick={handleDownload}
-              disabled={isSharing}
-              className="flex items-center justify-center gap-1.5 font-medium text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-60 px-4"
-              style={{ height: '36px', background: 'rgba(14,58,64,0.08)', color: '#0E3A40' }}
-            >
-              {isSharing
-                ? <span className="animate-pulse text-xs">…</span>
-                : <>
-                    <DownloadSimple size={12} weight="regular" aria-hidden="true" />
-                    Baixar
-                  </>}
-            </button>
-          </div>
+          {/* 5. Compartilhar — share nativo (Instagram Stories, WhatsApp etc.), fallback pra download */}
+          <button
+            onClick={handleStory}
+            disabled={isSharing}
+            className="w-full flex items-center justify-center gap-1.5 font-bold text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-60"
+            style={{ height: '36px', background: '#0E3A40', color: 'white' }}
+          >
+            {isSharing
+              ? <span className="animate-pulse text-xs">…</span>
+              : <>
+                  <ShareNetwork size={14} weight="regular" aria-hidden="true" />
+                  Compartilhar
+                </>}
+          </button>
         </div>
       </div>
 

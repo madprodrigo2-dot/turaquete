@@ -334,10 +334,6 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
         {
           "label": "Manuseio",
           "v": 7
-        },
-        {
-          "label": "Spin",
-          "v": 7
         }
       ],
       "custoBeneficio": false,
@@ -356,7 +352,7 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
           "v": 7
         },
         {
-          "label": "Spin",
+          "label": "Estabilidade",
           "v": 7
         }
       ],
@@ -376,7 +372,7 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
           "v": 7
         },
         {
-          "label": "Spin",
+          "label": "Estabilidade",
           "v": 7
         }
       ],
@@ -456,10 +452,6 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
         {
           "label": "Manuseio",
           "v": 7
-        },
-        {
-          "label": "Spin",
-          "v": 7
         }
       ],
       "custoBeneficio": false,
@@ -478,7 +470,7 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
           "v": 7
         },
         {
-          "label": "Spin",
+          "label": "Estabilidade",
           "v": 7
         }
       ],
@@ -498,7 +490,7 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
           "v": 7
         },
         {
-          "label": "Spin",
+          "label": "Estabilidade",
           "v": 7
         }
       ],
@@ -578,10 +570,6 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
         {
           "label": "Manuseio",
           "v": 7
-        },
-        {
-          "label": "Spin",
-          "v": 7
         }
       ],
       "custoBeneficio": false,
@@ -600,7 +588,7 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
           "v": 7
         },
         {
-          "label": "Spin",
+          "label": "Estabilidade",
           "v": 7
         }
       ],
@@ -620,7 +608,7 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
           "v": 7
         },
         {
-          "label": "Spin",
+          "label": "Estabilidade",
           "v": 7
         }
       ],
@@ -739,10 +727,6 @@ export const QUIZ_RAQUETES: Record<ArquetipoSlug, QuizRaqueteCard[]> =
       "destaques": [
         {
           "label": "Manuseio",
-          "v": 7
-        },
-        {
-          "label": "Spin",
           "v": 7
         }
       ],
