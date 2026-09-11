@@ -28,18 +28,16 @@ function track(event: string, params?: Record<string, unknown>) {
 // ── Visual identity per archetype (mirrors quiz-story.ts) ─────────────────────
 
 const VIS: Record<ArquetipoSlug, {
-  bg: string
   ac: string
   numero: string
   quote: string
-  grad?: true
 }> = {
-  muralha:           { bg: '#0E3A40', ac: '#0CC0BE', numero: '00', quote: 'Comigo não passa.'            },
-  'contra-atacante': { bg: '#087F7D', ac: '#FFC42E', numero: '07', quote: 'Deixa vir.'                   },
-  canhao:            { bg: '#E8492A', ac: '#FFC42E', numero: '09', quote: 'Se subiu, desceu.'             },
-  'dono-da-rede':    { bg: '#0E3A40', ac: '#FF5E3A', numero: '01', quote: 'A rede tem dono.'              },
-  finalizador:       { bg: '#143C46', ac: '#FFC42E', numero: '10', quote: 'Ponto curto, papo reto.'       },
-  camaleao:          { bg: '#0E3A40', ac: '#FFC42E', numero: '23', quote: 'Eu jogo o jogo que o jogo pede.', grad: true },
+  muralha:           { ac: '#0CC0BE', numero: '00', quote: 'Comigo não passa.'                 },
+  'contra-atacante': { ac: '#FFC42E', numero: '07', quote: 'Deixa vir.'                         },
+  canhao:            { ac: '#FFC42E', numero: '09', quote: 'Se subiu, desceu.'                 },
+  'dono-da-rede':    { ac: '#FF5E3A', numero: '01', quote: 'A rede tem dono.'                   },
+  finalizador:       { ac: '#FFC42E', numero: '10', quote: 'Ponto curto, papo reto.'            },
+  camaleao:          { ac: '#FFC42E', numero: '23', quote: 'Eu jogo o jogo que o jogo pede.'    },
 }
 
 // Poster name split per archetype
@@ -170,7 +168,7 @@ function AutoFitName({
           {i === 0 && (
             <span style={{ fontSize: `${oSz}px`, color: accentColor, opacity: 0.72, marginRight: '0.14em' }}>O/A</span>
           )}
-          <span style={{ fontSize: `${sz}px`, color: textColor, textShadow: `2px 2px 0 ${accentColor}` }}>{word}</span>
+          <span style={{ fontSize: `${sz}px`, color: textColor }}>{word}</span>
         </div>
       ))}
     </div>
@@ -181,13 +179,13 @@ function AutoFitName({
 
 function Landing({ onStart }: { onStart: () => void }) {
   return (
-    <div className="relative" style={{ background: '#0E3A40', minHeight: '100dvh' }}>
+    <div className="relative" style={{ background: '#FBF6EF', minHeight: '100dvh' }}>
       {/* Image hero — height explícito necessário para next/image fill */}
       <style>{`
         .landing-hero-img { object-position: center 20%; }
         @media (max-width: 767px) { .landing-hero-img { object-position: 12% center; } }
       `}</style>
-      <div className="relative overflow-hidden" style={{ height: 'clamp(360px, 70vh, 580px)' }}>
+      <div className="relative overflow-hidden" style={{ height: '280px' }}>
         <Image
           src="/landingperfil.png"
           alt="Beach tennis"
@@ -197,44 +195,44 @@ function Landing({ onStart }: { onStart: () => void }) {
           className="landing-hero-img"
           style={{ objectFit: 'cover' }}
         />
-        {/* Dark top band for text contrast + bottom fade for transition */}
+        {/* Soft fade only on the bottom band — transition into the light background below */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'linear-gradient(to bottom, rgba(14,58,64,0.82) 0%, rgba(14,58,64,0.18) 52%, rgba(14,58,64,0.78) 100%)',
+          background: 'linear-gradient(to bottom, transparent 55%, #FBF6EF 100%)',
         }} />
 
-        {/* Overlay — apenas nav + título sobre a imagem */}
-        <div className="absolute inset-0 z-10 flex flex-col gap-3 px-8" style={{
+        {/* Overlay — apenas "Voltar" sobre a imagem */}
+        <div className="absolute inset-0 z-10 flex flex-col px-8" style={{
           paddingTop: 'max(32px, env(safe-area-inset-top, 0px) + 14px)',
         }}>
-          <Link href="/" className="self-start text-sm font-medium transition-opacity hover:opacity-70" style={{ color: 'rgba(12,192,190,0.7)' }}>
+          <Link href="/" className="self-start text-sm font-medium transition-opacity hover:opacity-80" style={{ color: 'white', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
             ← Voltar
           </Link>
-          <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#0CC0BE' }}>
-            Turaquete · Beach Tennis
-          </p>
-          <h1 className="font-heading font-bold text-white leading-tight" style={{ fontSize: 'clamp(26px, 7.5vw, 46px)' }}>
-            Qual é o seu perfil de jogador?
-          </h1>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
-            Baseado na classificação de estilos do tênis profissional (ATP), adaptada ao beach tennis.
-          </p>
         </div>
       </div>
 
-      {/* CTA — abaixo do hero, no fundo escuro */}
-      <div className="px-8 py-8 flex flex-col gap-4 max-w-sm mx-auto w-full">
-        <div className="flex gap-2 flex-wrap">
+      {/* Título, subtítulo, badges e CTA — no fundo claro, abaixo da imagem */}
+      <div className="px-8 py-8 flex flex-col gap-3 max-w-sm mx-auto w-full">
+        <p className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#0CC0BE' }}>
+          Turaquete · Beach Tennis
+        </p>
+        <h1 className="font-heading font-bold leading-tight" style={{ fontSize: 'clamp(26px, 7.5vw, 46px)', color: '#0E3A40' }}>
+          Qual é o seu perfil de jogador?
+        </h1>
+        <p className="text-sm leading-relaxed" style={{ color: 'rgba(14,58,64,0.68)' }}>
+          Baseado na classificação de estilos do tênis profissional (ATP), adaptada ao beach tennis.
+        </p>
+        <div className="flex gap-2 flex-wrap mt-1">
           {['7 perguntas', '~2 minutos', 'Sem cadastro'].map(b => (
             <span key={b} className="px-3 py-1.5 rounded-full text-xs font-semibold" style={{
               border: '1.5px solid rgba(12,192,190,0.36)',
-              color: '#0CC0BE',
-              background: 'rgba(12,192,190,0.1)',
+              color: '#0E3A40',
+              background: 'rgba(12,192,190,0.12)',
             }}>{b}</span>
           ))}
         </div>
         <button
           onClick={onStart}
-          className="font-heading font-bold text-white text-lg py-4 px-8 rounded-2xl w-full max-w-xs transition-all hover:opacity-90 active:scale-[0.97]"
+          className="font-heading font-bold text-white text-lg py-4 px-8 rounded-2xl w-full max-w-xs transition-all hover:opacity-90 active:scale-[0.97] mt-2"
           style={{ background: '#FF5E3A', boxShadow: '0 8px 32px rgba(255,94,58,0.4)' }}
         >
           Descobrir meu perfil
@@ -479,10 +477,6 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
   const blobRef                   = useRef<Blob | null>(null)
   const [blobReady, setBlobReady] = useState(false)
 
-  const bgStyle = vis.grad
-    ? { background: 'linear-gradient(160deg, #0CC0BE 0%, #0E3A40 58%)' }
-    : { background: vis.bg }
-
   const acLabel = vis.ac === '#FFC42E' ? '#0E3A40' : vis.ac
 
   // Pré-gera o PNG ao montar — garante que o blob existe ANTES do click (req. Android)
@@ -564,15 +558,15 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
   return (
     <div className="quiz-result">
       {/* ── HEADER — max 420px desktop / 48vh mobile, fit-content ──────── */}
-      <div className="relative overflow-hidden" style={{ ...bgStyle, maxHeight: 'min(420px, 48vh)' }}>
+      <div className="relative overflow-hidden" style={{ background: '#FBF6EF', maxHeight: 'min(420px, 48vh)' }}>
         {/* Jersey number — max 60% do alto do header, canto direito */}
         <div className="absolute right-0 pointer-events-none select-none" style={{
           bottom: 0, maxHeight: '60%', overflow: 'hidden',
         }} aria-hidden>
           <span className="font-heading font-bold" style={{
             fontSize: 'clamp(110px, 38vw, 300px)',
-            color: vis.ac,
-            opacity: 0.09,
+            color: '#0CC0BE',
+            opacity: 0.1,
             lineHeight: 0.82,
             display: 'block',
             marginRight: '-0.07em',
@@ -586,19 +580,19 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
           paddingBottom: '20px',
         }}>
           {/* 1. Label */}
-          <p className="font-bold tracking-[0.18em] uppercase" style={{ fontSize: '13px', color: vis.ac }}>
+          <p className="font-bold tracking-[0.18em] uppercase" style={{ fontSize: '13px', color: '#0CC0BE' }}>
             Meu Perfil de Jogo
           </p>
 
           {/* 2. Nome auto-fit — O inline */}
-          <AutoFitName parts={parts} textColor="white" accentColor={vis.ac} />
+          <AutoFitName parts={parts} textColor="#0E3A40" accentColor="#FF5E3A" />
 
           {/* 3. Badge ATP */}
           <span className="self-start px-3 py-1 rounded-full font-semibold" style={{
             fontSize: '11px',
-            border: `1.5px solid ${vis.ac}`,
-            color: vis.ac,
-            background: `${vis.ac}14`,
+            border: '1.5px solid rgba(255,94,58,0.40)',
+            color: '#FF5E3A',
+            background: 'rgba(255,94,58,0.08)',
           }}>
             {arq.equivalente} · estilo do tênis pro
           </span>
@@ -606,7 +600,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
           {/* 4. Quote */}
           <p className="font-heading font-bold italic" style={{
             fontSize: 'clamp(18px, 5.5vw, 26px)',
-            color: 'rgba(255,255,255,0.88)',
+            color: '#0E3A40',
             lineHeight: 1.22,
           }}>"{vis.quote}"</p>
 
@@ -616,7 +610,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               onClick={handleStory}
               disabled={isSharing}
               className="flex-1 flex items-center justify-center gap-1.5 font-bold text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-60"
-              style={{ height: '36px', background: `${vis.ac}28`, color: vis.ac }}
+              style={{ height: '36px', background: '#0E3A40', color: 'white' }}
             >
               {isSharing
                 ? <span className="animate-pulse text-xs">…</span>
@@ -629,7 +623,7 @@ function Result({ winner, scores, onReset }: { winner: ArquetipoSlug; scores: Sc
               onClick={handleDownload}
               disabled={isSharing}
               className="flex items-center justify-center gap-1.5 font-medium text-sm rounded-xl transition-all active:scale-[0.97] disabled:opacity-60 px-4"
-              style={{ height: '36px', background: 'rgba(255,255,255,0.12)', color: 'white' }}
+              style={{ height: '36px', background: 'rgba(14,58,64,0.08)', color: '#0E3A40' }}
             >
               {isSharing
                 ? <span className="animate-pulse text-xs">…</span>
