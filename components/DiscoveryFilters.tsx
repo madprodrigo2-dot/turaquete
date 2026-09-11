@@ -183,7 +183,10 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
           <div className="-mr-5 md:mr-0 relative">
             <div className="flex gap-2 overflow-x-auto pb-1 pr-2 md:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
-                onClick={() => setPrecoKey('todas')}
+                onClick={e => {
+                  setPrecoKey('todas')
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+                }}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
                   precoKey === 'todas'
                     ? 'bg-aqua text-white border-aqua'
@@ -195,7 +198,10 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
               {PRECO_BUCKETS.map(b => (
                 <button
                   key={b.label}
-                  onClick={() => setPrecoKey(b.label)}
+                  onClick={e => {
+                    setPrecoKey(b.label)
+                    e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+                  }}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium whitespace-nowrap ${
                     precoKey === b.label
                       ? 'bg-aqua text-white border-aqua'
@@ -206,6 +212,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
                 </button>
               ))}
             </div>
+            <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-[#F7F3EC] to-transparent md:hidden" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-14 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
           </div>
         )}
