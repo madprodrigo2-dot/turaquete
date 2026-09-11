@@ -13,25 +13,24 @@ const CX   = W / 2
 const MX   = 80
 const CW   = W - MX * 2
 
-const WHITE = '#FFFFFF'
-const ARENA = '#F7EDDC'   // cor areia — usada em texto/elementos quentes
+const ARENA = '#F7EDDC'   // cor areia — ainda usada nos chips de "Minhas raquetes"
+const TINTA = '#0E3A40'
 
 // ── Identidades ───────────────────────────────────────────────────────────────
 
 interface Identidade {
-  bg:     string | [string, string]
   ac:     string
   numero: string
   quote:  string
 }
 
 const IDENTIDADES: Record<ArquetipoSlug, Identidade> = {
-  muralha:           { bg: '#0E3A40', ac: '#0CC0BE', numero: '00', quote: 'Comigo não passa.'              },
-  'contra-atacante': { bg: '#087F7D', ac: '#FFC42E', numero: '07', quote: 'Deixa vir.'                    },
-  canhao:            { bg: '#E8492A', ac: '#FFC42E', numero: '09', quote: 'Se subiu, desceu.'              },
-  'dono-da-rede':    { bg: '#0E3A40', ac: '#FF5E3A', numero: '01', quote: 'A rede tem dono.'              },
-  finalizador:       { bg: '#143C46', ac: '#FFC42E', numero: '10', quote: 'Ponto curto, papo reto.'       },
-  camaleao:          { bg: ['#0CC0BE', '#0E3A40'], ac: '#FFC42E', numero: '23', quote: 'Eu jogo o jogo que o jogo pede.' },
+  muralha:           { ac: '#0CC0BE', numero: '00', quote: 'Comigo não passa.'                 },
+  'contra-atacante': { ac: '#FFC42E', numero: '07', quote: 'Deixa vir.'                         },
+  canhao:            { ac: '#FFC42E', numero: '09', quote: 'Se subiu, desceu.'                 },
+  'dono-da-rede':    { ac: '#FF5E3A', numero: '01', quote: 'A rede tem dono.'                   },
+  finalizador:       { ac: '#FFC42E', numero: '10', quote: 'Ponto curto, papo reto.'            },
+  camaleao:          { ac: '#FFC42E', numero: '23', quote: 'Eu jogo o jogo que o jogo pede.'    },
 }
 
 const POSTER_LINES: Record<ArquetipoSlug, string[]> = {
@@ -113,7 +112,7 @@ function letterSpaced(
 
 function divider(ctx: CanvasRenderingContext2D, y: number) {
   ctx.save()
-  ctx.strokeStyle = hexToRgba(ARENA, 0.20)
+  ctx.strokeStyle = 'rgba(14,58,64,0.12)'
   ctx.lineWidth   = 1
   ctx.beginPath()
   ctx.moveTo(MX, y); ctx.lineTo(W - MX, y)
@@ -123,28 +122,13 @@ function divider(ctx: CanvasRenderingContext2D, y: number) {
 
 // ── Background / grain ────────────────────────────────────────────────────────
 
-function drawBackground(ctx: CanvasRenderingContext2D, bg: string | [string, string]) {
-  if (Array.isArray(bg)) {
-    const grad = ctx.createLinearGradient(0, 0, 0, H)
-    grad.addColorStop(0, bg[0])
-    grad.addColorStop(1, bg[1])
-    ctx.fillStyle = grad
-  } else {
-    ctx.fillStyle = bg
-  }
-  ctx.fillRect(0, 0, W, H)
-
-  // Overlay arena quente — suaviza o escuro e neutraliza o tom muito masculino
-  const warm = ctx.createLinearGradient(0, 0, 0, H)
-  warm.addColorStop(0,   'rgba(247,237,220,0.10)')
-  warm.addColorStop(0.5, 'rgba(247,237,220,0.06)')
-  warm.addColorStop(1,   'rgba(247,237,220,0.14)')
-  ctx.fillStyle = warm
+function drawBackground(ctx: CanvasRenderingContext2D) {
+  ctx.fillStyle = '#FBF6EF'
   ctx.fillRect(0, 0, W, H)
 }
 
 function drawGrain(ctx: CanvasRenderingContext2D) {
-  ctx.fillStyle = hexToRgba(ARENA, 0.06)
+  ctx.fillStyle = 'rgba(14,58,64,0.04)'
   const step = 45
   for (let x = step / 2; x < W; x += step)
     for (let y = step / 2; y < H; y += step) {
@@ -152,10 +136,10 @@ function drawGrain(ctx: CanvasRenderingContext2D) {
     }
 }
 
-function drawJerseyBg(ctx: CanvasRenderingContext2D, ff: string, numero: string, ac: string) {
+function drawJerseyBg(ctx: CanvasRenderingContext2D, ff: string, numero: string) {
   ctx.save()
   ctx.font         = `800 650px '${ff}', sans-serif`
-  ctx.fillStyle    = hexToRgba(ac, 0.10)
+  ctx.fillStyle    = hexToRgba('#0CC0BE', 0.08)
   ctx.textAlign    = 'right'
   ctx.textBaseline = 'middle'
   ctx.fillText(numero, W + 90, 490)
@@ -195,7 +179,7 @@ function drawNameBlock(
   // First line
   ctx.fillStyle = hexToRgba(ac, 0.88)
   ctx.fillText(words[0], MX + 4, topY + 4)
-  ctx.fillStyle = WHITE
+  ctx.fillStyle = TINTA
   ctx.fillText(words[0], MX, topY)
 
   let lineBottom = topY + sz
@@ -203,7 +187,7 @@ function drawNameBlock(
     const ly = lineBottom + 6
     ctx.fillStyle = hexToRgba(ac, 0.88)
     ctx.fillText(words[i], MX + 4, ly + 4)
-    ctx.fillStyle = WHITE
+    ctx.fillStyle = TINTA
     ctx.fillText(words[i], MX, ly)
     lineBottom = ly + sz
   }
@@ -235,7 +219,7 @@ function drawNameBlock(
 function drawQuote(ctx: CanvasRenderingContext2D, ff: string, quote: string, topY: number): number {
   ctx.save()
   ctx.font         = `italic 800 48px '${ff}', sans-serif`
-  ctx.fillStyle    = hexToRgba(ARENA, 0.94)
+  ctx.fillStyle    = hexToRgba(TINTA, 0.94)
   ctx.textAlign    = 'center'
   ctx.textBaseline = 'top'
   const lines = wrapText(ctx, `"${quote}"`, 960)
@@ -250,7 +234,7 @@ function drawQuote(ctx: CanvasRenderingContext2D, ff: string, quote: string, top
 function drawDescription(ctx: CanvasRenderingContext2D, ff: string, text: string, topY: number): number {
   ctx.save()
   ctx.font         = `400 29px '${ff}', sans-serif`
-  ctx.fillStyle    = hexToRgba(ARENA, 0.80)
+  ctx.fillStyle    = hexToRgba(TINTA, 0.80)
   ctx.textAlign    = 'center'
   ctx.textBaseline = 'top'
   const lines = wrapText(ctx, text, 880)
@@ -277,11 +261,9 @@ function drawBars(
 
   ctx.save()
   ctx.font         = `700 26px '${ff}', sans-serif`
-  ctx.fillStyle    = ARENA
-  ctx.globalAlpha  = 0.72
+  ctx.fillStyle    = 'rgba(14,58,64,0.55)'
   ctx.textBaseline = 'middle'
   letterSpaced(ctx, 'SEU JOGO EM NÚMEROS', CX, topY + 13, 4)
-  ctx.globalAlpha  = 1
   ctx.restore()
 
   const ROW_H      = 64
@@ -298,22 +280,22 @@ function drawBars(
 
     ctx.font         = `${isW ? 700 : 400} 27px '${ff}', sans-serif`
     ctx.textBaseline = 'top'
-    ctx.fillStyle    = isW ? WHITE : hexToRgba(ARENA, 0.52)
+    ctx.fillStyle    = isW ? hexToRgba(TINTA, 0.88) : 'rgba(14,58,64,0.55)'
     ctx.textAlign    = 'left'
     ctx.fillText(nome, MX, rowY)
 
     ctx.font      = `700 27px '${ff}', sans-serif`
-    ctx.fillStyle = isW ? ac : hexToRgba(ARENA, 0.40)
+    ctx.fillStyle = isW ? ac : 'rgba(14,58,64,0.55)'
     ctx.textAlign = 'right'
     ctx.fillText(`${pct}%`, W - MX, rowY)
 
     const barY = rowY + 37
-    ctx.fillStyle = isW ? hexToRgba(ac, 0.18) : hexToRgba(ARENA, 0.10)
+    ctx.fillStyle = isW ? hexToRgba(ac, 0.18) : 'rgba(14,58,64,0.10)'
     drawRoundRect(ctx, MX, barY, CW, BAR_H, BAR_H / 2)
     ctx.fill()
 
     const fillW = Math.max((pct / 100) * CW, BAR_H)
-    ctx.fillStyle = isW ? ac : hexToRgba(ARENA, 0.32)
+    ctx.fillStyle = isW ? ac : 'rgba(14,58,64,0.32)'
     drawRoundRect(ctx, MX, barY, fillW, BAR_H, BAR_H / 2)
     ctx.fill()
 
@@ -334,11 +316,9 @@ function drawPontosFortres(
 ): number {
   ctx.save()
   ctx.font         = `700 26px '${ff}', sans-serif`
-  ctx.fillStyle    = ARENA
-  ctx.globalAlpha  = 0.72
+  ctx.fillStyle    = 'rgba(14,58,64,0.55)'
   ctx.textBaseline = 'middle'
   letterSpaced(ctx, 'PONTOS FORTES', CX, topY + 13, 4)
-  ctx.globalAlpha  = 1
   ctx.restore()
 
   const BULLET_R = 7
@@ -355,7 +335,7 @@ function drawPontosFortres(
     ctx.fillStyle = ac
     ctx.fill()
     ctx.font         = `500 28px '${ff}', sans-serif`
-    ctx.fillStyle    = hexToRgba(ARENA, 0.88)
+    ctx.fillStyle    = hexToRgba(TINTA, 0.88)
     ctx.textAlign    = 'left'
     ctx.textBaseline = 'middle'
     ctx.fillText(pf, TEXT_X, fy)
@@ -403,17 +383,14 @@ async function drawMinhasRaquetes(
   // Section label
   ctx.save()
   ctx.font         = `700 26px '${ff}', sans-serif`
-  ctx.fillStyle    = ARENA
-  ctx.globalAlpha  = 0.72
+  ctx.fillStyle    = 'rgba(14,58,64,0.55)'
   ctx.textBaseline = 'middle'
   letterSpaced(ctx, 'MINHAS RAQUETES', CX, topY + 13, 4)
-  ctx.globalAlpha  = 1
   ctx.restore()
 
   const CHIP_W   = 280
   const CHIP_H   = 180
   const GAP      = 24
-  const TINTA    = '#0E3A40'
   const n        = raquetes.length
   const totalW   = n * CHIP_W + (n - 1) * GAP
   const startX   = CX - totalW / 2
@@ -467,7 +444,7 @@ async function drawMinhasRaquetes(
 function drawHook(ctx: CanvasRenderingContext2D, ff: string, centerY: number): number {
   ctx.save()
   ctx.font         = `500 26px '${ff}', sans-serif`
-  ctx.fillStyle    = hexToRgba(ARENA, 0.68)
+  ctx.fillStyle    = 'rgba(14,58,64,0.55)'
   ctx.textAlign    = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText('E você, joga como?', CX, centerY)
@@ -488,12 +465,11 @@ function drawFooter(ctx: CanvasRenderingContext2D, ff: string, ac: string) {
   const lgX = CX - (tuW + ctx.measureText('raquete').width) / 2
   ctx.fillStyle = ac;   ctx.textAlign = 'left'
   ctx.fillText('tu', lgX, logoY)
-  ctx.fillStyle = WHITE
+  ctx.fillStyle = TINTA
   ctx.fillText('raquete', lgX + tuW, logoY)
 
   ctx.font      = `600 36px '${ff}', sans-serif`
-  ctx.fillStyle = hexToRgba(ARENA, 0.80)
-  ctx.globalAlpha = 1
+  ctx.fillStyle = 'rgba(14,58,64,0.55)'
   ctx.textAlign = 'center'
   ctx.fillText('turaquete.com.br/perfil', CX, urlY)
   ctx.restore()
@@ -516,8 +492,8 @@ export async function gerarStoryPNG(
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  drawBackground(ctx, id.bg)
-  drawJerseyBg(ctx, ff, id.numero, id.ac)
+  drawBackground(ctx)
+  drawJerseyBg(ctx, ff, id.numero)
   drawGrain(ctx)
 
   let y = drawHeader(ctx, ff, id.ac)
