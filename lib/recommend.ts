@@ -559,7 +559,7 @@ export function suggestComparisons(
 }
 
 // ── Featured carousel config ─────────────────────────────────────────────────
-const TOP_N = 8
+const TOP_N = 12
 const TOP_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
 
 // Piso de qualidade técnica — equivale ao top 70% do catálogo publicado por
@@ -805,7 +805,7 @@ export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {
 }
 
 const NOVIDADES_MIN = 4
-const NOVIDADES_LIMIT = 8
+const NOVIDADES_LIMIT = 12
 const NOVIDADES_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
 
 export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
