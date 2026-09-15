@@ -240,12 +240,15 @@ body {
 .reveal-up { animation: reveal-up var(--dur-base) var(--ease-out) both; }
 
 /* ── "Como funciona" — o passo ativo avança em cor entre os 3 (delta 2) ──── */
+/* Fundo claro + borda/texto navy em vez de bloco solido escuro (pedido do
+   Rodrigo — o navy solido ficava pesado demais em desktop; mesmo padrão dos
+   Deltas 23/24 no quiz: cor como acento, não como preenchimento). */
 @keyframes step-cycle {
   0%, 27% {
-    background-color: var(--color-tinta);
-    color: #fff;
+    background-color: #FBF6EF;
+    color: var(--color-tinta);
     border-color: var(--color-tinta);
-    box-shadow: 0 10px 26px rgba(14, 58, 64, 0.2);
+    box-shadow: 0 4px 16px rgba(14, 58, 64, 0.10);
   }
   34%, 100% {
     background-color: #fff;

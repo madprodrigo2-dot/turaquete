@@ -1369,7 +1369,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                     key={i}
                     className={`step-cycle rounded-2xl border p-5 ${
                       i === 0
-                        ? 'bg-tinta text-white border-tinta shadow-[0_10px_26px_rgba(14,58,64,0.2)]'
+                        ? 'bg-[#FBF6EF] text-tinta border-tinta shadow-[0_4px_16px_rgba(14,58,64,0.10)]'
                         : 'bg-white text-tinta border-tinta/7 shadow-[0_2px_10px_rgba(14,58,64,0.06)]'
                     }`}
                     style={{ animationDelay: `${STEP_CYCLE_DELAYS[i]}s` }}
