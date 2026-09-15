@@ -1,4 +1,5 @@
 import RacketBadgeOverlay from './RacketBadgeOverlay'
+import type { AttributeBadge } from '@/lib/attributeBadge'
 
 interface Props {
   src?: string | null
@@ -11,6 +12,8 @@ interface Props {
   // Passthrough to RacketBadgeOverlay — 'detail' scales the athlete pill up for
   // the product-detail hero photo. Defaults to 'card' (see RacketBadgeOverlay).
   badgeSize?: 'card' | 'detail'
+  // Passthrough to RacketBadgeOverlay — só os 3 callers aprovados devem passar isso.
+  topBadges?: AttributeBadge[]
 }
 
 function Placeholder() {
@@ -25,7 +28,7 @@ function Placeholder() {
 // Single source of truth for the racket image tile + badge overlay.
 // Always uses relative + overflow-hidden so the badges are clipped to the tile
 // and can never escape card bounds or bleed over a sticky header (z-10 < z-30).
-export default function RacketImageTile({ src, alt, athlete, brandLogo, brandName, hoverScale, loading = 'lazy', badgeSize = 'card' }: Props) {
+export default function RacketImageTile({ src, alt, athlete, brandLogo, brandName, hoverScale, loading = 'lazy', badgeSize = 'card', topBadges }: Props) {
   return (
     <div className="relative aspect-[800/1020] bg-white overflow-hidden shrink-0">
       {src ? (
@@ -39,7 +42,7 @@ export default function RacketImageTile({ src, alt, athlete, brandLogo, brandNam
       ) : (
         <Placeholder />
       )}
-      <RacketBadgeOverlay athlete={athlete} brandLogo={brandLogo} brandName={brandName} size={badgeSize} />
+      <RacketBadgeOverlay athlete={athlete} brandLogo={brandLogo} brandName={brandName} size={badgeSize} topBadges={topBadges} />
     </div>
   )
 }

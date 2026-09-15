@@ -1,4 +1,5 @@
 import BrandLogo from './BrandLogo'
+import type { AttributeBadge } from '@/lib/attributeBadge'
 
 // Multi-athlete strings use '&' or '/' as separators, and any single name can
 // carry a parenthetical aside not meant for display (e.g. "Edição Ayrton Senna
@@ -26,6 +27,10 @@ interface Props {
   // Rather than pile a 4th on top, that caller passes 'left' — safe because the
   // athlete badge no longer lives in that corner either (moved to the bottom).
   brandCorner?: 'left' | 'right'
+  // "9+ num atributo" badge (top-left) — só passado pelos 3 callers aprovados
+  // (home carousels, /marcas/[slug], listagens de categoria). Deixar undefined
+  // em qualquer outro caller para não aparecer lá (chat, comparador, ficha).
+  topBadges?: AttributeBadge[]
 }
 
 // Athlete badge (bottom, prominent) + brand logo badge (top-right corner,
@@ -35,7 +40,7 @@ interface Props {
 // Single source of truth so the pair always matches wherever a photo shows
 // both — card tiles (via RacketImageTile) and the product detail hero alike.
 // Caller's image wrapper must be `relative` (and ideally `overflow-hidden`).
-export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size = 'card', brandCorner = 'right' }: Props) {
+export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size = 'card', brandCorner = 'right', topBadges }: Props) {
   const isDetail = size === 'detail'
   // Co-signed athletes and unusually long names truncate to one line with an
   // ellipsis rather than wrapping — the badge sits at the photo's bottom edge,
@@ -46,6 +51,18 @@ export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size
 
   return (
     <>
+      {topBadges && topBadges.length > 0 && (
+        <div className="absolute top-1.5 left-1.5 z-10 flex flex-col items-start gap-1">
+          {topBadges.map(b => (
+            <span
+              key={b.label}
+              className="inline-flex items-center gap-1 h-5 rounded-md bg-[#FF5E3A] text-white text-[10px] font-bold px-1.5 leading-none shadow-sm whitespace-nowrap"
+            >
+              <span aria-hidden="true">★</span>{b.label} {b.value}
+            </span>
+          ))}
+        </div>
+      )}
       {brandLogo && (
         <div className={`absolute top-1.5 ${brandCorner === 'left' ? 'left-1.5' : 'right-1.5'} z-10 h-5 flex items-center justify-center rounded-md bg-white/70 border border-tinta/10 px-1.5`}>
           <BrandLogo src={brandLogo} alt={brandName ?? ''} />

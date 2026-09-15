@@ -6,6 +6,7 @@ import { RacketWithInsights } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import RacketImageTile from '@/components/RacketImageTile'
 import { derivarNivel } from '@/lib/nivel'
+import { getTopAttributeBadges } from '@/lib/attributeBadge'
 import { PRECO_BUCKETS } from '@/lib/agent/preco-buckets'
 import type { SortKey } from '@/components/DiscoveryFilters'
 
@@ -49,7 +50,7 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
       href={`/raquetes/${racket.slug}`}
       className="group bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 transition-all flex flex-col"
     >
-      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale />
+      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale topBadges={getTopAttributeBadges(racket.racket_insights)} />
       <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="text-tinta text-xs font-semibold leading-snug line-clamp-2 min-h-[33px]">{getDisplayName(racket)}</p>
         {price && <p className="text-coral font-bold text-sm">{price}</p>}

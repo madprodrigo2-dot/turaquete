@@ -8,6 +8,7 @@ import { getDisplayName } from '@/lib/displayName'
 import RacketImageTile from './RacketImageTile'
 import { NIVEL_LABEL } from './SpecsGrid'
 import { derivarNivel } from '@/lib/nivel'
+import { getTopAttributeBadges } from '@/lib/attributeBadge'
 import NaoAcheiWidget from './NaoAcheiWidget'
 import { PRECO_BUCKETS } from '@/lib/agent/preco-buckets'
 
@@ -51,7 +52,7 @@ function RacketCard({ racket }: { racket: RacketWithInsights }) {
       href={`/raquetes/${racket.slug}`}
       className="group bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 hover:border-aqua/30 transition-all duration-200 flex flex-col"
     >
-      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} hoverScale />
+      <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} hoverScale topBadges={getTopAttributeBadges(racket.racket_insights)} />
       <div className="p-3 flex flex-col gap-1 flex-1">
         {nivel && (
           <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-tinta/[0.06] text-tinta/50 w-fit leading-none">

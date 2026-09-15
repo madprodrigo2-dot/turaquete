@@ -9,6 +9,7 @@ import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import { derivarNivel } from '@/lib/nivel'
+import { getTopAttributeBadges } from '@/lib/attributeBadge'
 import InsightsModal from './InsightsModal'
 import RacketImageTile from './RacketImageTile'
 import AthleteBadge from './AthleteBadge'
@@ -399,7 +400,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
     <>
       <div className="bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-arena flex flex-col h-full">
         <Link href={`/raquetes/${racket.slug}`} className="block">
-          <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} />
+          <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} topBadges={getTopAttributeBadges(racket.racket_insights)} />
         </Link>
         <div className="p-4 flex flex-col gap-2.5 flex-1">
           <Link href={`/raquetes/${racket.slug}`}>
