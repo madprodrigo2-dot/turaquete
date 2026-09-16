@@ -1044,14 +1044,55 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
       {/* ── Seção menta: hero ── */}
       <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8 pt-6 md:pt-10 md:pb-10">
+
+        {/* Headline full-width — desktop only (Delta 26): antes vivia dentro da coluna
+            esquerda do grid (Delta 25); agora ocupa a largura inteira da seção numa fila
+            própria, acima do grid de duas colunas. Mobile mantém o H1 dentro da coluna
+            (cópia abaixo, com md:hidden). */}
+        <div className="hidden md:flex md:flex-col md:gap-3 md:mb-8">
+          <span className="inline-flex items-center gap-1.5 w-fit bg-aqua/[0.12] text-tinta text-[11px] font-semibold px-2.5 py-1 rounded-full border border-aqua/20">
+            <Hexagon size={12} weight="fill" color="#0CC0BE" aria-hidden="true" />
+            Especialista virtual de beach tennis
+          </span>
+          <h1 className="font-heading font-extrabold text-tinta text-[4rem] leading-[0.98] whitespace-nowrap" style={{ letterSpacing: '-0.02em' }}>
+            A raquete certa{' '}
+            <span className="relative inline-block text-coral">
+              de primeira.
+              <svg
+                viewBox="0 0 140 10"
+                fill="none"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+                className="absolute -bottom-1 left-0 w-full h-[8px]"
+              >
+                <path
+                  d="M3 6.5C30 2 65 1.5 100 3.5C118 5 132 6.2 137 7"
+                  stroke="#FF5E3A"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
+            </span>
+            {' '}<Check
+              size="0.85em"
+              weight="bold"
+              color="#0CC0BE"
+              aria-hidden={true}
+              className="inline align-middle"
+              style={{ marginLeft: '0.12em' }}
+            />
+          </h1>
+        </div>
+
         <div className="flex flex-col md:grid md:grid-cols-[1fr_0.85fr] md:gap-10 md:items-center gap-5">
 
           {/* Coluna texto */}
           <div className="flex flex-col gap-6 md:gap-8">
 
-            {/* H1 + subtítulo */}
+            {/* H1 (mobile only, Delta 26 — desktop usa a fila full-width acima) + subtítulo */}
             <div className="flex flex-col gap-3">
-              <h1 className="font-heading font-extrabold text-tinta text-[clamp(2.1rem,7vw,3.25rem)] leading-[1.05]" style={{ letterSpacing: '-0.02em' }}>
+              <h1 className="md:hidden font-heading font-extrabold text-tinta text-[clamp(2.1rem,7vw,3.25rem)] leading-[1.05]" style={{ letterSpacing: '-0.02em' }}>
                 A raquete certa{' '}
                 <span className="relative inline-block text-coral">
                   de primeira.
@@ -1170,8 +1211,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               </div>
             )}
 
-            {/* Franja — texto discreto, abaixo do CTA */}
-            <p className="text-xs text-tinta/50 leading-relaxed text-center">
+            {/* Franja — texto discreto, abaixo do CTA; some no desktop (Delta 25),
+                mobile mantém — mesmo tratamento do "explore as raquetes" logo abaixo */}
+            <p className="text-xs text-tinta/50 leading-relaxed text-center md:hidden">
               O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
             </p>
 
@@ -1194,7 +1236,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           </div>{/* end coluna texto */}
 
           {/* Coluna visual — foto hero */}
-          <div className="relative w-full shrink-0">
+          <div className="relative w-full shrink-0 md:flex md:flex-col md:gap-8">
+            {/* Wrapper "relative" próprio pra Tury (abaixo) ancorar no frame — não no
+                bloco inteiro (frame + chips), senão o -bottom negativo dela mediria a
+                partir do fundo dos chips em vez do fundo do vídeo. */}
+            <div className="relative">
             <div className="relative w-full rounded-2xl overflow-hidden md:aspect-[16/9] md:bg-white md:border md:border-aqua/20 md:shadow-sm">
               {/* Desktop: frame em aspect-[16/9] casa com o aspect real do vídeo (960x540),
                   inset-0 preenche de ponta a ponta sem letterbox. object-contain (não cover)
@@ -1232,31 +1278,56 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               </div>
             </div>
 
-            {/* Tury + bolha de fala — fora do frame, pendurado no canto inferior-esquerdo (delta 18:
-                antes ficava sobreposto ao vídeo, agora não tapa mais o conteúdo visual) */}
-            <div className="hidden md:flex absolute left-4 top-full -mt-3 z-10 items-end gap-2.5 pointer-events-none max-w-[90%]">
+            {/* Tury + bolha de fala — sobreposta à borda inferior do vídeo (Delta 25: antes
+                ficava pendurada abaixo do frame com espaço vazio; agora ancorada como no
+                mobile, -bottom negativo em vez de top-full, pra "morder" o frame). Delta 26:
+                Tury encolhe de 88px pra 64px pra ficar proporcional ao frame 16:9. */}
+            <div className="hidden md:flex absolute left-4 -bottom-6 z-10 items-end gap-2.5 pointer-events-none max-w-[90%]">
               <Image
                 src="/tury-transparente-explicando.png"
                 alt="Tury"
                 width={296}
                 height={376}
                 className="tury-float select-none shrink-0"
-                style={{ height: '88px', width: 'auto' }}
+                style={{ height: '64px', width: 'auto' }}
               />
               <div className="min-w-0 mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-3 py-2 shadow-md">
                 <p className="text-[12px] font-semibold text-tinta leading-snug">Encontrei 3 raquetes pra você</p>
                 <p className="text-[10.5px] text-tinta/50 leading-snug mt-0.5">baseado no seu perfil →</p>
               </div>
             </div>
+            </div>{/* end wrapper relative do frame+Tury */}
+
+            {/* Chips de score — Delta 26: preenchem o espaço vazio abaixo da Tury (mesmos
+                dados reais do exampleRacket já usados nos badges dentro do frame, só que
+                em formato "label X/10", rounded-xl = radius 12px pedido). */}
+            {exampleRacket?.racket_insights && (
+              <div className="hidden md:flex items-center gap-2 pl-4 mt-6 md:mt-0">
+                {([
+                  { label: 'Potência', value: exampleRacket.racket_insights.power },
+                  { label: 'Controle', value: exampleRacket.racket_insights.control },
+                  { label: 'Conforto', value: exampleRacket.racket_insights.comfort },
+                ] as { label: string; value: number | null }[])
+                  .filter((b): b is { label: string; value: number } => b.value != null)
+                  .map(b => (
+                    <span key={b.label} className="bg-white border border-aqua/20 rounded-xl px-2.5 py-1.5 text-[11px] font-semibold text-tinta whitespace-nowrap">
+                      {b.label} <span className="text-tinta/40 font-normal">{b.value}/10</span>
+                    </span>
+                  ))}
+              </div>
+            )}
           </div>
 
         </div>
       </div>{/* end seção menta */}
 
-      {/* Marquee de marcas — loop horizontal sob o hero */}
+      {/* Marquee de marcas — loop horizontal sob o hero. Delta 26: no desktop vira banda
+          full-bleed (md:max-w-none preenche os 100vw do wrapper) com fundo branco sólido —
+          antes ficava confinada aos ~960px do container do hero, com sobra vazia nas
+          laterais em telas largas. Mobile mantém a largura/fundo translúcido de sempre. */}
       {brandLogos.length > 0 && (
-        <div className="w-full flex justify-center border-t border-tinta/8 bg-white/60">
-          <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl flex items-center gap-6 px-5 md:px-8 py-4">
+        <div className="w-full flex justify-center border-t border-tinta/8 bg-white/60 md:bg-white">
+          <div className="w-full max-w-sm md:max-w-none flex items-center gap-6 px-5 md:px-8 py-4">
             <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-tinta/40">
               {brands.length} marcas no catálogo
             </span>
