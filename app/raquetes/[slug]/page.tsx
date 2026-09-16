@@ -270,8 +270,10 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 </div>
               )}
 
-              {/* Specs + Tecnologias — 2 colunas no desktop */}
-              <div className="flex flex-col gap-5 lg:grid lg:grid-cols-2 lg:gap-3.5">
+              {/* Specs + Tecnologias — 2 colunas no desktop (Delta 27: colunas desiguais
+                  1.3fr/1fr + items-start, pra Tecnologias não esticar até a altura de
+                  Especificações quando tem poucas tags) */}
+              <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[1.3fr_1fr] lg:items-start lg:gap-3.5">
                 <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
                   <p className="text-tinta font-semibold text-sm mb-3">Especificações</p>
                   <SpecsGrid racket={racket} hideTechRows />

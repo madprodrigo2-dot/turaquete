@@ -202,11 +202,16 @@ export default function SpecsGrid({ racket, variant = 'page', hideTechRows = fal
 
   return (
     <>
-      {rows.map(({ label, value, tipo }) => {
+      {rows.map(({ label, value, tipo }, i) => {
         const adj = ADJUSTABLE[label]
         const isErgonomia = tipo === 'ergonomia'
+        // Índice explícito em vez de last:border-0 — este variant é renderizado dentro de
+        // um card que às vezes tem o MegaSpinLink como irmão logo depois (fora deste
+        // componente), o que faz a última row deixar de ser :last-child de verdade e o
+        // border-b indevidamente aparecer, dobrando com o border-t do link.
+        const isLastRow = i === rows.length - 1
         return (
-          <div key={label} className="flex justify-between items-center py-2 border-b border-aqua/10 last:border-0">
+          <div key={label} className={`flex justify-between items-center py-2 ${isLastRow ? 'border-0' : 'border-b border-aqua/10'}`}>
             <span className="text-tinta/60 text-sm">{label}</span>
             <div className="flex items-center gap-2 ml-4">
               <span className="text-tinta text-sm font-medium text-right">{value}</span>
