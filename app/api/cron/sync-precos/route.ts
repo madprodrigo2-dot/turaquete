@@ -324,7 +324,7 @@ export async function GET(req: NextRequest) {
     lines.push(`🔄 ${priceChanged} mudaram de preço`)
     lines.push(`🪙 ${creditsTotal} crédito${creditsTotal !== 1 ? 's' : ''}`)
     lines.push(`⏱ ${durLabel}`)
-    if (budgetExhausted) lines.push('⚡ budget esgotado — chunk interrompido')
+    if (budgetExhausted) lines.push('⏳ tempo esgotado (não é falta de crédito) — resto sincroniza amanhã')
 
     console.log('[sync] enviando Telegram diário')
     await sendTelegram(lines.join('\n')).catch((e: unknown) => {
