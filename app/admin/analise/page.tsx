@@ -9,6 +9,7 @@ import { EvolucaoSection, type EvolucaoPoint } from './EvolucaoSection'
 import { Suspense } from 'react'
 import { brtCutoff } from '@/lib/brt'
 import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
+import { PRECO_BUCKETS } from '@/lib/agent/preco-buckets'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,21 @@ interface SessionCostRow { session_id: string; total_brl: number; total_usd: num
 interface ClickRow       { session_id: string; event_type: string; racket_id: number | null }
 interface RecEventRow    { racket_id: number; conversation_id: string }
 interface RacketRow      { id: number; name: string; slug: string }
+interface LojaClickRow   { session_id: string; racket_id: number | null }
+
+// Labels de intenção — usadas tanto no insight "Intenção #1" quanto no novo
+// desglose "Ver na loja por intenção". Hoisted pra módulo pra evitar duplicar.
+const INTENT_LABEL: Record<string, string> = {
+  'primeira_raquete': 'primeira raquete',
+  'upgrade_tecnico':  'upgrade técnico',
+  'resolver_dor':     'resolver dor',
+  'indefinido':       'indefinido',
+  'troca':            'troca',
+  'lesao_dor':        'lesão/dor',
+}
+
+// Amostra mínima antes de confiar numa % (mesmo limiar usado em toda a página).
+const MIN_DATA = 5
 
 function getAdmin() {
   return createClient(
@@ -87,6 +103,7 @@ export default async function AnaliseAdmin({
     linkClickCounts,
     fallbackRows,
     opsStats,
+    lojaClickDetailRows,
   ] = await Promise.all([
 
     sb.rpc('admin_cost_by_session', {
@@ -120,14 +137,22 @@ export default async function AnaliseAdmin({
       return (includeTest ? q : q.eq('is_test', false)).then(r => {
         const seen = new Set<string>()
         const c: Record<string, number> = {}
+        // sessionIntentMap: session_id -> intenção principal. Antes essa relação
+        // por-sessão era descartada depois de virar a contagem agregada — agora
+        // reaproveitada pro desglose "Ver na loja por intenção" (mesma query).
+        const sessionIntentMap = new Map<string, string>()
         for (const row of (r.data ?? []) as { session_id: string; intencao_tags: string[] | null }[]) {
           if (seen.has(row.session_id)) continue
           seen.add(row.session_id)
           const principal = (row.intencao_tags ?? [])[0]
           if (!principal || principal === 'indefinido') continue
           c[principal] = (c[principal] ?? 0) + 1
+          sessionIntentMap.set(row.session_id, principal)
         }
-        return Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total)
+        return {
+          counts: Object.entries(c).map(([k, v]) => ({ intencao_detectada: k, total: v })).sort((a, b) => b.total - a.total),
+          sessionIntentMap,
+        }
       })
     })(),
 
@@ -172,6 +197,19 @@ export default async function AnaliseAdmin({
       ultima_sync: (syncRes.data?.[0]?.price_updated_at as string | null) ?? null,
     })),
 
+    // link_clicks detalhado (session_id + racket_id) — fonte de verdade pro desglose
+    // "Ver na loja" por raquete/preço/intenção (link_clicks, não feedback_events,
+    // que só cobre cliques disparados dentro do chat e mistura análise+loja).
+    (() => {
+      let q = sb.from('link_clicks')
+        .select('session_id, racket_id')
+        .eq('is_test', false)
+        .not('session_id', 'is', null)
+        .gte('created_at', cutoffDate)
+      if (toDate) q = q.lte('created_at', toDate)
+      return q.then(r => (r.data ?? []) as LojaClickRow[])
+    })(),
+
   ])
 
   // ── Evolução — 180 dias via RPC (agrega no banco, evita limite de 1000 rows do PostgREST) ──
@@ -203,7 +241,8 @@ export default async function AnaliseAdmin({
     })
   }
 
-  const intencoes: IntencaoRow[] = intentRaw
+  const intencoes: IntencaoRow[] = intentRaw.counts
+  const sessionIntentMap = intentRaw.sessionIntentMap
 
   // ── Cost stats ────────────────────────────────────────────────────────────
   const sessions            = sessionCostRows.filter(r => r.total_brl > 0)
@@ -215,6 +254,19 @@ export default async function AnaliseAdmin({
   const sessionsWithRec     = sessions.filter(r => r.had_rec)
   const sessionsWithLoja    = sessions.filter(r => lojaSessionIds.has(r.session_id))
   const sessionsWithAnalise = sessions.filter(r => analiseSessionIds.has(r.session_id))
+
+  // ── Ponto 2: abriu análise vs não abriu — correlação com clique em loja ───
+  // Reaproveita os mesmos sets acima (analiseSessionIds / lojaSessionIds já
+  // existiam), só faltava cruzar. Ambos os grupos partem de sessionsWithRec
+  // (só faz sentido comparar quem chegou a ter algo pra clicar).
+  const sessionsRecComAnalise = sessionsWithRec.filter(r => analiseSessionIds.has(r.session_id))
+  const sessionsRecSemAnalise = sessionsWithRec.filter(r => !analiseSessionIds.has(r.session_id))
+  const lojaRateComAnalise = sessionsRecComAnalise.length > 0
+    ? sessionsRecComAnalise.filter(r => lojaSessionIds.has(r.session_id)).length / sessionsRecComAnalise.length
+    : null
+  const lojaRateSemAnalise = sessionsRecSemAnalise.length > 0
+    ? sessionsRecSemAnalise.filter(r => lojaSessionIds.has(r.session_id)).length / sessionsRecSemAnalise.length
+    : null
 
   const avgBrl      = avg(sessions.map(r => r.total_brl))
   const avg7Brl     = avg(sessions7.map(r => r.total_brl))
@@ -248,6 +300,15 @@ export default async function AnaliseAdmin({
     if (!clickByRacket[e.racket_id]) clickByRacket[e.racket_id] = new Set()
     clickByRacket[e.racket_id].add(e.session_id)
   }
+  // lojaByRacket — mesma ideia que clickByRacket, mas a partir de link_clicks
+  // (só "Ver na loja" de verdade, cobre chat + ficha + marca; clickByRacket via
+  // feedback_events só cobre o chat e mistura análise+loja).
+  const lojaByRacket: Record<number, Set<string>> = {}
+  for (const r of lojaClickDetailRows) {
+    if (r.racket_id == null) continue
+    if (!lojaByRacket[r.racket_id]) lojaByRacket[r.racket_id] = new Set()
+    lojaByRacket[r.racket_id].add(r.session_id)
+  }
 
   // ── Top raquetes recomendadas ─────────────────────────────────────────────
   const racketCounts: Record<number, number> = {}
@@ -259,21 +320,102 @@ export default async function AnaliseAdmin({
   const topRaquetes = topRacketIds.map(id => {
     const recSessions = recByRacket[id] ?? new Set<string>()
     const clickSessions = clickByRacket[id] ?? new Set<string>()
+    const lojaSessions = lojaByRacket[id] ?? new Set<string>()
     const intersect = [...recSessions].filter(sid => clickSessions.has(sid)).length
+    const intersectLoja = [...recSessions].filter(sid => lojaSessions.has(sid)).length
     return {
       id,
       name: racketNames.find(r => r.id === id)?.name ?? `ID ${id}`,
       slug: racketNames.find(r => r.id === id)?.slug ?? null,
       count: racketCounts[id] ?? 0,
       pctEngajou: recSessions.size > 0 ? pct(intersect, recSessions.size) : '—',
+      pctComprou: recSessions.size > 0 ? pct(intersectLoja, recSessions.size) : '—',
       smallSample: (racketCounts[id] ?? 0) < 5,
     }
   })
 
+  // ── Ponto 1: "Ver na loja" por raquete / faixa de preço / intenção ────────
+  // Fonte de verdade = link_clicks (lojaClickDetailRows), não feedback_events —
+  // mesma fórmula do resto da página (sessões que clicaram loja ÷ sessões que
+  // receberam a recomendação correspondente), só que segmentada 3 formas.
+
+  // Preço de toda raquete que apareceu em alguma recomendação ou clique — pra
+  // bucketizar por faixa (reaproveita PRECO_BUCKETS já usado pelo agente do chat,
+  // não inventa faixa nova).
+  const priceRelevantIds = [...new Set([
+    ...recEventRows.map(e => e.racket_id),
+    ...lojaClickDetailRows.map(r => r.racket_id).filter((id): id is number => id != null),
+  ])]
+  const racketPriceRows = priceRelevantIds.length
+    ? await sb.from('rackets').select('id, price').in('id', priceRelevantIds).then(r => (r.data ?? []) as { id: number; price: number | string | null }[])
+    : []
+  const racketPriceMap = new Map<number, number | null>(
+    racketPriceRows.map(r => [r.id, r.price != null ? Number(r.price) : null])
+  )
+  function bucketForPrice(price: number | null): string | null {
+    if (price == null) return null
+    const b = PRECO_BUCKETS.find(b => price >= b.min && (b.max === null || price <= b.max))
+    return b?.label ?? null
+  }
+
+  // Por faixa de preço
+  const recSessionsByBucket: Record<string, Set<string>> = {}
+  for (const e of recEventRows) {
+    const bucket = bucketForPrice(racketPriceMap.get(e.racket_id) ?? null)
+    if (!bucket) continue
+    if (!recSessionsByBucket[bucket]) recSessionsByBucket[bucket] = new Set()
+    recSessionsByBucket[bucket].add(e.conversation_id)
+  }
+  const lojaSessionsByBucket: Record<string, Set<string>> = {}
+  for (const r of lojaClickDetailRows) {
+    if (r.racket_id == null) continue
+    const bucket = bucketForPrice(racketPriceMap.get(r.racket_id) ?? null)
+    if (!bucket) continue
+    if (!lojaSessionsByBucket[bucket]) lojaSessionsByBucket[bucket] = new Set()
+    lojaSessionsByBucket[bucket].add(r.session_id)
+  }
+  const precoBreakdown = PRECO_BUCKETS.map(b => {
+    const recSet = recSessionsByBucket[b.label] ?? new Set<string>()
+    const lojaSet = lojaSessionsByBucket[b.label] ?? new Set<string>()
+    const intersectN = [...recSet].filter(sid => lojaSet.has(sid)).length
+    return {
+      label: b.label,
+      recCount: recSet.size,
+      pctLoja: recSet.size > 0 ? pct(intersectN, recSet.size) : '—',
+      smallSample: recSet.size < MIN_DATA,
+    }
+  }).filter(row => row.recCount > 0)
+
+  // Por intenção — reaproveita sessionIntentMap (mesma query do insight "Intenção #1")
+  const recSessionsByIntent: Record<string, Set<string>> = {}
+  for (const e of recEventRows) {
+    const intent = sessionIntentMap.get(e.conversation_id)
+    if (!intent) continue
+    if (!recSessionsByIntent[intent]) recSessionsByIntent[intent] = new Set()
+    recSessionsByIntent[intent].add(e.conversation_id)
+  }
+  const lojaSessionsByIntent: Record<string, Set<string>> = {}
+  for (const r of lojaClickDetailRows) {
+    const intent = sessionIntentMap.get(r.session_id)
+    if (!intent) continue
+    if (!lojaSessionsByIntent[intent]) lojaSessionsByIntent[intent] = new Set()
+    lojaSessionsByIntent[intent].add(r.session_id)
+  }
+  const intentBreakdown = Object.entries(recSessionsByIntent).map(([intent, recSet]) => {
+    const lojaSet = lojaSessionsByIntent[intent] ?? new Set<string>()
+    const intersectN = [...recSet].filter(sid => lojaSet.has(sid)).length
+    return {
+      intent,
+      label: INTENT_LABEL[intent] ?? intent,
+      recCount: recSet.size,
+      pctLoja: recSet.size > 0 ? pct(intersectN, recSet.size) : '—',
+      smallSample: recSet.size < MIN_DATA,
+    }
+  }).sort((a, b) => b.recCount - a.recCount)
+
   // ── Insights ──────────────────────────────────────────────────────────────
   type Insight = { level: 'ok' | 'warn' | 'info' | 'neutral'; text: string }
   const insights: Insight[] = []
-  const MIN_DATA  = 5
   const totalConv = sessions.length
 
   if (primeiraMsgColumnMissing) {
@@ -284,14 +426,6 @@ export default async function AnaliseAdmin({
   } else {
     const totalInt = intencoes.reduce((a, r) => a + r.total, 0)
     const topIntent = intencoes[0] ?? null
-    const INTENT_LABEL: Record<string, string> = {
-      'primeira_raquete': 'primeira raquete',
-      'upgrade_tecnico':  'upgrade técnico',
-      'resolver_dor':     'resolver dor',
-      'indefinido':       'indefinido',
-      'troca':            'troca',
-      'lesao_dor':        'lesão/dor',
-    }
     if (topIntent && totalInt > 0) {
       const label = INTENT_LABEL[topIntent.intencao_detectada ?? ''] ?? topIntent.intencao_detectada ?? '?'
       insights.push({ level: 'info', text: `Intenção #1: "${label}" (${pct(topIntent.total, totalInt)} das sessões com quiz no período).` })
@@ -306,6 +440,13 @@ export default async function AnaliseAdmin({
         level: lojaRate >= 0.3 ? 'ok' : lojaRate >= 0.1 ? 'warn' : 'warn',
         text: `${pct(sessionsWithLoja.length, sessionsWithRec.length)} das sessões com recomendação clicaram em Ver na loja (${daysLabel}).${lojaRate < 0.1 ? ' Abaixo de 10% — copy ou confiança podem melhorar.' : lojaRate < 0.3 ? ' Entre 10–29% — espaço para melhorar conversão.' : ''}`,
       })
+      if (lojaRateComAnalise !== null && lojaRateSemAnalise !== null && sessionsRecComAnalise.length >= MIN_DATA && sessionsRecSemAnalise.length >= MIN_DATA) {
+        const diffPts = Math.round((lojaRateComAnalise - lojaRateSemAnalise) * 100)
+        insights.push({
+          level: diffPts > 0 ? 'ok' : 'neutral',
+          text: `Quem abre a análise clica em Ver na loja ${pct(Math.round(lojaRateComAnalise * sessionsRecComAnalise.length), sessionsRecComAnalise.length)} das vezes, vs ${pct(Math.round(lojaRateSemAnalise * sessionsRecSemAnalise.length), sessionsRecSemAnalise.length)} de quem não abre (${daysLabel}).${diffPts !== 0 ? ` Diferença de ${diffPts > 0 ? '+' : ''}${diffPts}pp.` : ''}`,
+        })
+      }
     }
     if (lcTotal > 0) {
       insights.push({ level: lcMonetizavel > 0 ? 'ok' : 'warn', text: `${lcMonetizavel} clique${lcMonetizavel !== 1 ? 's' : ''} monetizáve${lcMonetizavel !== 1 ? 'is' : 'l'} (afiliado + busca) de ${lcTotal} total (${daysLabel}).${custoPorClique != null ? ` Custo/clique ${fmtBrl(custoPorClique, 4)}.` : ''}` })
@@ -511,6 +652,32 @@ export default async function AnaliseAdmin({
             </div>
           </div>
         )}
+
+        {/* Abriu análise vs não abriu — correlação com clique em loja (ponto 2) */}
+        {(sessionsRecComAnalise.length > 0 || sessionsRecSemAnalise.length > 0) && (
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Abriu análise → Ver na loja</p>
+              <p className="text-lg font-bold text-teal-700">
+                {lojaRateComAnalise != null ? `${Math.round(lojaRateComAnalise * 100)}%` : '—'}
+              </p>
+              <p className="text-[10px] text-gray-300">
+                {sessionsRecComAnalise.filter(r => lojaSessionIds.has(r.session_id)).length} de {sessionsRecComAnalise.length} sessões
+                {sessionsRecComAnalise.length < MIN_DATA && sessionsRecComAnalise.length > 0 && ' (amostra pequena)'}
+              </p>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Não abriu análise → Ver na loja</p>
+              <p className="text-lg font-bold text-gray-700">
+                {lojaRateSemAnalise != null ? `${Math.round(lojaRateSemAnalise * 100)}%` : '—'}
+              </p>
+              <p className="text-[10px] text-gray-300">
+                {sessionsRecSemAnalise.filter(r => lojaSessionIds.has(r.session_id)).length} de {sessionsRecSemAnalise.length} sessões
+                {sessionsRecSemAnalise.length < MIN_DATA && sessionsRecSemAnalise.length > 0 && ' (amostra pequena)'}
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ══ SEÇÃO 3 — Produto ════════════════════════════════════════════════ */}
@@ -536,6 +703,11 @@ export default async function AnaliseAdmin({
                         % engajou <InfoTooltip text="Sessões que abriram análise OU clicaram na loja para essa raquete específica ÷ sessões que a receberam como recomendação. Mede interesse no produto — não é conversão." />
                       </span>
                     </th>
+                    <th className="text-right px-4 py-2">
+                      <span className="inline-flex items-center gap-0.5 justify-end">
+                        % Ver na loja <InfoTooltip text="Sessões que clicaram Ver na loja para essa raquete (link_clicks, cobre chat + ficha + marca) ÷ sessões que a receberam como recomendação. Isolado de análise — mede intenção de compra." />
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -559,6 +731,13 @@ export default async function AnaliseAdmin({
                           <span className="font-medium text-teal-700">{r.pctEngajou}</span>
                         )}
                       </td>
+                      <td className="px-4 py-2 text-right">
+                        {r.smallSample ? (
+                          <span className="text-gray-300" title="amostra pequena (n<5)">{r.pctComprou}</span>
+                        ) : (
+                          <span className="font-medium text-coral">{r.pctComprou}</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -566,6 +745,81 @@ export default async function AnaliseAdmin({
               <p className="text-[10px] text-gray-300 px-4 py-2">{recEventRows.length} recomendações totais no período</p>
             </div>
           )}
+        </div>
+
+        {/* Ver na loja — por faixa de preço e por intenção (link_clicks) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+              Ver na loja por faixa de preço <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+            </h2>
+            {precoBreakdown.length === 0 ? (
+              <p className="text-gray-400 italic text-xs">Sem dados no período.</p>
+            ) : (
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="bg-gray-50 text-gray-400 uppercase">
+                    <tr>
+                      <th className="text-left px-4 py-2">Faixa</th>
+                      <th className="text-right px-4 py-2">Recs</th>
+                      <th className="text-right px-4 py-2">% Ver na loja</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {precoBreakdown.map(row => (
+                      <tr key={row.label} className="border-t border-gray-100">
+                        <td className="px-4 py-2 text-gray-700">{row.label}</td>
+                        <td className="px-4 py-2 text-right text-gray-400">{row.recCount}</td>
+                        <td className="px-4 py-2 text-right">
+                          {row.smallSample ? (
+                            <span className="text-gray-300" title="amostra pequena (n<5)">{row.pctLoja}</span>
+                          ) : (
+                            <span className="font-medium text-coral">{row.pctLoja}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-3">
+              Ver na loja por intenção <span className="text-gray-400 font-normal normal-case tracking-normal text-[11px]">— {daysLabel}</span>
+            </h2>
+            {intentBreakdown.length === 0 ? (
+              <p className="text-gray-400 italic text-xs">Sem dados no período.</p>
+            ) : (
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-100">
+                <table className="w-full border-collapse text-xs">
+                  <thead className="bg-gray-50 text-gray-400 uppercase">
+                    <tr>
+                      <th className="text-left px-4 py-2">Intenção</th>
+                      <th className="text-right px-4 py-2">Recs</th>
+                      <th className="text-right px-4 py-2">% Ver na loja</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {intentBreakdown.map(row => (
+                      <tr key={row.intent} className="border-t border-gray-100">
+                        <td className="px-4 py-2 text-gray-700">{row.label}</td>
+                        <td className="px-4 py-2 text-right text-gray-400">{row.recCount}</td>
+                        <td className="px-4 py-2 text-right">
+                          {row.smallSample ? (
+                            <span className="text-gray-300" title="amostra pequena (n<5)">{row.pctLoja}</span>
+                          ) : (
+                            <span className="font-medium text-coral">{row.pctLoja}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Custos */}
