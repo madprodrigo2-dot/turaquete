@@ -997,7 +997,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
       {/* Sticky header — full viewport width */}
       <div className={`sticky top-0 z-30 w-full flex justify-center bg-[#FBF6EF]/95 backdrop-blur-sm transition-shadow duration-200${showHeaderCta ? ' shadow-sm' : ''}`}>
-        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl flex items-center justify-between px-5 md:px-8 py-3 md:py-4">
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-7xl flex items-center justify-between px-5 md:px-8 py-3 md:py-4">
           <Link href="/" aria-label="Voltar à página inicial" className="cursor-pointer">
             <div className="relative h-10 md:h-[3.25rem] aspect-[322/128]">
               <Image
@@ -1043,7 +1043,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
       </div>
 
       {/* ── Seção menta: hero ── */}
-      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl px-5 md:px-8 pt-6 md:pt-10 md:pb-10">
+      <div className="w-full max-w-sm md:max-w-4xl lg:max-w-7xl px-5 md:px-8 pt-6 md:pt-10 md:pb-10">
 
         {/* Headline full-width — desktop only (Delta 26): antes vivia dentro da coluna
             esquerda do grid (Delta 25); agora ocupa a largura inteira da seção numa fila
@@ -1121,7 +1121,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                   style={{ marginLeft: '0.12em' }}
                 />
               </h1>
-              <p className="text-tinta/70 text-base md:text-lg leading-relaxed">
+              <p className="text-tinta/70 text-base md:text-lg leading-relaxed max-w-prose">
                 Raquete errada custa caro. Conte como você joga e nossa especialista virtual te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
               </p>
             </div>
@@ -1258,9 +1258,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
 
                 {/* Badges de score (potência/controle/conforto) — dados reais do exampleRacket, nunca fixos.
                     3 píldoras separadas: agora que o Tury saiu de dentro do frame (delta 18), sobra
-                    altura de sobra pro formato original. */}
+                    altura de sobra pro formato original. lg: bump — mesmo motivo do Tury logo abaixo:
+                    o frame cresceu ~25% com max-w-7xl e essas píldoras em px fixo não acompanhavam. */}
                 {exampleRacket?.racket_insights && (
-                  <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-2 pointer-events-none">
+                  <div className="absolute right-3 top-3 lg:right-4 lg:top-4 z-10 flex flex-col items-end gap-2 lg:gap-2.5 pointer-events-none">
                     {([
                       { label: 'Potência', value: exampleRacket.racket_insights.power },
                       { label: 'Controle', value: exampleRacket.racket_insights.control },
@@ -1268,9 +1269,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                     ] as { label: string; value: number | null }[])
                       .filter((b): b is { label: string; value: number } => b.value != null)
                       .map(b => (
-                        <div key={b.label} className="bg-white rounded-xl shadow-md px-3 py-1.5 flex flex-col items-center leading-none">
-                          <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/40">{b.label}</span>
-                          <span className="font-heading font-extrabold text-tinta text-xl tabular-nums mt-0.5">{b.value}</span>
+                        <div key={b.label} className="bg-white rounded-xl shadow-md px-3 py-1.5 lg:px-3.5 lg:py-2 flex flex-col items-center leading-none">
+                          <span className="font-mono text-[9px] lg:text-[11px] font-semibold uppercase tracking-widest text-tinta/40">{b.label}</span>
+                          <span className="font-heading font-extrabold text-tinta text-xl lg:text-2xl tabular-nums mt-0.5">{b.value}</span>
                         </div>
                       ))}
                   </div>
@@ -1281,15 +1282,16 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             {/* Tury + bolha de fala — sobreposta à borda inferior do vídeo (Delta 25: antes
                 ficava pendurada abaixo do frame com espaço vazio; agora ancorada como no
                 mobile, -bottom negativo em vez de top-full, pra "morder" o frame). Delta 26:
-                Tury encolhe de 88px pra 64px pra ficar proporcional ao frame 16:9. */}
+                Tury encolhe de 88px pra 64px pra ficar proporcional ao frame 16:9. h-16 lg:h-20
+                (64→80px) — o frame cresceu ~25% (1024→1280px) com max-w-7xl; 80px mantém a
+                mesma proporção de antes em vez de ficar cada vez mais pequena por comparação. */}
             <div className="hidden md:flex absolute left-4 -bottom-6 z-10 items-end gap-2.5 pointer-events-none max-w-[90%]">
               <Image
                 src="/tury-transparente-explicando.png"
                 alt="Tury"
                 width={296}
                 height={376}
-                className="tury-float select-none shrink-0"
-                style={{ height: '64px', width: 'auto' }}
+                className="tury-float select-none shrink-0 h-16 lg:h-20 w-auto"
               />
               <div className="min-w-0 mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-3 py-2 shadow-md">
                 <p className="text-[12px] font-semibold text-tinta leading-snug">Encontrei 3 raquetes pra você</p>
@@ -1356,7 +1358,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             só cobria a textura com uma cor chapada, virando o "corte" que o delta 17
             queria eliminar. O pt-14/py-16 abaixo mantém o mesmo respiro, agora com
             arena-grain visível nele em vez da curva. */}
-        <div className="relative max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 pt-14 pb-4 md:pt-16 md:pb-6 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
+        <div className="relative max-w-sm md:max-w-4xl lg:max-w-7xl mx-auto px-5 md:px-8 pt-14 pb-4 md:pt-16 md:pb-6 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
 
           {/* Explorar por perfil */}
           <RevealDiv>
@@ -1660,7 +1662,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
         {/* Marcas + Atletas + FAQ + CTA — segue na mesma superfície arena-grain de cima (delta 17).
             A partir da linha de confiança em diante, o fundo passa a ser claro (delta 20): texto
             de rodapé em cinza tem pouco contraste sobre a arena. */}
-        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-4 pb-6 md:pt-6 md:pb-10">
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-7xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-4 pb-6 md:pt-6 md:pb-10">
 
         {/* Marcas disponíveis */}
         {brands.length > 0 && (
@@ -1718,7 +1720,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           mesma cor do header (bg-[#FBF6EF]) pra dar contraste ao texto cinza, que ficava apagado
           sobre a arena. */}
       <div className="w-full bg-[#FBF6EF]">
-        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-5xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
+        <div className="w-full max-w-sm md:max-w-4xl lg:max-w-7xl mx-auto flex flex-col gap-6 md:gap-8 px-5 md:px-8 pt-8 md:pt-12">
 
         {/* Linha de confiança */}
         <p className="text-center text-tinta/50 text-xs md:text-sm leading-relaxed">

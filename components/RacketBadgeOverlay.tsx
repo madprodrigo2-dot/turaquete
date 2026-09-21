@@ -64,7 +64,7 @@ export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size
         </div>
       )}
       {brandLogo && (
-        <div className={`absolute top-1.5 ${brandCorner === 'left' ? 'left-1.5' : 'right-1.5'} z-10 h-5 flex items-center justify-center rounded-md bg-white/70 border border-tinta/10 px-1.5`}>
+        <div className={`absolute top-1.5 ${brandCorner === 'left' ? 'left-1.5' : 'right-1.5'} z-10 h-5 lg:h-6 flex items-center justify-center rounded-md bg-white/70 border border-tinta/10 px-1.5`}>
           <BrandLogo src={brandLogo} alt={brandName ?? ''} />
         </div>
       )}

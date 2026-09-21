@@ -51,9 +51,9 @@ export default async function CompararPage({
 
   return (
     <div className="min-h-screen sand-texture">
-      <SiteNav />
+      <SiteNav maxWidth="max-w-4xl lg:max-w-7xl" />
 
-      <div className="max-w-4xl lg:max-w-5xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
+      <div className="max-w-4xl lg:max-w-7xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl md:text-3xl font-bold text-tinta">Comparar raquetes</h1>
           <p className="text-tinta/60 text-sm">

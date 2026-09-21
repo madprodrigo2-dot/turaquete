@@ -264,9 +264,9 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
-      <SiteNav maxWidth="max-w-6xl" />
+      <SiteNav maxWidth="max-w-7xl" />
 
-      <div className="max-w-6xl mx-auto px-5 md:px-10 py-8 flex flex-col gap-6">
+      <div className="max-w-7xl mx-auto px-5 md:px-10 py-8 flex flex-col gap-6">
 
         {/* Header da marca */}
         <div className="bg-white rounded-2xl border border-aqua/15 shadow-sm px-3 py-2 md:px-5 md:py-2.5 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">

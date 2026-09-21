@@ -136,10 +136,10 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
         <SiteNav
           useHistory
           fallbackHref={racket.brands?.slug ? `/marcas/${racket.brands.slug}` : '/'}
-          maxWidth="max-w-5xl"
+          maxWidth="max-w-7xl"
         />
 
-        <div className="max-w-5xl mx-auto px-5 md:px-10 py-8">
+        <div className="max-w-7xl mx-auto px-5 md:px-10 py-8">
 
           {/* Layout: coluna única mobile, 2 colunas desktop (imagem sticky + conteúdo) */}
           <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_1.15fr] lg:gap-10 lg:items-start">

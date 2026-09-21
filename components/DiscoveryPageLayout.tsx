@@ -31,9 +31,9 @@ export default function DiscoveryPageLayout({
 }: Props) {
   return (
     <div className="min-h-screen sand-texture">
-      <SiteNav />
+      <SiteNav maxWidth="max-w-4xl lg:max-w-7xl" />
 
-      <div className="max-w-4xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
+      <div className="max-w-4xl lg:max-w-7xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
 
         {/* Header */}
         {imageUrl ? (
