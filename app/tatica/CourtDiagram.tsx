@@ -56,6 +56,20 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
       <rect x={13} y={H / 2 - 8} width={5} height={16} rx={2} fill="#0E3A40" opacity={0.55} />
       <rect x={W - 18} y={H / 2 - 8} width={5} height={16} rx={2} fill="#0E3A40" opacity={0.55} />
 
+      {/* Linhas de referência de distância (3m/6m da rede, quadra de 8m por lado)
+          — não existem numa quadra de beach tennis de verdade (não tem linha de
+          serviço), servem só pra dar noção de escala real às posições dos
+          jogadores em vez de só "mais perto/mais longe" relativo. */}
+      {[3, 6].flatMap(m => {
+        const offsetPct = (m / 8) * 50
+        return [50 - offsetPct, 50 + offsetPct].map(yPct => (
+          <g key={`ref-${m}-${yPct}`}>
+            <line x1={16} y1={py(yPct)} x2={W - 16} y2={py(yPct)} stroke="#0E3A40" strokeOpacity={0.12} strokeWidth={1} strokeDasharray="3 4" />
+            <text x={22} y={py(yPct) - 4} fontSize={8} fontWeight={600} fill="#0E3A40" opacity={0.35}>{m}m</text>
+          </g>
+        ))
+      })}
+
       {/* Setas da jogada correta (só aparecem na tela de resultado) */}
       {allArrows.length > 0 && (
         <g className="tatica-arrow-in">

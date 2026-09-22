@@ -114,8 +114,8 @@ export const PUZZLES: Puzzle[] = [
     titulo: 'Cordão invisível',
     situacao: 'Seu parceiro avançou até a rede, você ainda está no meio da quadra.',
     players: [
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 22 },
-      { id: 'you', team: 'voce', label: 'Você', x: 70, y: 55 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
+      { id: 'you', team: 'voce', label: 'Você', x: 70, y: 70 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 12 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
@@ -129,13 +129,13 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'A dupla se move como uma unidade. Se um avança e o outro fica atrás, abre um buraco enorme no meio da quadra.',
     resultado: {
       highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 70, y: 55 }, to: { x: 70, y: 25 }, style: 'flat' }],
+      arrows: [{ from: { x: 70, y: 70 }, to: { x: 70, y: 54 }, style: 'flat' }],
     },
   },
   {
     slug: 'depois-de-dar-um-globo',
     titulo: 'Depois de dar um globo',
-    situacao: 'Você acabou de dar um globo defensivo por cima do adversário que estava na rede.',
+    situacao: 'Você deu um globo bom e profundo por cima do adversário que estava na rede.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 60, y: 62 },
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 65 },
@@ -164,7 +164,7 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'Você está entre a linha de saque e a rede, nem perto o suficiente pra um voleio forte nem longe o suficiente pra defender bem.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 50, y: 58 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 25 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
@@ -178,7 +178,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'Essa posição intermediária é a mais fraca da quadra. A regra é sempre escolher um lado: ou fecha a rede com decisão, ou volta pro fundo pra se posicionar bem.',
     resultado: {
       highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 50, y: 58 }, to: { x: 50, y: 22 }, style: 'flat' }],
+      arrows: [{ from: { x: 50, y: 58 }, to: { x: 50, y: 54 }, style: 'flat' }],
     },
   },
   {
@@ -186,12 +186,12 @@ export const PUZZLES: Puzzle[] = [
     titulo: 'Triângulo defensivo',
     situacao: 'Seu parceiro subiu à rede sozinho, você ficou no fundo. O adversário devolve um globo alto pro meio.',
     players: [
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 30, y: 20 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 30, y: 54 },
       { id: 'you', team: 'voce', label: 'Você', x: 60, y: 85 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 12 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
-    ball: { x: 50, y: 45 },
+    ball: { x: 50, y: 55 },
     opcoes: [
       { id: 'A', texto: 'O da rede recua rápido pra pegar', porqueErrada: 'Quem está na rede tem menos tempo e ângulo pra julgar uma bola alta. Arriscar a queda ali é mais provável.' },
       { id: 'B', texto: 'Você, do fundo, assume o globo' },
@@ -201,7 +201,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'A formação em triângulo existe pra isso. Quem está no fundo tem mais tempo e ângulo pra cobrir o globo, enquanto quem está na rede mantém a pressão.',
     resultado: {
       highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 60, y: 85 }, to: { x: 50, y: 48 }, style: 'flat' }],
+      arrows: [{ from: { x: 60, y: 85 }, to: { x: 50, y: 55 }, style: 'flat' }],
     },
   },
   {
@@ -210,7 +210,7 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'Você sacou cruzado pro lado mais fraco do adversário, seu parceiro está na rede.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 75, y: 88 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 25 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 25, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
@@ -224,7 +224,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'A devolução mais provável de um saque cruzado tende a voltar pela mesma diagonal. Cobrir essa diagonal de antemão aumenta a chance de um voleio de ataque.',
     resultado: {
       highlightPlayerIds: ['you-partner'],
-      arrows: [{ from: { x: 25, y: 25 }, to: { x: 42, y: 20 }, style: 'flat' }],
+      arrows: [{ from: { x: 25, y: 54 }, to: { x: 40, y: 52 }, style: 'flat' }],
     },
   },
   {
@@ -233,7 +233,7 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'Seu parceiro foi puxado pra fora da quadra buscando uma bola forte, você está do outro lado perto da rede.',
     players: [
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 95, y: 70 },
-      { id: 'you', team: 'voce', label: 'Você', x: 20, y: 25 },
+      { id: 'you', team: 'voce', label: 'Você', x: 20, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 12 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
@@ -247,7 +247,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'Quando um parceiro é puxado pra fora, o buraco mais perigoso passa a ser o meio da quadra. Reposicionar pro meio prioriza fechar esse ângulo mais aberto.',
     resultado: {
       highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 20, y: 25 }, to: { x: 45, y: 30 }, style: 'flat' }],
+      arrows: [{ from: { x: 20, y: 54 }, to: { x: 45, y: 56 }, style: 'flat' }],
     },
   },
   {
@@ -282,7 +282,7 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'Seu saque toca a rede e ainda assim cai dentro da quadra do adversário.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 50, y: 90 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 25 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 45, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 75, y: 15 },
     ],
@@ -301,7 +301,7 @@ export const PUZZLES: Puzzle[] = [
   {
     slug: 'quando-rematar',
     titulo: 'Quando rematar',
-    situacao: 'Chega um globo do adversário, alto e longe do corpo dele.',
+    situacao: 'Chega um globo do adversário, alto e longe do seu corpo, te dando espaço pra golpear com força.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 55, y: 65 },
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 70 },
@@ -350,7 +350,7 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'Você sacou 3 vezes seguidas igual (mesma direção e velocidade) e o adversário já está antecipando.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 50, y: 90 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 25 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 70, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 30, y: 15 },
     ],
@@ -396,7 +396,7 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'O vento começou a favorecer bastante a quadra do adversário.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 50, y: 80 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 25 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
@@ -439,7 +439,7 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'Você vai sacar. O que seu parceiro precisa saber antes?',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 50, y: 90 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 25 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 35, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
@@ -453,7 +453,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'Quem está na rede precisa saber a direção e intenção do saque antes de acontecer, pra conseguir antecipar a diagonal provável da devolução. Essa comunicação é antes do ponto, não durante.',
     resultado: {
       highlightPlayerIds: ['you-partner'],
-      arrows: [{ from: { x: 25, y: 25 }, to: { x: 35, y: 20 }, style: 'flat' }],
+      arrows: [{ from: { x: 25, y: 54 }, to: { x: 35, y: 52 }, style: 'flat' }],
     },
   },
   {
@@ -485,11 +485,11 @@ export const PUZZLES: Puzzle[] = [
     situacao: 'Você está claramente ganhando o ponto (adversário mal posicionado, você no controle), mas o ponto ainda não acabou.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 50, y: 65 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 25 },
+      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 15, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 45, y: 30 },
     ],
-    ball: { x: 50, y: 45 },
+    ball: { x: 50, y: 55 },
     opcoes: [
       { id: 'A', texto: 'Arrisca um golpe espetacular pra terminar rápido', porqueErrada: 'Arriscar demais quando você já está ganhando a jogada é o erro mais comum que devolve pontos de graça pro adversário.' },
       { id: 'B', texto: 'Escolhe o golpe mais seguro que termine o ponto' },
@@ -499,7 +499,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'Com vantagem clara, o objetivo é fechar o ponto da forma mais confiável possível. Arriscar demais quando você já está ganhando a jogada é um erro comum que devolve pontos de graça pro adversário.',
     resultado: {
       highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 50, y: 45 }, to: { x: 75, y: 20 }, style: 'flat' }],
+      arrows: [{ from: { x: 50, y: 55 }, to: { x: 75, y: 20 }, style: 'flat' }],
     },
   },
 ]
