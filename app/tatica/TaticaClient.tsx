@@ -38,6 +38,7 @@ function PuzzleCard({
   const [selected, setSelected] = useState<'A' | 'B' | 'C' | null>(null)
   const answered = selected !== null
   const isCorrect = selected === puzzle.correta
+  const selectedOption = puzzle.opcoes.find(o => o.id === selected)
   const reaction = isCorrect
     ? CORRECT_REACTIONS[index % CORRECT_REACTIONS.length]
     : INCORRECT_REACTIONS[index % INCORRECT_REACTIONS.length]
@@ -122,6 +123,12 @@ function PuzzleCard({
               <p className="text-[12px] font-semibold text-tinta leading-snug">{reaction}</p>
             </div>
           </div>
+          {!isCorrect && selectedOption?.porqueErrada && (
+            <div className="mb-3 pb-3 border-b border-coral/20">
+              <p className="font-heading font-bold text-coral text-sm mb-1">Por que essa não é a melhor escolha</p>
+              <p className="text-tinta/70 text-sm leading-relaxed">{selectedOption.porqueErrada}</p>
+            </div>
+          )}
           <p className={`font-heading font-bold text-sm mb-1.5 ${isCorrect ? 'text-aqua' : 'text-coral'}`}>
             {isCorrect ? 'Resposta certa.' : `A certa era a ${puzzle.correta}.`}
           </p>
