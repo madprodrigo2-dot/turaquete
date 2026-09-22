@@ -311,6 +311,23 @@ body {
   transform-origin: bottom center;
 }
 
+/* ── Tática: seta de resultado (fade do grupo + "desenho" da linha reta) ─── */
+@keyframes tatica-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes tatica-draw {
+  to { stroke-dashoffset: 0; }
+}
+.tatica-arrow-in {
+  animation: tatica-fade-in 280ms ease-out both;
+}
+.tatica-arrow-draw {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: tatica-draw 480ms ease-out 80ms forwards;
+}
+
 /* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .bt-ball,
@@ -328,9 +345,12 @@ body {
   .pulse-dot,
   .tury-enter,
   .tury-breathe,
-  .tury-float {
+  .tury-float,
+  .tatica-arrow-in,
+  .tatica-arrow-draw {
     animation: none !important;
   }
   .typing-cursor { display: none; }
-  .tury-enter, .tury-breathe, .tury-float { opacity: 1; }
+  .tury-enter, .tury-breathe, .tury-float, .tatica-arrow-in { opacity: 1; }
+  .tatica-arrow-draw { stroke-dashoffset: 0; }
 }
