@@ -576,6 +576,41 @@ function validateRazao(razao: string, ins: Insights | null): string {
   return razao
 }
 
+function normNome(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
+}
+
+// Bolded spans the model uses as a descriptive label instead of a product name —
+// never treated as a naming attempt (nothing to correct).
+const NOME_GENERICO_RE = /^(qual\b|a primeira\b|a segunda\b|a terceira\b|melhor\b|sweet spot\b|\d+\.)/i
+
+// Case real: motor recomendou id=64 ("Z Soft"), o modelo escreveu **Heroe's Lava 2024**
+// na resposta final — nome inventado, raquete inexistente. A tool recomendar_raquetas
+// já ancora os ids reais em pendingRecommendations; esta função garante que o TEXTO
+// livre gerado depois não solte um nome que não bate com nenhuma raquete real citada.
+// Não regenera (custaria uma chamada extra) — troca o nome errado pelo real, na mesma
+// posição em que apareceu. Só age quando NENHUM nome real aparece em lugar nenhum do
+// texto — se o modelo evitou nomear (comum e seguro, o card mostra o nome de qualquer
+// jeito), não mexe em nada.
+export function validateNomeRaquete(text: string, recommendations: RecommendedRacket[]): string {
+  if (recommendations.length === 0) return text
+  const realNames = recommendations.map(r => r.racket.name)
+  const normedText = normNome(text)
+  if (realNames.some(n => normedText.includes(normNome(n)))) return text
+
+  const boldSpans = [...text.matchAll(/\*\*(.+?)\*\*/g)].map(m => m[1].trim())
+  const candidates = boldSpans.filter(b => !b.endsWith('?') && !NOME_GENERICO_RE.test(b))
+  if (candidates.length === 0) return text
+
+  console.warn(`[nome-guard] texto cita "${candidates.join('", "')}" mas nenhuma raquete real (${realNames.join(', ')}) aparece — substituindo`)
+  let result = text
+  candidates.forEach((cand, i) => {
+    const real = realNames[Math.min(i, realNames.length - 1)]
+    result = result.split(`**${cand}**`).join(`**${real}**`)
+  })
+  return result
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function executeTool(
@@ -1931,7 +1966,8 @@ export async function runAgentTurn(
         return streamResponse(messages, pendingRecommendations, pendingSuggestions, isComparison, diagnosticoRef, intencaoRef, debugRef, usage, pendingQuestionFieldRef, onToken, signal)
       }
       const textBlock = response.content.find(b => b.type === 'text')
-      const text = textBlock?.type === 'text' ? textBlock.text : ''
+      const rawText = textBlock?.type === 'text' ? textBlock.text : ''
+      const text = validateNomeRaquete(rawText, pendingRecommendations)
       return {
         text,
         recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
@@ -2084,8 +2120,9 @@ export async function runAgentTurn(
   }, { signal })
   addUsage(usage, finalResponse.usage)
   const textBlock = finalResponse.content.find(b => b.type === 'text')
+  const rawFinalText = textBlock?.type === 'text' ? textBlock.text : ''
   return {
-    text: textBlock?.type === 'text' ? textBlock.text : '',
+    text: validateNomeRaquete(rawFinalText, pendingRecommendations),
     recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
     suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
     isComparison: isComparison || undefined,
@@ -2116,6 +2153,18 @@ async function streamResponse(
     systemBlocks.push({
       type: 'text',
       text: `\n\n[FAIXA VINCULANTE CALCULADA PELO CÓDIGO]\npeso_min=${diagnosticoRef.value.peso_min}g  peso_max=${diagnosticoRef.value.peso_max}g  balance=${diagnosticoRef.value.balance_preferido}\nNarre EXATAMENTE estes valores. É proibido usar qualquer outro número de peso no diagnóstico desta conversa.`,
+    })
+  }
+  // Reforço contra alucinação de nome (caso real: motor recomendou "Z Soft", o texto
+  // final citou "Heroe's Lava 2024" — raquete inexistente). O validateNomeRaquete no
+  // fim desta função corrige o texto ANTES de salvar/retornar, mas como essa resposta
+  // é transmitida token a token (onToken), o usuário já teria visto o nome errado
+  // passar na tela antes da correção rodar. Esta injeção ataca a causa, não só o efeito.
+  if (pendingRecommendations.length > 0) {
+    const nomesReais = pendingRecommendations.map(r => r.racket.name).join(', ')
+    systemBlocks.push({
+      type: 'text',
+      text: `\n\n[NOMES REAIS DAS RAQUETES RECOMENDADAS]\n${nomesReais}\nSe for citar o nome de alguma raquete no texto, use EXATAMENTE um destes nomes, letra por letra. NUNCA invente, combine ou modifique um nome.`,
     })
   }
   // When chips are pending, inject system instruction.
@@ -2212,7 +2261,7 @@ async function streamResponse(
   }
 
   return {
-    text,
+    text: validateNomeRaquete(text, pendingRecommendations),
     recommendations: pendingRecommendations.length > 0 ? pendingRecommendations : undefined,
     suggestions: pendingSuggestions.length > 0 ? pendingSuggestions : undefined,
     isComparison: isComparison || undefined,
