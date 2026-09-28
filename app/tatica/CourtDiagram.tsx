@@ -9,16 +9,68 @@ interface Props {
   arrows?: CourtArrow[]
 }
 
+const W = 300
+const H = 400
+const px = (x: number) => (x / 100) * W
+const py = (y: number) => (y / 100) * H
+
+// Classifica a(s) flecha(s) do resultado em "jogador(es) se movendo" ou "bola
+// voando" sem precisar de nenhum campo novo em puzzles.ts — deriva isso só da
+// geometria que já existe. Regras (conferidas contra as 20 táticas hoje):
+//  1. Duas flechas + dois destacados: só pode ser a dupla se deslocando junto
+//     (nunca duas bolas ao mesmo tempo). Cada flecha liga ao jogador cuja
+//     posição de origem bate exatamente com o `from` dela.
+//  2. Uma flecha + um destacado: se ela nasce exatamente na posição do jogador
+//     E o destino fica do seu próprio lado da quadra (y>=50, rede em y=50), é
+//     o jogador se deslocando. Cruzar pro lado do adversário (y<50) só pode
+//     ser a bola voando pra lá — um jogador nunca fica de pé no campo do rival
+//     (ex.: "variar o saque" e "capitalizar um bom saque" nascem na posição
+//     do jogador mas terminam no campo adversário — são o saque/remate, não o
+//     jogador correndo pra lá).
+//  3. Qualquer outro caso (sem match, ou sem destacado nenhum) é a bola.
+function resolveMovement(
+  players: CourtPlayer[],
+  highlightPlayerIds: string[] | undefined,
+  arrows: CourtArrow[] | undefined
+): { playerTargets: Record<string, { x: number; y: number }>; shotTarget?: { x: number; y: number } } {
+  const playerTargets: Record<string, { x: number; y: number }> = {}
+  if (!arrows || arrows.length === 0) return { playerTargets }
+
+  const ids = highlightPlayerIds ?? []
+
+  if (ids.length > 1) {
+    for (const arrow of arrows) {
+      const player = players.find(p => ids.includes(p.id) && p.x === arrow.from.x && p.y === arrow.from.y)
+      if (player) playerTargets[player.id] = arrow.to
+    }
+    return { playerTargets }
+  }
+
+  const arrow = arrows[0]
+  const single = ids.length === 1 ? players.find(p => p.id === ids[0]) : undefined
+  const startsAtPlayer = !!single && single.x === arrow.from.x && single.y === arrow.from.y
+  const staysOnOwnSide = arrow.to.y >= 50
+
+  if (startsAtPlayer && staysOnOwnSide) {
+    playerTargets[single!.id] = arrow.to
+    return { playerTargets }
+  }
+
+  // A bola sempre parte da posição real dela (`ball`, tratada em quem chama),
+  // nunca do `from` da flecha — esse `from` às vezes fica ancorado no jogador
+  // só por escolha visual de quem desenhou a flecha (ex.: um saque nasce na
+  // posição de quem saca, não na posição atual da bola antes do saque).
+  return { playerTargets, shotTarget: arrow.to }
+}
+
 // Quadra em top-down, rede horizontal em y=50. Coordenadas dos dados são %
 // (0–100) e mapeadas direto pro viewBox 0–300 x 0–400 (proporção ~3:4, igual
 // a uma quadra de beach tennis vista de cima). Mesma paleta do resto do site
 // (aqua = você, coral = adversário, tinta = linhas) — sem assets novos.
 export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows }: Props) {
-  const W = 300
-  const H = 400
-  const px = (x: number) => (x / 100) * W
-  const py = (y: number) => (y / 100) * H
   const allArrows = arrows ?? []
+  const { playerTargets, shotTarget } = resolveMovement(players, highlightPlayerIds, arrows)
+  const ballPos = shotTarget ?? ball
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Diagrama da quadra">
@@ -110,26 +162,29 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
         </g>
       )}
 
-      {/* Bola, com um leve brilho pra não ficar um disco chapado */}
-      <circle cx={px(ball.x)} cy={py(ball.y)} r={7} fill="url(#ballFill)" stroke="#0E3A40" strokeWidth={1.5} />
-      <path d={`M ${px(ball.x) - 5} ${py(ball.y)} Q ${px(ball.x)} ${py(ball.y) - 6}, ${px(ball.x) + 5} ${py(ball.y)}`} fill="none" stroke="#0E3A40" strokeOpacity={0.35} strokeWidth={1} />
+      {/* Bola — desliza pra posição final quando a resposta resolve num "tiro" */}
+      <g className="tatica-token" transform={`translate(${px(ballPos.x)}, ${py(ballPos.y)})`}>
+        <circle r={7} fill="url(#ballFill)" stroke="#0E3A40" strokeWidth={1.5} />
+        <path d="M -5 0 Q 0 -6, 5 0" fill="none" stroke="#0E3A40" strokeOpacity={0.35} strokeWidth={1} />
+      </g>
 
-      {/* Jogadores */}
+      {/* Jogadores — desliza pra posição final quando a resposta resolve em movimento */}
       {players.map(p => {
         const isYou = p.team === 'voce'
         const isHighlighted = (highlightPlayerIds ?? []).includes(p.id)
         const fill = isYou ? 'url(#youFill)' : 'url(#advFill)'
         const r = isHighlighted ? 20 : 17
+        const target = playerTargets[p.id] ?? { x: p.x, y: p.y }
         return (
-          <g key={p.id}>
+          <g key={p.id} className="tatica-token" transform={`translate(${px(target.x)}, ${py(target.y)})`}>
             {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
-            <ellipse cx={px(p.x)} cy={py(p.y) + r * 0.72} rx={r * 0.85} ry={r * 0.26} fill="#0E3A40" opacity={0.14} />
+            <ellipse cx={0} cy={r * 0.72} rx={r * 0.85} ry={r * 0.26} fill="#0E3A40" opacity={0.14} />
             {isHighlighted && (
-              <circle cx={px(p.x)} cy={py(p.y)} r={r + 6} fill={isYou ? '#0CC0BE' : '#FF5E3A'} fillOpacity={0.18} />
+              <circle cx={0} cy={0} r={r + 6} fill={isYou ? '#0CC0BE' : '#FF5E3A'} fillOpacity={0.18} />
             )}
-            <circle cx={px(p.x)} cy={py(p.y)} r={r} fill={fill} stroke="#FFFDF8" strokeWidth={2.5} />
+            <circle cx={0} cy={0} r={r} fill={fill} stroke="#FFFDF8" strokeWidth={2.5} />
             <text
-              x={px(p.x)} y={py(p.y) + 4}
+              x={0} y={4}
               textAnchor="middle"
               fontSize={11}
               fontWeight={700}
@@ -139,7 +194,7 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
               {isYou ? (p.label === 'Você' ? 'V' : p.label === 'Parceiro' ? 'P' : p.label[0]) : p.label.replace('Adv. ', 'A')}
             </text>
             <text
-              x={px(p.x)} y={py(p.y) + r + 14}
+              x={0} y={r + 14}
               textAnchor="middle"
               fontSize={10}
               fontWeight={600}
