@@ -50,6 +50,7 @@ const FACE_STYLE: Record<string, string> = {
   HYBRID_VIDRO: 'bg-indigo-100 text-indigo-700',
   KEVLAR_PURE: 'bg-emerald-100 text-emerald-800',
   KEVLAR_CARBON: 'bg-teal-100 text-teal-700',
+  CARBON_1K: 'bg-gray-50 text-gray-500',
   CARBON_3K: 'bg-gray-100 text-gray-600',
   CARBON_3K_METAL: 'bg-slate-100 text-slate-600',
   CARBON_6K_15K: 'bg-orange-100 text-orange-700',

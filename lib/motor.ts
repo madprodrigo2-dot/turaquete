@@ -52,6 +52,9 @@ export function classifyFace(face: string | null | undefined): FaceGrade {
   if (f.includes('24k') || f.includes('triaxial')) return 'CARBON_24K'
   if (f.includes('12k') || f.includes('15k') || f.includes('16k')) return 'CARBON_6K_15K'
   if (f.includes('6k')) return 'CARBON_6K'
+  // "1k" isolado — não confundir com o "1k" dentro de "21k"/"31k" (já tratado acima
+  // pelo check de 18k/21k, mas o lookbehind blinda contra qualquer variação futura).
+  if (/(?<!\d)1k(?!\d)/.test(f)) return 'CARBON_1K'
   if (
     f.includes('titanio') || f.includes('titanium') || f.includes('titânio') ||
     f.includes('metal fusion') || f.includes('silver') || f.includes('mft') ||
@@ -67,6 +70,9 @@ export function classifyCore(core: string | null | undefined): CoreClass {
     c.includes('supersoft') || c.includes('extra soft') || c.includes('extrasoft') ||
     c.includes('special extrasoft')
   ) return 'SUPERSOFT'
+  // "Soft Plus" — o "Plus" indica um EVA mais macio que o soft padrão (dado de
+  // mercado, 2026-09). Checado ANTES do 'soft' genérico abaixo, senão nunca seria alcançado.
+  if (c.includes('soft plus')) return 'SUPERSOFT'
   if (c.includes('branco') || c.includes('white')) return 'SUPERSOFT'
   if (c === 'eva 10' || c === 'eva 13') return 'SUPERSOFT'
   if (c.includes('hard') || c.includes('duro') || c.includes('high density') || c.includes('alta densidade')) return 'HARD'
