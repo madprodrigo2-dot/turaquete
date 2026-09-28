@@ -135,7 +135,7 @@ export const PUZZLES: Puzzle[] = [
   {
     slug: 'depois-de-dar-um-globo',
     titulo: 'Depois de dar um globo',
-    situacao: 'Você deu um globo bom e profundo por cima do adversário que estava na rede.',
+    situacao: 'Você deu um globo por cima do adversário que estava na rede — não foi perfeito, e ele ainda consegue alcançar a bola lá atrás.',
     players: [
       { id: 'you', team: 'voce', label: 'Você', x: 60, y: 62 },
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 65 },
