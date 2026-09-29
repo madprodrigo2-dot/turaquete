@@ -35,7 +35,7 @@ const PLAYER_H = 38
 const PLAYER_W = PLAYER_H * 0.4726
 const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o highlight
 const PLAYER_W_HL = PLAYER_H_HL * 0.4726
-const BALL_SIZE = 15
+const BALL_SIZE = 9
 const ANIM_MS = 550
 
 // Anima x/y via requestAnimationFrame, não via CSS transition — testado ao
