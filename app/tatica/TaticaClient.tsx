@@ -74,6 +74,7 @@ function PuzzleCard({
             ball={puzzle.ball}
             highlightPlayerIds={answered ? puzzle.resultado.highlightPlayerIds : undefined}
             arrows={answered ? puzzle.resultado.arrows : undefined}
+            action={answered ? puzzle.resultado.action : undefined}
           />
         </div>
       </div>

@@ -1,13 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { CourtPlayer, CourtArrow } from './puzzles'
+import type { CourtPlayer, CourtArrow, Puzzle } from './puzzles'
+
+type Action = NonNullable<Puzzle['resultado']['action']>
 
 interface Props {
   players: CourtPlayer[]
   ball: { x: number; y: number }
   highlightPlayerIds?: string[]
   arrows?: CourtArrow[]
+  action?: Action
 }
 
 const W = 300
@@ -37,6 +40,20 @@ const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o 
 const PLAYER_W_HL = PLAYER_H_HL * 0.4726
 const BALL_SIZE = 9
 const ANIM_MS = 550
+
+// Poses de ação real (de frente, golpeando) pro jogador destacado no
+// resultado — só existem pro time "você" (as 5 artes vieram só na cor
+// teal, e nenhuma das 20 táticas destaca um adversário). Cada pose tem sua
+// própria proporção (braço/raquete erguidos mudam a silhueta bem mais que
+// a pose de espaldas padrão), medida no arquivo fonte de cada uma — por
+// isso não reusa PLAYER_W/PLAYER_H_HL, cada action tem seu próprio ratio.
+const ACTION_POSES: Record<Action, { href: string; ratio: number }> = {
+  voleio: { href: '/tactica/jugador-voleio.webp', ratio: 1579 / 1956 },
+  smash: { href: '/tactica/jugador-smash.webp', ratio: 1243 / 2019 },
+  saque: { href: '/tactica/jugador-saque.webp', ratio: 1273 / 1928 },
+  globo: { href: '/tactica/jugador-globo.webp', ratio: 1639 / 1889 },
+  ataque: { href: '/tactica/jugador-ataque.webp', ratio: 1580 / 1533 },
+}
 
 // Anima x/y via requestAnimationFrame, não via CSS transition — testado ao
 // vivo (Chromium desta sessão): setar `style.transform` com translate()
@@ -103,16 +120,22 @@ function BallToken({ pos }: { pos: { x: number; y: number } }) {
 }
 
 function PlayerToken({
-  player, target, isHighlighted, isYou,
+  player, target, isHighlighted, isYou, action,
 }: {
   player: CourtPlayer
   target: { x: number; y: number }
   isHighlighted: boolean
   isYou: boolean
+  action?: Action
 }) {
   const { x, y } = useAnimatedXY(px(target.x), py(target.y))
   const h = isHighlighted ? PLAYER_H_HL : PLAYER_H
-  const w = isHighlighted ? PLAYER_W_HL : PLAYER_W
+  // pose de ação só existe pro time "você" destacado — qualquer outro caso
+  // (não destacado, adversário, ou tática sem action) cai na pose padrão
+  // de espaldas, com a proporção fixa de sempre.
+  const pose = isHighlighted && isYou && action ? ACTION_POSES[action] : undefined
+  const w = pose ? h * pose.ratio : (isHighlighted ? PLAYER_W_HL : PLAYER_W)
+  const href = pose ? pose.href : (isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival.webp')
   return (
     <g transform={`translate(${x}, ${y})`}>
       {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
@@ -121,7 +144,7 @@ function PlayerToken({
         <ellipse cx={0} cy={-h * 0.4} rx={w * 0.9} ry={h * 0.55} fill={isYou ? '#0CC0BE' : '#FF5E3A'} fillOpacity={0.18} />
       )}
       <image
-        href={isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival.webp'}
+        href={href}
         x={-w / 2} y={-h}
         width={w} height={h}
       />
@@ -194,7 +217,7 @@ function resolveMovement(
 // é arte real (public/tactica/*.webp), sem nada desenhado à mão em SVG além
 // das linhas de referência de distância e do traçado da flecha em si (que
 // muda de puzzle pra puzzle, não dá pra ser um asset fixo).
-export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows }: Props) {
+export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows, action }: Props) {
   const allArrows = arrows ?? []
   const { playerTargets, shotTarget } = resolveMovement(players, highlightPlayerIds, arrows)
   const ballPos = shotTarget ?? ball
@@ -263,6 +286,7 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           target={playerTargets[p.id] ?? { x: p.x, y: p.y }}
           isHighlighted={(highlightPlayerIds ?? []).includes(p.id)}
           isYou={p.team === 'voce'}
+          action={action}
         />
       ))}
 

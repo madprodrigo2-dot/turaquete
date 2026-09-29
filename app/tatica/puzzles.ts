@@ -36,6 +36,9 @@ export interface Puzzle {
   resultado: {
     highlightPlayerIds?: string[]
     arrows?: CourtArrow[]
+    // Pose de ação real (não a de espaldas padrão) pro jogador destacado — só
+    // 5 tipos têm arte própria hoje (as outras táticas ficam com a pose padrão).
+    action?: 'voleio' | 'smash' | 'saque' | 'globo' | 'ataque'
   }
 }
 
@@ -61,6 +64,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you-fh'],
       arrows: [{ from: { x: 32, y: 62 }, to: { x: 50, y: 60 }, style: 'flat' }],
+      action: 'voleio',
     },
   },
   {
@@ -84,6 +88,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you-hit'],
       arrows: [{ from: { x: 50, y: 68 }, to: { x: 50, y: 10 }, style: 'flat' }],
+      action: 'voleio',
     },
   },
   {
@@ -107,6 +112,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you-def'],
       arrows: [{ from: { x: 50, y: 85 }, to: { x: 50, y: 8 }, style: 'lob' }],
+      action: 'globo',
     },
   },
   {
@@ -202,6 +208,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 60, y: 85 }, to: { x: 50, y: 55 }, style: 'flat' }],
+      action: 'voleio',
     },
   },
   {
@@ -319,6 +326,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 55, y: 55 }, to: { x: 50, y: 15 }, style: 'flat' }],
+      action: 'smash',
     },
   },
   {
@@ -365,6 +373,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 50, y: 90 }, to: { x: 25, y: 15 }, style: 'flat' }],
+      action: 'saque',
     },
   },
   {
@@ -388,6 +397,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 50, y: 60 }, to: { x: 15, y: 15 }, style: 'flat' }],
+      action: 'ataque',
     },
   },
   {
@@ -431,6 +441,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 50, y: 70 }, to: { x: 50, y: 15 }, style: 'flat' }],
+      action: 'smash',
     },
   },
   {
@@ -477,6 +488,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you-fh'],
       arrows: [{ from: { x: 32, y: 62 }, to: { x: 50, y: 58 }, style: 'flat' }],
+      action: 'voleio',
     },
   },
   {
@@ -500,6 +512,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 50, y: 55 }, to: { x: 75, y: 20 }, style: 'flat' }],
+      action: 'ataque',
     },
   },
 ]
