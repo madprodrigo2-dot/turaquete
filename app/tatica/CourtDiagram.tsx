@@ -19,16 +19,30 @@ const H = 400
 // A superfície dourada dentro de fondo-cancha.webp não ocupa o canvas
 // inteiro — tem margem própria "horneada" na imagem (medido pixel a pixel
 // direto no arquivo: cor muda de bege pra dourado em ~15,1%/84,9% no eixo X
-// e ~9%/86,3% no eixo Y). px()/py() mapeiam os 0–100% dos dados de cada
-// puzzle pra ESSA área real, não pro canvas 0–300/0–400 inteiro — senão
-// jogador/bola/rede ficam desalinhados do que a imagem desenha como quadra.
-// Se o fundo for regenerado com margem diferente, remedir e ajustar aqui.
-const COURT_X0 = 0.151 * W
-const COURT_X1 = 0.849 * W
-const COURT_Y0 = 0.09 * H
-const COURT_Y1 = 0.863 * H
+// e ~9%/86,3% no eixo Y). Isso deixava a quadra pequena dentro do espaço
+// total do diagrama (a margem de areia "de sobra" competia com o espaço da
+// quadra em si). Corrigido desenhando o fundo (ver BG_X/Y/W/H abaixo) MAIOR
+// que o canvas e deslocado — o <svg> recorta sozinho o que sai do viewBox,
+// então só a quadra + uma margem fina (~3,5%) fica visível. COURT_X0/X1/Y0/Y1
+// já refletem essa margem nova (não mais a margem bruta do arquivo) — são o
+// que px()/py() usam pra mapear os 0–100% dos dados de cada puzzle.
+// Se o fundo for regenerado com margem diferente, remedir e ajustar tudo.
+const COURT_X0 = 0.035 * W
+const COURT_X1 = 0.965 * W
+const COURT_Y0 = 0.035 * H
+const COURT_Y1 = 0.965 * H
 const px = (x: number) => COURT_X0 + (x / 100) * (COURT_X1 - COURT_X0)
 const py = (y: number) => COURT_Y0 + (y / 100) * (COURT_Y1 - COURT_Y0)
+
+// Fundo desenhado maior que o canvas e deslocado pra esquerda/cima — recortado
+// pelo próprio viewBox do <svg> (comportamento padrão, não precisa clipPath).
+// Escala X (1,3324) e Y (1,2032) são diferentes de propósito: a margem bruta
+// do arquivo não é igual nos dois eixos (69,8% de span em X, 77,3% em Y), um
+// zoom uniforme deixaria margens desparelhas entre os lados. O preço é esticar
+// a imagem ~11% a mais no X que no Y (por cima do 0,4% que preserveAspectRatio
+// "none" já estica) — invisível na prática porque as linhas internas erradas
+// do asset (tênis/pádel, já reportado) vão ser substituídas de qualquer jeito.
+const BG_X = -49.86, BG_Y = -29.32, BG_W = 399.72, BG_H = 481.28
 
 // Tamanho dos personagens (arte real, não mais um círculo) — ~0.4726 de
 // proporção largura/altura nos dois PNGs (equipe e rival, medido no arquivo
@@ -40,6 +54,10 @@ const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o 
 const PLAYER_W_HL = PLAYER_H_HL * 0.4726
 const BALL_SIZE = 9
 const ANIM_MS = 550
+// Altura renderizada da faixa da rede — testando um aumento (era 16) a
+// pedido do Rodrigo ("a rede deveria ser mais alta"). Ver comentário perto
+// do <image> da rede sobre os puzzles mais apertados que isso afeta.
+const NET_H = 20
 
 // Poses de ação real (de frente, golpeando) pro jogador destacado no
 // resultado — só existem pro time "você" (as 5 artes vieram só na cor
@@ -241,22 +259,33 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           fondo-cancha.webp veio com linhas internas de tênis/padel (linha de
           serviço, quadrados) — beach tennis de verdade não tem nada disso,
           só o retângulo de areia com a borda. Pedido pra Rodrigo regenerar
-          sem essas marcas; não mexi nisso agora. */}
-      <image href="/tactica/fondo-cancha.webp" x={0} y={0} width={W} height={H} preserveAspectRatio="none" />
+          sem essas marcas; não mexi nisso agora. Desenhado maior que o canvas
+          (ver BG_X/Y/W/H) pra recortar a margem de areia excedente do
+          arquivo — só a quadra + uma margem fina fica visível. brightness()
+          leve porque o dourado do arquivo ficava escuro demais (medido
+          ~RGB(217,169,85) no miolo da quadra). */}
+      <image
+        href="/tactica/fondo-cancha.webp"
+        x={BG_X} y={BG_Y} width={BG_W} height={BG_H}
+        preserveAspectRatio="none"
+        style={{ filter: 'brightness(1.15) saturate(0.95)' }}
+      />
 
       {/* Rede — imagem real (chroma-key verde removido + spill de croma
-          suprimido no cordão da malha). Altura reduzida bem abaixo da
-          proporção nativa (que dava ~51 unidades, 12,75% da altura da
-          quadra) — nos dados de puzzles.ts, jogador/flecha perto da rede
-          assumem uma linha quase sem espessura; um bloco desse tamanho
-          engolia jogador+halo+label inteiros nos puzzles com gente perto do
-          net. 16 unidades = mesma altura que os postes desenhados à mão
-          tinham antes, restaura o comportamento que os 20 puzzles já
-          assumem. Fita branca do topo ancorada exatamente em y=50% (rede). */}
+          suprimido no cordão da malha). Altura em NET_H — testando um valor
+          maior que os 16 originais (pedido do Rodrigo, "a rede deveria ser
+          mais alta"). O caso mais apertado nos dados é y=52 (cobertura-
+          diagonal-no-saque e avisar-o-saque, os dois jogadores terminam a
+          poucas unidades da rede) — como jogador/label/swoosh sempre
+          desenham DEPOIS da rede (nunca ficam escondidos, só sobrepostos),
+          o teto real não é "esconde o jogador", é só estética: quanto de
+          malha aparece atrás dele. Testado visualmente nesses 2 puzzles
+          antes de fechar o número. Fita branca do topo ancorada exatamente
+          em y=50% (rede). */}
       <image
         href="/tactica/red.webp"
         x={COURT_X0} y={py(50)}
-        width={COURT_X1 - COURT_X0} height={16}
+        width={COURT_X1 - COURT_X0} height={NET_H}
         preserveAspectRatio="none"
       />
 
@@ -271,7 +300,7 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           comunica que a rede de beach tennis fica elevada, sem tocar a
           areia. */}
       <rect
-        x={COURT_X0} y={py(50) + 16 + 3}
+        x={COURT_X0} y={py(50) + NET_H + 3}
         width={COURT_X1 - COURT_X0} height={2}
         rx={1}
         fill="#0E3A40" opacity={0.16}
