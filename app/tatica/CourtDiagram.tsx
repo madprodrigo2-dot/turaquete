@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import type { CourtPlayer, CourtArrow } from './puzzles'
 
 interface Props {
@@ -11,8 +12,20 @@ interface Props {
 
 const W = 300
 const H = 400
-const px = (x: number) => (x / 100) * W
-const py = (y: number) => (y / 100) * H
+
+// A superfície dourada dentro de fondo-cancha.webp não ocupa o canvas
+// inteiro — tem margem própria "horneada" na imagem (medido pixel a pixel
+// direto no arquivo: cor muda de bege pra dourado em ~15,1%/84,9% no eixo X
+// e ~9%/86,3% no eixo Y). px()/py() mapeiam os 0–100% dos dados de cada
+// puzzle pra ESSA área real, não pro canvas 0–300/0–400 inteiro — senão
+// jogador/bola/rede ficam desalinhados do que a imagem desenha como quadra.
+// Se o fundo for regenerado com margem diferente, remedir e ajustar aqui.
+const COURT_X0 = 0.151 * W
+const COURT_X1 = 0.849 * W
+const COURT_Y0 = 0.09 * H
+const COURT_Y1 = 0.863 * H
+const px = (x: number) => COURT_X0 + (x / 100) * (COURT_X1 - COURT_X0)
+const py = (y: number) => COURT_Y0 + (y / 100) * (COURT_Y1 - COURT_Y0)
 
 // Tamanho dos personagens (arte real, não mais um círculo) — ~0.4726 de
 // proporção largura/altura nos dois PNGs (equipe e rival, medido no arquivo
@@ -23,6 +36,108 @@ const PLAYER_W = PLAYER_H * 0.4726
 const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o highlight
 const PLAYER_W_HL = PLAYER_H_HL * 0.4726
 const BALL_SIZE = 15
+const ANIM_MS = 550
+
+// Anima x/y via requestAnimationFrame, não via CSS transition — testado ao
+// vivo (Chromium desta sessão): setar `style.transform` com translate()
+// sem unidade é CSS inválido e o navegador REJEITA a atribuição em silêncio
+// (style.transform fica "", getComputedStyle acusa "none", só o atributo
+// serializado mostra o valor — um estado inconsistente que engana até o
+// devtools). O atributo `transform` puro do SVG renderiza certo mas o
+// transition-property do CSS não anima mudanças nele. RAF com interpolação
+// manual não depende de nenhuma das duas ambiguidades — sempre funciona.
+function useAnimatedXY(targetX: number, targetY: number): { x: number; y: number } {
+  const [pos, setPos] = useState({ x: targetX, y: targetY })
+  const fromRef = useRef({ x: targetX, y: targetY })
+  const rafRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const from = fromRef.current
+    if (from.x === targetX && from.y === targetY) return
+
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduceMotion) {
+      fromRef.current = { x: targetX, y: targetY }
+      setPos({ x: targetX, y: targetY })
+      return
+    }
+
+    const start = performance.now()
+    const startPos = from
+    // aproxima o cubic-bezier(0.22, 1, 0.36, 1) que o CSS antigo usava — ease-out forte
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3)
+
+    function tick(now: number) {
+      const t = Math.min(1, (now - start) / ANIM_MS)
+      const e = ease(t)
+      setPos({
+        x: startPos.x + (targetX - startPos.x) * e,
+        y: startPos.y + (targetY - startPos.y) * e,
+      })
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(tick)
+      } else {
+        fromRef.current = { x: targetX, y: targetY }
+        rafRef.current = null
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [targetX, targetY])
+
+  return pos
+}
+
+function BallToken({ pos }: { pos: { x: number; y: number } }) {
+  const { x, y } = useAnimatedXY(px(pos.x), py(pos.y))
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <image href="/tactica/pelota.webp" x={-BALL_SIZE / 2} y={-BALL_SIZE / 2} width={BALL_SIZE} height={BALL_SIZE} />
+    </g>
+  )
+}
+
+function PlayerToken({
+  player, target, isHighlighted, isYou,
+}: {
+  player: CourtPlayer
+  target: { x: number; y: number }
+  isHighlighted: boolean
+  isYou: boolean
+}) {
+  const { x, y } = useAnimatedXY(px(target.x), py(target.y))
+  const h = isHighlighted ? PLAYER_H_HL : PLAYER_H
+  const w = isHighlighted ? PLAYER_W_HL : PLAYER_W
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
+      <ellipse cx={0} cy={2} rx={w * 0.6} ry={w * 0.22} fill="#0E3A40" opacity={0.16} />
+      {isHighlighted && (
+        <ellipse cx={0} cy={-h * 0.4} rx={w * 0.9} ry={h * 0.55} fill={isYou ? '#0CC0BE' : '#FF5E3A'} fillOpacity={0.18} />
+      )}
+      <image
+        href={isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival.webp'}
+        x={-w / 2} y={-h}
+        width={w} height={h}
+      />
+      <text
+        x={0} y={14}
+        textAnchor="middle"
+        fontSize={9}
+        fontWeight={600}
+        fill="#0E3A40"
+        opacity={0.65}
+      >
+        {player.label}
+      </text>
+    </g>
+  )
+}
 
 // Classifica a(s) flecha(s) do resultado em "jogador(es) se movendo" ou "bola
 // voando" sem precisar de nenhum campo novo em puzzles.ts — deriva isso só da
@@ -99,14 +214,28 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
         </marker>
       </defs>
 
-      {/* Fundo — imagem real, substitui areia+quadra desenhadas à mão */}
+      {/* Fundo — imagem real, substitui areia+quadra desenhadas à mão. TODO:
+          fondo-cancha.webp veio com linhas internas de tênis/padel (linha de
+          serviço, quadrados) — beach tennis de verdade não tem nada disso,
+          só o retângulo de areia com a borda. Pedido pra Rodrigo regenerar
+          sem essas marcas; não mexi nisso agora. */}
       <image href="/tactica/fondo-cancha.webp" x={0} y={0} width={W} height={H} preserveAspectRatio="none" />
 
       {/* Rede — imagem real (chroma-key verde removido + spill de croma
-          suprimido no cordão da malha). A fita branca do topo do asset fica
-          exatamente em y=H/2 (a rede sempre em y=50%); malha e cabo inferior
-          pendem abaixo disso. */}
-      <image href="/tactica/red.webp" x={16} y={H / 2} width={W - 32} height={(W - 32) / (900 / 171)} preserveAspectRatio="none" />
+          suprimido no cordão da malha). Altura reduzida bem abaixo da
+          proporção nativa (que dava ~51 unidades, 12,75% da altura da
+          quadra) — nos dados de puzzles.ts, jogador/flecha perto da rede
+          assumem uma linha quase sem espessura; um bloco desse tamanho
+          engolia jogador+halo+label inteiros nos puzzles com gente perto do
+          net. 16 unidades = mesma altura que os postes desenhados à mão
+          tinham antes, restaura o comportamento que os 20 puzzles já
+          assumem. Fita branca do topo ancorada exatamente em y=50% (rede). */}
+      <image
+        href="/tactica/red.webp"
+        x={COURT_X0} y={py(50)}
+        width={COURT_X1 - COURT_X0} height={16}
+        preserveAspectRatio="none"
+      />
 
       {/* Linhas de referência de distância (3m/6m da rede, quadra de 8m por lado)
           — não existem numa quadra de beach tennis de verdade (não tem linha de
@@ -116,50 +245,26 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
         const offsetPct = (m / 8) * 50
         return [50 - offsetPct, 50 + offsetPct].map(yPct => (
           <g key={`ref-${m}-${yPct}`}>
-            <line x1={16} y1={py(yPct)} x2={W - 16} y2={py(yPct)} stroke="#0E3A40" strokeOpacity={0.15} strokeWidth={1} strokeDasharray="3 4" />
-            <text x={22} y={py(yPct) - 4} fontSize={8} fontWeight={600} fill="#0E3A40" opacity={0.4}>{m}m</text>
+            <line x1={COURT_X0} y1={py(yPct)} x2={COURT_X1} y2={py(yPct)} stroke="#0E3A40" strokeOpacity={0.15} strokeWidth={1} strokeDasharray="3 4" />
+            <text x={COURT_X0 + 6} y={py(yPct) - 4} fontSize={8} fontWeight={600} fill="#0E3A40" opacity={0.4}>{m}m</text>
           </g>
         ))
       })}
 
       {/* Bola — desliza pra posição final quando a resposta resolve num "tiro" */}
-      <g className="tatica-token" transform={`translate(${px(ballPos.x)}, ${py(ballPos.y)})`}>
-        <image href="/tactica/pelota.webp" x={-BALL_SIZE / 2} y={-BALL_SIZE / 2} width={BALL_SIZE} height={BALL_SIZE} />
-      </g>
+      <BallToken pos={ballPos} />
 
       {/* Jogadores — arte real (equipe/rival), ancorada pelo pé. Desliza pra
           posição final quando a resposta resolve em movimento. */}
-      {players.map(p => {
-        const isYou = p.team === 'voce'
-        const isHighlighted = (highlightPlayerIds ?? []).includes(p.id)
-        const target = playerTargets[p.id] ?? { x: p.x, y: p.y }
-        const h = isHighlighted ? PLAYER_H_HL : PLAYER_H
-        const w = isHighlighted ? PLAYER_W_HL : PLAYER_W
-        return (
-          <g key={p.id} className="tatica-token" transform={`translate(${px(target.x)}, ${py(target.y)})`}>
-            {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
-            <ellipse cx={0} cy={2} rx={w * 0.6} ry={w * 0.22} fill="#0E3A40" opacity={0.16} />
-            {isHighlighted && (
-              <ellipse cx={0} cy={-h * 0.4} rx={w * 0.9} ry={h * 0.55} fill={isYou ? '#0CC0BE' : '#FF5E3A'} fillOpacity={0.18} />
-            )}
-            <image
-              href={isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival.webp'}
-              x={-w / 2} y={-h}
-              width={w} height={h}
-            />
-            <text
-              x={0} y={14}
-              textAnchor="middle"
-              fontSize={9}
-              fontWeight={600}
-              fill="#0E3A40"
-              opacity={0.65}
-            >
-              {p.label}
-            </text>
-          </g>
-        )
-      })}
+      {players.map(p => (
+        <PlayerToken
+          key={p.id}
+          player={p}
+          target={playerTargets[p.id] ?? { x: p.x, y: p.y }}
+          isHighlighted={(highlightPlayerIds ?? []).includes(p.id)}
+          isYou={p.team === 'voce'}
+        />
+      ))}
 
       {/* Swoosh no ponto de partida + linha/curva (segue vetor, muda de puzzle
           pra puzzle) + ponta de flecha real no destino — desenhado por cima dos

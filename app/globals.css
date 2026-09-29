@@ -327,11 +327,13 @@ body {
   stroke-dashoffset: 500;
   animation: tatica-draw 480ms ease-out 80ms forwards;
 }
-/* Jogadores e bola deslizam pra posição do resultado — o alvo (atributo
-   transform) muda no React, essa transition anima a interpolação. */
-.tatica-token {
-  transition: transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
-}
+/* Jogadores e bola deslizam pra posição do resultado via requestAnimationFrame
+   dentro do próprio CourtDiagram (useAnimatedXY), não via CSS transition —
+   testado ao vivo e confirmado que CSS transition não anima de forma
+   confiável um translate() aplicado num <g> de SVG nesse browser (tanto o
+   atributo `transform` puro quanto style.transform sem unidade falham,
+   um deles em silêncio). O hook já respeita prefers-reduced-motion
+   diretamente via matchMedia, sem precisar de regra aqui. */
 
 /* ── Respect prefers-reduced-motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -354,9 +356,6 @@ body {
   .tatica-arrow-in,
   .tatica-arrow-draw {
     animation: none !important;
-  }
-  .tatica-token {
-    transition: none !important;
   }
   .typing-cursor { display: none; }
   .tury-enter, .tury-breathe, .tury-float, .tatica-arrow-in { opacity: 1; }
