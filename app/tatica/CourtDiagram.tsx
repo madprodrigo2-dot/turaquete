@@ -260,6 +260,23 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
         preserveAspectRatio="none"
       />
 
+      {/* Sombra da rede — o asset red.webp termina direto no cabo inferior
+          da malha, sem nenhum vão desenhado, e o código também não deixava
+          nenhum (testado: só encolher a altura não criava a sensação de vão,
+          porque não existe nenhuma "linha de chão" separada nesse diagrama —
+          o olho não tem com o que comparar pra perceber que sobrou espaço).
+          Uma sombra fina alguns pontos abaixo do cabo, no mesmo estilo da
+          sombra de contato dos jogadores (mesma cor/opacidade), marca onde
+          o "chão" realmente está — o vão entre o cabo e essa sombra é que
+          comunica que a rede de beach tennis fica elevada, sem tocar a
+          areia. */}
+      <rect
+        x={COURT_X0} y={py(50) + 16 + 3}
+        width={COURT_X1 - COURT_X0} height={2}
+        rx={1}
+        fill="#0E3A40" opacity={0.16}
+      />
+
       {/* Linhas de referência de distância (3m/6m da rede, quadra de 8m por lado)
           — não existem numa quadra de beach tennis de verdade (não tem linha de
           serviço), servem só pra dar noção de escala real às posições dos
