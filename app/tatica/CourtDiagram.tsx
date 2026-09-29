@@ -14,6 +14,16 @@ const H = 400
 const px = (x: number) => (x / 100) * W
 const py = (y: number) => (y / 100) * H
 
+// Tamanho dos personagens (arte real, não mais um círculo) — ~0.4726 de
+// proporção largura/altura nos dois PNGs (equipe e rival, medido no arquivo
+// fonte). Ancorados pelo PÉ (base), não pelo centro: a coordenada do jogador
+// representa "onde ele está pisando", igual um diagrama tático de verdade.
+const PLAYER_H = 38
+const PLAYER_W = PLAYER_H * 0.4726
+const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o highlight
+const PLAYER_W_HL = PLAYER_H_HL * 0.4726
+const BALL_SIZE = 15
+
 // Classifica a(s) flecha(s) do resultado em "jogador(es) se movendo" ou "bola
 // voando" sem precisar de nenhum campo novo em puzzles.ts — deriva isso só da
 // geometria que já existe. Regras (conferidas contra as 20 táticas hoje):
@@ -64,9 +74,11 @@ function resolveMovement(
 }
 
 // Quadra em top-down, rede horizontal em y=50. Coordenadas dos dados são %
-// (0–100) e mapeadas direto pro viewBox 0–300 x 0–400 (proporção ~3:4, igual
-// a uma quadra de beach tennis vista de cima). Mesma paleta do resto do site
-// (aqua = você, coral = adversário, tinta = linhas) — sem assets novos.
+// (0–100) e mapeadas direto pro viewBox 0–300 x 0–400. Todo o visual — fundo,
+// rede, bola, ponta de flecha, swoosh e os dois personagens (equipe/rival) —
+// é arte real (public/tactica/*.webp), sem nada desenhado à mão em SVG além
+// das linhas de referência de distância e do traçado da flecha em si (que
+// muda de puzzle pra puzzle, não dá pra ser um asset fixo).
 export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows }: Props) {
   const allArrows = arrows ?? []
   const { playerTargets, shotTarget } = resolveMovement(players, highlightPlayerIds, arrows)
@@ -75,38 +87,26 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Diagrama da quadra">
       <defs>
-        <radialGradient id="courtSand" cx="50%" cy="38%" r="75%">
-          <stop offset="0%" stopColor="#FBF6EF" />
-          <stop offset="100%" stopColor="#F3E4C8" />
-        </radialGradient>
-        <radialGradient id="youFill" cx="38%" cy="32%" r="70%">
-          <stop offset="0%" stopColor="#5DDCDA" />
-          <stop offset="100%" stopColor="#0CC0BE" />
-        </radialGradient>
-        <radialGradient id="advFill" cx="38%" cy="32%" r="70%">
-          <stop offset="0%" stopColor="#FF8A69" />
-          <stop offset="100%" stopColor="#FF5E3A" />
-        </radialGradient>
-        <radialGradient id="ballFill" cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="100%" stopColor="#F3E9D4" />
-        </radialGradient>
+        <marker
+          id="arrowhead-img"
+          markerWidth="22" markerHeight="22"
+          refX="19" refY="11"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+          viewBox="0 0 1032 1026"
+        >
+          <image href="/tactica/punta-flecha.webp" x="0" y="0" width="1032" height="1026" />
+        </marker>
       </defs>
 
-      {/* Areia de fundo, com "manchas" suaves pra não ficar um bloco de cor chapado */}
-      <rect x={0} y={0} width={W} height={H} rx={16} fill="#F7EDDC" />
-      <ellipse cx={W * 0.78} cy={H * 0.12} rx={70} ry={34} fill="#AF8041" opacity={0.08} />
-      <ellipse cx={W * 0.14} cy={H * 0.28} rx={58} ry={30} fill="#A07338" opacity={0.07} />
-      <ellipse cx={W * 0.2} cy={H * 0.82} rx={64} ry={32} fill="#AF8041" opacity={0.08} />
-      <ellipse cx={W * 0.82} cy={H * 0.7} rx={56} ry={28} fill="#A07338" opacity={0.06} />
+      {/* Fundo — imagem real, substitui areia+quadra desenhadas à mão */}
+      <image href="/tactica/fondo-cancha.webp" x={0} y={0} width={W} height={H} preserveAspectRatio="none" />
 
-      {/* Quadra */}
-      <rect x={16} y={16} width={W - 32} height={H - 32} rx={8} fill="url(#courtSand)" stroke="#0E3A40" strokeOpacity={0.25} strokeWidth={2} />
-
-      {/* Rede, com postes nas duas pontas */}
-      <line x1={16} y1={H / 2} x2={W - 16} y2={H / 2} stroke="#0E3A40" strokeWidth={3} strokeDasharray="6 5" strokeLinecap="round" />
-      <rect x={13} y={H / 2 - 8} width={5} height={16} rx={2} fill="#0E3A40" opacity={0.55} />
-      <rect x={W - 18} y={H / 2 - 8} width={5} height={16} rx={2} fill="#0E3A40" opacity={0.55} />
+      {/* Rede — imagem real (chroma-key verde removido + spill de croma
+          suprimido no cordão da malha). A fita branca do topo do asset fica
+          exatamente em y=H/2 (a rede sempre em y=50%); malha e cabo inferior
+          pendem abaixo disso. */}
+      <image href="/tactica/red.webp" x={16} y={H / 2} width={W - 32} height={(W - 32) / (900 / 171)} preserveAspectRatio="none" />
 
       {/* Linhas de referência de distância (3m/6m da rede, quadra de 8m por lado)
           — não existem numa quadra de beach tennis de verdade (não tem linha de
@@ -116,20 +116,66 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
         const offsetPct = (m / 8) * 50
         return [50 - offsetPct, 50 + offsetPct].map(yPct => (
           <g key={`ref-${m}-${yPct}`}>
-            <line x1={16} y1={py(yPct)} x2={W - 16} y2={py(yPct)} stroke="#0E3A40" strokeOpacity={0.12} strokeWidth={1} strokeDasharray="3 4" />
-            <text x={22} y={py(yPct) - 4} fontSize={8} fontWeight={600} fill="#0E3A40" opacity={0.35}>{m}m</text>
+            <line x1={16} y1={py(yPct)} x2={W - 16} y2={py(yPct)} stroke="#0E3A40" strokeOpacity={0.15} strokeWidth={1} strokeDasharray="3 4" />
+            <text x={22} y={py(yPct) - 4} fontSize={8} fontWeight={600} fill="#0E3A40" opacity={0.4}>{m}m</text>
           </g>
         ))
       })}
 
-      {/* Setas da jogada correta (só aparecem na tela de resultado) */}
+      {/* Bola — desliza pra posição final quando a resposta resolve num "tiro" */}
+      <g className="tatica-token" transform={`translate(${px(ballPos.x)}, ${py(ballPos.y)})`}>
+        <image href="/tactica/pelota.webp" x={-BALL_SIZE / 2} y={-BALL_SIZE / 2} width={BALL_SIZE} height={BALL_SIZE} />
+      </g>
+
+      {/* Jogadores — arte real (equipe/rival), ancorada pelo pé. Desliza pra
+          posição final quando a resposta resolve em movimento. */}
+      {players.map(p => {
+        const isYou = p.team === 'voce'
+        const isHighlighted = (highlightPlayerIds ?? []).includes(p.id)
+        const target = playerTargets[p.id] ?? { x: p.x, y: p.y }
+        const h = isHighlighted ? PLAYER_H_HL : PLAYER_H
+        const w = isHighlighted ? PLAYER_W_HL : PLAYER_W
+        return (
+          <g key={p.id} className="tatica-token" transform={`translate(${px(target.x)}, ${py(target.y)})`}>
+            {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
+            <ellipse cx={0} cy={2} rx={w * 0.6} ry={w * 0.22} fill="#0E3A40" opacity={0.16} />
+            {isHighlighted && (
+              <ellipse cx={0} cy={-h * 0.4} rx={w * 0.9} ry={h * 0.55} fill={isYou ? '#0CC0BE' : '#FF5E3A'} fillOpacity={0.18} />
+            )}
+            <image
+              href={isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival.webp'}
+              x={-w / 2} y={-h}
+              width={w} height={h}
+            />
+            <text
+              x={0} y={14}
+              textAnchor="middle"
+              fontSize={9}
+              fontWeight={600}
+              fill="#0E3A40"
+              opacity={0.65}
+            >
+              {p.label}
+            </text>
+          </g>
+        )
+      })}
+
+      {/* Swoosh no ponto de partida + linha/curva (segue vetor, muda de puzzle
+          pra puzzle) + ponta de flecha real no destino — desenhado por cima dos
+          tokens (senão o personagem tapa o swoosh quando o tiro nasce em cima
+          dele, o caso mais comum). Só aparece no resultado. */}
       {allArrows.length > 0 && (
         <g className="tatica-arrow-in">
-          <defs>
-            <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-              <path d="M0,0 L8,4 L0,8 Z" fill="#FF5E3A" />
-            </marker>
-          </defs>
+          {allArrows.map((a, i) => (
+            <image
+              key={`swoosh-${i}`}
+              href="/tactica/swoosh.webp"
+              x={px(a.from.x) - 13} y={py(a.from.y) - 13}
+              width={26} height={26}
+              opacity={0.85}
+            />
+          ))}
           {allArrows.map((a, i) => (
             a.style === 'lob' ? (
               // Ponto de controle deslocado em X (não só em Y) — se from.x === to.x
@@ -144,7 +190,7 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
                 strokeWidth={3}
                 strokeDasharray="2 8"
                 strokeLinecap="round"
-                markerEnd="url(#arrowhead)"
+                markerEnd="url(#arrowhead-img)"
               />
             ) : (
               <line
@@ -155,57 +201,12 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
                 stroke="#FF5E3A"
                 strokeWidth={3}
                 strokeLinecap="round"
-                markerEnd="url(#arrowhead)"
+                markerEnd="url(#arrowhead-img)"
               />
             )
           ))}
         </g>
       )}
-
-      {/* Bola — desliza pra posição final quando a resposta resolve num "tiro" */}
-      <g className="tatica-token" transform={`translate(${px(ballPos.x)}, ${py(ballPos.y)})`}>
-        <circle r={7} fill="url(#ballFill)" stroke="#0E3A40" strokeWidth={1.5} />
-        <path d="M -5 0 Q 0 -6, 5 0" fill="none" stroke="#0E3A40" strokeOpacity={0.35} strokeWidth={1} />
-      </g>
-
-      {/* Jogadores — desliza pra posição final quando a resposta resolve em movimento */}
-      {players.map(p => {
-        const isYou = p.team === 'voce'
-        const isHighlighted = (highlightPlayerIds ?? []).includes(p.id)
-        const fill = isYou ? 'url(#youFill)' : 'url(#advFill)'
-        const r = isHighlighted ? 20 : 17
-        const target = playerTargets[p.id] ?? { x: p.x, y: p.y }
-        return (
-          <g key={p.id} className="tatica-token" transform={`translate(${px(target.x)}, ${py(target.y)})`}>
-            {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
-            <ellipse cx={0} cy={r * 0.72} rx={r * 0.85} ry={r * 0.26} fill="#0E3A40" opacity={0.14} />
-            {isHighlighted && (
-              <circle cx={0} cy={0} r={r + 6} fill={isYou ? '#0CC0BE' : '#FF5E3A'} fillOpacity={0.18} />
-            )}
-            <circle cx={0} cy={0} r={r} fill={fill} stroke="#FFFDF8" strokeWidth={2.5} />
-            <text
-              x={0} y={4}
-              textAnchor="middle"
-              fontSize={11}
-              fontWeight={700}
-              fill="#FFFDF8"
-              style={{ fontFamily: 'var(--font-heading, sans-serif)' }}
-            >
-              {isYou ? (p.label === 'Você' ? 'V' : p.label === 'Parceiro' ? 'P' : p.label[0]) : p.label.replace('Adv. ', 'A')}
-            </text>
-            <text
-              x={0} y={r + 14}
-              textAnchor="middle"
-              fontSize={10}
-              fontWeight={600}
-              fill="#0E3A40"
-              opacity={0.6}
-            >
-              {p.label}
-            </text>
-          </g>
-        )
-      })}
     </svg>
   )
 }
