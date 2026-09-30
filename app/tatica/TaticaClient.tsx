@@ -74,7 +74,7 @@ function PuzzleCard({
       </div>
 
       <div className="bg-white rounded-2xl p-4 shadow-card border border-[rgba(14,58,64,0.06)]">
-        <div className="max-w-[300px] md:max-w-[550px] mx-auto">
+        <div className="max-w-[300px] md:max-w-[400px] mx-auto">
           <CourtDiagram
             players={puzzle.players}
             ball={puzzle.ball}
