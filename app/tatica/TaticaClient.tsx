@@ -51,7 +51,13 @@ function PuzzleCard({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1.5">
+      {/* Título/progresso e o bloco de texto abaixo (situação, opções,
+          feedback) ficam travados na largura de mobile mesmo no md: — só o
+          card da quadra usa o espaço extra do container pai (que cresce pra
+          max-w-2xl no md:). Texto largo demais fica ruim de ler; a quadra é
+          visual, não tem esse problema — pedido do Rodrigo comparando com
+          o Padel Chess, que no desktop mostra a quadra bem maior. */}
+      <div className="flex flex-col gap-1.5 md:max-w-sm md:mx-auto md:w-full">
         <div className="flex items-center justify-between">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-tinta/40">
             Tática {index + 1} de {total}
@@ -68,7 +74,7 @@ function PuzzleCard({
       </div>
 
       <div className="bg-white rounded-2xl p-4 shadow-card border border-[rgba(14,58,64,0.06)]">
-        <div className="max-w-[300px] mx-auto">
+        <div className="max-w-[300px] md:max-w-[550px] mx-auto">
           <CourtDiagram
             players={puzzle.players}
             ball={puzzle.ball}
@@ -79,6 +85,7 @@ function PuzzleCard({
         </div>
       </div>
 
+      <div className="flex flex-col gap-5 md:max-w-sm md:mx-auto md:w-full">
       <p className="text-tinta/70 text-sm leading-relaxed">{puzzle.situacao}</p>
 
       <div className="flex flex-col gap-2.5">
@@ -146,6 +153,7 @@ function PuzzleCard({
           <ArrowRight size={18} weight="bold" />
         </button>
       )}
+      </div>
     </div>
   )
 }
@@ -215,7 +223,7 @@ export default function TaticaClient() {
         </div>
       </div>
 
-      <div className="max-w-sm mx-auto px-5 py-8">
+      <div className="max-w-sm md:max-w-2xl mx-auto px-5 py-8">
         {finished ? (
           <SummaryScreen score={score} total={PUZZLES.length} onRestart={handleRestart} />
         ) : (

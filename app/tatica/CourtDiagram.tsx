@@ -287,7 +287,18 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
                     0 0 0 0 0.55"
             result="noiseGray"
           />
-          <feBlend in="bright" in2="noiseGray" mode="overlay" />
+          {/* Rodrigo achou o grão marcado demais na v1 (alpha 0.55, ruído
+              cru 0-1 direto) — comprime o contraste do cinza (0.4/0.3 puxa
+              tudo pra perto de 0.5, a faixa de "quase sem efeito" do
+              overlay) e derruba o alpha pela metade, pra sobrar só uma
+              textura fina, não manchas. */}
+          <feComponentTransfer in="noiseGray" result="noiseSoft">
+            <feFuncR type="linear" slope="0.4" intercept="0.3" />
+            <feFuncG type="linear" slope="0.4" intercept="0.3" />
+            <feFuncB type="linear" slope="0.4" intercept="0.3" />
+            <feFuncA type="linear" slope="0.5" intercept="0" />
+          </feComponentTransfer>
+          <feBlend in="bright" in2="noiseSoft" mode="overlay" />
         </filter>
       </defs>
 
