@@ -54,10 +54,10 @@ const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o 
 const PLAYER_W_HL = PLAYER_H_HL * 0.4726
 const BALL_SIZE = 9
 const ANIM_MS = 550
-// Altura renderizada da faixa da rede — testando um aumento (era 16) a
-// pedido do Rodrigo ("a rede deveria ser mais alta"). Ver comentário perto
+// Altura renderizada da faixa da rede — segundo aumento (era 16, depois 20)
+// a pedido do Rodrigo ("a rede ainda parece baixa"). Ver comentário perto
 // do <image> da rede sobre os puzzles mais apertados que isso afeta.
-const NET_H = 20
+const NET_H = 23
 
 // Poses de ação real (de frente, golpeando) pro jogador destacado no
 // resultado — só existem pro time "você" (as 5 artes vieram só na cor
@@ -253,22 +253,54 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
         >
           <image href="/tactica/punta-flecha.webp" x="0" y="0" width="1032" height="1026" />
         </marker>
+
+        {/* Grão de areia sintético — fondo-cancha.webp é cor sólida (sem
+            nenhuma textura de foto), o que o Rodrigo notou ("a areia não
+            parece areia"). feTurbulence gera ruído fractal procedural (o
+            jeito padrão de simular grão/ruído em SVG, sem precisar de
+            nenhuma imagem extra) — convertido pra cinza translúcido e
+            misturado por cima com blend "overlay", que escurece/clareia
+            sutilmente cada pixel baseado no ruído em vez de só empurrar
+            tudo pra uma cor, o que fica mais orgânico que opacity simples.
+            brightness/saturate (que antes eram um CSS style à parte) foram
+            incorporados aqui como feComponentTransfer/feColorMatrix, pra
+            tudo (clarear a cor original demonstrada + grão) sair de um
+            filtro só. */}
+        <filter id="sandTexture" x="-5%" y="-5%" width="110%" height="110%">
+          <feColorMatrix in="SourceGraphic" type="saturate" values="0.95" result="desat" />
+          <feComponentTransfer in="desat" result="bright">
+            <feFuncR type="linear" slope="1.15" />
+            <feFuncG type="linear" slope="1.15" />
+            <feFuncB type="linear" slope="1.15" />
+          </feComponentTransfer>
+          <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="7" stitchTiles="stitch" result="noise" />
+          {/* overlay com cinza CONSTANTE é matematicamente um no-op (0.5 é o
+              ponto neutro da fórmula overlay) — precisa que o valor em si
+              varie (não só o alpha) pra clarear/escurecer de verdade. Usa o
+              canal R do ruído (varia ~0-1) nos 3 canais = cinza variável,
+              alpha fixo controla só a intensidade geral do efeito. */}
+          <feColorMatrix
+            in="noise" type="matrix"
+            values="1 0 0 0 0
+                    1 0 0 0 0
+                    1 0 0 0 0
+                    0 0 0 0 0.55"
+            result="noiseGray"
+          />
+          <feBlend in="bright" in2="noiseGray" mode="overlay" />
+        </filter>
       </defs>
 
-      {/* Fundo — imagem real, substitui areia+quadra desenhadas à mão. TODO:
-          fondo-cancha.webp veio com linhas internas de tênis/padel (linha de
-          serviço, quadrados) — beach tennis de verdade não tem nada disso,
-          só o retângulo de areia com a borda. Pedido pra Rodrigo regenerar
-          sem essas marcas; não mexi nisso agora. Desenhado maior que o canvas
-          (ver BG_X/Y/W/H) pra recortar a margem de areia excedente do
-          arquivo — só a quadra + uma margem fina fica visível. brightness()
-          leve porque o dourado do arquivo ficava escuro demais (medido
-          ~RGB(217,169,85) no miolo da quadra). */}
+      {/* Fundo — imagem real, substitui areia+quadra desenhadas à mão.
+          Desenhado maior que o canvas (ver BG_X/Y/W/H) pra recortar a
+          margem de areia excedente do arquivo — só a quadra + uma margem
+          fina fica visível. filter=sandTexture (ver <defs>) clareia a cor
+          original e adiciona o grão sintético. */}
       <image
         href="/tactica/fondo-cancha.webp"
         x={BG_X} y={BG_Y} width={BG_W} height={BG_H}
         preserveAspectRatio="none"
-        style={{ filter: 'brightness(1.15) saturate(0.95)' }}
+        filter="url(#sandTexture)"
       />
 
       {/* Rede — imagem real (chroma-key verde removido + spill de croma
