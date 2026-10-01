@@ -70,7 +70,8 @@ const ACTION_POSES: Record<Action, { href: string; ratio: number }> = {
   smash: { href: '/tactica/jugador-smash.webp', ratio: 1243 / 2019 },
   saque: { href: '/tactica/jugador-saque.webp', ratio: 1273 / 1928 },
   globo: { href: '/tactica/jugador-globo.webp', ratio: 1639 / 1889 },
-  ataque: { href: '/tactica/jugador-ataque.webp', ratio: 1580 / 1533 },
+  ataque: { href: '/tactica/jugador-ataque-frente.webp', ratio: 441 / 861 },
+  defensa: { href: '/tactica/jugador-defensa-frente.webp', ratio: 358 / 509 },
 }
 
 // Anima x/y via requestAnimationFrame, não via CSS transition — testado ao
@@ -323,11 +324,16 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           desenham DEPOIS da rede (nunca ficam escondidos, só sobrepostos),
           o teto real não é "esconde o jogador", é só estética: quanto de
           malha aparece atrás dele. Testado visualmente nesses 2 puzzles
-          antes de fechar o número. Fita branca do topo ancorada exatamente
-          em y=50% (rede). */}
+          antes de fechar o número. CENTRADA em y=50% (não ancorada pelo
+          topo) — bug que o Rodrigo notou numa captura de prod: y={py(50)}
+          puro deixava o topo da imagem exatamente em 50% e toda a altura
+          sobrando pra baixo, então a rede nunca ficava entre as duas linhas
+          de 3m, sempre mais perto da de baixo (a diferença media exatamente
+          NET_H de unidades). y={`py(50) - NET_H / 2`} reparte a altura
+          igual pros dois lados. */}
       <image
         href="/tactica/red.webp"
-        x={COURT_X0} y={py(50)}
+        x={COURT_X0} y={py(50) - NET_H / 2}
         width={COURT_X1 - COURT_X0} height={NET_H}
         preserveAspectRatio="none"
       />
@@ -343,7 +349,7 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           comunica que a rede de beach tennis fica elevada, sem tocar a
           areia. */}
       <rect
-        x={COURT_X0} y={py(50) + NET_H + 3}
+        x={COURT_X0} y={py(50) + NET_H / 2 + 3}
         width={COURT_X1 - COURT_X0} height={2}
         rx={1}
         fill="#0E3A40" opacity={0.16}

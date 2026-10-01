@@ -38,7 +38,7 @@ export interface Puzzle {
     arrows?: CourtArrow[]
     // Pose de ação real (não a de espaldas padrão) pro jogador destacado — só
     // 5 tipos têm arte própria hoje (as outras táticas ficam com a pose padrão).
-    action?: 'voleio' | 'smash' | 'saque' | 'globo' | 'ataque'
+    action?: 'voleio' | 'smash' | 'saque' | 'globo' | 'ataque' | 'defensa'
   }
 }
 
@@ -350,6 +350,7 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 55, y: 75 }, to: { x: 50, y: 72 }, style: 'flat' }],
+      action: 'defensa',
     },
   },
   {
