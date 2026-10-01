@@ -45,15 +45,30 @@ const py = (y: number) => COURT_Y0 + (y / 100) * (COURT_Y1 - COURT_Y0)
 const BG_X = -49.86, BG_Y = -29.32, BG_W = 399.72, BG_H = 481.28
 
 // Tamanho dos personagens (arte real, não mais um círculo) — ~0.4726 de
-// proporção largura/altura nos dois PNGs (equipe e rival, medido no arquivo
-// fonte). Ancorados pelo PÉ (base), não pelo centro: a coordenada do jogador
-// representa "onde ele está pisando", igual um diagrama tático de verdade.
+// proporção largura/altura no PNG de espaldas (jugador-equipo, medido no
+// arquivo fonte — jugador-rival usava a mesma proporção antes de virar
+// jugador-rival-frente, ver RIVAL_FRONT_RATIO abaixo). Ancorados pelo PÉ
+// (base), não pelo centro: a coordenada do jogador representa "onde ele
+// está pisando", igual um diagrama tático de verdade.
 const PLAYER_H = 38
 const PLAYER_W = PLAYER_H * 0.4726
 const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o highlight
 const PLAYER_W_HL = PLAYER_H_HL * 0.4726
 const BALL_SIZE = 9
 const ANIM_MS = 550
+
+// Adversário de frente (olhando pra rede/câmera) em vez de espaldas — pedido
+// do Rodrigo depois de notar que os 4 jogadores pareciam todos "olhando pra
+// cima" na mesma direção, sem sentido geométrico (quem está do lado de lá
+// da rede devia estar de frente pra quem está olhando o diagrama). Nenhuma
+// das 20 táticas destaca um adversário, então só precisa de uma pose neutra
+// parada — sem arte própria nesse tom ainda, então isso é um patch rápido
+// (confirmado como provisório): recolore jugador-defensa-frente.webp
+// (teal→laranja/vermelho do rival, preservando luz/sombra de cada pixel)
+// em vez de pedir uma geração nova. Troca o corpo inteiro de cor, então não
+// bate 100% com o estilo "corpo teal + faixa colorida" do jugador-rival.webp
+// de espaldas — aceitável como provisório, revisar se vira definitivo.
+const RIVAL_FRONT_RATIO = 358 / 509
 // Altura renderizada da faixa da rede — segundo aumento (era 16, depois 20)
 // a pedido do Rodrigo ("a rede ainda parece baixa"). Ver comentário perto
 // do <image> da rede sobre os puzzles mais apertados que isso afeta.
@@ -150,11 +165,12 @@ function PlayerToken({
   const { x, y } = useAnimatedXY(px(target.x), py(target.y))
   const h = isHighlighted ? PLAYER_H_HL : PLAYER_H
   // pose de ação só existe pro time "você" destacado — qualquer outro caso
-  // (não destacado, adversário, ou tática sem action) cai na pose padrão
-  // de espaldas, com a proporção fixa de sempre.
+  // (não destacado, tática sem action) cai na pose padrão parada, de
+  // espaldas pro time "você" ou de frente (ver RIVAL_FRONT_RATIO) pro
+  // adversário — cada uma com sua própria proporção de silhueta.
   const pose = isHighlighted && isYou && action ? ACTION_POSES[action] : undefined
-  const w = pose ? h * pose.ratio : (isHighlighted ? PLAYER_W_HL : PLAYER_W)
-  const href = pose ? pose.href : (isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival.webp')
+  const w = pose ? h * pose.ratio : (isYou ? (isHighlighted ? PLAYER_W_HL : PLAYER_W) : h * RIVAL_FRONT_RATIO)
+  const href = pose ? pose.href : (isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival-frente.webp')
   return (
     <g transform={`translate(${x}, ${y})`}>
       {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
