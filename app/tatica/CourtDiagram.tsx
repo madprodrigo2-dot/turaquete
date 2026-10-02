@@ -260,15 +260,39 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Diagrama da quadra">
       <defs>
+        {/* refX/refY de um <marker> com viewBox próprio são interpretados
+            NAS COORDENADAS DESSE viewBox, não nas de markerWidth/Height —
+            pegadinha da spec do SVG. A versão anterior calculava refX=19
+            refY=11 pensando num espaço de 22×22 (a ponta real fica a
+            ~86%/50% da imagem, 19/22≈0,86 e 11/22=0,5 batem exato), mas o
+            navegador lia isso como 19/1032 e 11/1026 do viewBox — quase o
+            canto superior-esquerdo, não a ponta. Resultado: o triângulo
+            inteiro ficava pendurado acima-à-direita de onde a linha
+            realmente termina (bug sempre existiu, só virou visível demais
+            quando o diagrama cresceu de tamanho em tela). viewBox e
+            width/height da imagem também estavam errados (1032×1026 não
+            bate com o arquivo real, que é 256×256 — sem distorção visível
+            porque a proporção é quase igual, mas por clareza agora reflete
+            o tamanho de verdade). refX/refY medidos direto no arquivo: a
+            ponta fica em (253, 126) de 256×256.
+
+            markerWidth/Height: ficou em 22 (proporcional a uma bola de
+            15) desde a implementação original, mas a bola encolheu pra 9
+            num commit posterior que não tocou no marker — a ponta passou
+            a ficar ~2,4x o tamanho da bola em vez de ~1,5x, cobrindo ela
+            por completo no destino da flecha. 13.2 = 9 × (22/15) restaura
+            a proporção original. refX/refY não mudam: são medidos no
+            espaço do viewBox da imagem (256×256), não em unidades do
+            marker, então são independentes do tamanho renderizado. */}
         <marker
           id="arrowhead-img"
-          markerWidth="22" markerHeight="22"
-          refX="19" refY="11"
+          markerWidth="13.2" markerHeight="13.2"
+          refX="253" refY="126"
           orient="auto"
           markerUnits="userSpaceOnUse"
-          viewBox="0 0 1032 1026"
+          viewBox="0 0 256 256"
         >
-          <image href="/tactica/punta-flecha.webp" x="0" y="0" width="1032" height="1026" />
+          <image href="/tactica/punta-flecha.webp" x="0" y="0" width="256" height="256" />
         </marker>
 
         {/* Grão de areia sintético — fondo-cancha.webp é cor sólida (sem
