@@ -145,6 +145,63 @@ function useAnimatedXY(targetX: number, targetY: number): { x: number; y: number
   return pos
 }
 
+// Grid de depuração — ferramenta pro Rodrigo/dev ler coordenadas x/y direto
+// no diagrama em vez de medir a olho ou calcular manualmente (pedido depois
+// da rodada de correção de inconsistências texto-vs-posição em puzzles.ts).
+// Ativado com ?debug=grid na URL, mas só conta se NODE_ENV !== 'production'
+// primeiro — essa comparação é substituída pelo bundler em build time
+// (next build sempre embute NODE_ENV="production"), então no bundle que
+// vai pro navegador do usuário final o branch abaixo nunca roda, mesmo que
+// alguém digite o query param na URL de produção. Funciona só em `npm run
+// dev` local, que é onde os puzzles são editados/revisados mesmo.
+function useDebugGrid(): boolean {
+  const [enabled, setEnabled] = useState(false)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return
+    setEnabled(new URLSearchParams(window.location.search).get('debug') === 'grid')
+  }, [])
+  return enabled
+}
+
+// Linhas a cada 10 unidades (0-100, as mesmas % que os dados de puzzles.ts
+// usam — por isso usa px()/py() em vez de desenhar em unidades cruas do
+// SVG, senão o número lido no grid não bateria com o que se digita no
+// arquivo) + um ponto com label em cada posição real de players/ball do
+// puzzle atual, pra não precisar nem contar linhas de grid pra achar o
+// valor exato. Cor (magenta) escolhida por não existir em nenhum outro
+// elemento do diagrama — inconfundível como overlay de depuração.
+function DebugGrid({ players, ball }: { players: CourtPlayer[]; ball: { x: number; y: number } }) {
+  const ticks: number[] = []
+  for (let v = 0; v <= 100; v += 10) ticks.push(v)
+  const points = [
+    ...players.map(p => ({ x: p.x, y: p.y, label: p.label })),
+    { x: ball.x, y: ball.y, label: 'bola' },
+  ]
+  const GRID = '#FF00AA'
+  return (
+    <g pointerEvents="none">
+      {ticks.map(v => (
+        <line key={`gx-${v}`} x1={px(v)} y1={py(0)} x2={px(v)} y2={py(100)} stroke={GRID} strokeOpacity={0.35} strokeWidth={0.5} strokeDasharray="2 2" />
+      ))}
+      {ticks.map(v => (
+        <line key={`gy-${v}`} x1={px(0)} y1={py(v)} x2={px(100)} y2={py(v)} stroke={GRID} strokeOpacity={0.35} strokeWidth={0.5} strokeDasharray="2 2" />
+      ))}
+      {ticks.map(v => (
+        <text key={`lx-${v}`} x={px(v)} y={py(0) - 4} fontSize={6} fill={GRID} textAnchor="middle">{v}</text>
+      ))}
+      {ticks.map(v => (
+        <text key={`ly-${v}`} x={px(0) - 4} y={py(v) + 2} fontSize={6} fill={GRID} textAnchor="end">{v}</text>
+      ))}
+      {points.map((pt, i) => (
+        <g key={`pt-${i}`} transform={`translate(${px(pt.x)}, ${py(pt.y)})`}>
+          <circle r={2} fill={GRID} />
+          <text x={4} y={-4} fontSize={7} fontWeight={700} fill={GRID}>{`${pt.label} (${pt.x},${pt.y})`}</text>
+        </g>
+      ))}
+    </g>
+  )
+}
+
 function BallToken({ pos }: { pos: { x: number; y: number } }) {
   const { x, y } = useAnimatedXY(px(pos.x), py(pos.y))
   return (
@@ -257,6 +314,7 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
   const allArrows = arrows ?? []
   const { playerTargets, shotTarget } = resolveMovement(players, highlightPlayerIds, arrows)
   const ballPos = shotTarget ?? ball
+  const showGrid = useDebugGrid()
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Diagrama da quadra">
@@ -472,6 +530,8 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           ))}
         </g>
       )}
+
+      {showGrid && <DebugGrid players={players} ball={ball} />}
     </svg>
   )
 }
