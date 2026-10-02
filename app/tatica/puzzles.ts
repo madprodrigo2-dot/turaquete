@@ -74,8 +74,8 @@ export const PUZZLES: Puzzle[] = [
     players: [
       { id: 'you-hit', team: 'voce', label: 'Você', x: 50, y: 72 },
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 22, y: 68 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 28, y: 14 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 72, y: 14 },
+      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 28, y: 46 },
+      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 72, y: 46 },
     ],
     ball: { x: 50, y: 68 },
     opcoes: [
@@ -98,8 +98,8 @@ export const PUZZLES: Puzzle[] = [
     players: [
       { id: 'you-def', team: 'voce', label: 'Você', x: 50, y: 88 },
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 22, y: 84 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 32, y: 12 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 68, y: 12 },
+      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 32, y: 46 },
+      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 68, y: 46 },
     ],
     ball: { x: 50, y: 85 },
     opcoes: [
@@ -169,7 +169,7 @@ export const PUZZLES: Puzzle[] = [
     titulo: 'Terra de ninguém',
     situacao: 'Você está entre a linha de saque e a rede, nem perto o suficiente pra um voleio forte nem longe o suficiente pra defender bem.',
     players: [
-      { id: 'you', team: 'voce', label: 'Você', x: 50, y: 58 },
+      { id: 'you', team: 'voce', label: 'Você', x: 50, y: 65 },
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
@@ -184,7 +184,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'Essa posição intermediária é a mais fraca da quadra. A regra é sempre escolher um lado: ou fecha a rede com decisão, ou volta pro fundo pra se posicionar bem.',
     resultado: {
       highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 50, y: 58 }, to: { x: 50, y: 54 }, style: 'flat' }],
+      arrows: [{ from: { x: 50, y: 65 }, to: { x: 50, y: 54 }, style: 'flat' }],
     },
   },
   {
@@ -197,7 +197,7 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 12 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
-    ball: { x: 50, y: 55 },
+    ball: { x: 50, y: 72 },
     opcoes: [
       { id: 'A', texto: 'O da rede recua rápido pra pegar', porqueErrada: 'Quem está na rede tem menos tempo e ângulo pra julgar uma bola alta. Arriscar a queda ali é mais provável.' },
       { id: 'B', texto: 'Você, do fundo, assume o globo' },
@@ -207,7 +207,7 @@ export const PUZZLES: Puzzle[] = [
     explicacao: 'A formação em triângulo existe pra isso. Quem está no fundo tem mais tempo e ângulo pra cobrir o globo, enquanto quem está na rede mantém a pressão.',
     resultado: {
       highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 60, y: 85 }, to: { x: 50, y: 55 }, style: 'flat' }],
+      arrows: [{ from: { x: 60, y: 85 }, to: { x: 50, y: 72 }, style: 'flat' }],
       action: 'voleio',
     },
   },
@@ -267,7 +267,7 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
-    ball: { x: 55, y: 22 },
+    ball: { x: 55, y: 46 },
     opcoes: [
       { id: 'A', texto: 'Avança à rede com seu parceiro' },
       { id: 'B', texto: 'Recua esperando outro ataque', porqueErrada: 'Desperdiça a chance de virar o ponto. Dá tempo pro adversário se recompor.' },
@@ -278,8 +278,8 @@ export const PUZZLES: Puzzle[] = [
     resultado: {
       highlightPlayerIds: ['you', 'you-partner'],
       arrows: [
-        { from: { x: 55, y: 80 }, to: { x: 55, y: 38 }, style: 'flat' },
-        { from: { x: 25, y: 75 }, to: { x: 25, y: 35 }, style: 'flat' },
+        { from: { x: 55, y: 80 }, to: { x: 55, y: 54 }, style: 'flat' },
+        { from: { x: 25, y: 75 }, to: { x: 25, y: 54 }, style: 'flat' },
       ],
     },
   },
@@ -334,10 +334,10 @@ export const PUZZLES: Puzzle[] = [
     titulo: 'Antecipar o smash',
     situacao: 'O adversário está armando um smash contra você.',
     players: [
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 55, y: 18 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 25, y: 15 },
       { id: 'you', team: 'voce', label: 'Você', x: 55, y: 75 },
       { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 70 },
+      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 55, y: 18 },
+      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 25, y: 15 },
     ],
     ball: { x: 55, y: 25 },
     opcoes: [
@@ -431,7 +431,7 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 35, y: 15 },
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 65, y: 15 },
     ],
-    ball: { x: 50, y: 35 },
+    ball: { x: 50, y: 58 },
     opcoes: [
       { id: 'A', texto: 'Remata com força' },
       { id: 'B', texto: 'Devolve suave, "pra não arriscar"', porqueErrada: 'Devolve de graça a vantagem que você já tinha conquistado com o saque.' },
