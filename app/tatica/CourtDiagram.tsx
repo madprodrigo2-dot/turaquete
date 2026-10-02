@@ -44,16 +44,17 @@ const py = (y: number) => COURT_Y0 + (y / 100) * (COURT_Y1 - COURT_Y0)
 // do asset (tênis/pádel, já reportado) vão ser substituídas de qualquer jeito.
 const BG_X = -49.86, BG_Y = -29.32, BG_W = 399.72, BG_H = 481.28
 
-// Tamanho dos personagens (arte real, não mais um círculo) — ~0.4726 de
-// proporção largura/altura no PNG de espaldas (jugador-equipo, medido no
-// arquivo fonte — jugador-rival usava a mesma proporção antes de virar
-// jugador-rival-frente, ver RIVAL_FRONT_RATIO abaixo). Ancorados pelo PÉ
-// (base), não pelo centro: a coordenada do jogador representa "onde ele
-// está pisando", igual um diagrama tático de verdade.
+// Tamanho dos personagens (arte real, não mais um círculo) — ~0.9371 de
+// proporção largura/altura no PNG de espaldas (jugador-defensa-espalda,
+// medido no arquivo fonte: 477×509 — braço esticado pro lado deixa a
+// silhueta bem mais larga que a cabeça-raquete simples que era usada antes,
+// jugador-equipo.webp, 300×635 ≈ 0,4726). Ancorados pelo PÉ (base), não pelo
+// centro: a coordenada do jogador representa "onde ele está pisando", igual
+// um diagrama tático de verdade.
 const PLAYER_H = 38
-const PLAYER_W = PLAYER_H * 0.4726
+const PLAYER_W = PLAYER_H * (477 / 509)
 const PLAYER_H_HL = 44 // destacado no resultado — um pouco maior, reforça o highlight
-const PLAYER_W_HL = PLAYER_H_HL * 0.4726
+const PLAYER_W_HL = PLAYER_H_HL * (477 / 509)
 const BALL_SIZE = 9
 const ANIM_MS = 550
 
@@ -170,7 +171,7 @@ function PlayerToken({
   // adversário — cada uma com sua própria proporção de silhueta.
   const pose = isHighlighted && isYou && action ? ACTION_POSES[action] : undefined
   const w = pose ? h * pose.ratio : (isYou ? (isHighlighted ? PLAYER_W_HL : PLAYER_W) : h * RIVAL_FRONT_RATIO)
-  const href = pose ? pose.href : (isYou ? '/tactica/jugador-equipo.webp' : '/tactica/jugador-rival-frente.webp')
+  const href = pose ? pose.href : (isYou ? '/tactica/jugador-defensa-espalda.webp' : '/tactica/jugador-rival-frente.webp')
   return (
     <g transform={`translate(${x}, ${y})`}>
       {/* Sombra de contato com a areia — dá uma sensação de "pé no chão" */}
