@@ -5,12 +5,35 @@ import type { CourtPlayer, CourtArrow, Puzzle } from './puzzles'
 
 type Action = NonNullable<Puzzle['resultado']['action']>
 
+interface OptionBadge {
+  id: string
+  x: number
+  y: number
+  // 'idle' = ainda não escolhida. 'picked' = escolhida mas não confirmada
+  // (highlight provisório). 'correct'/'incorrect' só depois de confirmar —
+  // 'incorrect' é só a que foi escolhida errada, as outras erradas não
+  // escolhidas ficam 'dim' (apagadas, sem chamar atenção pra não confundir).
+  state: 'idle' | 'picked' | 'correct' | 'incorrect' | 'dim'
+}
+
 interface Props {
   players: CourtPlayer[]
   ball: { x: number; y: number }
   highlightPlayerIds?: string[]
   arrows?: CourtArrow[]
   action?: Action
+  // Modo piloto "badge na quadra" (ver puzzles.ts PuzzleOption.posicao) — só
+  // passado quando o puzzle tem posicao em todas as opções. onPickOption
+  // omitido depois de confirmado (badges viram só visual, não clicáveis).
+  optionBadges?: OptionBadge[]
+  onPickOption?: (id: string) => void
+  // 'width' (padrão, usado pelos 19 puzzles clássicos): o <svg> ocupa a
+  // largura do container e a altura segue a proporção — certo quando quem
+  // limita o espaço é a largura (card dentro de uma página que rola).
+  // 'height': o <svg> ocupa a ALTURA do container e a largura segue a
+  // proporção — usado no modo piloto "badge na quadra", onde o layout é
+  // sem scroll e quem sobra de espaço é vertical, não horizontal.
+  fit?: 'width' | 'height'
 }
 
 const W = 300
@@ -143,6 +166,44 @@ function useAnimatedXY(targetX: number, targetY: number): { x: number; y: number
   }, [targetX, targetY])
 
   return pos
+}
+
+// Badges de opção na quadra (modo piloto estilo Padel Chess) — um "pill"
+// amarelo com a letra, na posição que puzzles.ts define em opcao.posicao.
+// Cor muda com o estado (ver OptionBadge acima); 'picked' ganha um anel
+// escuro pra diferenciar "selecionado, esperando Confirmar" de 'correct'
+// (que usa a cor aqua, igual ao resto do app). Tocável via onClick nativo
+// do SVG — funciona em touch sem handler extra.
+function OptionBadges({ badges, onPick }: { badges: OptionBadge[]; onPick?: (id: string) => void }) {
+  const SIZE = 22
+  return (
+    <g>
+      {badges.map(b => {
+        const fill = b.state === 'correct' ? '#0CC0BE' : b.state === 'incorrect' ? '#FF5E3A' : '#FFC42E'
+        const opacity = b.state === 'dim' ? 0.3 : 1
+        const clickable = !!onPick
+        return (
+          <g
+            key={b.id}
+            transform={`translate(${px(b.x)}, ${py(b.y)})`}
+            opacity={opacity}
+            onClick={clickable ? () => onPick(b.id) : undefined}
+            style={clickable ? { cursor: 'pointer' } : undefined}
+          >
+            <rect
+              x={-SIZE / 2} y={-SIZE / 2} width={SIZE} height={SIZE} rx={7}
+              fill={fill}
+              stroke={b.state === 'picked' ? '#0E3A40' : 'none'}
+              strokeWidth={b.state === 'picked' ? 2.5 : 0}
+            />
+            <text textAnchor="middle" dominantBaseline="central" y={1} fontSize={13} fontWeight={800} fill="#0E3A40">
+              {b.id}
+            </text>
+          </g>
+        )
+      })}
+    </g>
+  )
 }
 
 // Grid de depuração — ferramenta pro Rodrigo/dev ler coordenadas x/y direto
@@ -310,14 +371,18 @@ function resolveMovement(
 // é arte real (public/tactica/*.webp), sem nada desenhado à mão em SVG além
 // das linhas de referência de distância e do traçado da flecha em si (que
 // muda de puzzle pra puzzle, não dá pra ser um asset fixo).
-export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows, action }: Props) {
+export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows, action, optionBadges, onPickOption, fit = 'width' }: Props) {
   const allArrows = arrows ?? []
   const { playerTargets, shotTarget } = resolveMovement(players, highlightPlayerIds, arrows)
   const ballPos = shotTarget ?? ball
   const showGrid = useDebugGrid()
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Diagrama da quadra">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className={fit === 'height' ? 'h-full w-auto mx-auto block' : 'w-full h-auto'}
+      role="img" aria-label="Diagrama da quadra"
+    >
       <defs>
         {/* refX/refY de um <marker> com viewBox próprio são interpretados
             NAS COORDENADAS DESSE viewBox, não nas de markerWidth/Height —
@@ -530,6 +595,8 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           ))}
         </g>
       )}
+
+      {optionBadges && <OptionBadges badges={optionBadges} onPick={onPickOption} />}
 
       {showGrid && <DebugGrid players={players} ball={ball} />}
     </svg>

@@ -22,6 +22,13 @@ export interface PuzzleOption {
   // Só existe pra opções erradas — explica especificamente por que ESSA opção
   // falha (não é o mesmo texto genérico de "qual era a certa").
   porqueErrada?: string
+  // Opcional — posição na quadra (mesma % 0-100 de CourtPlayer/ball) que essa
+  // opção representa. Quando TODAS as opções de um puzzle têm isso, o
+  // TaticaClient troca pro modo "badge na quadra" (estilo Padel Chess) em vez
+  // da lista de cards de texto. Puzzles conceituais/de regra (sem um "lugar"
+  // que faça sentido pra cada opção) ficam sem isso de propósito e continuam
+  // no formato de cards — ver proposta de escopo discutida com o Rodrigo.
+  posicao?: { x: number; y: number }
 }
 
 export interface Puzzle {
@@ -78,10 +85,17 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 72, y: 46 },
     ],
     ball: { x: 50, y: 68 },
+    // Puzzle piloto do modo "badge na quadra" (ver proposta discutida com o
+    // Rodrigo). posicao de C bate exato com o alvo de resultado.arrows (único
+    // ponto que já tinha uma posição "oficial" antes desta mudança). A e B
+    // são estimativas táticas plausíveis pra onde cada tiro iria — nunca
+    // tinham posição registrada em lugar nenhum (só o resultado da opção
+    // certa é visualizado hoje), ajustar em uma linha se o Rodrigo achar
+    // que o lugar não bate com o texto.
     opcoes: [
-      { id: 'A', texto: 'Atacar pela linha, o lado mais aberto', porqueErrada: 'É um ângulo mais fácil de cobrir pra quem está bem posicionado na rede, não explora a falta de comunicação entre os adversários.' },
-      { id: 'B', texto: 'Atacar cruzado, na diagonal, pro canto', porqueErrada: 'É mais arriscado, maior chance de erro por sair da quadra, e não aproveita a mesma vantagem tática da bola pelo meio.' },
-      { id: 'C', texto: 'Atacar pelo meio, entre os dois adversários' },
+      { id: 'A', texto: 'Atacar pela linha, o lado mais aberto', porqueErrada: 'É um ângulo mais fácil de cobrir pra quem está bem posicionado na rede, não explora a falta de comunicação entre os adversários.', posicao: { x: 85, y: 46 } },
+      { id: 'B', texto: 'Atacar cruzado, na diagonal, pro canto', porqueErrada: 'É mais arriscado, maior chance de erro por sair da quadra, e não aproveita a mesma vantagem tática da bola pelo meio.', posicao: { x: 15, y: 15 } },
+      { id: 'C', texto: 'Atacar pelo meio, entre os dois adversários', posicao: { x: 50, y: 10 } },
     ],
     correta: 'C',
     explicacao: 'A bola pelo meio reduz o ângulo de resposta dos dois adversários e explora a falta de comunicação sobre quem deveria pegá-la. Estatisticamente é a jogada com maior chance de ponto contra duplas sem uma regra clara de "bola do meio".',

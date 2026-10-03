@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Check, X, ArrowRight, ArrowLeft, ArrowCounterClockwise } from '@phosphor-icons/react'
-import { PUZZLES, type Puzzle } from './puzzles'
+import { PUZZLES, type Puzzle, type PuzzleOption } from './puzzles'
 import CourtDiagram from './CourtDiagram'
 
 const CORRECT_REACTIONS = [
@@ -19,6 +19,57 @@ const INCORRECT_REACTIONS = [
   'Não dessa vez, mas o raciocínio tá no caminho.',
   'Foi por pouco, olha a explicação.',
 ]
+
+// Compartilhado pelos dois modos (cards clássico e badge-na-quadra piloto)
+// — texto completo de porquêErrada/explicação, sem resumir (pedido
+// explícito do Rodrigo: não perder conteúdo nessa primeira versão).
+function AnswerFeedback({
+  isCorrect, reaction, selectedOption, puzzle,
+}: {
+  isCorrect: boolean
+  reaction: string
+  selectedOption: PuzzleOption | undefined
+  puzzle: Puzzle
+}) {
+  return (
+    <div className={`rounded-2xl p-4 border ${isCorrect ? 'bg-aqua/10 border-aqua/30' : 'bg-coral/10 border-coral/30'}`}>
+      <div className="flex items-start gap-2 mb-3">
+        <Image
+          src="/tury-explicando.png"
+          alt="Tury"
+          width={80}
+          height={100}
+          className="h-9 w-auto object-contain shrink-0"
+        />
+        <div className="min-w-0 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-3 py-1.5 shadow-sm">
+          <p className="text-[12px] font-semibold text-tinta leading-snug">{reaction}</p>
+        </div>
+      </div>
+      {!isCorrect && selectedOption?.porqueErrada && (
+        <div className="mb-3 pb-3 border-b border-coral/20">
+          <p className="font-heading font-bold text-coral text-sm mb-1">Por que essa não é a melhor escolha</p>
+          <p className="text-tinta/70 text-sm leading-relaxed">{selectedOption.porqueErrada}</p>
+        </div>
+      )}
+      <p className={`font-heading font-bold text-sm mb-1.5 ${isCorrect ? 'text-aqua' : 'text-coral'}`}>
+        {isCorrect ? 'Resposta certa.' : `A certa era a ${puzzle.correta}.`}
+      </p>
+      <p className="text-tinta/70 text-sm leading-relaxed">{puzzle.explicacao}</p>
+    </div>
+  )
+}
+
+function NextButton({ index, total, onNext }: { index: number; total: number; onNext: () => void }) {
+  return (
+    <button
+      onClick={onNext}
+      className="w-full bg-coral text-white font-semibold text-base py-3.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2"
+    >
+      {index < total - 1 ? 'Próxima tática' : 'Ver resultado final'}
+      <ArrowRight size={18} weight="bold" />
+    </button>
+  )
+}
 
 function PuzzleCard({
   puzzle,
@@ -35,6 +86,17 @@ function PuzzleCard({
   onAnswer: (correct: boolean) => void
   onNext: () => void
 }) {
+  // Piloto "badge na quadra" (estilo Padel Chess) — só entra nesse modo
+  // quando TODAS as opções do puzzle têm posicao definida em puzzles.ts.
+  // Hoje só "atacar-pelo-meio" tem isso; os outros 19 continuam no formato
+  // de cards de texto abaixo, sem nenhuma mudança de comportamento.
+  const isSpatial = puzzle.opcoes.every(o => o.posicao)
+
+  // `picked` é a escolha provisória (antes de confirmar) — só existe de
+  // verdade no modo espacial. `selected` é a resposta FINAL, que dispara
+  // onAnswer/feedback — nos cards clássicos, tocar a opção já seta os dois
+  // de uma vez (sem passo de confirmação extra, comportamento inalterado).
+  const [picked, setPicked] = useState<'A' | 'B' | 'C' | null>(null)
   const [selected, setSelected] = useState<'A' | 'B' | 'C' | null>(null)
   const answered = selected !== null
   const isCorrect = selected === puzzle.correta
@@ -43,10 +105,87 @@ function PuzzleCard({
     ? CORRECT_REACTIONS[index % CORRECT_REACTIONS.length]
     : INCORRECT_REACTIONS[index % INCORRECT_REACTIONS.length]
 
-  function handleSelect(id: 'A' | 'B' | 'C') {
+  function handlePick(id: 'A' | 'B' | 'C') {
     if (answered) return
-    setSelected(id)
-    onAnswer(id === puzzle.correta)
+    setPicked(id)
+    if (!isSpatial) {
+      setSelected(id)
+      onAnswer(id === puzzle.correta)
+    }
+  }
+
+  function handleConfirm() {
+    if (!picked || answered) return
+    setSelected(picked)
+    onAnswer(picked === puzzle.correta)
+  }
+
+  if (isSpatial) {
+    const badges = puzzle.opcoes.map(opt => ({
+      id: opt.id,
+      x: opt.posicao!.x,
+      y: opt.posicao!.y,
+      state: !answered
+        ? (picked === opt.id ? ('picked' as const) : ('idle' as const))
+        : (opt.id === puzzle.correta ? ('correct' as const) : picked === opt.id ? ('incorrect' as const) : ('dim' as const)),
+    }))
+
+    return (
+      <div className="flex flex-col h-full gap-2">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="h-1.5 flex-1 rounded-full bg-tinta/8 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-aqua transition-[width] duration-300 ease-out"
+              style={{ width: `${(index / total) * 100}%` }}
+            />
+          </div>
+          <p className="font-mono text-[10px] font-semibold text-aqua shrink-0">{score} acertos</p>
+        </div>
+
+        <div className="flex-1 min-h-0 bg-white rounded-2xl p-2 shadow-card border border-[rgba(14,58,64,0.06)] flex items-center justify-center">
+          <CourtDiagram
+            players={puzzle.players}
+            ball={puzzle.ball}
+            highlightPlayerIds={answered ? puzzle.resultado.highlightPlayerIds : undefined}
+            arrows={answered ? puzzle.resultado.arrows : undefined}
+            action={answered ? puzzle.resultado.action : undefined}
+            optionBadges={badges}
+            onPickOption={!answered ? (id => handlePick(id as 'A' | 'B' | 'C')) : undefined}
+            fit="height"
+          />
+        </div>
+
+        <p className="text-tinta/70 text-xs leading-snug text-center shrink-0 px-1">{puzzle.situacao}</p>
+
+        {!answered ? (
+          <div className="flex items-stretch gap-2 shrink-0">
+            {puzzle.opcoes.map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => handlePick(opt.id)}
+                className={`w-11 h-11 rounded-xl font-heading font-bold text-base transition-colors shrink-0 ${
+                  picked === opt.id ? 'bg-yellow text-tinta ring-2 ring-tinta' : 'bg-tinta/8 text-tinta/60'
+                }`}
+              >
+                {opt.id}
+              </button>
+            ))}
+            <button
+              onClick={handleConfirm}
+              disabled={!picked}
+              className="flex-1 bg-coral text-white font-semibold rounded-xl transition-all disabled:bg-tinta/10 disabled:text-tinta/35"
+            >
+              Confirmar
+            </button>
+          </div>
+        ) : (
+          <div className="shrink-0 flex flex-col gap-3">
+            <AnswerFeedback isCorrect={isCorrect} reaction={reaction} selectedOption={selectedOption} puzzle={puzzle} />
+            <NextButton index={index} total={total} onNext={onNext} />
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -101,7 +240,7 @@ function PuzzleCard({
             <button
               key={opt.id}
               disabled={answered}
-              onClick={() => handleSelect(opt.id)}
+              onClick={() => handlePick(opt.id)}
               className={`text-left rounded-2xl border-2 px-4 py-3 flex items-start gap-3 transition-colors disabled:cursor-default ${stateClasses}`}
             >
               <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -117,42 +256,9 @@ function PuzzleCard({
         })}
       </div>
 
-      {answered && (
-        <div className={`rounded-2xl p-4 border ${isCorrect ? 'bg-aqua/10 border-aqua/30' : 'bg-coral/10 border-coral/30'}`}>
-          <div className="flex items-start gap-2 mb-3">
-            <Image
-              src="/tury-explicando.png"
-              alt="Tury"
-              width={80}
-              height={100}
-              className="h-9 w-auto object-contain shrink-0"
-            />
-            <div className="min-w-0 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-3 py-1.5 shadow-sm">
-              <p className="text-[12px] font-semibold text-tinta leading-snug">{reaction}</p>
-            </div>
-          </div>
-          {!isCorrect && selectedOption?.porqueErrada && (
-            <div className="mb-3 pb-3 border-b border-coral/20">
-              <p className="font-heading font-bold text-coral text-sm mb-1">Por que essa não é a melhor escolha</p>
-              <p className="text-tinta/70 text-sm leading-relaxed">{selectedOption.porqueErrada}</p>
-            </div>
-          )}
-          <p className={`font-heading font-bold text-sm mb-1.5 ${isCorrect ? 'text-aqua' : 'text-coral'}`}>
-            {isCorrect ? 'Resposta certa.' : `A certa era a ${puzzle.correta}.`}
-          </p>
-          <p className="text-tinta/70 text-sm leading-relaxed">{puzzle.explicacao}</p>
-        </div>
-      )}
+      {answered && <AnswerFeedback isCorrect={isCorrect} reaction={reaction} selectedOption={selectedOption} puzzle={puzzle} />}
 
-      {answered && (
-        <button
-          onClick={onNext}
-          className="w-full bg-coral text-white font-semibold text-base py-3.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2"
-        >
-          {index < total - 1 ? 'Próxima tática' : 'Ver resultado final'}
-          <ArrowRight size={18} weight="bold" />
-        </button>
-      )}
+      {answered && <NextButton index={index} total={total} onNext={onNext} />}
       </div>
     </div>
   )
@@ -196,6 +302,11 @@ export default function TaticaClient() {
   const [finished, setFinished] = useState(false)
   const [runId, setRunId] = useState(0)
   const puzzle = PUZZLES[current]
+  // Controla o "chrome" da página inteira (header/padding), não só o card —
+  // o modo piloto precisa do layout sem scroll de ponta a ponta, não só o
+  // diagrama maior. Só o puzzle piloto ativa isso; os outros 19 (e a tela
+  // de resultado final) continuam na página normal, com scroll.
+  const isSpatial = !finished && puzzle.opcoes.every(o => o.posicao)
 
   function handleNext() {
     if (current < PUZZLES.length - 1) {
@@ -213,9 +324,12 @@ export default function TaticaClient() {
   }
 
   return (
-    <div className="min-h-screen sand-texture">
-      <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
-        <div className="max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 py-3 flex items-center gap-2">
+    <div className={isSpatial ? 'h-dvh overflow-hidden sand-texture flex flex-col' : 'min-h-screen sand-texture'}>
+      <div className={isSpatial
+        ? 'shrink-0 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]'
+        : 'sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]'}
+      >
+        <div className={`max-w-sm md:max-w-4xl mx-auto px-5 md:px-8 flex items-center gap-2 ${isSpatial ? 'py-1.5' : 'py-3'}`}>
           <ArrowLeft size={16} weight="regular" className="text-tinta" aria-hidden="true" />
           <Link href="/" className="text-tinta text-sm font-medium hover:text-aqua transition-colors">Início</Link>
           <span className="text-tinta/30 text-sm">·</span>
@@ -223,7 +337,10 @@ export default function TaticaClient() {
         </div>
       </div>
 
-      <div className="max-w-sm md:max-w-2xl mx-auto px-5 py-8">
+      <div className={isSpatial
+        ? 'flex-1 min-h-0 overflow-y-auto max-w-sm md:max-w-2xl mx-auto px-3 py-2 w-full flex flex-col'
+        : 'max-w-sm md:max-w-2xl mx-auto px-5 py-8'}
+      >
         {finished ? (
           <SummaryScreen score={score} total={PUZZLES.length} onRestart={handleRestart} />
         ) : (
