@@ -116,10 +116,12 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 68, y: 46 },
     ],
     ball: { x: 50, y: 85 },
+    // Segunda rodada do modo "badge na quadra" — B bate com resultado.arrows,
+    // A/C são estimativas táticas (passing baixo cruzado / bola curta mole).
     opcoes: [
-      { id: 'A', texto: 'Tentar um passing forte e cruzado, arriscado', porqueErrada: 'Contra uma dupla bem postada na rede, esse chute costuma ser interceptado facilmente. O risco não compensa.' },
-      { id: 'B', texto: 'Dar um globo alto e profundo, pra ganhar tempo e se reposicionar' },
-      { id: 'C', texto: 'Bater uma bola curta e mole, só pra devolver', porqueErrada: 'Devolve o controle do ponto pro adversário, que vai atacar essa bola fácil sem dificuldade.' },
+      { id: 'A', texto: 'Tentar um passing forte e cruzado, arriscado', porqueErrada: 'Contra uma dupla bem postada na rede, esse chute costuma ser interceptado facilmente. O risco não compensa.', posicao: { x: 20, y: 48 } },
+      { id: 'B', texto: 'Dar um globo alto e profundo, pra ganhar tempo e se reposicionar', posicao: { x: 50, y: 8 } },
+      { id: 'C', texto: 'Bater uma bola curta e mole, só pra devolver', porqueErrada: 'Devolve o controle do ponto pro adversário, que vai atacar essa bola fácil sem dificuldade.', posicao: { x: 50, y: 42 } },
     ],
     correta: 'B',
     explicacao: 'Contra uma dupla bem postada na rede, o globo profundo é a ferramenta mais segura. Força o adversário a recuar ou arriscar um smash difícil, e te dá tempo pra se reposicionar.',
@@ -236,10 +238,12 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
     ball: { x: 30, y: 20 },
+    // B bate com resultado.arrows. A = meio da rede (x=50). C = linha lateral
+    // OPOSTA ao lado do saque/devolução provável (x=90, direita).
     opcoes: [
-      { id: 'A', texto: 'Se posiciona no meio, cobrindo os dois lados', porqueErrada: 'Cobrir "os dois lados por igual" na prática significa não cobrir bem nenhum. Perde a chance de interceptar a devolução mais provável.' },
-      { id: 'B', texto: 'Se inclina pra cobrir a diagonal provável da devolução' },
-      { id: 'C', texto: 'Corre pra linha lateral oposta', porqueErrada: 'Aposta numa devolução pouco provável e abre exatamente o lado que o adversário tende a devolver.' },
+      { id: 'A', texto: 'Se posiciona no meio, cobrindo os dois lados', porqueErrada: 'Cobrir "os dois lados por igual" na prática significa não cobrir bem nenhum. Perde a chance de interceptar a devolução mais provável.', posicao: { x: 50, y: 52 } },
+      { id: 'B', texto: 'Se inclina pra cobrir a diagonal provável da devolução', posicao: { x: 40, y: 52 } },
+      { id: 'C', texto: 'Corre pra linha lateral oposta', porqueErrada: 'Aposta numa devolução pouco provável e abre exatamente o lado que o adversário tende a devolver.', posicao: { x: 90, y: 52 } },
     ],
     correta: 'B',
     explicacao: 'A devolução mais provável de um saque cruzado tende a voltar pela mesma diagonal. Cobrir essa diagonal de antemão aumenta a chance de um voleio de ataque.',
@@ -330,10 +334,12 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
     ball: { x: 55, y: 55 },
+    // A bate com resultado.arrows (smash). B/C são estimativas (devolução
+    // segura mais rasa / globo profundo pro lado).
     opcoes: [
-      { id: 'A', texto: 'Remata com força' },
-      { id: 'B', texto: 'Devolve suave, jogando seguro', porqueErrada: 'Desperdiça a condição ideal pro smash e devolve a iniciativa pro adversário sem necessidade.' },
-      { id: 'C', texto: 'Devolve com um globo', porqueErrada: 'É desnecessariamente defensivo numa situação onde você tem total controle pra atacar.' },
+      { id: 'A', texto: 'Remata com força', posicao: { x: 50, y: 15 } },
+      { id: 'B', texto: 'Devolve suave, jogando seguro', porqueErrada: 'Desperdiça a condição ideal pro smash e devolve a iniciativa pro adversário sem necessidade.', posicao: { x: 50, y: 35 } },
+      { id: 'C', texto: 'Devolve com um globo', porqueErrada: 'É desnecessariamente defensivo numa situação onde você tem total controle pra atacar.', posicao: { x: 65, y: 8 } },
     ],
     correta: 'A',
     explicacao: 'Essa é a condição ideal pro smash. Desperdiçar essa chance com um golpe suave devolve a iniciativa pro adversário.',
@@ -446,10 +452,12 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 65, y: 15 },
     ],
     ball: { x: 50, y: 58 },
+    // A bate com resultado.arrows (smash). B/C são estimativas (devolução
+    // segura mais rasa / globo profundo pro lado).
     opcoes: [
-      { id: 'A', texto: 'Remata com força' },
-      { id: 'B', texto: 'Devolve suave, "pra não arriscar"', porqueErrada: 'Devolve de graça a vantagem que você já tinha conquistado com o saque.' },
-      { id: 'C', texto: 'Devolve com um globo profundo', porqueErrada: 'É desnecessariamente defensivo numa bola fraca que você já tem controle pra atacar.' },
+      { id: 'A', texto: 'Remata com força', posicao: { x: 50, y: 15 } },
+      { id: 'B', texto: 'Devolve suave, "pra não arriscar"', porqueErrada: 'Devolve de graça a vantagem que você já tinha conquistado com o saque.', posicao: { x: 50, y: 35 } },
+      { id: 'C', texto: 'Devolve com um globo profundo', porqueErrada: 'É desnecessariamente defensivo numa bola fraca que você já tem controle pra atacar.', posicao: { x: 30, y: 8 } },
     ],
     correta: 'A',
     explicacao: 'Depois de um bom saque que gerou uma devolução fraca, é a hora de aproveitar com um ataque. Jogar seguro nesse momento devolve a vantagem que você já tinha conquistado.',
@@ -517,10 +525,13 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 45, y: 30 },
     ],
     ball: { x: 50, y: 55 },
+    // B bate com resultado.arrows (o vão aberto entre os adversários mal
+    // postados). A = canto extremo/apertado (golpe espetacular, mais risco).
+    // C = devolução central e rasa, sem comprometimento.
     opcoes: [
-      { id: 'A', texto: 'Arrisca um golpe espetacular pra terminar rápido', porqueErrada: 'Arriscar demais quando você já está ganhando a jogada é o erro mais comum que devolve pontos de graça pro adversário.' },
-      { id: 'B', texto: 'Escolhe o golpe mais seguro que termine o ponto' },
-      { id: 'C', texto: 'Devolve suave pra o ponto continuar', porqueErrada: 'Prolonga o ponto sem necessidade, dando chance pro adversário se recuperar de uma posição que já estava perdendo.' },
+      { id: 'A', texto: 'Arrisca um golpe espetacular pra terminar rápido', porqueErrada: 'Arriscar demais quando você já está ganhando a jogada é o erro mais comum que devolve pontos de graça pro adversário.', posicao: { x: 95, y: 8 } },
+      { id: 'B', texto: 'Escolhe o golpe mais seguro que termine o ponto', posicao: { x: 75, y: 20 } },
+      { id: 'C', texto: 'Devolve suave pra o ponto continuar', porqueErrada: 'Prolonga o ponto sem necessidade, dando chance pro adversário se recuperar de uma posição que já estava perdendo.', posicao: { x: 50, y: 35 } },
     ],
     correta: 'B',
     explicacao: 'Com vantagem clara, o objetivo é fechar o ponto da forma mais confiável possível. Arriscar demais quando você já está ganhando a jogada é um erro comum que devolve pontos de graça pro adversário.',
