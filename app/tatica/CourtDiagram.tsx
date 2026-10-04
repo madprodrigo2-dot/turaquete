@@ -483,12 +483,12 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           suprimido no cordão da malha). Altura em NET_H — testando um valor
           maior que os 16 originais (pedido do Rodrigo, "a rede deveria ser
           mais alta"). O caso mais apertado nos dados é y=52 (cobertura-
-          diagonal-no-saque e avisar-o-saque, os dois jogadores terminam a
-          poucas unidades da rede) — como jogador/label/swoosh sempre
-          desenham DEPOIS da rede (nunca ficam escondidos, só sobrepostos),
-          o teto real não é "esconde o jogador", é só estética: quanto de
-          malha aparece atrás dele. Testado visualmente nesses 2 puzzles
-          antes de fechar o número. CENTRADA em y=50% (não ancorada pelo
+          diagonal-no-saque, o jogador termina a poucas unidades da rede) —
+          como jogador/label/swoosh sempre desenham DEPOIS da rede (nunca
+          ficam escondidos, só sobrepostos), o teto real não é "esconde o
+          jogador", é só estética: quanto de malha aparece atrás dele.
+          Testado visualmente nesse puzzle antes de fechar o número.
+          CENTRADA em y=50% (não ancorada pelo
           topo) — bug que o Rodrigo notou numa captura de prod: y={py(50)}
           puro deixava o topo da imagem exatamente em 50% e toda a altura
           sobrando pra baixo, então a rede nunca ficava entre as duas linhas

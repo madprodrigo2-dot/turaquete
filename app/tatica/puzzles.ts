@@ -61,10 +61,16 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 66, y: 20 },
     ],
     ball: { x: 50, y: 60 },
+    // Adaptado pro modo badge-na-quadra (rodada de 14/10/2026). As duas opções
+    // erradas originais ("ambos esperam" e "quem estiver mais perto da rede")
+    // convergiam pro MESMO ponto no espaço — a bola caindo sem ninguém tocar —
+    // impossível de diferenciar com 3 badges. Reescritas pra duas falhas
+    // espacialmente distintas (backhand assume / os dois se chocam), mantendo
+    // a mesma lição central (regra combinada evita confusão).
     opcoes: [
-      { id: 'A', texto: 'Ambos esperam, pensando que o outro vai pegar', porqueErrada: 'É exatamente o erro que causa o "buraco do meio": cada um espera que o outro pegue e a bola cai sem ninguém tocar.' },
-      { id: 'B', texto: 'O jogador de forehand daquele lado assume a bola (regra combinada de antemão)' },
-      { id: 'C', texto: 'Quem estiver mais perto da rede assume, independente do lado', porqueErrada: 'Sem uma regra combinada, isso pode gerar confusão ou até os dois se moverem pro mesmo lugar. Não resolve o problema de comunicação de forma confiável.' },
+      { id: 'A', texto: 'O jogador de backhand daquele lado assume a bola', porqueErrada: 'O backhand geralmente tem menos controle que o forehand numa bola no meio — a regra combinada prioriza quem tem o golpe mais confiável nessa posição.', posicao: { x: 68, y: 62 } },
+      { id: 'B', texto: 'O jogador de forehand daquele lado assume a bola (regra combinada de antemão)', posicao: { x: 32, y: 62 } },
+      { id: 'C', texto: 'Ambos tentam pegar ao mesmo tempo, sem combinar antes', porqueErrada: 'Sem uma regra combinada, os dois tentando pegar a mesma bola pode causar um choque ou os dois errarem o toque.', posicao: { x: 50, y: 60 } },
     ],
     correta: 'B',
     explicacao: 'É a regra de ouro pra evitar o "buraco do meio", a causa número 1 de pontos perdidos em duplas iniciantes. Combinar antes quem cobre o meio evita que os dois fiquem esperando um pelo outro.',
@@ -142,10 +148,13 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
     ball: { x: 50, y: 25 },
+    // Adaptado pro modo badge-na-quadra. "Fica onde está" vira a própria
+    // posição atual do jogador (70,70) — não precisa inventar lugar nenhum,
+    // é literalmente onde ele já está.
     opcoes: [
-      { id: 'A', texto: 'Fica onde está', porqueErrada: 'Isso quebra o "cordão invisível" entre os parceiros e abre um buraco enorme no meio da quadra.' },
-      { id: 'B', texto: 'Avança também, mantendo a mesma distância entre vocês' },
-      { id: 'C', texto: 'Recua pro fundo', porqueErrada: 'Deixa seu parceiro sozinho na rede, sem cobertura, e cede o controle do ponto que vocês tinham.' },
+      { id: 'A', texto: 'Fica onde está', porqueErrada: 'Isso quebra o "cordão invisível" entre os parceiros e abre um buraco enorme no meio da quadra.', posicao: { x: 70, y: 70 } },
+      { id: 'B', texto: 'Avança também, mantendo a mesma distância entre vocês', posicao: { x: 70, y: 54 } },
+      { id: 'C', texto: 'Recua pro fundo', porqueErrada: 'Deixa seu parceiro sozinho na rede, sem cobertura, e cede o controle do ponto que vocês tinham.', posicao: { x: 70, y: 88 } },
     ],
     correta: 'B',
     explicacao: 'A dupla se move como uma unidade. Se um avança e o outro fica atrás, abre um buraco enorme no meio da quadra.',
@@ -165,10 +174,13 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
     ball: { x: 68, y: 18 },
+    // Adaptado pro modo badge-na-quadra. Como os 2 jogadores se movem juntos
+    // (ver resultado.arrows), o badge usa um ponto médio representativo entre
+    // os dois alvos/posições, não a posição exata de nenhum jogador individual.
     opcoes: [
-      { id: 'A', texto: 'Avança à rede com seu parceiro', porqueErrada: 'Depois de lobar, o adversário pode rematar. Avançar nesse momento deixa a dupla exposta sem tempo de reagir.' },
-      { id: 'B', texto: 'Fica onde está', porqueErrada: 'Não dá o espaço necessário pra reagir a um possível smash de volta.' },
-      { id: 'C', texto: 'Recua com seu parceiro pro fundo' },
+      { id: 'A', texto: 'Avança à rede com seu parceiro', porqueErrada: 'Depois de lobar, o adversário pode rematar. Avançar nesse momento deixa a dupla exposta sem tempo de reagir.', posicao: { x: 42, y: 52 } },
+      { id: 'B', texto: 'Fica onde está', porqueErrada: 'Não dá o espaço necessário pra reagir a um possível smash de volta.', posicao: { x: 42, y: 63 } },
+      { id: 'C', texto: 'Recua com seu parceiro pro fundo', posicao: { x: 42, y: 85 } },
     ],
     correta: 'C',
     explicacao: 'Depois de lobar, o adversário pode rematar. A dupla precisa de espaço e tempo pra defender, então os dois recuam juntos.',
@@ -178,29 +190,6 @@ export const PUZZLES: Puzzle[] = [
         { from: { x: 60, y: 62 }, to: { x: 60, y: 85 }, style: 'flat' },
         { from: { x: 25, y: 65 }, to: { x: 25, y: 85 }, style: 'flat' },
       ],
-    },
-  },
-  {
-    slug: 'terra-de-ninguem',
-    titulo: 'Terra de ninguém',
-    situacao: 'Você está entre a linha de saque e a rede, nem perto o suficiente pra um voleio forte nem longe o suficiente pra defender bem.',
-    players: [
-      { id: 'you', team: 'voce', label: 'Você', x: 50, y: 65 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 15 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
-    ],
-    ball: { x: 70, y: 40 },
-    opcoes: [
-      { id: 'A', texto: 'Fica ali e reage', porqueErrada: 'É a posição mais fraca da quadra. Parado ali você não defende bem nem ataca bem.' },
-      { id: 'B', texto: 'Decide: avança com convicção até a rede ou recua até o fundo' },
-      { id: 'C', texto: 'Recua só meio metro', porqueErrada: 'Não resolve o problema, você continua na zona intermediária mais vulnerável.' },
-    ],
-    correta: 'B',
-    explicacao: 'Essa posição intermediária é a mais fraca da quadra. A regra é sempre escolher um lado: ou fecha a rede com decisão, ou volta pro fundo pra se posicionar bem.',
-    resultado: {
-      highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 50, y: 65 }, to: { x: 50, y: 54 }, style: 'flat' }],
     },
   },
   {
@@ -214,10 +203,13 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
     ball: { x: 50, y: 72 },
+    // Adaptado pro modo badge-na-quadra. A = posição do parceiro (que tenta
+    // errado). C ("nenhum se move") = posição inicial do "Você", já que
+    // inação significa ninguém saiu do lugar onde estava.
     opcoes: [
-      { id: 'A', texto: 'O da rede recua rápido pra pegar', porqueErrada: 'Quem está na rede tem menos tempo e ângulo pra julgar uma bola alta. Arriscar a queda ali é mais provável.' },
-      { id: 'B', texto: 'Você, do fundo, assume o globo' },
-      { id: 'C', texto: 'Nenhum se move', porqueErrada: 'A bola cai dentro da quadra e vocês perdem o ponto de graça.' },
+      { id: 'A', texto: 'O da rede recua rápido pra pegar', porqueErrada: 'Quem está na rede tem menos tempo e ângulo pra julgar uma bola alta. Arriscar a queda ali é mais provável.', posicao: { x: 30, y: 54 } },
+      { id: 'B', texto: 'Você, do fundo, assume o globo', posicao: { x: 50, y: 72 } },
+      { id: 'C', texto: 'Nenhum se move', porqueErrada: 'A bola cai dentro da quadra e vocês perdem o ponto de graça.', posicao: { x: 60, y: 85 } },
     ],
     correta: 'B',
     explicacao: 'A formação em triângulo existe pra isso. Quem está no fundo tem mais tempo e ângulo pra cobrir o globo, enquanto quem está na rede mantém a pressão.',
@@ -263,10 +255,12 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
     ball: { x: 90, y: 55 },
+    // Adaptado pro modo badge-na-quadra. "Mantém a posição exata" vira a
+    // própria posição atual do jogador (20,54).
     opcoes: [
-      { id: 'A', texto: 'Você se move pro meio da quadra, deixando seu lado momentaneamente aberto' },
-      { id: 'B', texto: 'Mantém a posição exata', porqueErrada: 'Ignora que o ângulo mais aberto e perigoso mudou pro meio da quadra depois que seu parceiro foi puxado pra fora.' },
-      { id: 'C', texto: 'Corre pro lado do seu parceiro', porqueErrada: 'Deixa o meio, que é o ângulo mais aberto agora, completamente livre pro adversário explorar.' },
+      { id: 'A', texto: 'Você se move pro meio da quadra, deixando seu lado momentaneamente aberto', posicao: { x: 45, y: 56 } },
+      { id: 'B', texto: 'Mantém a posição exata', porqueErrada: 'Ignora que o ângulo mais aberto e perigoso mudou pro meio da quadra depois que seu parceiro foi puxado pra fora.', posicao: { x: 20, y: 54 } },
+      { id: 'C', texto: 'Corre pro lado do seu parceiro', porqueErrada: 'Deixa o meio, que é o ângulo mais aberto agora, completamente livre pro adversário explorar.', posicao: { x: 85, y: 58 } },
     ],
     correta: 'A',
     explicacao: 'Quando um parceiro é puxado pra fora, o buraco mais perigoso passa a ser o meio da quadra. Reposicionar pro meio prioriza fechar esse ângulo mais aberto.',
@@ -286,10 +280,13 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
     ],
     ball: { x: 55, y: 46 },
+    // Adaptado pro modo badge-na-quadra. A usa ponto médio entre os dois
+    // alvos de resultado.arrows (os 2 jogadores avançam juntos). C ("fica
+    // onde está") usa a posição atual do "Você".
     opcoes: [
-      { id: 'A', texto: 'Avança à rede com seu parceiro' },
-      { id: 'B', texto: 'Recua esperando outro ataque', porqueErrada: 'Desperdiça a chance de virar o ponto. Dá tempo pro adversário se recompor.' },
-      { id: 'C', texto: 'Fica onde está', porqueErrada: 'Não aproveita a vantagem que a bola curta te deu, e o adversário se recupera fácil.' },
+      { id: 'A', texto: 'Avança à rede com seu parceiro', posicao: { x: 40, y: 54 } },
+      { id: 'B', texto: 'Recua esperando outro ataque', porqueErrada: 'Desperdiça a chance de virar o ponto. Dá tempo pro adversário se recompor.', posicao: { x: 40, y: 88 } },
+      { id: 'C', texto: 'Fica onde está', porqueErrada: 'Não aproveita a vantagem que a bola curta te deu, e o adversário se recupera fácil.', posicao: { x: 55, y: 80 } },
     ],
     correta: 'A',
     explicacao: 'Uma bola curta perto da rede do adversário é a chance de virar o ponto de defesa pra ataque. A dupla avança junto pra pressionar antes que o adversário se recomponha.',
@@ -299,28 +296,6 @@ export const PUZZLES: Puzzle[] = [
         { from: { x: 55, y: 80 }, to: { x: 55, y: 54 }, style: 'flat' },
         { from: { x: 25, y: 75 }, to: { x: 25, y: 54 }, style: 'flat' },
       ],
-    },
-  },
-  {
-    slug: 'a-regra-do-let',
-    titulo: 'A regra do let',
-    situacao: 'Seu saque toca a rede e ainda assim cai dentro da quadra do adversário.',
-    players: [
-      { id: 'you', team: 'voce', label: 'Você', x: 50, y: 90 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 45, y: 15 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 75, y: 15 },
-    ],
-    ball: { x: 50, y: 50 },
-    opcoes: [
-      { id: 'A', texto: 'Repete o ponto (let), como no tênis', porqueErrada: 'É a regra do tênis, não do beach tennis. Aqui não existe let no saque.' },
-      { id: 'B', texto: 'O ponto é válido, segue jogando normal' },
-      { id: 'C', texto: 'Perde o ponto automaticamente', porqueErrada: 'Só perde o ponto se o saque tocar a rede e NÃO entrar. Se entra, o ponto segue normal.' },
-    ],
-    correta: 'B',
-    explicacao: 'Em beach tennis não existe a regra do let. Se o saque toca a rede e entra, o ponto segue normal. Se toca a rede e não entra, perde o ponto direto, não tem segundo saque.',
-    resultado: {
-      arrows: [{ from: { x: 50, y: 50 }, to: { x: 50, y: 20 }, style: 'flat' }],
     },
   },
   {
@@ -360,10 +335,13 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 25, y: 15 },
     ],
     ball: { x: 55, y: 25 },
+    // Adaptado pro modo badge-na-quadra. A = posição atual ("fica parado").
+    // B reusa o pequeno deslocamento que já existia em resultado.arrows
+    // (a "leitura" se traduz num ajuste fino de posição, não um salto).
     opcoes: [
-      { id: 'A', texto: 'Fica parado olhando a bola', porqueErrada: 'Sem antecipar a direção, você reage tarde demais pra um smash rápido.' },
-      { id: 'B', texto: 'Se prepara antecipando a direção pela postura/movimento dele' },
-      { id: 'C', texto: 'Recua o máximo possível', porqueErrada: 'Só recuar sem ler a jogada não garante que você vai estar no lugar certo quando a bola vier.' },
+      { id: 'A', texto: 'Fica parado olhando a bola', porqueErrada: 'Sem antecipar a direção, você reage tarde demais pra um smash rápido.', posicao: { x: 55, y: 75 } },
+      { id: 'B', texto: 'Se prepara antecipando a direção pela postura/movimento dele', posicao: { x: 50, y: 72 } },
+      { id: 'C', texto: 'Recua o máximo possível', porqueErrada: 'Só recuar sem ler a jogada não garante que você vai estar no lugar certo quando a bola vier.', posicao: { x: 50, y: 90 } },
     ],
     correta: 'B',
     explicacao: 'Defender o smash depende de ler a postura e o movimento do adversário antes do golpe. Ficar parado ou só recuar sem ler a jogada reduz muito a chance de defender bem.',
@@ -384,10 +362,13 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 30, y: 15 },
     ],
     ball: { x: 68, y: 20 },
+    // Adaptado pro modo badge-na-quadra. A = mesmo lugar de sempre (posição
+    // atual da bola, o padrão repetido). C = centro, simbolizando "sem
+    // direção definida".
     opcoes: [
-      { id: 'A', texto: 'Continua igual, é o que sai melhor', porqueErrada: 'Um padrão repetido de saque é fácil de antecipar. O adversário já está lendo bem essa jogada.' },
-      { id: 'B', texto: 'Varia direção e velocidade do próximo saque' },
-      { id: 'C', texto: 'Saca o mais forte possível, sem se importar com o lugar', porqueErrada: 'Força sem direção não é suficiente, o adversário pode estar simplesmente esperando naquele lugar.' },
+      { id: 'A', texto: 'Continua igual, é o que sai melhor', porqueErrada: 'Um padrão repetido de saque é fácil de antecipar. O adversário já está lendo bem essa jogada.', posicao: { x: 68, y: 20 } },
+      { id: 'B', texto: 'Varia direção e velocidade do próximo saque', posicao: { x: 25, y: 15 } },
+      { id: 'C', texto: 'Saca o mais forte possível, sem se importar com o lugar', porqueErrada: 'Força sem direção não é suficiente, o adversário pode estar simplesmente esperando naquele lugar.', posicao: { x: 50, y: 20 } },
     ],
     correta: 'B',
     explicacao: 'Um padrão repetido de saque fica fácil de antecipar. Variar direção e velocidade é uma das táticas mais simples pra desorientar o adversário.',
@@ -396,50 +377,6 @@ export const PUZZLES: Puzzle[] = [
       arrows: [{ from: { x: 50, y: 90 }, to: { x: 25, y: 15 }, style: 'flat' }],
       action: 'saque',
     },
-  },
-  {
-    slug: 'jogar-nas-pontas-na-areia',
-    titulo: 'Jogar nas pontas na areia',
-    situacao: 'Você quer cansar o adversário, aproveitando que na areia mudar de direção é mais lento que numa quadra dura.',
-    players: [
-      { id: 'you', team: 'voce', label: 'Você', x: 50, y: 75 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 70 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 40, y: 18 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 60, y: 15 },
-    ],
-    ball: { x: 50, y: 60 },
-    opcoes: [
-      { id: 'A', texto: 'Joga sempre no meio', porqueErrada: 'Não explora a dificuldade extra de se mover lateralmente na areia.' },
-      { id: 'B', texto: 'Joga nas pontas, alternando os lados' },
-      { id: 'C', texto: 'Joga sempre no mesmo lugar', porqueErrada: 'É previsível. O adversário se acomoda ali e deixa de gastar energia extra se movendo.' },
-    ],
-    correta: 'B',
-    explicacao: 'Na areia, mudar de direção custa mais tempo e esforço do que numa quadra dura. Atacar as pontas alternadamente explora essa dificuldade extra de movimento.',
-    resultado: {
-      highlightPlayerIds: ['you'],
-      arrows: [{ from: { x: 50, y: 60 }, to: { x: 15, y: 15 }, style: 'flat' }],
-      action: 'ataque',
-    },
-  },
-  {
-    slug: 'troca-de-lado-por-vento',
-    titulo: 'Troca de lado por vento',
-    situacao: 'O vento começou a favorecer bastante a quadra do adversário.',
-    players: [
-      { id: 'you', team: 'voce', label: 'Você', x: 50, y: 80 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 30, y: 15 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
-    ],
-    ball: { x: 50, y: 50 },
-    opcoes: [
-      { id: 'A', texto: 'Não dá pra fazer nada até o fim do set', porqueErrada: 'As trocas de lado acontecem a cada 6 pontos, não só no fim do set. Dá pra esperar bem menos tempo do que isso.' },
-      { id: 'B', texto: 'A troca de lado acontece automaticamente a cada 6 pontos, então precisa se adaptar tacticamente até lá' },
-      { id: 'C', texto: 'Pode pedir a troca em qualquer momento', porqueErrada: 'A troca de lado é automática a cada 6 pontos, não é algo que se pede fora disso.' },
-    ],
-    correta: 'B',
-    explicacao: 'As trocas de lado acontecem a cada 6 pontos, pensadas justamente pra dividir de forma justa a vantagem do vento e do sol. Não tem como pedir a troca fora disso, o jeito é se adaptar enquanto espera.',
-    resultado: {},
   },
   {
     slug: 'capitalizar-um-bom-saque',
@@ -465,53 +402,6 @@ export const PUZZLES: Puzzle[] = [
       highlightPlayerIds: ['you'],
       arrows: [{ from: { x: 50, y: 70 }, to: { x: 50, y: 15 }, style: 'flat' }],
       action: 'smash',
-    },
-  },
-  {
-    slug: 'avisar-o-saque',
-    titulo: 'Avisar o saque',
-    situacao: 'Você vai sacar. O que seu parceiro precisa saber antes?',
-    players: [
-      { id: 'you', team: 'voce', label: 'Você', x: 50, y: 90 },
-      { id: 'you-partner', team: 'voce', label: 'Parceiro', x: 25, y: 54 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 35, y: 15 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 15 },
-    ],
-    ball: { x: 50, y: 88 },
-    opcoes: [
-      { id: 'A', texto: 'Não precisa avisar nada, ele se ajusta sozinho', porqueErrada: 'Sem saber a direção do saque, seu parceiro não consegue antecipar a diagonal provável da devolução.' },
-      { id: 'B', texto: 'A direção e intenção do saque, pra se posicionar na rede em consequência' },
-      { id: 'C', texto: 'Só importa depois que o adversário devolver', porqueErrada: 'Nessa hora já é tarde. A posição ideal precisa ser decidida antes do saque, não depois da devolução.' },
-    ],
-    correta: 'B',
-    explicacao: 'Quem está na rede precisa saber a direção e intenção do saque antes de acontecer, pra conseguir antecipar a diagonal provável da devolução. Essa comunicação é antes do ponto, não durante.',
-    resultado: {
-      highlightPlayerIds: ['you-partner'],
-      arrows: [{ from: { x: 25, y: 54 }, to: { x: 35, y: 52 }, style: 'flat' }],
-    },
-  },
-  {
-    slug: 'bola-dividida-sem-tempo-de-avisar',
-    titulo: 'Bola dividida sem tempo de avisar',
-    situacao: 'Chega uma bola de altura média, bem no meio, e não dá tempo de gritar nada.',
-    players: [
-      { id: 'you-fh', team: 'voce', label: 'Forehand', x: 32, y: 62 },
-      { id: 'you-bh', team: 'voce', label: 'Backhand', x: 68, y: 62 },
-      { id: 'adv-1', team: 'adversario', label: 'Adv. 1', x: 34, y: 20 },
-      { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 66, y: 20 },
-    ],
-    ball: { x: 50, y: 58 },
-    opcoes: [
-      { id: 'A', texto: 'Os dois vão atrás da bola por segurança', porqueErrada: 'Sem uma regra combinada, os dois tentarem pegar a mesma bola pode causar um choque ou os dois errarem a bola.' },
-      { id: 'B', texto: 'Já combinaram antes que a bola do meio é do forehand daquele lado, então cada um já sabe seu papel' },
-      { id: 'C', texto: 'Nenhum se move, pra não se chocar', porqueErrada: 'A bola cai dentro da quadra e vocês perdem o ponto de graça.' },
-    ],
-    correta: 'B',
-    explicacao: 'Por isso a regra da bola do meio se combina antes da partida, não se decide na hora. Em situações sem tempo de se comunicar, cada um já sabe automaticamente o que fazer.',
-    resultado: {
-      highlightPlayerIds: ['you-fh'],
-      arrows: [{ from: { x: 32, y: 62 }, to: { x: 50, y: 58 }, style: 'flat' }],
-      action: 'voleio',
     },
   },
   {
