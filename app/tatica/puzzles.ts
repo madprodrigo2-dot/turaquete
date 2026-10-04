@@ -61,16 +61,18 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 66, y: 20 },
     ],
     ball: { x: 50, y: 60 },
-    // Adaptado pro modo badge-na-quadra (rodada de 14/10/2026). As duas opções
-    // erradas originais ("ambos esperam" e "quem estiver mais perto da rede")
-    // convergiam pro MESMO ponto no espaço — a bola caindo sem ninguém tocar —
-    // impossível de diferenciar com 3 badges. Reescritas pra duas falhas
-    // espacialmente distintas (backhand assume / os dois se chocam), mantendo
-    // a mesma lição central (regra combinada evita confusão).
+    // Revertido do modo badge-na-quadra (18/10/2026) — Rodrigo notou que os
+    // badges B/A ficavam literalmente em cima de "Forehand"/"Backhand" (dois
+    // jogadores JÁ identificados por label própria) e o badge C flutuava sem
+    // contexto. A decisão real aqui é QUEM assume a bola / se há choque por
+    // falta de comunicação — um conceito, não um lugar — diferente de
+    // puzzles tipo "globo sob pressão" onde o badge É literalmente pra onde
+    // a bola vai. Texto de volta ao original pré-adaptação (a reescrita só
+    // existia pra forçar 3 posições distintas, sem motivo pra manter agora).
     opcoes: [
-      { id: 'A', texto: 'O jogador de backhand daquele lado assume a bola', porqueErrada: 'O backhand geralmente tem menos controle que o forehand numa bola no meio — a regra combinada prioriza quem tem o golpe mais confiável nessa posição.', posicao: { x: 68, y: 62 } },
-      { id: 'B', texto: 'O jogador de forehand daquele lado assume a bola (regra combinada de antemão)', posicao: { x: 32, y: 62 } },
-      { id: 'C', texto: 'Ambos tentam pegar ao mesmo tempo, sem combinar antes', porqueErrada: 'Sem uma regra combinada, os dois tentando pegar a mesma bola pode causar um choque ou os dois errarem o toque.', posicao: { x: 50, y: 60 } },
+      { id: 'A', texto: 'Ambos esperam, pensando que o outro vai pegar', porqueErrada: 'É exatamente o erro que causa o "buraco do meio": cada um espera que o outro pegue e a bola cai sem ninguém tocar.' },
+      { id: 'B', texto: 'O jogador de forehand daquele lado assume a bola (regra combinada de antemão)' },
+      { id: 'C', texto: 'Quem estiver mais perto da rede assume, independente do lado', porqueErrada: 'Sem uma regra combinada, isso pode gerar confusão ou até os dois se moverem pro mesmo lugar. Não resolve o problema de comunicação de forma confiável.' },
     ],
     correta: 'B',
     explicacao: 'É a regra de ouro pra evitar o "buraco do meio", a causa número 1 de pontos perdidos em duplas iniciantes. Combinar antes quem cobre o meio evita que os dois fiquem esperando um pelo outro.',
@@ -203,13 +205,15 @@ export const PUZZLES: Puzzle[] = [
       { id: 'adv-2', team: 'adversario', label: 'Adv. 2', x: 70, y: 12 },
     ],
     ball: { x: 50, y: 72 },
-    // Adaptado pro modo badge-na-quadra. A = posição do parceiro (que tenta
-    // errado). C ("nenhum se move") = posição inicial do "Você", já que
-    // inação significa ninguém saiu do lugar onde estava.
+    // Revertido do modo badge-na-quadra (18/10/2026) — mesmo problema do
+    // bola-no-meio: A ficava em cima de "Parceiro" e C em cima da posição
+    // inicial de "Você", dois jogadores já identificados por label própria.
+    // A decisão real é QUEM tenta pegar (o da rede vs o do fundo) / se
+    // ninguém se move — não um lugar na quadra.
     opcoes: [
-      { id: 'A', texto: 'O da rede recua rápido pra pegar', porqueErrada: 'Quem está na rede tem menos tempo e ângulo pra julgar uma bola alta. Arriscar a queda ali é mais provável.', posicao: { x: 30, y: 54 } },
-      { id: 'B', texto: 'Você, do fundo, assume o globo', posicao: { x: 50, y: 72 } },
-      { id: 'C', texto: 'Nenhum se move', porqueErrada: 'A bola cai dentro da quadra e vocês perdem o ponto de graça.', posicao: { x: 60, y: 85 } },
+      { id: 'A', texto: 'O da rede recua rápido pra pegar', porqueErrada: 'Quem está na rede tem menos tempo e ângulo pra julgar uma bola alta. Arriscar a queda ali é mais provável.' },
+      { id: 'B', texto: 'Você, do fundo, assume o globo' },
+      { id: 'C', texto: 'Nenhum se move', porqueErrada: 'A bola cai dentro da quadra e vocês perdem o ponto de graça.' },
     ],
     correta: 'B',
     explicacao: 'A formação em triângulo existe pra isso. Quem está no fundo tem mais tempo e ângulo pra cobrir o globo, enquanto quem está na rede mantém a pressão.',
