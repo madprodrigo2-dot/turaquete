@@ -3,7 +3,14 @@
 import { usePathname } from 'next/navigation'
 
 export default function SiteFooter() {
-  const isHome = usePathname() === '/'
+  const pathname = usePathname()
+  const isHome = pathname === '/'
+  // /tatica é noindex/nofollow, isolada, sem link nenhum pra fora (nem pro
+  // resto do site) e sem nenhum link de afiliado na página — o disclaimer
+  // não se aplica aqui. Esconder o footer também é o que falta pro piloto
+  // "badge na quadra" ficar com zero scroll de verdade (Rodrigo confirmou
+  // que o scroll que via era chegar nesse footer, não o conteúdo do puzzle).
+  if (pathname?.startsWith('/tatica')) return null
 
   return (
     <footer
