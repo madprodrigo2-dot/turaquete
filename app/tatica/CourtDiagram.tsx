@@ -16,6 +16,15 @@ interface OptionBadge {
   state: 'idle' | 'picked' | 'correct' | 'incorrect' | 'dim'
 }
 
+interface TrajectoryGuide {
+  from: { x: number; y: number }
+  to: { x: number; y: number }
+  // false = linha fina/tracejada, sempre visível, só pra indicar direção
+  // sem chamar atenção. true = a opção escolhida (antes de confirmar) —
+  // vira a flecha "de verdade", mesmo estilo da flecha pós-resultado.
+  active: boolean
+}
+
 interface Props {
   players: CourtPlayer[]
   ball: { x: number; y: number }
@@ -27,6 +36,11 @@ interface Props {
   // omitido depois de confirmado (badges viram só visual, não clicáveis).
   optionBadges?: OptionBadge[]
   onPickOption?: (id: string) => void
+  // Guias de trajetória por opção, só antes de confirmar (ver TaticaClient —
+  // origem calculada a partir de resultado.arrows, reaproveitado, não é
+  // campo novo em puzzles.ts). Some depois de confirmar — aí a flecha normal
+  // de allArrows assume.
+  trajectoryGuides?: TrajectoryGuide[]
   // 'width' (padrão, usado pelos 19 puzzles clássicos): o <svg> ocupa a
   // largura do container e a altura segue a proporção — certo quando quem
   // limita o espaço é a largura (card dentro de uma página que rola).
@@ -166,6 +180,43 @@ function useAnimatedXY(targetX: number, targetY: number): { x: number; y: number
   }, [targetX, targetY])
 
   return pos
+}
+
+// Guias de trajetória — pedido do Rodrigo depois de notar que os badges
+// ficavam "flutuando" sem indicar de onde vem a jogada (conferimos a
+// referência real do Padel Chess de novo: eles também não desenham flecha
+// nenhuma, nem ao escolher — então isso é uma melhoria nossa, não uma cópia).
+// 3 linhas simultâneas e CHEIAS seria poluição visual — por isso só a opção
+// escolhida (picked) fica no estilo cheio (cor sólida, ponta de flecha real,
+// swoosh), as outras 2 ficam finas/tracejadas/translúcidas o tempo todo,
+// só pra dar noção de direção sem competir com os badges.
+function TrajectoryGuides({ guides }: { guides: TrajectoryGuide[] }) {
+  return (
+    <g pointerEvents="none">
+      {guides.map((g, i) => (
+        <g key={i}>
+          {g.active && (
+            <image
+              href="/tactica/swoosh.webp"
+              x={px(g.from.x) - 13} y={py(g.from.y) - 13}
+              width={26} height={26}
+              opacity={0.85}
+            />
+          )}
+          <line
+            x1={px(g.from.x)} y1={py(g.from.y)}
+            x2={px(g.to.x)} y2={py(g.to.y)}
+            stroke={g.active ? '#FF5E3A' : '#0E3A40'}
+            strokeOpacity={g.active ? 1 : 0.22}
+            strokeWidth={g.active ? 3 : 1}
+            strokeDasharray={g.active ? undefined : '2 4'}
+            strokeLinecap="round"
+            markerEnd={g.active ? 'url(#arrowhead-img)' : undefined}
+          />
+        </g>
+      ))}
+    </g>
+  )
 }
 
 // Badges de opção na quadra (modo piloto estilo Padel Chess) — um "pill"
@@ -371,7 +422,7 @@ function resolveMovement(
 // é arte real (public/tactica/*.webp), sem nada desenhado à mão em SVG além
 // das linhas de referência de distância e do traçado da flecha em si (que
 // muda de puzzle pra puzzle, não dá pra ser um asset fixo).
-export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows, action, optionBadges, onPickOption, fit = 'width' }: Props) {
+export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows, action, optionBadges, onPickOption, trajectoryGuides, fit = 'width' }: Props) {
   const allArrows = arrows ?? []
   const { playerTargets, shotTarget } = resolveMovement(players, highlightPlayerIds, arrows)
   const ballPos = shotTarget ?? ball
@@ -595,6 +646,8 @@ export default function CourtDiagram({ players, ball, highlightPlayerIds, arrows
           ))}
         </g>
       )}
+
+      {trajectoryGuides && <TrajectoryGuides guides={trajectoryGuides} />}
 
       {optionBadges && <OptionBadges badges={optionBadges} onPick={onPickOption} />}
 

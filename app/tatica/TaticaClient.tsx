@@ -20,6 +20,21 @@ const INCORRECT_REACTIONS = [
   'Foi por pouco, olha a explicação.',
 ]
 
+// Origem da(s) guia(s) de trajetória — reaproveita resultado.arrows (sem
+// campo novo em puzzles.ts). Puzzles com 2 jogadores se movendo juntos
+// (depois-de-dar-um-globo, bola-curta-depois-de-bloquear) têm 2 arrows;
+// usa o ponto médio das duas origens como uma única linha representativa
+// por opção, em vez de 6 linhas finas simultâneas (testado, ficava poluído).
+function trajectoryOrigin(puzzle: Puzzle): { x: number; y: number } | null {
+  const arrows = puzzle.resultado.arrows
+  if (!arrows || arrows.length === 0) return null
+  if (arrows.length === 1) return arrows[0].from
+  return {
+    x: arrows.reduce((sum, a) => sum + a.from.x, 0) / arrows.length,
+    y: arrows.reduce((sum, a) => sum + a.from.y, 0) / arrows.length,
+  }
+}
+
 // Compartilhado pelos dois modos (cards clássico e badge-na-quadra piloto)
 // — texto completo de porquêErrada/explicação, sem resumir (pedido
 // explícito do Rodrigo: não perder conteúdo nessa primeira versão).
@@ -129,10 +144,19 @@ function PuzzleCard({
         ? (picked === opt.id ? ('picked' as const) : ('idle' as const))
         : (opt.id === puzzle.correta ? ('correct' as const) : picked === opt.id ? ('incorrect' as const) : ('dim' as const)),
     }))
+    // Guias de trajetória só antes de confirmar — depois disso a flecha
+    // normal (allArrows, via arrows=resultado.arrows) já conta a história.
+    const origin = trajectoryOrigin(puzzle)
+    const guides = !answered && origin
+      ? puzzle.opcoes.map(opt => ({ from: origin, to: opt.posicao!, active: picked === opt.id }))
+      : undefined
 
     return (
       <div className="flex flex-col h-full gap-2">
         <div className="flex items-center gap-2 shrink-0">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-tinta/40 shrink-0">
+            {index + 1}/{total}
+          </p>
           <div className="h-1.5 flex-1 rounded-full bg-tinta/8 overflow-hidden">
             <div
               className="h-full rounded-full bg-aqua transition-[width] duration-300 ease-out"
@@ -151,6 +175,7 @@ function PuzzleCard({
             action={answered ? puzzle.resultado.action : undefined}
             optionBadges={badges}
             onPickOption={!answered ? (id => handlePick(id as 'A' | 'B' | 'C')) : undefined}
+            trajectoryGuides={guides}
             fit="height"
           />
         </div>
