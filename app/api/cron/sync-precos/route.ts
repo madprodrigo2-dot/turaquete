@@ -107,6 +107,10 @@ export async function GET(req: NextRequest) {
 
   const dry       = req.nextUrl.searchParams.get('dry') === 'true'
   const chunkSize = Math.max(1, parseInt(req.nextUrl.searchParams.get('chunk') ?? String(CHUNK_SIZE), 10) || CHUNK_SIZE)
+  const idsParam  = req.nextUrl.searchParams.get('ids')
+  const targetIds = idsParam
+    ? idsParam.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n))
+    : null
 
   const geckoKey = process.env.GECKOAPI_KEY
   if (!geckoKey) return NextResponse.json({ error: 'GECKOAPI_KEY não configurada' }, { status: 500 })
@@ -134,33 +138,41 @@ export async function GET(req: NextRequest) {
 
   const pool = (all ?? []).filter(r => isSpecificMlUrl(r.affiliate_url))
 
-  const eligible = pool.filter(r =>
-    (r.price_updated_at === null || r.price_updated_at < tenDaysAgo) &&
-    (r.last_sync_at    === null || r.last_sync_at    < tenDaysAgo)
-  )
-
-  // Fallback: se as "vencidas" (>=10 dias) não preenchem o chunk, completa com as
-  // próximas mais antigas do pool inteiro (já vem ordenado por price_updated_at
-  // ascendente da query acima) — aproveita crédito de API que ficaria ocioso em
-  // vez de esperar elas baterem 10 dias. Não muda chunkSize nem o ritmo/retry das
-  // chamadas — só amplia de onde os itens do mesmo chunk podem vir.
-  // Pedido do Rodrigo (2026-09), confirmado margem de créditos no plano GeckoAPI.
-  let items = eligible.slice(0, chunkSize)
+  let items: typeof pool
   let backfilled = 0
-  if (items.length < chunkSize) {
-    const alreadyIn = new Set(items.map(r => r.id))
-    const need      = chunkSize - items.length
-    const backfill  = pool.filter(r => !alreadyIn.has(r.id)).slice(0, need)
-    backfilled = backfill.length
-    items = [...items, ...backfill]
+
+  if (targetIds) {
+    // Retry dirigido por id — ignora janela de elegibilidade e chunkSize,
+    // processa exatamente as raquetes pedidas (ex: reprocessar falhas específicas).
+    items = pool.filter(r => targetIds.includes(r.id))
+    console.log(`[sync] retry dirigido: ${items.length}/${targetIds.length} ids encontrados no pool`)
+  } else {
+    const eligible = pool.filter(r =>
+      (r.price_updated_at === null || r.price_updated_at < tenDaysAgo) &&
+      (r.last_sync_at    === null || r.last_sync_at    < tenDaysAgo)
+    )
+
+    // Fallback: se as "vencidas" (>=10 dias) não preenchem o chunk, completa com as
+    // próximas mais antigas do pool inteiro (já vem ordenado por price_updated_at
+    // ascendente da query acima) — aproveita crédito de API que ficaria ocioso em
+    // vez de esperar elas baterem 10 dias. Não muda chunkSize nem o ritmo/retry das
+    // chamadas — só amplia de onde os itens do mesmo chunk podem vir.
+    // Pedido do Rodrigo (2026-09), confirmado margem de créditos no plano GeckoAPI.
+    items = eligible.slice(0, chunkSize)
+    if (items.length < chunkSize) {
+      const alreadyIn = new Set(items.map(r => r.id))
+      const need      = chunkSize - items.length
+      const backfill  = pool.filter(r => !alreadyIn.has(r.id)).slice(0, need)
+      backfilled = backfill.length
+      items = [...items, ...backfill]
+    }
+    console.log(`[sync] selecionadas: ${items.length} (${items.length - backfilled} vencidas >=10d + ${backfilled} preenchimento)`)
   }
 
   if (items.length === 0) {
     console.log('[sync] fila vazia — nenhuma raquete com affiliate_url de ML elegível')
     return NextResponse.json({ dry, chunk: 0, processed: 0 })
   }
-
-  console.log(`[sync] selecionadas: ${items.length} (${items.length - backfilled} vencidas >=10d + ${backfilled} preenchimento)`)
 
   const results: {
     id: number; name: string; priceBefore: number | null; priceAfter: number | null
