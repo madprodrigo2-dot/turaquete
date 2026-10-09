@@ -11,6 +11,7 @@ import { buildMlSearchUrl, SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { getSupabaseAdmin } from '@/lib/supabase'
 import { headers } from 'next/headers'
 import { auth } from '@/auth'
+import { checkClickRateLimit } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -193,6 +194,17 @@ export default async function IrPage({
   const isBot   = /bot|crawler|spider|google|bing|baidu|yandex|facebook|slurp|preview/i.test(ua)
   const isTest  = isAdmin || isBot || cookieStore.get('turaquete_test_mode')?.value === '1'
 
+  const rawIp = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
+             ?? hdrs.get('x-real-ip')
+             ?? null
+
+  // Barra rajadas de clique (scraping automatizado) antes de qualquer trabalho
+  // no banco. Admin nunca é bloqueado — mesma regra do rate-limit do chat.
+  if (!isAdmin && !checkClickRateLimit(rawIp ?? '127.0.0.1')) {
+    console.warn(`[rate-limit] blocked click ip=${rawIp ?? '-'} slug=${slug} ua=${ua.slice(0, 80)}`)
+    notFound()
+  }
+
   // Fetch racket + session origin concurrently
   const sessionId = sp.s ?? null
   const [racket, sessionOrigin] = await Promise.all([
@@ -253,9 +265,6 @@ export default async function IrPage({
 
   const price = racket.price ? Number(racket.price) : null
 
-  const rawIp = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
-             ?? hdrs.get('x-real-ip')
-             ?? null
   const ipHash = rawIp && process.env.IP_HASH_SALT
     ? Array.from(
         new Uint8Array(

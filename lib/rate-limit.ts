@@ -107,3 +107,18 @@ export function getRateLimitState(ip: string, sessionId?: string): LimitesState 
 export function checkEventsRateLimit(ip: string): boolean {
   return check(`ev:${ip}`, 120, HOUR_MS)
 }
+
+// Cliques de afiliado (/ir/[slug]): 8/10s (rajada) + 15/min + 200/dia — cobre
+// uso legítimo (várias abas comparando raquetas) mas barra scraping automatizado
+export const CLICK_LIMITS = {
+  BURST_PER_10S:  8,
+  MAX_PER_MIN:   15,
+  MAX_PER_DAY_IP: 200,
+}
+
+export function checkClickRateLimit(ip: string): boolean {
+  if (!check(`click_10s:${ip}`, CLICK_LIMITS.BURST_PER_10S, 10_000)) return false
+  if (!check(`click_min:${ip}`,  CLICK_LIMITS.MAX_PER_MIN,  MINUTE_MS))  return false
+  if (!check(`click_day:${ip}`,  CLICK_LIMITS.MAX_PER_DAY_IP, DAY_MS))   return false
+  return true
+}
