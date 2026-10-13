@@ -691,14 +691,25 @@ export async function getBrandChipsForPref(): Promise<string[]> {
 }
 
 export async function listarMarcas(): Promise<Brand[]> {
+  // Join a partir de rackets (publicada=true) — mesmo padrão de getBrandChipsForPref()
+  // e /api/busca. Marcas sem nenhuma raquete publicada (ex: marcas só de grips) nunca
+  // aparecem aqui, sem depender de nenhum flag manual.
   const { data, error } = await getSupabase()
-    .from('brands')
-    .select('id, name, slug, country, website, status, logo_url')
-    .order('status')   // disponivel primero, depois em_breve
-    .order('name')
+    .from('rackets')
+    .select('brands!inner(id, name, slug, country, website, status, logo_url)')
+    .eq('publicada', true)
 
   if (error) throw new Error(`Supabase: ${error.message}`)
-  return (data as Brand[]) ?? []
+
+  const byId = new Map<number, Brand>()
+  for (const r of (data ?? []) as unknown as Array<{ brands: Brand | Brand[] | null }>) {
+    const b = Array.isArray(r.brands) ? r.brands[0] : r.brands
+    if (b) byId.set(b.id, b)
+  }
+
+  return [...byId.values()].sort((a, b) =>
+    a.status !== b.status ? (a.status === 'disponivel' ? -1 : 1) : a.name.localeCompare(b.name)
+  )
 }
 
 export async function getRaquetasComAtleta(): Promise<RacketWithInsights[]> {
