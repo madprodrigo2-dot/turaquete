@@ -16,3 +16,13 @@ export function getDisplayName(racket: {
   }
   return racket.nome_base
 }
+
+// Alguns grips já têm a marca embutida no próprio `name` (ex: "Tourna Grip XL
+// Original Dry Feel", "Overgrip TBT") — prefixar a marca de novo duplicaria
+// ("Tourna Tourna Grip..."). Só prefixa quando o nome ainda não menciona a marca.
+export function getGripDisplayName(grip: { name: string; brandName?: string | null }): string {
+  if (!grip.brandName) return grip.name
+  return grip.name.toLowerCase().includes(grip.brandName.toLowerCase())
+    ? grip.name
+    : `${grip.brandName} ${grip.name}`
+}

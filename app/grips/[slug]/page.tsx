@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getSupabaseAdmin } from '@/lib/supabase'
+import { getGripDisplayName } from '@/lib/displayName'
 import SiteNav from '@/components/SiteNav'
 import RacketImageTile from '@/components/RacketImageTile'
 
@@ -87,7 +88,7 @@ export async function generateMetadata(
   const grip = await getGripBySlug(slug)
   if (!grip) return { robots: { index: false, follow: false } }
 
-  const displayName = grip.brand?.name ? `${grip.brand.name} ${grip.name}` : grip.name
+  const displayName = getGripDisplayName({ name: grip.name, brandName: grip.brand?.name })
 
   return {
     title: `${displayName} (preview)`,
@@ -100,7 +101,7 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
   const grip = await getGripBySlug(slug)
   if (!grip) notFound()
 
-  const displayName = grip.brand?.name ? `${grip.brand.name} ${grip.name}` : grip.name
+  const displayName = getGripDisplayName({ name: grip.name, brandName: grip.brand?.name })
   const specRows = buildSpecRows(grip)
 
   return (
@@ -112,21 +113,15 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
         {/* Layout: coluna única mobile, 2 colunas desktop (imagem sticky + conteúdo) — mesmo padrão de /raquetes/[slug] */}
         <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_1.15fr] lg:gap-10 lg:items-start">
 
-          {/* ── Coluna esquerda: imagem sticky ── */}
+          {/* ── Coluna esquerda: imagem ──
+              Overgrip é um acessório pequeno, não uma raquete — o tile de
+              800x1020 herdado de /raquetes/[slug] (pensado pra foto grande de
+              raquete) ficava desproporcionalmente enorme aqui. Largura
+              limitada (não estica até preencher a coluna) resolve. */}
           <div className="lg:sticky lg:top-20">
-            {grip.image_url ? (
-              <>
-                <div className="lg:hidden bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[220px]">
-                  <div className="relative overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={grip.image_url}
-                      alt={displayName}
-                      className="object-contain max-h-72 w-auto"
-                    />
-                  </div>
-                </div>
-                <div className="hidden lg:block rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)]">
+            <div className="max-w-[240px] md:max-w-[280px] mx-auto lg:mx-0">
+              {grip.image_url ? (
+                <div className="rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)]">
                   <RacketImageTile
                     src={grip.image_url}
                     alt={displayName}
@@ -136,12 +131,12 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
                     loading="eager"
                   />
                 </div>
-              </>
-            ) : (
-              <div className="bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] min-h-[220px]">
-                <span className="text-xs text-tinta/30">{displayName}</span>
-              </div>
-            )}
+              ) : (
+                <div className="bg-white rounded-2xl p-6 flex items-center justify-center shadow-card border border-[rgba(14,58,64,0.06)] aspect-[800/1020]">
+                  <span className="text-xs text-tinta/30 text-center">{displayName}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ── Coluna direita: conteúdo ── */}
