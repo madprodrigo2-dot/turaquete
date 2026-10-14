@@ -9,6 +9,7 @@ const TABS = [
   // Operação frequente primeiro — afiliados é o gargalo de monetização.
   { label: 'Afiliados',   href: '/admin/afiliados'  },
   { label: 'Raquetas',    href: '/admin/rackets'    },
+  { label: 'Grips',       href: '/admin/grips'      },
   { label: 'Preços',      href: '/admin/precos'     },
   { label: 'Conteúdo',    href: '/admin/qualidade'  },
   { label: 'Motor',       href: '/admin/motor'      },
