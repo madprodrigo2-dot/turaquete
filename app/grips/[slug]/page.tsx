@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { getGripDisplayName } from '@/lib/displayName'
 import SiteNav from '@/components/SiteNav'
 import RacketImageTile from '@/components/RacketImageTile'
+import GripRadar from '@/components/GripRadar'
 
 // Preview de design para Rodrigo revisar o layout público antes de decidir o
 // resto da estratégia de grips (publicação, cross-sell, affiliate_url). Por
@@ -62,6 +63,28 @@ const TIPO_LABEL: Record<string, string> = {
   texturizado: 'Texturizado',
 }
 
+// Radar "Perfil estimado" — NÃO é o motor (calcularMotor() não existe pra
+// grips, decisão já tomada de não construir um). É uma fórmula fixa e
+// documentada com só 2 inputs reais (tipo, espessura_mm), sem usar material
+// como input numérico (não temos coeficiente real de absorção/conforto por
+// material — usar isso seria inventar dado). Só calcula/mostra quando os 2
+// inputs existem; nunca estima o que falta.
+const ADERENCIA_BY_TIPO: Record<string, number> = { tacky: 9, texturizado: 6, dry: 4 }
+const ABSORCAO_BY_TIPO:  Record<string, number> = { tacky: 4, texturizado: 7, dry: 9 }
+
+function confortoFromEspessura(espessuraMm: number): number {
+  const raw = 1 + ((espessuraMm - 0.4) / 0.6) * 9
+  return Math.round(Math.min(10, Math.max(1, raw)))
+}
+
+function buildRadarScores(grip: GripDetail): { aderencia: number; absorcao: number; conforto: number } | null {
+  if (!grip.tipo || grip.espessura_mm == null) return null
+  const aderencia = ADERENCIA_BY_TIPO[grip.tipo]
+  const absorcao = ABSORCAO_BY_TIPO[grip.tipo]
+  if (aderencia == null || absorcao == null) return null
+  return { aderencia, absorcao, conforto: confortoFromEspessura(grip.espessura_mm) }
+}
+
 interface SpecRow { label: string; value: string }
 
 function buildSpecRows(grip: GripDetail): SpecRow[] {
@@ -103,6 +126,7 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
 
   const displayName = getGripDisplayName({ name: grip.name, brandName: grip.brand?.name })
   const specRows = buildSpecRows(grip)
+  const radarScores = buildRadarScores(grip)
 
   return (
     <div className="min-h-screen sand-texture">
@@ -156,6 +180,17 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
             >
               Em breve
             </button>
+
+            {/* Perfil estimado — radar de 3 eixos, ver buildRadarScores acima */}
+            {radarScores && (
+              <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-1">
+                <p className="text-tinta font-semibold text-sm">Perfil estimado</p>
+                <p className="text-tinta/40 text-xs">
+                  Estimativa a partir do tipo e da espessura — não é medição de laboratório.
+                </p>
+                <GripRadar {...radarScores} />
+              </div>
+            )}
 
             {/* Especificações */}
             {specRows.length > 0 && (
