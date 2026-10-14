@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import { redirect, notFound } from 'next/navigation'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 
 type AdminGrip = {
@@ -51,7 +51,7 @@ export default async function GripPreviewPage({
   if (session?.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
   const { slug } = await params
-  const sb = getSupabase()
+  const sb = getSupabaseAdmin()
 
   const { data, error } = await sb
     .from('grips')

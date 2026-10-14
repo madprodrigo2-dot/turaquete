@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import Link from 'next/link'
 
 type GripRow = {
@@ -18,7 +18,7 @@ export default async function AdminGripsPage() {
   const session = await auth()
   if (session?.user?.email !== process.env.ADMIN_EMAIL) redirect('/admin/login')
 
-  const sb = getSupabase()
+  const sb = getSupabaseAdmin()
 
   const { data, error } = await sb
     .from('grips')
