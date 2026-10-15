@@ -30,6 +30,7 @@ type GripDetail = {
   embalagem_formato: string | null
   image_url: string | null
   specs_extra: Record<string, unknown> | null
+  recomendado_para: string | null
   brand: { name: string; logo_url: string | null } | null
 }
 
@@ -38,7 +39,7 @@ async function getGripBySlug(slug: string): Promise<GripDetail | null> {
     .from('grips')
     .select(`
       id, name, slug, material, espessura_mm, comprimento_cm, largura_cm, tipo,
-      embalagem_unidades, embalagem_formato, image_url, specs_extra,
+      embalagem_unidades, embalagem_formato, image_url, specs_extra, recomendado_para,
       brand:brands(name, logo_url)
     `)
     .eq('slug', slug)
@@ -189,6 +190,14 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
                   Estimativa a partir do tipo e da espessura — não é medição de laboratório.
                 </p>
                 <GripRadar {...radarScores} />
+              </div>
+            )}
+
+            {/* Recomendado para — coluna recomendado_para, ver lib/gripRecomendacao.ts */}
+            {grip.recomendado_para && (
+              <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
+                <p className="text-tinta font-semibold text-sm mb-1.5">Recomendado pra</p>
+                <p className="text-tinta/70 text-sm leading-relaxed">{grip.recomendado_para}</p>
               </div>
             )}
 
