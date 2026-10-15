@@ -4,18 +4,26 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 import { getGripDisplayName } from '@/lib/displayName'
 import SiteNav from '@/components/SiteNav'
 import RacketImageTile from '@/components/RacketImageTile'
-import GripRadar from '@/components/GripRadar'
+import GripScoreSection from '@/components/GripScoreSection'
+import TermoGlossario from '@/components/TermoGlossario'
+import type { GlossarioEntry } from '@/lib/glossario'
 
 // Preview de design para Rodrigo revisar o layout público antes de decidir o
 // resto da estratégia de grips (publicação, cross-sell, affiliate_url). Por
 // decisão explícita dele:
-// - busca ignora `publicada` (mostra o grip independente do valor) — NÃO
-//   generalizar esse comportamento pra nenhuma outra página.
+// - busca ignora `publicada` mas filtra por ficha completa (ver os .not()
+//   na query abaixo) — NÃO generalizar esse comportamento pra nenhuma
+//   outra página.
 // - usa getSupabaseAdmin() porque `grips` não tem nenhuma policy/grant
 //   público ainda; é a única forma de ler o dado aqui sem abrir RLS.
 // - noindex/nofollow, fora do sitemap, sem link de nenhum lugar do site —
 //   só é alcançável por quem tem a URL exata.
 // - sem CTA de compra real (sem affiliate_url ainda) — botão fica desabilitado.
+
+// Só mostra grips com ficha realmente completa (decisão do Rodrigo
+// 2026-10-15): material, espessura_mm, comprimento_cm, largura_cm e tipo
+// todos preenchidos. O resto segue existindo na tabela e em /admin/grips
+// pra acompanhamento interno, só não aparece nas rotas públicas.
 
 type GripDetail = {
   id: number
@@ -43,6 +51,11 @@ async function getGripBySlug(slug: string): Promise<GripDetail | null> {
       brand:brands(name, logo_url)
     `)
     .eq('slug', slug)
+    .not('material', 'is', null)
+    .not('espessura_mm', 'is', null)
+    .not('comprimento_cm', 'is', null)
+    .not('largura_cm', 'is', null)
+    .not('tipo', 'is', null)
     .single()
 
   if (error || !data) return null
@@ -62,6 +75,24 @@ const TIPO_LABEL: Record<string, string> = {
   tacky: 'Tacky (aderente)',
   dry: 'Dry (seco)',
   texturizado: 'Texturizado',
+}
+
+// Explicações curtas pra quem não é especialista — confirmado por Rodrigo
+// 2026-10-15. Material fica de fora de propósito: o valor já é
+// autoexplicativo (ex. "Poliuretano (PU)"), não precisa de tooltip.
+const SPEC_GLOSSARY: Record<string, GlossarioEntry> = {
+  Tipo: {
+    termo: 'Tipo',
+    definicao: 'Tacky gruda mais, dry fica seco ao toque, texturizado é um meio-termo com relevo na superfície.',
+  },
+  Espessura: {
+    termo: 'Espessura',
+    definicao: 'Mais fino dá mais sensibilidade no toque; mais espesso amortece mais o impacto no braço.',
+  },
+  Embalagem: {
+    termo: 'Embalagem',
+    definicao: 'Quantas unidades vêm no pacote — cada overgrip dá pra uma troca de empunhadura.',
+  },
 }
 
 // Radar "Perfil estimado" — NÃO é o motor (calcularMotor() não existe pra
@@ -182,14 +213,19 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
               Em breve
             </button>
 
-            {/* Perfil estimado — radar de 3 eixos, ver buildRadarScores acima */}
+            {/* Perfil estimado — barras (GripScoreSection), ver buildRadarScores acima.
+                Era um radar de 3 eixos; trocado por não ser legível com só 3 pontos
+                (virava um triângulo). Barras reusam o ScoreBar já usado nos 6 eixos
+                do motor em /raquetes/[slug]. */}
             {radarScores && (
-              <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-1">
-                <p className="text-tinta font-semibold text-sm">Perfil estimado</p>
-                <p className="text-tinta/40 text-xs">
-                  Estimativa a partir do tipo e da espessura — não é medição de laboratório.
-                </p>
-                <GripRadar {...radarScores} />
+              <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <p className="text-tinta font-semibold text-sm">Perfil estimado</p>
+                  <p className="text-tinta/40 text-xs">
+                    Estimativa a partir do tipo e da espessura — não é medição de laboratório.
+                  </p>
+                </div>
+                <GripScoreSection {...radarScores} />
               </div>
             )}
 
@@ -205,15 +241,24 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
             {specRows.length > 0 && (
               <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
                 <p className="text-tinta font-semibold text-sm mb-3">Especificações</p>
-                {specRows.map(({ label, value }, i) => (
-                  <div
-                    key={label}
-                    className={`flex justify-between items-center py-2 ${i === specRows.length - 1 ? 'border-0' : 'border-b border-aqua/10'}`}
-                  >
-                    <span className="text-tinta/60 text-sm">{label}</span>
-                    <span className="text-tinta text-sm font-medium text-right ml-4">{value}</span>
-                  </div>
-                ))}
+                {specRows.map(({ label, value }, i) => {
+                  const entry = SPEC_GLOSSARY[label]
+                  return (
+                    <div
+                      key={label}
+                      className={`flex justify-between items-center py-2 ${i === specRows.length - 1 ? 'border-0' : 'border-b border-aqua/10'}`}
+                    >
+                      {entry ? (
+                        <TermoGlossario entry={entry}>
+                          <span className="text-tinta/60 text-sm">{label}</span>
+                        </TermoGlossario>
+                      ) : (
+                        <span className="text-tinta/60 text-sm">{label}</span>
+                      )}
+                      <span className="text-tinta text-sm font-medium text-right ml-4">{value}</span>
+                    </div>
+                  )
+                })}
               </div>
             )}
 

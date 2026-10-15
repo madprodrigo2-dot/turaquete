@@ -6,9 +6,10 @@ import SiteNav from '@/components/SiteNav'
 import RacketImageTile from '@/components/RacketImageTile'
 
 // Preview de design — listagem pública de grips. Mesmas regras explícitas de
-// /grips/[slug] (ver comentário lá): ignora `publicada`, usa getSupabaseAdmin()
-// porque `grips` não tem policy/grant público ainda, noindex/nofollow, fora
-// do sitemap, sem link de nenhum lugar do site.
+// /grips/[slug] (ver comentário lá): ignora `publicada` mas filtra por ficha
+// completa, usa getSupabaseAdmin() porque `grips` não tem policy/grant
+// público ainda, noindex/nofollow, fora do sitemap, sem link de nenhum
+// lugar do site.
 
 export const metadata: Metadata = {
   title: 'Grips (preview)',
@@ -59,6 +60,11 @@ async function listarGrips(): Promise<GripListItem[]> {
       comprimento_cm, largura_cm, embalagem_unidades,
       brand:brands(name, logo_url)
     `)
+    .not('material', 'is', null)
+    .not('espessura_mm', 'is', null)
+    .not('comprimento_cm', 'is', null)
+    .not('largura_cm', 'is', null)
+    .not('tipo', 'is', null)
     .order('id')
 
   if (error) {
