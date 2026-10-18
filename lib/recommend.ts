@@ -559,7 +559,7 @@ export function suggestComparisons(
 }
 
 // ── Featured carousel config ─────────────────────────────────────────────────
-const TOP_N = 12
+const TOP_N = 18
 const TOP_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
 
 // Piso de qualidade técnica — equivale ao top 70% do catálogo publicado por
@@ -816,8 +816,14 @@ export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {
 }
 
 const NOVIDADES_MIN = 4
-const NOVIDADES_LIMIT = 12
-const NOVIDADES_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por marca
+const NOVIDADES_LIMIT = 18
+// 100 cobre as ~92 raquetes 2026 elegíveis hoje com margem. Mesmo assim o
+// carrossel entrega no máximo 1 raquete por marca que exista com model_year
+// 2026 e price >= 1500 — hoje são 16 marcas (de 17 no catálogo; Alma Genius
+// fica de fora inteira, nenhum modelo dela passa do piso de preço). NÃO
+// alcança 18 por falta de marcas elegíveis, não por tamanho de pool — só
+// sobe pra 18 se o catálogo somar mais marcas 2026 acima de R$1.500.
+const NOVIDADES_POOL = 100
 
 export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
   const { data, error } = await getSupabase()
@@ -827,6 +833,8 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
     .eq('model_year', 2026)
     .neq('is_active', false)
     .neq('fora_de_linha', true)
+    .gte('price', 1500)
+    .not('price', 'is', null)
     .order('created_at', { ascending: false })
     .limit(NOVIDADES_POOL)
 
