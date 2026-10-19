@@ -10,12 +10,19 @@ function computeNivelFormula(r: RacketWithInsights): 'iniciante' | 'intermediari
   const ins = r.racket_insights
   if (!ins) return null
   const f = ins.forgiveness, p = ins.power, c = ins.control, co = ins.comfort
+
+  let formula: 'iniciante' | 'intermediario' | 'avancado' | null = null
   if (f != null && p != null && c != null && co != null) {
-    if (f <= 4 || (f <= 6 && (p >= 7 || c >= 7)) || (f <= 7 && p >= 9)) return 'avancado'
-    if (f >= 7 && co >= 6 && p <= 6) return 'iniciante'
-    return 'intermediario'
+    if (f <= 4 || (f <= 6 && (p >= 7 || c >= 7)) || (f <= 7 && p >= 9)) formula = 'avancado'
+    else if (f >= 7 && co >= 6 && p <= 6) formula = 'iniciante'
+    else formula = 'intermediario'
   }
-  return ins.nivel_override ?? null
+
+  // Override editorial: só existe quando admin registrou motivo explícito.
+  // Vence sempre, mesmo com os 4 scores completos (bug antigo: só era
+  // consultado quando faltava algum score, ignorando override em raquetes
+  // com ficha completa — ex. Aria By Pininfarina).
+  return ins.nivel_override ?? formula
 }
 
 export interface RacketFilters {
