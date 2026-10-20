@@ -20,10 +20,15 @@ import type { GlossarioEntry } from '@/lib/glossario'
 //   só é alcançável por quem tem a URL exata.
 // - sem CTA de compra real (sem affiliate_url ainda) — botão fica desabilitado.
 
-// Só mostra grips com ficha realmente completa (decisão do Rodrigo
-// 2026-10-15): material, espessura_mm, comprimento_cm, largura_cm e tipo
-// todos preenchidos. O resto segue existindo na tabela e em /admin/grips
-// pra acompanhamento interno, só não aparece nas rotas públicas.
+// Só mostra grips com ficha realmente completa. Critério atualizado
+// (decisão do Rodrigo 2026-10-20, substitui a regra de 2026-10-15 que
+// exigia os 5 campos): tipo + espessura_mm, os únicos 2 que alimentam
+// Aderência/Absorção/Conforto (buildRadarScores abaixo) e `recomendado_para`
+// (lib/gripRecomendacao.ts). material/comprimento_cm/largura_cm são
+// descritivos, sem efeito em nenhum score — ficam opcionais, já tratados
+// como tal em buildSpecRows (aparecem se existirem, somem se não). O resto
+// segue existindo na tabela e em /admin/grips pra acompanhamento interno,
+// só não aparece nas rotas públicas.
 
 type GripDetail = {
   id: number
@@ -51,10 +56,7 @@ async function getGripBySlug(slug: string): Promise<GripDetail | null> {
       brand:brands(name, logo_url)
     `)
     .eq('slug', slug)
-    .not('material', 'is', null)
     .not('espessura_mm', 'is', null)
-    .not('comprimento_cm', 'is', null)
-    .not('largura_cm', 'is', null)
     .not('tipo', 'is', null)
     .single()
 

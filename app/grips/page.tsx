@@ -10,6 +10,13 @@ import RacketImageTile from '@/components/RacketImageTile'
 // completa, usa getSupabaseAdmin() porque `grips` não tem policy/grant
 // público ainda, noindex/nofollow, fora do sitemap, sem link de nenhum
 // lugar do site.
+//
+// Ficha "completa" (decisão do Rodrigo 2026-10-20, substitui a regra de
+// 2026-10-15): exige só tipo + espessura_mm — os únicos 2 campos que
+// alimentam Aderência/Absorção/Conforto e `recomendado_para`
+// (ver lib/gripRecomendacao.ts). material/comprimento_cm/largura_cm são
+// puramente descritivos, sem efeito em nenhum score, então ficam opcionais
+// — aparecem se existirem (buildSpecLine já trata isso), somem se não.
 
 export const metadata: Metadata = {
   title: 'Grips (preview)',
@@ -60,10 +67,7 @@ async function listarGrips(): Promise<GripListItem[]> {
       comprimento_cm, largura_cm, embalagem_unidades,
       brand:brands(name, logo_url)
     `)
-    .not('material', 'is', null)
     .not('espessura_mm', 'is', null)
-    .not('comprimento_cm', 'is', null)
-    .not('largura_cm', 'is', null)
     .not('tipo', 'is', null)
     .order('id')
 
