@@ -1122,7 +1122,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 />
               </h1>
               <p className="text-tinta/70 text-base md:text-lg leading-relaxed max-w-prose">
-                Raquete errada custa caro. Conte como você joga e nossa especialista virtual te indica a ideal pro seu nível, estilo e bolso, explicando o porquê de cada escolha.
+                Sua raquete é um investimento no seu jogo. Conte como você joga e a Tury indica a que encaixa em você e te ajuda a evoluir, explicando o porquê de cada escolha.
               </p>
             </div>
 
@@ -1464,7 +1464,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             </div>
           </RevealDiv>
 
-          {/* Quem é a Tury? — transparência */}
+          {/* Por que a Tury existe — transparência */}
           <RevealDiv delay={100}>
           <div className="bg-white rounded-2xl p-4 md:p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
             <div className="grid grid-cols-[auto_1fr] gap-x-4 md:gap-x-6 gap-y-2 md:gap-y-3">
@@ -1477,10 +1477,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 style={{ width: 'auto' }}
               />
               <div className="self-end pb-0.5 md:pb-0 md:self-start">
-                <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Quem é a Tury?</p>
+                <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Por que a Tury existe</p>
                 <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual, não uma pessoa</p>
               </div>
               <div className="col-span-2 md:col-span-1 md:self-start flex flex-col gap-1.5">
+                <p className="text-tinta/70 text-sm leading-snug mb-1">
+                  Quando você vai escolher a primeira raquete, quer achar a que encaixa no seu jogo e te ajuda a jogar melhor. No fim, é um investimento. A Tury existe pra você acertar essa escolha, com dados reais e sem nenhuma marca pagando pra aparecer primeiro.
+                </p>
                 {[
                   'Analisa dados reais de cada raquete: peso, balance, material e pontuações técnicas',
                   'Sem patrocínio: nenhuma marca paga para aparecer primeiro',
