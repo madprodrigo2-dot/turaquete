@@ -832,8 +832,20 @@ const NOVIDADES_LIMIT = 18
 // sobe pra 18 se o catálogo somar mais marcas 2026 acima de R$1.500.
 const NOVIDADES_POOL = 100
 
+// Janela de "nova garantida" antes de entrar na disputa por clique — 14 dias,
+// decisão de Rodrigo 2026-10-23 (ele deixou 14 ou 21 a meu critério). Dois
+// motivos pro 14: (1) é metade da janela de 30d que get_top_rackets_30d já
+// usa, então quando uma raquete sai do bucket "fresh" ela ainda está dentro
+// da MESMA janela de 30d e já teve ~14-16 dias reais pra acumular clique, em
+// vez de entrar no ranking do zero; (2) cobre confortavelmente o intervalo
+// típico entre levas de lançamento no catálogo (levas de 2026-08 a 2026-10
+// saíram a cada ~5-6 dias de mediana, maior intervalo real foi 26 dias) sem
+// segurar uma raquete "nova" na prateleira por tempo demais.
+const NOVIDADES_FRESH_WINDOW_DAYS = 14
+
 export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
-  const { data, error } = await getSupabase()
+  const supabase = getSupabase()
+  const { data, error } = await supabase
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('publicada', true)
@@ -848,12 +860,39 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
   if (error) throw new Error(`Supabase: ${error.message}`)
   const candidates = ((data as unknown[]) ?? []).map(normalizeRacket)
 
+  // Híbrido (decisão Rodrigo 2026-10-23): dentro da janela "fresh", mantém
+  // ordem por data (visibilidade de lançamento garantida, sem depender de
+  // clique que ainda não deu tempo de acontecer). Fora da janela, reordena
+  // por clique real dos últimos 30d — mesmo RPC de getTopRaquetas — senão um
+  // lançamento antigo nunca mais sobe, mesmo brilhando de verdade.
+  const freshCutoffMs = Date.now() - NOVIDADES_FRESH_WINDOW_DAYS * 24 * 60 * 60 * 1000
+  const isFresh = (r: RacketWithInsights) =>
+    r.created_at != null && new Date(r.created_at).getTime() >= freshCutoffMs
+  const fresh = candidates.filter(isFresh)
+  const aged = candidates.filter(r => !isFresh(r))
+
+  let orderedAged = aged
+  if (aged.length > 0) {
+    const { data: clickRows } = await supabase.rpc('get_top_rackets_30d', { lim: NOVIDADES_POOL })
+    const clicksById = new Map(
+      ((clickRows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => [r.racket_id, r.cnt])
+    )
+    orderedAged = [...aged].sort((a, b) => {
+      const clickDiff = (clicksById.get(b.id) ?? 0) - (clicksById.get(a.id) ?? 0)
+      if (clickDiff !== 0) return clickDiff
+      // Empate de clique (incluindo 0 x 0): mesmo desempate de hoje, mais recente primeiro.
+      return new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+    })
+  }
+
+  const ordered = [...fresh, ...orderedAged]
+
   // Teto de 1 raquete por marca — evita que uma marca com vários lançamentos
   // recentes ocupe todos os lugares do carrossel (caso que antes exigia
   // excluir Alma Genius na mão; agora resolvido de forma genérica).
   const seenBrands = new Set<string>()
   const rackets: RacketWithInsights[] = []
-  for (const r of candidates) {
+  for (const r of ordered) {
     const brandKey = r.brands?.slug
     if (brandKey) {
       if (seenBrands.has(brandKey)) continue
