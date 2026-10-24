@@ -824,12 +824,12 @@ export async function getRaquetasConforto(): Promise<RacketWithInsights[]> {
 
 const NOVIDADES_MIN = 4
 const NOVIDADES_LIMIT = 18
-// 100 cobre as ~92 raquetes 2026 elegíveis hoje com margem. Mesmo assim o
+// 100 cobre as ~92 raquetes 2026+ elegíveis hoje com margem. Mesmo assim o
 // carrossel entrega no máximo 1 raquete por marca que exista com model_year
-// 2026 e price >= 1500 — hoje são 16 marcas (de 17 no catálogo; Alma Genius
+// 2026+ e price >= 1500 — hoje são 16 marcas (de 17 no catálogo; Alma Genius
 // fica de fora inteira, nenhum modelo dela passa do piso de preço). NÃO
 // alcança 18 por falta de marcas elegíveis, não por tamanho de pool — só
-// sobe pra 18 se o catálogo somar mais marcas 2026 acima de R$1.500.
+// sobe pra 18 se o catálogo somar mais marcas 2026+ acima de R$1.500.
 const NOVIDADES_POOL = 100
 
 // Janela de "nova garantida" antes de entrar na disputa por clique — 14 dias,
@@ -849,7 +849,11 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
     .from('rackets')
     .select(SELECT_FIELDS)
     .eq('publicada', true)
-    .eq('model_year', 2026)
+    // >= em vez de = (decisão Rodrigo 2026-10-24): raquetes 2027+ já cadastradas
+    // (ex. Aria By Pininfarina, Wolf 2027) também contam como "novidade", não só
+    // o ano corrente do título do carrossel — título "Novidades 2026" fica como
+    // está de propósito, decisão explícita dele, não é descuido.
+    .gte('model_year', 2026)
     .neq('is_active', false)
     .neq('fora_de_linha', true)
     .gte('price', 1500)
