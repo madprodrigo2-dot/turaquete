@@ -29,6 +29,7 @@ export default async function IntermediarioPage() {
       subtitle="Equilíbrio entre controle e potência, para quem já domina o básico e quer evoluir."
       rackets={rackets}
       emptyMessage="Nenhuma raquete intermediária catalogada ainda."
+      defaultSort="controle"
     />
   )
 }

@@ -29,6 +29,7 @@ export default async function AvancadoPage() {
       subtitle="Exigem técnica e oferecem potência máxima. Para quem já joga no limite."
       rackets={rackets}
       emptyMessage="Nenhuma raquete avançada catalogada ainda."
+      defaultSort="potencia"
     />
   )
 }

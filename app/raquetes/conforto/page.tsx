@@ -28,6 +28,7 @@ export default async function ConfortoPage() {
       subtitle="Absorvem melhor o impacto e protegem cotovelo, ombro e punho."
       rackets={rackets}
       emptyMessage="Nenhuma raquete com esse perfil catalogada ainda."
+      defaultSort="conforto"
     />
   )
 }
