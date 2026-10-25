@@ -18,7 +18,7 @@ function normalize(s: string) {
 
 export type SortKey =
   | 'lancamentos' | 'menor-preco' | 'maior-preco'
-  | 'potencia' | 'controle' | 'conforto' | 'manuseio' | 'estabilidade' | 'perdao-erro'
+  | 'potencia' | 'controle' | 'conforto' | 'manuseio' | 'estabilidade'
 
 // Ordenação por pontuação do motor — todo MOTOR_DIMS (lib/motor.ts) menos spin,
 // de propósito: spin é ajustável por tratamento pós-venda (ver CompareView.tsx),
@@ -30,7 +30,6 @@ const SCORE_SORT_DIM: Partial<Record<SortKey, keyof NonNullable<RacketWithInsigh
   conforto:     'comfort',
   manuseio:     'maneuverability',
   estabilidade: 'stability',
-  'perdao-erro': 'forgiveness',
 }
 
 const NIVEL_SHORT: Record<string, string> = {
@@ -276,7 +275,6 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
                 <option value="potencia">Melhor potência</option>
                 <option value="conforto">Melhor conforto</option>
                 <option value="estabilidade">Melhor estabilidade</option>
-                <option value="perdao-erro">Mais perdão de erro</option>
               </optgroup>
             </select>
           </div>
