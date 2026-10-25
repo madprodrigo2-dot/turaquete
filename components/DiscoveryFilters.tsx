@@ -16,7 +16,22 @@ function normalize(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 }
 
-export type SortKey = 'lancamentos' | 'menor-preco' | 'maior-preco'
+export type SortKey =
+  | 'lancamentos' | 'menor-preco' | 'maior-preco'
+  | 'potencia' | 'controle' | 'conforto' | 'manuseio' | 'estabilidade' | 'perdao-erro'
+
+// Ordenação por pontuação do motor — todo MOTOR_DIMS (lib/motor.ts) menos spin,
+// de propósito: spin é ajustável por tratamento pós-venda (ver CompareView.tsx),
+// não é uma característica fixa da raquete, não faz sentido como critério de
+// ordem. Decisão de Rodrigo 2026-10-25.
+const SCORE_SORT_DIM: Partial<Record<SortKey, keyof NonNullable<RacketWithInsights['racket_insights']>>> = {
+  potencia:     'power',
+  controle:     'control',
+  conforto:     'comfort',
+  manuseio:     'maneuverability',
+  estabilidade: 'stability',
+  'perdao-erro': 'forgiveness',
+}
 
 const NIVEL_SHORT: Record<string, string> = {
   iniciante: 'Iniciante',
@@ -128,10 +143,18 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
       out = out.filter(r => r.brands?.name === marca)
     }
 
+    const scoreDim = SCORE_SORT_DIM[sort]
     if (sort === 'menor-preco') {
       out.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
     } else if (sort === 'maior-preco') {
       out.sort((a, b) => (b.price ?? 0) - (a.price ?? 0))
+    } else if (scoreDim) {
+      // Melhor pontuação primeiro; sem nota fica por último (nulo tratado como -1).
+      out.sort((a, b) => {
+        const av = a.racket_insights?.[scoreDim] as number | null | undefined
+        const bv = b.racket_insights?.[scoreDim] as number | null | undefined
+        return (bv ?? -1) - (av ?? -1)
+      })
     } else {
       // Lançamentos primeiro: model_year desc, created_at desc como desempate dentro do mesmo ano.
       out.sort((a, b) => {
@@ -242,9 +265,19 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
               onChange={e => setSort(e.target.value as SortKey)}
               className="w-full min-w-0 text-xs border border-tinta/15 rounded-xl px-2.5 py-1.5 bg-white text-tinta focus:outline-none focus:ring-1 focus:ring-aqua"
             >
-              <option value="lancamentos">Lançamentos</option>
-              <option value="menor-preco">Menor preço</option>
-              <option value="maior-preco">Maior preço</option>
+              <optgroup label="Padrão">
+                <option value="lancamentos">Lançamentos</option>
+                <option value="menor-preco">Menor preço</option>
+                <option value="maior-preco">Maior preço</option>
+              </optgroup>
+              <optgroup label="Pontuação">
+                <option value="manuseio">Melhor manuseio</option>
+                <option value="controle">Melhor controle</option>
+                <option value="potencia">Melhor potência</option>
+                <option value="conforto">Melhor conforto</option>
+                <option value="estabilidade">Melhor estabilidade</option>
+                <option value="perdao-erro">Mais perdão de erro</option>
+              </optgroup>
             </select>
           </div>
         </div>
