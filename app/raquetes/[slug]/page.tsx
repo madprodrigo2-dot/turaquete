@@ -334,7 +334,11 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                             <path d="M8 4.5L11 6.25V9.75L8 11.5L5 9.75V6.25L8 4.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" strokeOpacity="0.4"/>
                           </svg>
                           <span className="flex-1 text-sm font-semibold text-tinta">vs {s.name}</span>
-                          <BrandLogo src={s.brands?.logo_url} alt={s.brands?.name ?? ''} />
+                          {s.brands?.logo_url && (
+                            <div className="shrink-0 h-5 flex items-center rounded-md bg-white px-1.5">
+                              <BrandLogo src={s.brands.logo_url} alt={s.brands.name ?? ''} />
+                            </div>
+                          )}
                           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-tinta/25">
                             <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
