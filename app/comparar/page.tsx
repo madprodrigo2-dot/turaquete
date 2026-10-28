@@ -33,7 +33,7 @@ function computePopularPairs(rackets: RacketWithInsights[]) {
 }
 
 export const metadata: Metadata = {
-  title: 'Comparar Raquetes de Beach Tennis | Turaquete',
+  title: 'Comparar Raquetes de Beach Tennis',
   description: 'Compare raquetes de beach tennis lado a lado. Veja pontuacoes, especificacoes e precos para escolher a melhor opcao para o seu jogo.',
   alternates: { canonical: `${SITE_URL}/comparar` },
 }

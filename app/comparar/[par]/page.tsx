@@ -14,12 +14,12 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { par } = await params
   const vsIdx = par.indexOf('-vs-')
-  if (vsIdx === -1) return { title: 'Comparar Raquetes | Turaquete' }
+  if (vsIdx === -1) return { title: 'Comparar Raquetes' }
   const slugs = [par.slice(0, vsIdx), par.slice(vsIdx + 4)]
   const rackets = await getRaquetasPorSlug(slugs)
-  if (rackets.length < 2) return { title: 'Comparar Raquetes | Turaquete' }
+  if (rackets.length < 2) return { title: 'Comparar Raquetes' }
   return {
-    title: `${rackets[0].name} vs ${rackets[1].name}: Comparativo e Qual Escolher | Turaquete`,
+    title: `${rackets[0].name} vs ${rackets[1].name}: Comparativo e Qual Escolher`,
     description: `Compare ${rackets[0].name} e ${rackets[1].name} lado a lado: peso, balance, material e preço. Descubra qual é a ideal para o seu jogo.`,
     alternates: { canonical: `${SITE_URL}/comparar/${par}` },
   }

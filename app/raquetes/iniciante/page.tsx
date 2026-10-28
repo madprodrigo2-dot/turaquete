@@ -5,7 +5,7 @@ import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'Raquetes para Iniciantes — Beach Tennis | Turaquete',
+  title: 'Raquetes para Iniciantes — Beach Tennis',
   description: 'As melhores raquetes de beach tennis para quem está começando. Modelos com alto perdão de erro, fáceis de controlar e leves na articulação.',
   alternates: { canonical: 'https://www.turaquete.com.br/raquetes/iniciante' },
 }

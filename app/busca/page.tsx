@@ -6,7 +6,7 @@ import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'Buscar Raquetes de Beach Tennis | Turaquete',
+  title: 'Buscar Raquetes de Beach Tennis',
   description: 'Encontre raquetes de beach tennis pelo nome ou marca. Busca em todo o catálogo Turaquete.',
   robots: { index: false, follow: false },
 }

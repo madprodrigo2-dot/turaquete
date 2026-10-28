@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso — Turaquete',
+  title: 'Termos de Uso',
   description: 'Termos de uso do site Turaquete.',
 }
 

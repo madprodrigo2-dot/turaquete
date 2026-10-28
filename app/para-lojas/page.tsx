@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Turaquete para lojas e marcas | Parcerias',
+  title: 'Para lojas e marcas — Parcerias',
   description: 'Direcione compradores qualificados de beach tennis para a sua loja ou marca. Saiba como trabalhar com o Turaquete.',
 }
 

@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Página não encontrada — Turaquete',
+  title: 'Página não encontrada',
 }
 
 export default function NotFound() {

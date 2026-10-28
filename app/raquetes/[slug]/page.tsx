@@ -40,7 +40,7 @@ export async function generateMetadata(
     : null
 
   const displayName = getDisplayName(racket)
-  const title = `${displayName} — Raquete de Beach Tennis | Turaquete`
+  const title = `${displayName} — Raquete de Beach Tennis`
   const description =
     ins?.perfil_resumo ??
     `Especificações reais, avaliação e onde comprar a ${displayName}.${price ? ` A partir de ${price}.` : ''}`

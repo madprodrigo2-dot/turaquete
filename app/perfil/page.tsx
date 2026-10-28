@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import QuizPerfilClient from '@/components/QuizPerfilClient'
 
 export const metadata: Metadata = {
-  title: 'Qual é o seu perfil de jogador de beach tennis? | Turaquete',
+  title: 'Qual é o seu perfil de jogador de beach tennis?',
   description:
     'Descubra se você é Muralha, Canhão, Finalizador, Dono da Rede, Contra-Atacante ou Camaleão. Quiz gratuito de 7 perguntas baseado nos estilos de jogo do tênis profissional.',
   openGraph: {

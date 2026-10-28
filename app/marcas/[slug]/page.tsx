@@ -126,7 +126,7 @@ export async function generateMetadata(
   const result = await listarRaquetasPorMarca(slug)
   if (!result) return {}
   const { brand } = result
-  const title = `${brand.name} — Raquetes de Beach Tennis | Turaquete`
+  const title = `${brand.name} — Raquetes de Beach Tennis`
   const description = `Conheça todas as raquetes ${brand.name} disponíveis. Especificações reais, avaliação e onde comprar cada modelo.`
   return {
     title,
