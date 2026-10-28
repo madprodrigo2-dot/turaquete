@@ -27,9 +27,10 @@ interface Props {
   // Rather than pile a 4th on top, that caller passes 'left' — safe because the
   // athlete badge no longer lives in that corner either (moved to the bottom).
   brandCorner?: 'left' | 'right'
-  // "9+ num atributo" badge (top-left) — só passado pelos 3 callers aprovados
-  // (home carousels, /marcas/[slug], listagens de categoria). Deixar undefined
-  // em qualquer outro caller para não aparecer lá (chat, comparador, ficha).
+  // "9+ num atributo" badge (top-left) — passado pelos callers aprovados (home
+  // carousels, /marcas/[slug], listagens de categoria, ficha de detalhe).
+  // Deixar undefined em chat e comparador: o chat já empilha até 3 badges no
+  // canto superior direito, e nenhum dos dois pediu esse badge ainda.
   topBadges?: AttributeBadge[]
 }
 

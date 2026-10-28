@@ -17,6 +17,7 @@ import ScoreSection from '@/components/ScoreSection'
 import RacketKeyStats from '@/components/RacketKeyStats'
 import RacketHexagon from '@/components/RacketHexagon'
 import { derivarNivel } from '@/lib/nivel'
+import { getTopAttributeBadges } from '@/lib/attributeBadge'
 import PriceNote from '@/components/PriceNote'
 import ShareButton from '@/components/ShareButton'
 import MegaSpinLink from '@/components/MegaSpinLink'
@@ -158,7 +159,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                         alt={racket.name}
                         className="object-contain max-h-72 w-auto"
                       />
-                      <RacketBadgeOverlay athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} size="detail" />
+                      <RacketBadgeOverlay athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} size="detail" topBadges={getTopAttributeBadges(racket.racket_insights)} />
                     </div>
                   </div>
                   {/* Desktop: tile edge-to-edge, mesmo padrão usado no resto do site */}
@@ -171,6 +172,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                       brandName={racket.brands?.name}
                       badgeSize="detail"
                       loading="eager"
+                      topBadges={getTopAttributeBadges(racket.racket_insights)}
                     />
                   </div>
                 </>
