@@ -18,14 +18,16 @@ interface Props {
   athlete?: string
   brandLogo?: string | null
   brandName?: string
-  // 'detail' = product-detail hero (bigger photo) — the athlete badge scales up
-  // to stay proportionally prominent there. Brand stays uniformly small (see
-  // BrandLogo.tsx) since it's deliberately secondary in this design.
+  // 'detail' = product-detail hero (bigger photo): brand+athlete merge into one
+  // card (see below) since there's room for it. 'card' = narrow grid tiles
+  // (down to 2-col mobile) — merging there made the brand+athlete card collide
+  // with the attribute badge in the opposite corner, so 'card' keeps the older
+  // layout: logo alone up top, athlete as its own pill along the bottom edge.
   size?: 'card' | 'detail'
   // The chat recommendation card already stacks up to 3 badges ('Calce ideal',
   // 'Melhor custo-benefício', 'Peso alto de fábrica') in the top-right corner.
-  // Rather than pile a 4th on top, that caller passes 'left' — safe because the
-  // athlete badge no longer lives in that corner either (moved to the bottom).
+  // That caller passes 'left' so the brand logo (and, in 'detail', the merged
+  // brand+athlete card) lands in the free corner instead.
   brandCorner?: 'left' | 'right'
   // "9+ num atributo" badge (top-left) — passado pelos callers aprovados (home
   // carousels, /marcas/[slug], listagens de categoria, ficha de detalhe).
@@ -34,21 +36,22 @@ interface Props {
   topBadges?: AttributeBadge[]
 }
 
-// Athlete badge (bottom, prominent) + brand logo badge (top-right corner,
-// discreet) overlaid on a racket photo. Approved as "Variant B" over two
-// alternatives that put both badges at the top competing for the same space —
-// separating them by both position and visual weight reads as far less cramped.
-// Single source of truth so the pair always matches wherever a photo shows
-// both — card tiles (via RacketImageTile) and the product detail hero alike.
+// Atleta, marca e atributo-top overlaid numa foto de raquete. Em 'detail', o
+// atleta já foi um pill solto embaixo da foto (rounded-full, fonte grande) —
+// Rodrigo notou que 3 formas/pesos competindo (pill de atributo, pill da
+// marca, faixa larga do atleta) ficava desprolixo ali. Na ficha de detalhe,
+// com foto grande, o atleta virou uma linha secundária dentro do cartão da
+// marca: só 2 formas, rodapé livre, hierarquia mais clara. Em 'card' (grid
+// estreita) esse merge colidia com o badge de atributo, então ali o layout
+// original se mantém. Single source of truth — card tiles (via
+// RacketImageTile) e o hero da ficha de detalhe usam o mesmo componente.
 // Caller's image wrapper must be `relative` (and ideally `overflow-hidden`).
 export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size = 'card', brandCorner = 'right', topBadges }: Props) {
   const isDetail = size === 'detail'
+  const cornerCls = brandCorner === 'left' ? 'left-1.5' : 'right-1.5'
   // Co-signed athletes and unusually long names truncate to one line with an
-  // ellipsis rather than wrapping — the badge sits at the photo's bottom edge,
-  // so there's no room below it to grow into like the old top-corner layout had.
-  const athletePill = isDetail
-    ? 'text-sm px-3.5 py-2'
-    : 'text-[11px] px-2.5 py-1 md:text-xs md:px-3 md:py-1.5'
+  // ellipsis rather than wrapping.
+  const athletePill = 'text-[11px] px-2.5 py-1 md:text-xs md:px-3 md:py-1.5'
 
   return (
     <>
@@ -57,25 +60,46 @@ export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size
           {topBadges.map(b => (
             <span
               key={b.label}
-              className="inline-flex items-center gap-1 h-5 rounded-md bg-gold-deep text-white text-[10px] font-bold px-1.5 leading-none shadow-sm whitespace-nowrap"
+              className={`inline-flex items-center gap-1 rounded-md bg-gold-deep text-white font-bold leading-none shadow-sm whitespace-nowrap ${isDetail ? 'h-6 text-xs px-2' : 'h-5 text-[10px] px-1.5'}`}
             >
               <span aria-hidden="true">★</span>{b.label} {b.value}
             </span>
           ))}
         </div>
       )}
-      {brandLogo && (
-        <div className={`absolute top-1.5 ${brandCorner === 'left' ? 'left-1.5' : 'right-1.5'} z-10 h-5 lg:h-6 flex items-center justify-center rounded-md bg-white/70 border border-tinta/10 px-1.5`}>
-          <BrandLogo src={brandLogo} alt={brandName ?? ''} />
-        </div>
-      )}
-      {athlete && (
-        <div className="absolute bottom-2 left-2 right-2 z-10 flex justify-start">
-          <span className={`inline-flex items-center gap-1.5 max-w-full rounded-full bg-tinta text-white shadow-md font-bold leading-tight ${athletePill}`}>
-            <span className="text-yellow shrink-0" aria-hidden="true">★</span>
-            <span className="truncate">{cleanAthleteLabel(athlete)}</span>
-          </span>
-        </div>
+
+      {isDetail ? (
+        (brandLogo || athlete) && (
+          <div className={`absolute top-1.5 ${cornerCls} z-10 flex flex-col items-end gap-1 rounded-md bg-white/85 border border-tinta/10 max-w-[65%] px-2 py-1.5`}>
+            {brandLogo && (
+              <div className="h-6 flex items-center justify-center">
+                <BrandLogo src={brandLogo} alt={brandName ?? ''} />
+              </div>
+            )}
+            {athlete && (
+              <span className="inline-flex items-center gap-1 text-tinta text-[11px] font-bold leading-none truncate max-w-full">
+                <span className="text-gold-deep shrink-0" aria-hidden="true">★</span>
+                <span className="truncate">{cleanAthleteLabel(athlete)}</span>
+              </span>
+            )}
+          </div>
+        )
+      ) : (
+        <>
+          {brandLogo && (
+            <div className={`absolute top-1.5 ${cornerCls} z-10 h-5 lg:h-6 flex items-center justify-center rounded-md bg-white/70 border border-tinta/10 px-1.5`}>
+              <BrandLogo src={brandLogo} alt={brandName ?? ''} />
+            </div>
+          )}
+          {athlete && (
+            <div className="absolute bottom-2 left-2 right-2 z-10 flex justify-start">
+              <span className={`inline-flex items-center gap-1.5 max-w-full rounded-full bg-tinta text-white shadow-md font-bold leading-tight ${athletePill}`}>
+                <span className="text-yellow shrink-0" aria-hidden="true">★</span>
+                <span className="truncate">{cleanAthleteLabel(athlete)}</span>
+              </span>
+            </div>
+          )}
+        </>
       )}
     </>
   )
