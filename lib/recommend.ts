@@ -765,6 +765,27 @@ function minModelYearTopNivel(): number {
   return new Date().getFullYear() - 1
 }
 
+// Pool pra RPC de clicks globais (desempate) — folgado de propósito: o
+// catálogo inteiro tem no máximo ~12 clicks/30d numa raquete só hoje, então
+// 200 cobre tudo com margem sem custo real (ver nota no caller).
+const TOP_NIVEL_CLICKS_POOL = 200
+
+// Agrupa edições da mesma raquete reeditada ano a ano (ex. NG17 do Nico
+// Gianotti: 2023/2024/2025/2026 como linhas separadas no catálogo) — sem
+// isso, a recomendação real se divide entre os SKUs e a raquete nunca sobe
+// no ranking, mesmo sendo a mais escolhida de fato (caso real investigado
+// 2026-10-29). Chave: (marca, atleta) quando a ficha tem atleta assinado —
+// sinal mais confiável que nome pra "é a mesma linha" (testado: agrupar só
+// por prefixo do nome junta raquetes diferentes por coincidência, ex. "BT
+// Bullet"/"BT Destroyer"/"BT Cruiser" da Ocean Air viram "um grupo" só por
+// começarem com "BT"). Sem atleta, cai pro (marca, nome_base) exato.
+function consolidationKey(r: RacketWithInsights): string {
+  const specs = r.specs_extra as Record<string, unknown> | null
+  const atleta = typeof specs?.atleta === 'string' ? specs.atleta : null
+  const brandKey = r.brands?.slug ?? `sem-marca-${r.id}`
+  return atleta ? `atleta:${brandKey}:${atleta}` : `nome:${brandKey}:${r.nome_base ?? r.name}`
+}
+
 export async function getTopRaquetasPorNivel(
   nivel: 'iniciante' | 'intermediario' | 'avancado',
   pool: RacketWithInsights[],
@@ -782,18 +803,48 @@ export async function getTopRaquetasPorNivel(
   if (countById.size === 0) return []
 
   const minModelYear = minModelYearTopNivel()
-  const ranked = pool
+  const eligible = pool
     .filter(r => (countById.get(r.id) ?? 0) > 0)
     .filter(r => {
       const s = scoreGeral(r.racket_insights)
       return s != null && s >= SCORE_GERAL_FLOOR
     })
     .filter(r => r.model_year != null && r.model_year >= minModelYear)
-    .sort((a, b) => (countById.get(b.id) ?? 0) - (countById.get(a.id) ?? 0))
+  if (eligible.length === 0) return []
+
+  // Só soma cnt de edições que já passaram no filtro de antiguidade acima —
+  // uma edição 2023 nunca "empresta" volume pra uma 2026 só por compartilhar
+  // atleta/nome_base, senão reabriria a porta que esse filtro fechou.
+  const groups = new Map<string, RacketWithInsights[]>()
+  for (const r of eligible) {
+    const key = consolidationKey(r)
+    const group = groups.get(key)
+    if (group) group.push(r)
+    else groups.set(key, [r])
+  }
+
+  const consolidated = [...groups.values()].map(members => ({
+    representative: members.reduce((best, r) => (r.model_year ?? 0) > (best.model_year ?? 0) ? r : best),
+    cnt: members.reduce((sum, r) => sum + (countById.get(r.id) ?? 0), 0),
+  }))
+
+  // Clicks globais (não atribuíveis por página/nível — essa é a limitação
+  // conhecida) só entram pra desempatar cnt exatamente igual, nunca somados
+  // ou ponderados ao score: a escala é outra (unidades vs. dezenas de
+  // recomendação real), então misturar os dois de outro jeito distorceria
+  // mais do que ajudaria.
+  const { data: clickRows } = await getSupabase().rpc('get_top_rackets_30d', { lim: TOP_NIVEL_CLICKS_POOL })
+  const clicksById = new Map(
+    ((clickRows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => [r.racket_id, r.cnt])
+  )
+
+  consolidated.sort((a, b) =>
+    b.cnt - a.cnt || (clicksById.get(b.representative.id) ?? 0) - (clicksById.get(a.representative.id) ?? 0)
+  )
 
   const seenBrands = new Set<string>()
   const result: RacketWithInsights[] = []
-  for (const r of ranked) {
+  for (const { representative: r } of consolidated) {
     if (result.length >= topN) break
     const brandKey = r.brands?.slug
     if (brandKey) {
