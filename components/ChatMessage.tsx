@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import RacketCard from './RacketCard'
 import CompareTable from './CompareTable'
@@ -156,6 +156,20 @@ export default function ChatMessage({
   const hasRecs = (recommendations?.length ?? 0) > 0
   const userNivel = (confirmedProfile?.nivel ?? debug?.perfilInput?.nivel) as 'iniciante' | 'intermediario' | 'avancado' | undefined
 
+  // Estrela de Top Pick no comparador — leitura só, via API (não participa do
+  // pipeline do agente). Só busca quando o nível já foi confirmado; sem
+  // nível, nenhuma raquete ganha estrela (não é erro, é "ainda não sabemos").
+  const [topPickIds, setTopPickIds] = useState<number[]>([])
+  useEffect(() => {
+    if (!userNivel) { setTopPickIds([]); return }
+    let cancelled = false
+    fetch(`/api/top-picks?nivel=${userNivel}`)
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setTopPickIds(Array.isArray(data?.ids) ? data.ids : []) })
+      .catch(() => { if (!cancelled) setTopPickIds([]) })
+    return () => { cancelled = true }
+  }, [userNivel])
+
   // The pacing container ref — used only when rawText is provided.
   const containerRef = useRef<HTMLSpanElement>(null)
 
@@ -253,7 +267,7 @@ export default function ChatMessage({
       {/* RacketCards — held back until animation finishes */}
       {isAssistant && hasRecs && !holdBack && (
         <div className="mt-3 pl-[46px] md:pl-[68px] w-full flex flex-col gap-2 min-w-0">
-          {isComparison && <CompareTable recommendations={recommendations!} />}
+          {isComparison && <CompareTable recommendations={recommendations!} topPickIds={topPickIds} />}
           <div className={`flex gap-3 overflow-x-auto pb-1 -mr-4 pr-4 md:mr-0 md:pr-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:overflow-visible ${
             recommendations!.length === 2
               ? 'md:grid md:grid-cols-2 md:gap-2'

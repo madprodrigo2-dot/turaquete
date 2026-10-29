@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Star } from '@phosphor-icons/react'
 import { RecommendedRacket } from '@/lib/recommend'
 import InsightsModal from './InsightsModal'
 import { getDisplayName } from '@/lib/displayName'
@@ -20,9 +21,14 @@ const COL_COLORS = ['#FF5E3A', '#0CC0BE', '#FFC42E'] as const
 
 interface Props {
   recommendations: RecommendedRacket[]
+  // IDs do Top Pick ativo do nível (ver app/api/top-picks) — undefined/vazio
+  // quando ainda não carregou ou o nível não foi confirmado; nesse caso
+  // nenhuma estrela aparece, não é tratado como "nenhuma é Top Pick".
+  topPickIds?: number[]
 }
 
-export default function CompareTable({ recommendations }: Props) {
+export default function CompareTable({ recommendations, topPickIds }: Props) {
+  const topPickSet = new Set(topPickIds)
   const [openModal, setOpenModal] = useState<number | null>(null) // racket id
   const n = recommendations.length
   if (n < 2) return null
@@ -51,8 +57,11 @@ export default function CompareTable({ recommendations }: Props) {
                 style={{ backgroundColor: COL_COLORS[ci] }}
                 aria-hidden="true"
               />
-              <span className="text-white text-[10px] font-semibold leading-tight text-center w-full truncate px-0.5">
-                {getDisplayName(rec.racket).split(' ').slice(0, 2).join(' ')}
+              <span className="flex items-center gap-1 text-white text-[10px] font-semibold leading-tight text-center w-full min-w-0">
+                {topPickSet.has(rec.racket.id) && (
+                  <Star size={10} weight="fill" className="text-gold-light shrink-0" aria-label="Top Pick ativa" />
+                )}
+                <span className="truncate">{getDisplayName(rec.racket).split(' ').slice(0, 2).join(' ')}</span>
               </span>
             </button>
           ))}

@@ -224,9 +224,12 @@ function DivergentRow({
 
 interface Props {
   rackets: RacketWithInsights[]
+  // IDs do Top Pick ativo (nível + conforto) — ver app/comparar/[par]/page.tsx.
+  topPickIds?: number[]
 }
 
-export default function CompareView({ rackets }: Props) {
+export default function CompareView({ rackets, topPickIds }: Props) {
+  const topPickSet = new Set(topPickIds)
   const specs = alignedSpecs(rackets)
   const hasTwoRackets = rackets.length === 2
 
@@ -264,9 +267,12 @@ export default function CompareView({ rackets }: Props) {
               <div className="flex flex-col gap-1 px-0.5">
                 <Link
                   href={`/raquetes/${r.slug}`}
-                  className="text-[12px] font-semibold text-tinta leading-snug hover:underline"
+                  className="flex items-center gap-1 text-[12px] font-semibold text-tinta leading-snug hover:underline min-w-0"
                 >
-                  {r.name}
+                  {topPickSet.has(r.id) && (
+                    <Star size={11} weight="fill" className="text-gold-deep shrink-0" aria-label="Top Pick ativa" />
+                  )}
+                  <span className="truncate">{r.name}</span>
                 </Link>
                 {r.brands?.name && (
                   <span className="text-[11px] text-tinta/40">{r.brands.name}</span>

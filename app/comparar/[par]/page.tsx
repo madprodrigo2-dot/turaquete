@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getRaquetasPorSlug } from '@/lib/recommend'
+import {
+  getRaquetasPorSlug, getRaquetasPorNivel, getTopRaquetasPorNivel,
+  getRaquetasConforto, getTopRaquetasConforto,
+} from '@/lib/recommend'
+import { derivarNivel } from '@/lib/nivel'
 import CompareView from '@/components/CompareView'
 import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 
@@ -34,6 +38,19 @@ export default async function CompararParPage({ params }: Props) {
   const rackets = await getRaquetasPorSlug(slugs)
   if (rackets.length < 2) redirect('/comparar')
 
+  // Top Pick ativa — mesmo dado/lógica do CTA dourado na ficha de detalhe.
+  // Busca cada pool (nível/conforto) só 1x mesmo que as 2 raquetes comparadas
+  // compartilhem nível, ou que nenhuma precise do pool de conforto.
+  const niveis = [...new Set(rackets.map(r => derivarNivel(r)).filter((n): n is 'iniciante' | 'intermediario' | 'avancado' => n != null))]
+  const precisaConforto = rackets.some(r => r.racket_insights?.elbow_friendly)
+  const [porNivel, porConforto] = await Promise.all([
+    Promise.all(niveis.map(n => getRaquetasPorNivel(n).then(pool => getTopRaquetasPorNivel(n, pool, 4)).catch(() => []))),
+    precisaConforto ? getRaquetasConforto().then(pool => getTopRaquetasConforto(pool, 4)).catch(() => []) : Promise.resolve([]),
+  ])
+  // Array, não Set — props de Server pra Client Component precisam ser
+  // serializáveis (JSON), Set não passa pela ponte RSC.
+  const topPickIds = [...new Set([...porNivel.flat(), ...porConforto].map(r => r.id))]
+
   const breadcrumb = breadcrumbJsonLd([
     { name: 'Turaquete', url: SITE_URL },
     { name: 'Comparar', url: `${SITE_URL}/comparar` },
@@ -61,7 +78,7 @@ export default async function CompararParPage({ params }: Props) {
       </div>
 
       <div className="max-w-4xl lg:max-w-7xl mx-auto px-5 md:px-8 py-8">
-        <CompareView rackets={rackets} />
+        <CompareView rackets={rackets} topPickIds={topPickIds} />
       </div>
     </div>
   )
