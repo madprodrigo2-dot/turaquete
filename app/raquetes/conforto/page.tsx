@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getRaquetasConforto } from '@/lib/recommend'
+import { getRaquetasConforto, getTopRaquetasConforto } from '@/lib/recommend'
 import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 
 export const revalidate = 300
@@ -21,6 +21,7 @@ function IconConforto() {
 
 export default async function ConfortoPage() {
   const rackets = await getRaquetasConforto().catch(() => [])
+  const topPicks = await getTopRaquetasConforto(rackets, 4).catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-articulacoes.webp"
@@ -29,6 +30,9 @@ export default async function ConfortoPage() {
       rackets={rackets}
       emptyMessage="Nenhuma raquete com esse perfil catalogada ainda."
       defaultSort="conforto"
+      topPicks={topPicks}
+      topPicksTitle="Mais recomendadas para articulações sensíveis"
+      topPicksSubtitle="as escolhas mais frequentes do consultor pra quem tem cotovelo, ombro ou punho sensível"
     />
   )
 }

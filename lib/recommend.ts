@@ -787,6 +787,67 @@ function consolidationKey(r: RacketWithInsights): string {
   return atleta ? `atleta:${brandKey}:${atleta}` : `nome:${brandKey}:${r.nome_base ?? r.name}`
 }
 
+// Núcleo compartilhado por getTopRaquetasPorNivel e getTopRaquetasConforto:
+// consolida edições da mesma raquete (ver consolidationKey), desempata cnt
+// igual por clicks globais (RPC get_top_rackets_30d — não atribuível por
+// página/nível, por isso só desempate, nunca somado/ponderado ao score) e
+// aplica o teto de 1 por marca. `eligible` já deve chegar filtrado por quem
+// o caller decidiu que é candidato (cada um com seus próprios critérios).
+async function consolidateAndRank(
+  eligible: RacketWithInsights[],
+  countById: Map<number, number>,
+  topN: number
+): Promise<RacketWithInsights[]> {
+  if (eligible.length === 0) return []
+
+  const groups = new Map<string, RacketWithInsights[]>()
+  for (const r of eligible) {
+    const key = consolidationKey(r)
+    const group = groups.get(key)
+    if (group) group.push(r)
+    else groups.set(key, [r])
+  }
+
+  const consolidated = [...groups.values()].map(members => ({
+    representative: members.reduce((best, r) => (r.model_year ?? 0) > (best.model_year ?? 0) ? r : best),
+    cnt: members.reduce((sum, r) => sum + (countById.get(r.id) ?? 0), 0),
+  }))
+
+  const { data: clickRows } = await getSupabase().rpc('get_top_rackets_30d', { lim: TOP_NIVEL_CLICKS_POOL })
+  const clicksById = new Map(
+    ((clickRows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => [r.racket_id, r.cnt])
+  )
+
+  consolidated.sort((a, b) =>
+    b.cnt - a.cnt || (clicksById.get(b.representative.id) ?? 0) - (clicksById.get(a.representative.id) ?? 0)
+  )
+
+  const seenBrands = new Set<string>()
+  const result: RacketWithInsights[] = []
+  for (const { representative: r } of consolidated) {
+    if (result.length >= topN) break
+    const brandKey = r.brands?.slug
+    if (brandKey) {
+      if (seenBrands.has(brandKey)) continue
+      seenBrands.add(brandKey)
+    }
+    result.push(r)
+  }
+  return result
+}
+
+// affiliate_url cadastrado e preço válido — regra do Rodrigo 2026-10-29, não
+// faz sentido destacar raquete que não dá pra comprar (auditoria achou
+// raquetes sem link ou com link morto). Preço "válido" = mesmo critério já
+// usado em app/admin/precos (coluna "failed" daquela página): price não nulo
+// e last_sync_status não é um erro explícito (null conta como ok — nunca
+// passou pelo cron, não é um problema confirmado). Compartilhado por
+// getTopRaquetasPorNivel e getTopRaquetasConforto.
+function temLinkEPrecoValidos(r: RacketWithInsights): boolean {
+  return typeof r.affiliate_url === 'string' && r.affiliate_url.trim() !== ''
+    && r.price != null && (r.last_sync_status == null || r.last_sync_status === 'ok')
+}
+
 export async function getTopRaquetasPorNivel(
   nivel: 'iniciante' | 'intermediario' | 'avancado',
   pool: RacketWithInsights[],
@@ -811,59 +872,43 @@ export async function getTopRaquetasPorNivel(
       return s != null && s >= SCORE_GERAL_FLOOR
     })
     .filter(r => r.model_year != null && r.model_year >= minModelYear)
-    // Regra do Rodrigo 2026-10-29: não destacar raquete que não dá pra comprar.
-    // affiliate_url precisa existir (não valida o link em si, só que foi
-    // cadastrado) — auditoria achou raquetes sem link ou com link morto.
-    .filter(r => typeof r.affiliate_url === 'string' && r.affiliate_url.trim() !== '')
-    // Preço "válido" = mesmo critério já usado em app/admin/precos (coluna
-    // "failed" daquela página): price não nulo E last_sync_status não é um
-    // erro explícito. null em last_sync_status conta como ok — é uma raquete
-    // que nunca passou pelo cron de sync, não uma com problema confirmado.
-    .filter(r => r.price != null && (r.last_sync_status == null || r.last_sync_status === 'ok'))
-  if (eligible.length === 0) return []
-
+    .filter(temLinkEPrecoValidos)
   // Só soma cnt de edições que já passaram no filtro de antiguidade acima —
   // uma edição 2023 nunca "empresta" volume pra uma 2026 só por compartilhar
   // atleta/nome_base, senão reabriria a porta que esse filtro fechou.
-  const groups = new Map<string, RacketWithInsights[]>()
-  for (const r of eligible) {
-    const key = consolidationKey(r)
-    const group = groups.get(key)
-    if (group) group.push(r)
-    else groups.set(key, [r])
-  }
+  return consolidateAndRank(eligible, countById, topN)
+}
 
-  const consolidated = [...groups.values()].map(members => ({
-    representative: members.reduce((best, r) => (r.model_year ?? 0) > (best.model_year ?? 0) ? r : best),
-    cnt: members.reduce((sum, r) => sum + (countById.get(r.id) ?? 0), 0),
-  }))
+// Análogo a getTopRaquetasPorNivel, mas pra /raquetes/conforto — essa página
+// não tem "nível", tem um filtro de dor/articulação (cotovelo, ombro, punho
+// sensível), confirmado explicitamente no chat e já persistido em
+// conversations.confirmed_profile. RPC get_top_rackets_by_conforto_30d faz o
+// mesmo join de sempre, trocando o filtro de nivel por esses 3 flags.
+// Decisão Rodrigo 2026-10-29, com dado real investigado antes de implementar:
+// SEM piso de scoreGeral (ele mede power/control/maneuverability/stability —
+// nada a ver com conforto; aplicado aqui reprovaria "Giant", comfort=9, a
+// nota máxima do catálogo, só por ter potência/controle baixos, o que é
+// esperado nesse nicho) e SEM corte de antiguidade (as 3 recomendações reais
+// mais frequentes do nicho são de 2024 — "antigo" não é sinal de problema
+// aqui do jeito que é nas páginas de nível; a raquete certa pra articulação
+// sensível não muda todo ano). Mantém consolidação por atleta/nome_base,
+// filtro de link/preço e teto de 1 por marca — mesmo padrão de sempre.
+export async function getTopRaquetasConforto(
+  pool: RacketWithInsights[],
+  topN = 4
+): Promise<RacketWithInsights[]> {
+  if (pool.length === 0) return []
 
-  // Clicks globais (não atribuíveis por página/nível — essa é a limitação
-  // conhecida) só entram pra desempatar cnt exatamente igual, nunca somados
-  // ou ponderados ao score: a escala é outra (unidades vs. dezenas de
-  // recomendação real), então misturar os dois de outro jeito distorceria
-  // mais do que ajudaria.
-  const { data: clickRows } = await getSupabase().rpc('get_top_rackets_30d', { lim: TOP_NIVEL_CLICKS_POOL })
-  const clicksById = new Map(
-    ((clickRows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => [r.racket_id, r.cnt])
+  const { data: rows } = await getSupabase().rpc('get_top_rackets_by_conforto_30d', { lim: TOP_NIVEL_POOL })
+  const countById = new Map(
+    ((rows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => [r.racket_id, r.cnt])
   )
+  if (countById.size === 0) return []
 
-  consolidated.sort((a, b) =>
-    b.cnt - a.cnt || (clicksById.get(b.representative.id) ?? 0) - (clicksById.get(a.representative.id) ?? 0)
-  )
-
-  const seenBrands = new Set<string>()
-  const result: RacketWithInsights[] = []
-  for (const { representative: r } of consolidated) {
-    if (result.length >= topN) break
-    const brandKey = r.brands?.slug
-    if (brandKey) {
-      if (seenBrands.has(brandKey)) continue
-      seenBrands.add(brandKey)
-    }
-    result.push(r)
-  }
-  return result
+  const eligible = pool
+    .filter(r => (countById.get(r.id) ?? 0) > 0)
+    .filter(temLinkEPrecoValidos)
+  return consolidateAndRank(eligible, countById, topN)
 }
 
 export async function getRaquetasPorOrcamento(max: number): Promise<RacketWithInsights[]> {
