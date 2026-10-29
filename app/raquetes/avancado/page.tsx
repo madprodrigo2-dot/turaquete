@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getRaquetasPorNivel } from '@/lib/recommend'
+import { getRaquetasPorNivel, getTopRaquetasPorNivel } from '@/lib/recommend'
 import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 
 export const revalidate = 300
@@ -22,6 +22,7 @@ function IconAvancado() {
 
 export default async function AvancadoPage() {
   const rackets = await getRaquetasPorNivel('avancado').catch(() => [])
+  const topPicks = await getTopRaquetasPorNivel('avancado', rackets).catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-avancado.webp"
@@ -30,6 +31,9 @@ export default async function AvancadoPage() {
       rackets={rackets}
       emptyMessage="Nenhuma raquete avançada catalogada ainda."
       defaultSort="potencia"
+      topPicks={topPicks}
+      topPicksTitle="Mais recomendadas para avançados"
+      topPicksSubtitle="as escolhas mais frequentes do consultor pra quem já joga no limite"
     />
   )
 }

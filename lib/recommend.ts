@@ -744,6 +744,55 @@ export async function getRaquetasPorNivel(
   return all.filter(r => computeNivelFormula(r) === nivel)
 }
 
+// ── "Top 3" por nível ────────────────────────────────────────────────────────
+// Ranking dentro do pool que a própria página de nível já buscou (nunca
+// aparece um "top" que não esteja na grade abaixo). Fonte: recomendações
+// reais do chat nos últimos 30 dias, filtradas pelo nível que o usuário
+// confirmou na conversa (conversations.confirmed_profile->>'nivel') — RPC
+// get_top_rackets_by_nivel_30d faz esse join em SQL, mesmo padrão de
+// get_top_rackets_30d (usado em getTopRaquetas). Piso de scoreGeral e teto de
+// 1 por marca reaproveitados de getTopRaquetas, pelo mesmo motivo: não deixar
+// uma raquete de baixa qualidade subir só por volume de recomendação.
+const TOP_NIVEL_POOL = 50
+
+export async function getTopRaquetasPorNivel(
+  nivel: 'iniciante' | 'intermediario' | 'avancado',
+  pool: RacketWithInsights[],
+  topN = 3
+): Promise<RacketWithInsights[]> {
+  if (pool.length === 0) return []
+
+  const { data: rows } = await getSupabase().rpc('get_top_rackets_by_nivel_30d', {
+    p_nivel: nivel,
+    lim: TOP_NIVEL_POOL,
+  })
+  const countById = new Map(
+    ((rows as { racket_id: number; cnt: number }[] | null) ?? []).map(r => [r.racket_id, r.cnt])
+  )
+  if (countById.size === 0) return []
+
+  const ranked = pool
+    .filter(r => (countById.get(r.id) ?? 0) > 0)
+    .filter(r => {
+      const s = scoreGeral(r.racket_insights)
+      return s != null && s >= SCORE_GERAL_FLOOR
+    })
+    .sort((a, b) => (countById.get(b.id) ?? 0) - (countById.get(a.id) ?? 0))
+
+  const seenBrands = new Set<string>()
+  const result: RacketWithInsights[] = []
+  for (const r of ranked) {
+    if (result.length >= topN) break
+    const brandKey = r.brands?.slug
+    if (brandKey) {
+      if (seenBrands.has(brandKey)) continue
+      seenBrands.add(brandKey)
+    }
+    result.push(r)
+  }
+  return result
+}
+
 export async function getRaquetasPorOrcamento(max: number): Promise<RacketWithInsights[]> {
   const { data, error } = await getSupabase()
     .from('rackets')

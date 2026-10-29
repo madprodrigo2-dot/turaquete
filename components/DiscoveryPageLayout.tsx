@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { RacketWithInsights } from '@/lib/recommend'
 import DiscoveryFilters, { type SortKey } from './DiscoveryFilters'
+import TopPicksSection from './TopPicksSection'
 import SiteNav from './SiteNav'
 
 interface Props {
@@ -15,6 +16,9 @@ interface Props {
   showPrecoFilter?: boolean
   showTextSearch?: boolean
   initialQuery?: string
+  topPicks?: RacketWithInsights[]
+  topPicksTitle?: string
+  topPicksSubtitle?: string
 }
 
 export default function DiscoveryPageLayout({
@@ -28,6 +32,9 @@ export default function DiscoveryPageLayout({
   showPrecoFilter = true,
   showTextSearch,
   initialQuery,
+  topPicks,
+  topPicksTitle,
+  topPicksSubtitle,
 }: Props) {
   return (
     <div className="min-h-screen sand-texture">
@@ -54,6 +61,15 @@ export default function DiscoveryPageLayout({
             </div>
             <p className="text-tinta/60 text-sm">{subtitle}</p>
           </div>
+        )}
+
+        {/* Top picks — fixo acima da grade, nunca aparece se não houver dado real */}
+        {topPicks && topPicks.length > 0 && (
+          <TopPicksSection
+            rackets={topPicks}
+            title={topPicksTitle ?? 'Mais recomendadas pelo Turaquete'}
+            subtitle={topPicksSubtitle ?? 'com base em recomendações reais do chat nos últimos 30 dias'}
+          />
         )}
 
         {/* Filters + grid — or empty base message */}

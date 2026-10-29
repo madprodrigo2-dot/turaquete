@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getRaquetasPorNivel } from '@/lib/recommend'
+import { getRaquetasPorNivel, getTopRaquetasPorNivel } from '@/lib/recommend'
 import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 
 export const revalidate = 300
@@ -22,6 +22,7 @@ function IconIniciante() {
 
 export default async function InicirantePage() {
   const rackets = await getRaquetasPorNivel('iniciante').catch(() => [])
+  const topPicks = await getTopRaquetasPorNivel('iniciante', rackets).catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-iniciante.webp"
@@ -30,6 +31,9 @@ export default async function InicirantePage() {
       rackets={rackets}
       emptyMessage="Nenhuma raquete iniciante catalogada ainda."
       defaultSort="manuseio"
+      topPicks={topPicks}
+      topPicksTitle="Mais recomendadas para iniciantes"
+      topPicksSubtitle="as escolhas mais frequentes do consultor pra quem está começando"
     />
   )
 }

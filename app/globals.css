@@ -7,6 +7,14 @@
   --color-tinta:      #0E3A40;
   --color-aqua-light: #EAF7F6;
   --color-arena:      #F7EDDC;
+
+  /* Dourado "premium" — tom "Âmbar Coral", a meio caminho entre --color-yellow
+     e --color-coral (em vez de um dourado genérico desconectado da paleta).
+     Uso: seções de destaque/alto valor (ex. Top 3 por nível), não para UI
+     geral — ver TopPicksSection.tsx como referência de aplicação. */
+  --color-gold-light: #F9DDB3;
+  --color-gold:       #DB8A2E;
+  --color-gold-deep:  #A8631B;
 }
 
 /* ── Design tokens ────────────────────────────────────────────────────────── */

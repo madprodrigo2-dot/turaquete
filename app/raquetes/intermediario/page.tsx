@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getRaquetasPorNivel } from '@/lib/recommend'
+import { getRaquetasPorNivel, getTopRaquetasPorNivel } from '@/lib/recommend'
 import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 
 export const revalidate = 300
@@ -22,6 +22,7 @@ function IconIntermediario() {
 
 export default async function IntermediarioPage() {
   const rackets = await getRaquetasPorNivel('intermediario').catch(() => [])
+  const topPicks = await getTopRaquetasPorNivel('intermediario', rackets).catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-intermediario.webp"
@@ -30,6 +31,9 @@ export default async function IntermediarioPage() {
       rackets={rackets}
       emptyMessage="Nenhuma raquete intermediária catalogada ainda."
       defaultSort="controle"
+      topPicks={topPicks}
+      topPicksTitle="Mais recomendadas para intermediários"
+      topPicksSubtitle="as escolhas mais frequentes do consultor pra quem já domina o básico"
     />
   )
 }
