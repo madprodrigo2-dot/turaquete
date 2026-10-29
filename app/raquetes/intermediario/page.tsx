@@ -22,7 +22,9 @@ function IconIntermediario() {
 
 export default async function IntermediarioPage() {
   const rackets = await getRaquetasPorNivel('intermediario').catch(() => [])
-  const topPicks = await getTopRaquetasPorNivel('intermediario', rackets).catch(() => [])
+  // topN=4: desktop mostra 4 numa grade fechada (sem buraco), mobile corta pra
+  // 3 na lista compacta — ver TopPicksSection.tsx.
+  const topPicks = await getTopRaquetasPorNivel('intermediario', rackets, 4).catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-intermediario.webp"

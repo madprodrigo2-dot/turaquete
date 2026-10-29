@@ -22,7 +22,9 @@ function IconIniciante() {
 
 export default async function InicirantePage() {
   const rackets = await getRaquetasPorNivel('iniciante').catch(() => [])
-  const topPicks = await getTopRaquetasPorNivel('iniciante', rackets).catch(() => [])
+  // topN=4: desktop mostra 4 numa grade fechada (sem buraco), mobile corta pra
+  // 3 na lista compacta — ver TopPicksSection.tsx.
+  const topPicks = await getTopRaquetasPorNivel('iniciante', rackets, 4).catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-iniciante.webp"

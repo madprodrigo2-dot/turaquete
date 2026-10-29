@@ -228,7 +228,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
       {/* Grid or empty state */}
       {filtered.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {filtered.map(r => (
               <DiscoveryRacketCard key={r.id} racket={r} />
             ))}

@@ -31,6 +31,14 @@ interface Props {
 // completar com raquete mais velha só pra fechar o número. Por isso o pill
 // virou "Mais recomendadas" genérico em vez de "Top 3" fixo: não fica
 // estranho se um nível tiver só 1-2 elegíveis num dado momento.
+// V6 (2026-10-29): grade de 3 colunas em desktop com 3 cards deixava a seção
+// menor/proporcionalmente diferente da grade de 4 colunas logo abaixo (fix
+// anterior do tamanho das cards). Os callers agora pedem topN=4 — desktop
+// vira grade de 4 colunas fechada (sem buraco), mobile corta pra 3 na lista
+// compacta (`.slice(0, 3)` abaixo) porque o layout de lista vertical não
+// ganha nada em mostrar a 4ª linha. Se `rackets` vier com menos de 4 (nível
+// com poucas elegíveis), a grade desktop só mostra o que tem — mesmo
+// princípio de "não completar artificialmente" do V5.
 export default function TopPicksSection({ rackets, title, subtitle }: Props) {
   if (rackets.length === 0) return null
 
@@ -56,10 +64,10 @@ export default function TopPicksSection({ rackets, title, subtitle }: Props) {
       </div>
 
       {/* Mobile: linhas horizontais compactas (miniatura + nome + preço), sem
-          carrossel — as 3 cabem na tela sem scroll. Desktop: grade normal,
-          mesmo card da grade abaixo. */}
+          carrossel — só as 3 primeiras, que cabem na tela sem scroll. Desktop:
+          grade de 4 colunas, mesmo card da grade abaixo. */}
       <div className="flex flex-col gap-2 md:hidden">
-        {rackets.map(r => {
+        {rackets.slice(0, 3).map(r => {
           const price = r.price
             ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(r.price)
             : null
@@ -84,7 +92,7 @@ export default function TopPicksSection({ rackets, title, subtitle }: Props) {
         })}
       </div>
 
-      <div className="hidden md:grid md:grid-cols-3 gap-3">
+      <div className="hidden md:grid md:grid-cols-4 gap-3">
         {rackets.map(r => (
           <DiscoveryRacketCard key={r.id} racket={r} />
         ))}

@@ -22,7 +22,9 @@ function IconAvancado() {
 
 export default async function AvancadoPage() {
   const rackets = await getRaquetasPorNivel('avancado').catch(() => [])
-  const topPicks = await getTopRaquetasPorNivel('avancado', rackets).catch(() => [])
+  // topN=4: desktop mostra 4 numa grade fechada (sem buraco), mobile corta pra
+  // 3 na lista compacta — ver TopPicksSection.tsx.
+  const topPicks = await getTopRaquetasPorNivel('avancado', rackets, 4).catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-avancado.webp"
