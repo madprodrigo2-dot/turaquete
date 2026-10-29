@@ -25,6 +25,12 @@ interface Props {
 // Trocado por linhas horizontais compactas (miniatura + nome + preço, sem
 // carrossel) — 306px, as 3 cabem sem scroll. Desktop mantém a grade normal
 // com DiscoveryRacketCard, intocada.
+// V5 (2026-10-29): getTopRaquetasPorNivel() agora corta raquetes com mais de
+// ~2 anos de lançamento (model_year null também fica de fora). Com isso
+// `rackets` pode chegar aqui com 1 ou 2 itens em vez de sempre 3 — sem
+// completar com raquete mais velha só pra fechar o número. Por isso o pill
+// virou "Mais recomendadas" genérico em vez de "Top 3" fixo: não fica
+// estranho se um nível tiver só 1-2 elegíveis num dado momento.
 export default function TopPicksSection({ rackets, title, subtitle }: Props) {
   if (rackets.length === 0) return null
 
@@ -42,7 +48,7 @@ export default function TopPicksSection({ rackets, title, subtitle }: Props) {
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="inline-flex items-center gap-1 self-start text-[9px] font-bold uppercase tracking-wider text-tinta bg-gold-light rounded-full px-2 py-0.5 w-fit">
             <Star size={10} weight="fill" aria-hidden="true" />
-            Top 3
+            Mais recomendadas
           </span>
           <p className="font-heading font-bold text-white text-sm md:text-base leading-tight mt-0.5">{title}</p>
           <p className="text-white/70 text-xs">{subtitle}</p>

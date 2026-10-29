@@ -755,6 +755,16 @@ export async function getRaquetasPorNivel(
 // uma raquete de baixa qualidade subir só por volume de recomendação.
 const TOP_NIVEL_POOL = 50
 
+// Regra do Rodrigo 2026-10-29: raquete com mais de ~2 anos de lançamento não
+// entra no Top 3, mesmo com bom volume de recomendação — "2024 pra trás fica
+// de fora" (hoje, 2026, isso é model_year >= 2025). Calculado a partir do ano
+// atual, não fixo, pra não precisar lembrar de subir isso todo janeiro.
+// model_year null também fica de fora — sem o dado, não dá pra confirmar que
+// é recente (mesmo princípio do piso de scoreGeral abaixo).
+function minModelYearTopNivel(): number {
+  return new Date().getFullYear() - 1
+}
+
 export async function getTopRaquetasPorNivel(
   nivel: 'iniciante' | 'intermediario' | 'avancado',
   pool: RacketWithInsights[],
@@ -771,12 +781,14 @@ export async function getTopRaquetasPorNivel(
   )
   if (countById.size === 0) return []
 
+  const minModelYear = minModelYearTopNivel()
   const ranked = pool
     .filter(r => (countById.get(r.id) ?? 0) > 0)
     .filter(r => {
       const s = scoreGeral(r.racket_insights)
       return s != null && s >= SCORE_GERAL_FLOOR
     })
+    .filter(r => r.model_year != null && r.model_year >= minModelYear)
     .sort((a, b) => (countById.get(b.id) ?? 0) - (countById.get(a.id) ?? 0))
 
   const seenBrands = new Set<string>()
