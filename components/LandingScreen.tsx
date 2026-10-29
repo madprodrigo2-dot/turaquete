@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useMemo, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CaretLeft, CaretRight, CaretDown, ArrowRight, Check, Hexagon, Play } from '@phosphor-icons/react' // MIT license
+import { CaretLeft, CaretRight, CaretDown, ArrowRight, Check, Hexagon, Play, Star } from '@phosphor-icons/react' // MIT license
 // WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import { Brand, RacketWithInsights } from '@/lib/recommend'
@@ -455,7 +455,11 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
 
 // ── Carousel ──────────────────────────────────────────────────────────────────
 
-function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
+// onGold: variante de contraste pra quando o carrossel senta sobre o fundo
+// dourado (seção "Mais recomendadas pelo especialista") — as cores padrão
+// (seta com borda aqua, dot inativo tinta/20) foram desenhadas pro fundo
+// neutro do "Novidades 2026" e ficam pouco visíveis contra o dourado.
+function FeaturedCarousel({ rackets, onGold }: { rackets: RacketWithInsights[]; onGold?: boolean }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const [activeIdx, setActiveIdx] = useState(0)
   const [atStart, setAtStart] = useState(true)
@@ -551,7 +555,11 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
 
   const arrowCls = (disabled: boolean) =>
     `hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border shadow-sm items-center justify-center transition-all
-     ${disabled ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
+     ${disabled
+       ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300'
+       : onGold
+         ? 'border-gold-deep/40 text-tinta/70 hover:border-gold-deep/70 hover:text-tinta hover:shadow-md'
+         : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
 
   // Number of navigable positions = maxIdx + 1 (reachable slides only)
   const dotCount = maxIdx + 1
@@ -611,7 +619,9 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
               aria-label={`Ir para raquete ${idx + 1}`}
               aria-current={idx === activeIdx ? 'true' : undefined}
               className={`h-1.5 rounded-full transition-all duration-200 ${
-                idx === activeIdx ? 'w-4 bg-aqua' : 'w-1.5 bg-tinta/20 hover:bg-tinta/40'
+                idx === activeIdx
+                  ? `w-4 ${onGold ? 'bg-white' : 'bg-aqua'}`
+                  : onGold ? 'w-1.5 bg-white/35 hover:bg-white/55' : 'w-1.5 bg-tinta/20 hover:bg-tinta/40'
               }`}
             />
           ))}
@@ -1544,16 +1554,38 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             </div>
           )}
 
-          {/* Mais recomendadas pelo especialista */}
+          {/* Mais recomendadas pelo especialista — mesmo tratamento dourado do
+              TopPicksSection (páginas de nível/conforto), com a Tury dourada
+              especial (tury_gold_2.png, PNG com transparência real — a v1
+              tury_gold.jpg era JPEG sem canal alpha, descartada). Maior em
+              desktop (h-28) a pedido do Rodrigo; mobile ficou do mesmo
+              tamanho do TopPicksSection (h-14) porque naquele tamanho ela já
+              lia bem, sem o aperto de espaço vertical que motivou aumentar
+              só o desktop. FeaturedCarousel recebe onGold pra ajustar
+              contraste de setas/dots — a versão padrão (aqua/tinta) foi
+              desenhada pro fundo neutro do "Novidades 2026" acima. */}
           {featuredRackets.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-0.5">
-                <p className="font-heading font-bold text-tinta text-base md:text-lg">
-                  As mais recomendadas pelo especialista
-                </p>
-                <p className="text-tinta/50 text-xs">com base nas consultorias recentes</p>
+            <div className="flex flex-col gap-3 bg-gradient-to-br from-gold to-gold-deep border border-black/15 rounded-2xl p-4 md:p-5 shadow-[0_4px_24px_rgba(0,0,0,0.18)]">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/tury_gold_2.png"
+                  alt="Tury"
+                  width={432}
+                  height={578}
+                  className="h-14 md:h-28 w-auto object-contain shrink-0"
+                />
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="inline-flex items-center gap-1 self-start text-[9px] font-bold uppercase tracking-wider text-tinta bg-gold-light rounded-full px-2 py-0.5 w-fit">
+                    <Star size={10} weight="fill" aria-hidden="true" />
+                    Mais recomendadas
+                  </span>
+                  <p className="font-heading font-bold text-white text-base md:text-lg">
+                    As mais recomendadas pelo especialista
+                  </p>
+                  <p className="text-white/70 text-xs">com base nas consultorias recentes</p>
+                </div>
               </div>
-              <FeaturedCarousel rackets={featuredRackets} />
+              <FeaturedCarousel rackets={featuredRackets} onGold />
             </div>
           )}
 
