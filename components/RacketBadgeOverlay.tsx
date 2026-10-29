@@ -57,7 +57,7 @@ export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size
           {topBadges.map(b => (
             <span
               key={b.label}
-              className="inline-flex items-center gap-1 h-5 rounded-md bg-[#FF5E3A] text-white text-[10px] font-bold px-1.5 leading-none shadow-sm whitespace-nowrap"
+              className="inline-flex items-center gap-1 h-5 rounded-md bg-gold-deep text-white text-[10px] font-bold px-1.5 leading-none shadow-sm whitespace-nowrap"
             >
               <span aria-hidden="true">★</span>{b.label} {b.value}
             </span>

@@ -3,7 +3,10 @@ export const revalidate = 300
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getRaquetaPorSlug, listarRaquetas, suggestComparisons } from '@/lib/recommend'
+import {
+  getRaquetaPorSlug, listarRaquetas, suggestComparisons,
+  getRaquetasPorNivel, getTopRaquetasPorNivel, getRaquetasConforto, getTopRaquetasConforto,
+} from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
@@ -76,6 +79,21 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   const sugestoes = suggestComparisons(racket, allRackets, 6)
 
   const ins = racket.racket_insights
+
+  // "Top Pick ativa" — mesmo dado real do TopPicksSection (páginas de nível/
+  // conforto), só verificando se ESTA raquete está na lista agora. Checa os
+  // dois universos possíveis (nível calculado + conforto, se elbow_friendly)
+  // porque uma raquete pode estar em qualquer um dos dois, não só um.
+  const racketNivel = derivarNivel(racket)
+  const [nivelTopPicks, confortoTopPicks] = await Promise.all([
+    racketNivel
+      ? getRaquetasPorNivel(racketNivel).then(pool => getTopRaquetasPorNivel(racketNivel, pool, 4)).catch(() => [])
+      : Promise.resolve([]),
+    ins?.elbow_friendly
+      ? getRaquetasConforto().then(pool => getTopRaquetasConforto(pool, 4)).catch(() => [])
+      : Promise.resolve([]),
+  ])
+  const isTopPick = nivelTopPicks.some(r => r.id === racket.id) || confortoTopPicks.some(r => r.id === racket.id)
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
@@ -228,14 +246,19 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 </div>
               </div>
 
-              {/* CTA compra */}
+              {/* CTA compra — borda dourada quando a raquete é uma Top Pick
+                  ativa agora (mesmo fundo coral, só o contorno muda) */}
               {irUrl ? (
                 <BuyButton
                   href={irUrl}
                   racketName={racket.name}
                   racketSlug={racket.slug}
                   linkTipo={linkTipo}
-                  className="w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all shadow-md text-center block"
+                  className={`w-full bg-coral text-white font-semibold text-base py-4 rounded-2xl hover:opacity-90 hover:shadow-[0_8px_28px_rgba(255,94,58,0.40)] active:scale-[0.98] transition-all text-center block ${
+                    isTopPick
+                      ? 'border-2 border-gold-deep shadow-[0_0_0_3px_rgba(168,99,27,0.18),0_2px_8px_rgba(14,58,64,0.06),0_14px_34px_rgba(14,58,64,0.09)]'
+                      : 'shadow-md'
+                  }`}
                 >
                   {price ? `Ver na loja → ${price}` : 'Ver na loja →'}
                 </BuyButton>
