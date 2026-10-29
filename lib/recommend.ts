@@ -89,6 +89,7 @@ export interface RacketWithInsights {
   price: number | null
   price_previous: number | null
   price_updated_at: string | null
+  last_sync_status: string | null
   updated_at: string | null
   created_at: string | null
   currency: string
@@ -122,7 +123,7 @@ function normalizeRacket(raw: unknown): RacketWithInsights {
 
 const SELECT_FIELDS = `
   id, name, slug, nome_base, model_year, racket_family_count, weight_g, balance, format,
-  face_material, core, price, price_previous, price_updated_at, updated_at, created_at, currency, affiliate_url, source_url, image_url, technologies,
+  face_material, core, price, price_previous, price_updated_at, last_sync_status, updated_at, created_at, currency, affiliate_url, source_url, image_url, technologies,
   specs_extra, publicada, is_active,
   brands ( name, slug, logo_url ),
   racket_insights (
@@ -810,6 +811,15 @@ export async function getTopRaquetasPorNivel(
       return s != null && s >= SCORE_GERAL_FLOOR
     })
     .filter(r => r.model_year != null && r.model_year >= minModelYear)
+    // Regra do Rodrigo 2026-10-29: não destacar raquete que não dá pra comprar.
+    // affiliate_url precisa existir (não valida o link em si, só que foi
+    // cadastrado) — auditoria achou raquetes sem link ou com link morto.
+    .filter(r => typeof r.affiliate_url === 'string' && r.affiliate_url.trim() !== '')
+    // Preço "válido" = mesmo critério já usado em app/admin/precos (coluna
+    // "failed" daquela página): price não nulo E last_sync_status não é um
+    // erro explícito. null em last_sync_status conta como ok — é uma raquete
+    // que nunca passou pelo cron de sync, não uma com problema confirmado.
+    .filter(r => r.price != null && (r.last_sync_status == null || r.last_sync_status === 'ok'))
   if (eligible.length === 0) return []
 
   // Só soma cnt de edições que já passaram no filtro de antiguidade acima —
