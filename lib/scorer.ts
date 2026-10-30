@@ -261,6 +261,32 @@ export function scoreRacket(racket: RacketData, profile: ScorerProfile): number 
   return Math.round(score * 10) / 10
 }
 
+// ── % de compatibilidade (UI) ──────────────────────────────────────────────────
+// Deriva o % que a card mostra do match_score que já existe — não é um motor novo,
+// não toca ranking nem pesos. Calibrado sobre o range REAL do catálogo (medido
+// 2026-10-30: match_score nunca se aproxima dos extremos teóricos 0/10 — o
+// catálogo inteiro, em varios perfis, ficou entre 4.8 e 7.3), não a escala 0-10
+// teórica. Um mapeo linear direto deixaria as top-3 sempre a poucos pontos
+// percentuais uma da outra (ex. 91/87/87) — Rodrigo pediu uma curva que "sinta
+// generosa" pros bons matches: raiz quadrada sobre a posição normalizada empurra
+// a maioria das top-picks pra 90%+ sem achatar a diferença entre elas (validado
+// com os 5 perfis de teste da spec: 12/14 top-picks ficaram >=90%, as 2 que não
+// ficaram são o par mais fraco dos 5 perfis, não um artefato da curva).
+const COMPAT_ANCHOR_MIN = 4.5  // match_score abaixo disso é raro (globalmente observado: 4.8)
+const COMPAT_ANCHOR_MAX = 7.5  // idem acima (observado: 7.3)
+const COMPAT_FLOOR_PCT  = 58   // % no ancora mínima (t=0), antes da curva
+const COMPAT_CEIL_PCT   = 98   // teto absoluto — nunca 100%
+const COMPAT_HIDE_BELOW = 60   // abaixo disso a card não mostra número (regra 3 da spec)
+const COMPAT_CURVE_EXP  = 0.5  // raiz quadrada — aprovado por Rodrigo 2026-10-30
+
+export function compatPct(matchScore: number): number | null {
+  const t = Math.min(1, Math.max(0, (matchScore - COMPAT_ANCHOR_MIN) / (COMPAT_ANCHOR_MAX - COMPAT_ANCHOR_MIN)))
+  const curved = Math.pow(t, COMPAT_CURVE_EXP)
+  const pct = Math.min(COMPAT_CEIL_PCT, COMPAT_FLOOR_PCT + curved * (COMPAT_CEIL_PCT - COMPAT_FLOOR_PCT))
+  if (pct < COMPAT_HIDE_BELOW) return null
+  return Math.round(pct)
+}
+
 // ── Decision-trace variants (admin debug only) ────────────────────────────────
 
 export function calcular_faixa_ideal_traced(p: FittingProfile): { faixa: FaixaIdeal; trace: FaixaTrace } {

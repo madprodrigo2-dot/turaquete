@@ -17,6 +17,8 @@ interface Props {
   calce?: { tier: 'ideal' | 'encaixa'; percent: number } | null
   custoBeneficio?: boolean
   userNivel?: 'iniciante' | 'intermediario' | 'avancado'
+  compatPct?: number | null
+  isFirst?: boolean
 }
 
 const NIVEL_ORDER: Record<string, number> = { iniciante: 0, intermediario: 1, avancado: 2 }
@@ -63,7 +65,7 @@ function fireEvent(body: Record<string, unknown>) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- calce mantido no prop pra não quebrar o call site; badge desativado, ver comentário abaixo
-export default function RacketCard({ racket, razao, sessionId, calce, custoBeneficio, userNivel }: Props) {
+export default function RacketCard({ racket, razao, sessionId, calce, custoBeneficio, userNivel, compatPct, isFirst }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const hasLink  = !!(racket.affiliate_url ?? racket.source_url)
@@ -137,15 +139,30 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               toda recomendação batia "ideal" (98.8% dos casos reais, 57% em exatos 100%), tornando o
               badge sem valor informativo. Lógica de cálculo (calceBadge em ChatMessage.tsx) mantida
               intacta pra eventual redesenho — só a renderização foi removida daqui. */}
-          {(custoBeneficio || (racket.weight_g != null && racket.weight_g >= 340)) && (
+          {/* Canto superior direito: % de compatibilidade substitui a etiqueta antiga
+              (2026-10-30). "Melhor pra você" só na 1ª card; "Melhor custo-benefício"
+              nunca na 1ª (ver custoBeneficioBadge em ChatMessage.tsx — já exclui a
+              1ª da elegibilidade, mas o `!isFirst` aqui é a garantia final). */}
+          {(isFirst || compatPct != null || (!isFirst && custoBeneficio) || (racket.weight_g != null && racket.weight_g >= 340)) && (
             <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
-              {custoBeneficio && (
-                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-yellow/10 text-tinta/65 border border-yellow/30 shadow-sm">
+              {isFirst && (
+                <div className="rounded-full text-[9px] font-bold px-2.5 py-1 leading-none bg-gold-deep text-white shadow-sm whitespace-nowrap">
+                  Melhor pra você
+                </div>
+              )}
+              {!isFirst && custoBeneficio && (
+                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-yellow/10 text-tinta/65 border border-yellow/30 shadow-sm whitespace-nowrap">
                   Melhor custo-benefício
                 </div>
               )}
+              {compatPct != null && (
+                <div className="rounded-lg bg-white/95 border border-tinta/10 px-2 py-1 shadow-sm text-right leading-none">
+                  <span className="block text-tinta font-bold text-sm">{compatPct}%</span>
+                  <span className="block text-tinta/45 text-[8px] mt-0.5">compatível</span>
+                </div>
+              )}
               {racket.weight_g != null && racket.weight_g >= 340 && (
-                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-tinta/6 text-tinta/45 border border-tinta/10 shadow-sm">
+                <div className="rounded-full text-[10px] font-semibold px-2.5 py-1 leading-none bg-tinta/6 text-tinta/45 border border-tinta/10 shadow-sm whitespace-nowrap">
                   Peso alto de fábrica
                 </div>
               )}
@@ -200,7 +217,10 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
               target="_blank"
               rel={`noopener noreferrer${linkTipo === 'afiliado' ? ' sponsored' : ''}`}
               onClick={() => {
-                sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', { racket: racket.slug })
+                sendGAEvent('event', linkTipo === 'afiliado' ? 'clique_afiliado' : 'clique_loja_oficial', {
+                  racket: racket.slug,
+                  ...(compatPct != null ? { compat_pct: compatPct } : {}),
+                })
                 if (sessionId) fireEvent({ session_id: sessionId, event_type: 'ver_na_loja', racket_id: racket.id })
               }}
               className="mt-auto w-full text-center rounded-full bg-coral text-white text-xs font-heading font-semibold py-2 px-3 shadow-cta hover:scale-[1.02] hover:shadow-[0_6px_20px_rgba(255,94,58,0.38)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-1"
@@ -230,6 +250,7 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
         racket={racket}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        compatPct={compatPct}
       />
     </>
   )

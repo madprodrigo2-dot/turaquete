@@ -18,9 +18,10 @@ interface Props {
   racket: RacketWithInsights
   open: boolean
   onClose: () => void
+  compatPct?: number | null
 }
 
-export default function InsightsModal({ racket, open, onClose }: Props) {
+export default function InsightsModal({ racket, open, onClose, compatPct }: Props) {
   const [mounted, setMounted] = useState(false)
   const [anatomiaOpen, setAnatomiaOpen] = useState(false)
   const ins = racket.racket_insights
@@ -91,6 +92,14 @@ export default function InsightsModal({ racket, open, onClose }: Props) {
           <p className="text-tinta/50 text-xs leading-relaxed -mt-1">
             Analisamos cada raquete em 6 dimensões (0–10) com base nas suas especificações reais.
           </p>
+
+          {/* % de compatibilidade — mesmo numero da card, so quando existe (nao
+              aparece em comparacao/compra direta, onde nao ha match_score) */}
+          {compatPct != null && (
+            <p className="text-tinta text-sm -mt-2">
+              <span className="font-bold text-base">{compatPct}%</span> compatível com seu perfil
+            </p>
+          )}
 
           {/* Hexagrama premium */}
           <RacketHexagon racket={racket} />

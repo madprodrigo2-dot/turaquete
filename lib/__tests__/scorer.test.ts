@@ -13,6 +13,7 @@ import {
   calcular_faixa_ideal,
   clasificarNivel,
   computeScorerWeights,
+  compatPct,
   type ScorerProfile,
   type FittingProfile,
 } from '../scorer'
@@ -283,5 +284,87 @@ describe('clasificarNivel', () => {
 
   test('limiar exato -4 → intermediario (gap nao < -4)', () => {
     expect(clasificarNivel(4, 8)).toBe('intermediario')
+  })
+})
+
+// ── compatPct — % de compatibilidade da card (2026-10-30) ─────────────────────
+// Curva raiz quadrada sobre ancoras calibradas no range real do catalogo
+// (4.5-7.5, nao 0-10 teorico). Nao toca scoreRacket nem match_score — so
+// mapeia pra exibicao. Ver comentario em lib/scorer.ts pro raciocinio completo.
+
+describe('compatPct', () => {
+  test('determinístico — mesmo score sempre dá o mesmo %', () => {
+    expect(compatPct(6.7)).toBe(compatPct(6.7))
+    expect(compatPct(5.0)).toBe(compatPct(5.0))
+  })
+
+  test('nunca excede 98, mesmo muito acima da ancora máxima', () => {
+    expect(compatPct(7.5)).toBe(98)
+    expect(compatPct(10)).toBe(98)
+    expect(compatPct(100)).toBe(98)
+  })
+
+  test('null (não mostrar) abaixo do piso de 60%', () => {
+    // ancora mínima 4.5 → 58% antes da curva, que já é < 60
+    expect(compatPct(4.5)).toBeNull()
+    expect(compatPct(0)).toBeNull()
+    expect(compatPct(-5)).toBeNull()
+  })
+
+  test('primeiro valor que bate 60%+ passa a aparecer (sem salto abrupto pra null)', () => {
+    const justBelow = compatPct(4.49)
+    const atAnchor = compatPct(4.6)
+    expect(atAnchor).not.toBeNull()
+    expect(atAnchor!).toBeGreaterThanOrEqual(60)
+    // 4.49 fica abaixo da ancora mínima (4.5), clamp em t=0 → 58% → null
+    expect(justBelow).toBeNull()
+  })
+
+  test('monotônico — score maior nunca produz % menor (garante card-order = %-order)', () => {
+    const scores = [4.8, 5.3, 5.8, 6.0, 6.3, 6.4, 6.5, 6.7, 6.8, 6.9, 7.0, 7.2, 7.3]
+    for (let i = 1; i < scores.length; i++) {
+      const prev = compatPct(scores[i - 1]) ?? 0
+      const curr = compatPct(scores[i]) ?? 0
+      expect(curr).toBeGreaterThanOrEqual(prev)
+    }
+  })
+
+  test('scores empatados dão o mesmo % (desempate visual = desempate do ranking)', () => {
+    expect(compatPct(6.7)).toBe(compatPct(6.7))
+    expect(compatPct(6.3)).toBe(compatPct(6.3))
+  })
+
+  // 5 perfis da spec de Rodrigo — valores de match_score medidos em produção
+  // (buscarRaquetas real, 2026-10-30) pros 3 primeiros de cada perfil. Fixa
+  // esses números de referência: se a curva mudar, este teste documenta a
+  // diferença em vez de passar silenciosamente.
+  describe('tabela dos 5 perfis de teste (scores reais capturados em produção)', () => {
+    test('1. Iniciante, sem dor, R$500-1.200 → Z Soft, Cyclone, Skagen 3K', () => {
+      expect(compatPct(7.0)).toBe(95)  // Z Soft
+      expect(compatPct(6.7)).toBe(92)  // Cyclone
+      expect(compatPct(6.7)).toBe(92)  // Skagen 3K 2026 — empata com Cyclone
+    })
+
+    test('2. Iniciante, dor cotovelo, até R$500 → Matira 1K, Ultra', () => {
+      expect(compatPct(7.2)).toBe(96)  // Matira 1K 2026 Branca e Azul
+      expect(compatPct(6.7)).toBe(92)  // Ultra
+    })
+
+    test('3. Intermediário, ataque, sem dor, R$1.200-2.000', () => {
+      expect(compatPct(6.5)).toBe(91)  // Canyon Pro 3.0 BT 2026
+      expect(compatPct(6.4)).toBe(90)  // Brave Rafa Miller 12k 2025
+    })
+
+    test('4. Intermediário, "Ainda não sei", dor ombro, R$500-1.200', () => {
+      expect(compatPct(7.2)).toBe(96)  // Z Soft
+      expect(compatPct(6.9)).toBe(94)  // Kinetic X
+      expect(compatPct(6.8)).toBe(93)  // Attack
+    })
+
+    test('5. Avançado, defesa, sem dor, mais de R$3.000 — os 2 únicos abaixo de 90%', () => {
+      expect(compatPct(6.4)).toBe(90)  // Show 2026
+      expect(compatPct(6.3)).toBe(89)  // Aria By Pininfarina
+      expect(compatPct(6.3)).toBe(89)  // Minimalist Monaco — empata
+    })
   })
 })

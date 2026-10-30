@@ -3,7 +3,7 @@ import { agentTools } from './tools'
 import { SYSTEM_PROMPT } from './prompt'
 import { PRICING, TokenUsage } from './pricing'
 import { buscarRaquetas, detalleRaqueta, getRaquetasByIds, getBrandChipsForPref, RacketFilters, RecommendedRacket, RacketWithInsights, Insights } from '../recommend'
-import { calcular_faixa_ideal_traced, computeScorerWeights, FaixaIdeal, FittingProfile } from '../scorer'
+import { calcular_faixa_ideal_traced, computeScorerWeights, compatPct, FaixaIdeal, FittingProfile } from '../scorer'
 import type { DecisionTrace, FilterStep, PrecoDecision, MarcaDecision } from '../debug-types'
 import { computeProfileConfidence, CONFIDENCE_CONFIG, getFixedQuestionText, getChipsForField, PRECO_QUESTION_TEXT, LESAO_LOCAL_QUESTION_TEXT, type ConfidenceInfo, type FieldKey } from './confidence'
 import { SWEET_SPOT_HIGHLIGHT, SWEET_SPOT_COMPARISON } from '../sweetSpot'
@@ -1374,7 +1374,15 @@ async function executeTool(
         if (!racket) return []
         const scoreEntry = debugRef.value.scorerResults?.find(s => s.id === r.id)
         const razaoValidada = validateRazao(r.razao, racket.racket_insights)
-        const rec: RecommendedRacket = { racket, razao: razaoValidada, match_score: scoreEntry?.score }
+        // compat_pct deriva do mesmo match_score — único ponto de construção de
+        // RecommendedRacket (troca, marca, ver mais, comparação, compra_direta
+        // todos passam por aqui), então nunca precisa recalcular em outro lugar.
+        const rec: RecommendedRacket = {
+          racket,
+          razao: razaoValidada,
+          match_score: scoreEntry?.score,
+          compat_pct: scoreEntry?.score != null ? compatPct(scoreEntry.score) : null,
+        }
         return [rec]
       })
       .sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0))

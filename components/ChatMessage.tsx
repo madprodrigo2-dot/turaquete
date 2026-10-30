@@ -25,20 +25,23 @@ function calceBadge(recs: RecommendedRacket[], id: number): { tier: 'ideal' | 'e
   return null
 }
 
-// "Melhor custo-benefício": cheapest among rackets within ±0.3 of the best score.
-// Only shown when price spread ≥ R$300 — below that all options cost roughly the same
-// and the label adds no information. One badge per card group; can coexist with calce.
+// "Melhor custo-benefício" (2026-10-30): maior relação %/preço entre as
+// recomendadas, nunca na 1ª card — ela já leva "Melhor pra você", e a mesma
+// card acumular os dois selos contradiz "a que melhor encaixa no seu perfil"
+// com "a mais barata boa". `recs` precisa estar na ordem de exibição (índice 0
+// = 1ª card) — é a mesma ordem que RecommendedRacket[] já sai do agent.
+// Se a melhor relação for justamente a 1ª, não mostra o selo em nenhuma —
+// não "desce" pra 2ª colocada, que teria uma relação pior por definição.
 function custoBeneficioBadge(recs: RecommendedRacket[], id: number): boolean {
-  const scored = recs.filter(r => r.match_score != null && r.racket.price != null && r.racket.price > 0)
-  if (scored.length < 2) return false
-  const prices = scored.map(r => r.racket.price!)
-  if (Math.max(...prices) - Math.min(...prices) < 300) return false
-  const maxScore = Math.max(...scored.map(r => r.match_score!))
-  if (maxScore <= 0) return false
-  const nearBest = scored.filter(r => maxScore - r.match_score! <= 0.3)
-  if (nearBest.length === 0) return false
-  const best = nearBest.reduce((prev, curr) => curr.racket.price! < prev.racket.price! ? curr : prev)
-  return best.racket.id === id
+  const eligible = recs
+    .map((r, i) => ({ r, i }))
+    .filter(({ r }) => r.compat_pct != null && r.racket.price != null && r.racket.price > 0)
+  if (eligible.length < 2) return false
+  const best = eligible.reduce((prev, curr) =>
+    curr.r.compat_pct! / curr.r.racket.price! > prev.r.compat_pct! / prev.r.racket.price! ? curr : prev
+  )
+  if (best.i === 0) return false
+  return best.r.racket.id === id
 }
 import type { FaixaIdeal } from '@/lib/scorer'
 import { findGlossaryMatches } from '@/lib/glossario'
@@ -286,6 +289,8 @@ export default function ChatMessage({
                 calce={!isComparison ? calceBadge(recommendations!, rec.racket.id) : null}
                 custoBeneficio={!isComparison ? custoBeneficioBadge(recommendations!, rec.racket.id) : false}
                 userNivel={userNivel}
+                compatPct={!isComparison ? rec.compat_pct ?? null : null}
+                isFirst={!isComparison && i === 0}
               />
               </div>
             ))}

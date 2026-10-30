@@ -108,6 +108,7 @@ export interface RecommendedRacket {
   racket: RacketWithInsights
   razao: string
   match_score?: number  // score do scorer para esta consulta; undefined em comparações diretas
+  compat_pct?: number | null  // derivado de match_score via compatPct() (lib/scorer.ts); null = abaixo do piso, não mostrar
 }
 
 // Supabase returns one-to-many joins as arrays — normalise to single object
