@@ -156,9 +156,9 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
                 </div>
               )}
               {compatPct != null && (
-                <div className="rounded-lg bg-white/95 border border-tinta/10 px-2 py-1 shadow-sm text-right leading-none">
-                  <span className="block text-tinta font-bold text-sm">{compatPct}%</span>
-                  <span className="block text-tinta/45 text-[8px] mt-0.5">compatível</span>
+                <div className="rounded-full bg-white border border-aqua/30 px-2.5 py-1 shadow-sm whitespace-nowrap">
+                  <span className="text-tinta text-[11px] font-bold">{compatPct}%</span>
+                  <span className="text-tinta/55 text-[10px] font-medium ml-1">compatível</span>
                 </div>
               )}
               {racket.weight_g != null && racket.weight_g >= 340 && (
