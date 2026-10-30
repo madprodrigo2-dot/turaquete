@@ -249,6 +249,7 @@ const CHIP_TO_PROFILE: Record<string, Record<string, unknown>> = {
   'Ataque (potência, smash)':   { estilo: 'ofensivo' },
   'Defesa e controle':           { estilo: 'defensivo' },
   'Equilibrado':                 { estilo: 'misto' },
+  'Ainda não sei':               { estilo: 'misto' },
   'Estou começando (cat. E/D)': { nivel: 'iniciante' },
   'Intermediário (cat. C/B)':   { nivel: 'intermediario' },
   'Avançado (cat. A/Pro)':      { nivel: 'avancado' },
@@ -290,7 +291,8 @@ const CHIP_REACTIONS: Record<string, string> = {
   'Ataque (potência, smash)':  'Ofensivo, entendido.',
   'Defesa e controle':          'Defesa e controle, anotado.',
   'Equilibrado':                'Equilibrado, ótimo.',
-  'Estou começando (cat. E/D)': 'Legal, iniciante!',
+  'Ainda não sei':              'Tudo bem, a gente ajusta pelo resto do perfil.',
+  'Estou começando (cat. E/D)': 'Legal, iniciante! Vou focar em conforto e facilidade pra você acertar mais.',
   'Intermediário (cat. C/B)':   'Intermediário, ótimo.',
   'Avançado (cat. A/Pro)':      'Avançado, excelente.',
   'Minha batida é forte':       'Batida forte, anotado.',
@@ -369,12 +371,21 @@ function getPrefState(history: ChatMessage[]): { state: 'not_shown' | 'pending_l
 
 // Scan user chip messages in history → build confirmed profile.
 // Chip-answered fields are immune to model omission or re-inference between turns.
-function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<string, unknown> {
+// Exported for tests: verifies the iniciante shortcut below produces byte-identical
+// output to the manual "Equilibrado" + "Estou começando" chip path.
+export function extractConfirmedProfileFromHistory(history: ChatMessage[]): Record<string, unknown> {
   const confirmed: Record<string, unknown> = {}
   for (const m of history) {
     if (m.role !== 'user') continue
     const update = CHIP_TO_PROFILE[m.content.trim()]
     if (update) Object.assign(confirmed, update)
+  }
+  // Iniciante pula a pergunta de estilo (fluxo reordenado por nível, 2026-10-30) —
+  // equivale exatamente a ter tocado "Equilibrado": mesmo valor, mesmo campo. Só
+  // injeta quando o usuário ainda não respondeu estilo por conta própria (ex.:
+  // histórico legado de antes do reordenamento, ou algum caminho que já pergunte).
+  if (confirmed.nivel === 'iniciante' && confirmed.estilo == null) {
+    confirmed.estilo = 'misto'
   }
   return confirmed
 }
@@ -1773,7 +1784,11 @@ export async function runAgentTurn(
 
     // CASE 2: profile/brand chip reaches confidence, budget still unknown → pref step → price question
     if ((isProfileChip || isBrandAnswerInPref) && confidence.willRecommend && !budgetAnsweredRef.value) {
-      const prefSt = getPrefState(history)
+      // Iniciante pula o passo inteiro de preferência (fluxo reordenado por nível,
+      // 2026-10-30) — equivale a ter tocado "Sem preferência", que já não seta
+      // nenhum campo (CHIP_TO_PROFILE: {}). Forçar 'done' aqui, sem olhar o
+      // histórico, garante o pulo mesmo que a pergunta nunca tenha sido mostrada.
+      const prefSt = confirmedProfile.nivel === 'iniciante' ? { state: 'done' as const } : getPrefState(history)
       const hasLesao = !!(confirmedProfile.cotovelo_sensivel || confirmedProfile.ombro_sensivel || confirmedProfile.punho_sensivel)
 
       if (!hasLesao && (prefSt.state === 'not_shown' || prefSt.state === 'pending_level1')) {

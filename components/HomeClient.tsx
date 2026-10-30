@@ -12,11 +12,17 @@ import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
 import DebugPanel, { DebugData } from '@/components/DebugPanel'
 import FeedbackWidget from '@/components/FeedbackWidget'
+import { getFixedQuestionText, getChipsForField } from '@/lib/agent/confidence'
+
+// Nível primeiro — mesmo texto/chips de confidence.ts (FIELD_DEFS), nunca duplicado
+// aqui, pra não correr o risco dos dois lados divergirem.
+const NIVEL_CHIPS = getChipsForField('nivel')
+// Primeiro chip = iniciante, mesma ordem de FIELD_DEFS — usado pra saber quando
+// disparar os eventos de step_skipped (ver handleSend).
+const NIVEL_INICIANTE_CHIP = NIVEL_CHIPS[0]
 
 const OPENING_MESSAGE =
-  'Oi! Eu sou a Tury. Em menos de um minuto te digo qual raquete combina com você. Como você mais gosta de jogar?'
-
-const ESTILO_CHIPS = ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado']
+  `Oi! Eu sou a Tury. Em menos de um minuto te digo qual raquete combina com você. ${getFixedQuestionText('nivel')}`
 
 const CHAT_STORAGE_KEY = 'turaquete_chat_messages'
 const MESSAGE_LIMIT = 25
@@ -79,7 +85,7 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
   const [confirmReset, setConfirmReset] = useState(false)
 
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: OPENING_MESSAGE, suggestions: ESTILO_CHIPS },
+    { role: 'assistant', content: OPENING_MESSAGE, suggestions: NIVEL_CHIPS },
   ])
   const hasUserMessages = messages.some(m => m.role === 'user')
   const [loading, setLoading] = useState(false)
@@ -241,7 +247,7 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
     intencaoConvRef.current = undefined
     turnosAteRecRef.current = 0
     setFeedbackDone(false)
-    setMessages([{ role: 'assistant', content: OPENING_MESSAGE, suggestions: ESTILO_CHIPS }])
+    setMessages([{ role: 'assistant', content: OPENING_MESSAGE, suggestions: NIVEL_CHIPS }])
     setSessionId(generateId())
     try { sessionStorage.removeItem(CHAT_STORAGE_KEY) } catch {}
     sendGAEvent('event', 'conversa_reiniciada')
@@ -307,6 +313,15 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
       const isFirstMessage = !baseMessages.some(m => m.role === 'user')
     if (isFirstMessage && !isGATestMode()) {
       try { sendGAEvent('event', 'quiz_start') } catch {}
+      // Iniciante pula estilo e preferência (ver extractConfirmedProfileFromHistory
+      // e o passo de preferências em lib/agent/agent.ts) — eventos pra manter a
+      // visibilidade do funil que os passos fixos (sem pergunta) já davam de graça.
+      if (text === NIVEL_INICIANTE_CHIP) {
+        try {
+          sendGAEvent('event', 'step_skipped', { step: 'estilo', reason: 'beginner' })
+          sendGAEvent('event', 'step_skipped', { step: 'preferencia', reason: 'beginner' })
+        } catch {}
+      }
     }
       const reqBody: Record<string, unknown> = { messages: apiMessages, sessionId }
       // Post-rec context: send shown IDs and shown brands across ALL rec turns so

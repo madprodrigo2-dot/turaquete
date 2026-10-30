@@ -60,7 +60,10 @@ const FIELD_DEFS: FieldDef[] = [
     label: 'Estilo de jogo',
     question: 'Como você mais gosta de jogar?',
     weight: 32,
-    chips: ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado'],
+    // "Ainda não sei" — pedido explícito pro fluxo intermediário/avançado (iniciante
+    // nunca vê essa pergunta, pula direto com estilo='misto' injetado). Mapeia pro
+    // mesmo valor de "Equilibrado" em CHIP_TO_PROFILE (agent.ts).
+    chips: ['Ataque (potência, smash)', 'Defesa e controle', 'Equilibrado', 'Ainda não sei'],
     justification: 'maior discriminador: separa raquetes de potência vs controle vs equilíbrio',
   },
   {
