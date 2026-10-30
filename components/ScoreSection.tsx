@@ -18,6 +18,10 @@ const D_SPIN        = GLOSSARIO.find(e => e.termo === 'spin')!
 const D_ESTABILIDADE = GLOSSARIO.find(e => e.termo === 'estabilidade')!
 
 const CORAL = '#FF5E3A'
+// Mesmo tom de .star da foto/CTA Top Pick — ★9+ aqui usa o mesmo limiar
+// (>=9) do badge de atributo na foto, pra ser o mesmo sinal em dois lugares
+// da ficha, não dois critérios diferentes de "destaque".
+const GOLD = '#A8631B'
 
 export interface ScoreSectionProps {
   power:           number | null
@@ -61,7 +65,7 @@ function ScoreRow({ label, entry, value, spinLisa, sublabel, strong, isTop, dela
       label={labelNode}
       sublabel={sublabel}
       value={value}
-      color={strong ? CORAL : undefined}
+      color={isTop ? GOLD : strong ? CORAL : undefined}
       badge={isTop ? '★' : undefined}
       highlight={strong}
       delay={delay}
@@ -91,7 +95,12 @@ export default function ScoreSection({
   const threshold = anyNine ? 9 : (vals.length > 0 ? Math.max(...vals) : Infinity)
 
   function strong(v: number | null): boolean { return v !== null && v >= threshold }
-  function isTop(v: number | null): boolean  { return v === 10 }
+  // Mesmo limiar do badge de atributo na foto (getTopAttributeBadges, >=9) —
+  // antes era só v===10, tão raro (1 raquete em 237) que o ★ ficava invisível
+  // na prática. Sempre que isTop é true, strong também é (quando anyNine,
+  // threshold já é 9; quando não, isTop nunca bate) — por isso o ★ dourado
+  // nunca aparece "sozinho" sem a barra também ficar em destaque.
+  function isTop(v: number | null): boolean  { return v !== null && v >= 9 }
 
   return (
     <div className="flex flex-col gap-3">
