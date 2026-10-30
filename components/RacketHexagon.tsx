@@ -4,6 +4,11 @@ const SCORE_KEYS = ['power', 'control', 'comfort', 'maneuverability', 'spin', 's
 const LABELS     = ['Potência', 'Controle', 'Conforto', 'Manuseio', 'Spin', 'Estab.']
 const COLOR      = '#0CC0BE'
 const CORAL      = '#FF5E3A'
+// Mesmo limiar/tom do ★ dourado em ScoreSection.tsx (>=9) — antes o vértice
+// e a estrela ficavam coral pro mesmo dado que a barra já mostra dourado,
+// inconsistente na mesma ficha (RacketHexagon e ScoreSection renderizam lado
+// a lado, tanto na ficha de detalhe quanto no InsightsModal do chat).
+const GOLD       = '#A8631B'
 
 const CX = 130, CY = 130, R = 82, LABEL_R = 110, DOT_R = 8
 const ANGLES = [-90, -30, 30, 90, 150, 210].map(d => (d * Math.PI) / 180)
@@ -138,7 +143,8 @@ export default function RacketHexagon({ racket }: Props) {
           if (v == null || v === 0) return null
           const [x, y] = pt(ANGLES[i], (v / 10) * R)
           const strong = isStrong(v)
-          const accent = strong ? CORAL : COLOR
+          const top = v >= 9
+          const accent = top ? GOLD : strong ? CORAL : COLOR
           const starOffsetY = y <= CY ? -(DOT_R + 5) : DOT_R + 6
           return (
             <g key={i}>
@@ -153,13 +159,13 @@ export default function RacketHexagon({ racket }: Props) {
               >
                 {v}
               </text>
-              {v >= 9 && (
+              {top && (
                 <text
                   x={x} y={y + starOffsetY}
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fontSize={9}
-                  fill={CORAL}
+                  fill={GOLD}
                 >
                   ★
                 </text>
