@@ -2,7 +2,11 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { listarRaquetasPorMarca, RacketWithInsights } from '@/lib/recommend'
+import {
+  listarRaquetasPorMarca, RacketWithInsights,
+  getRaquetasPorNivel, getTopRaquetasPorNivel,
+  getRaquetasConforto, getTopRaquetasConforto,
+} from '@/lib/recommend'
 import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 import { derivarNivel } from '@/lib/nivel'
 import SiteNav from '@/components/SiteNav'
@@ -253,6 +257,17 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
   const logoSrc = brand.logo_url || BRAND_LOGOS[brand.slug] || null
   const brandIntro = buildBrandIntro(brand.name, rackets)
 
+  // Top Pick ativa — mesmo dado/lógica do CTA dourado na ficha de detalhe e
+  // do comparador (app/comparar/[par]/page.tsx). Busca cada pool (nível/
+  // conforto) só 1x por nível presente no catálogo da marca.
+  const niveis = [...new Set(rackets.map(r => derivarNivel(r)).filter((n): n is 'iniciante' | 'intermediario' | 'avancado' => n != null))]
+  const precisaConforto = rackets.some(r => r.racket_insights?.elbow_friendly)
+  const [porNivel, porConforto] = await Promise.all([
+    Promise.all(niveis.map(n => getRaquetasPorNivel(n).then(pool => getTopRaquetasPorNivel(n, pool, 4)).catch(() => []))),
+    precisaConforto ? getRaquetasConforto().then(pool => getTopRaquetasConforto(pool, 4)).catch(() => []) : Promise.resolve([]),
+  ])
+  const topPickIds = [...new Set([...porNivel.flat(), ...porConforto].map(r => r.id))]
+
   const breadcrumb = breadcrumbJsonLd([
     { name: 'Turaquete', url: SITE_URL },
     { name: brand.name },
@@ -315,7 +330,7 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
 
         {/* Grid de raquetes — sort/filtro cliente, reusa padrão de DiscoveryFilters */}
         {rackets.length > 0 ? (
-          <MarcaGrid rackets={rackets} />
+          <MarcaGrid rackets={rackets} topPickIds={topPickIds} />
         ) : (
           <p className="text-tinta/50 text-sm">Nenhuma raquete disponível no momento.</p>
         )}

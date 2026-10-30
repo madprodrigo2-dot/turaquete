@@ -34,9 +34,11 @@ interface Props {
   showTextSearch?: boolean
   initialQuery?: string
   autoFocusSearch?: boolean
+  // Passthrough pro card — borda dourada quando a raquete é Top Pick ativa.
+  topPickIds?: number[]
 }
 
-export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter, showTextSearch, initialQuery, autoFocusSearch }: Props) {
+export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter, showTextSearch, initialQuery, autoFocusSearch, topPickIds }: Props) {
   const [precoKey, setPrecoKey] = useState<string>('todas')
   const [marca, setMarca] = useState<string>('todas')
   const [sort, setSort] = useState<SortKey>(defaultSort)
@@ -230,7 +232,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {filtered.map(r => (
-              <DiscoveryRacketCard key={r.id} racket={r} />
+              <DiscoveryRacketCard key={r.id} racket={r} topPickIds={topPickIds} />
             ))}
           </div>
           {showTextSearch && query.trim() && (

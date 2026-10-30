@@ -34,7 +34,7 @@ const NIVEL_FILTROS = [
 ] as const
 type NivelKey = (typeof NIVEL_FILTROS)[number]['key'] | 'todos'
 
-function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
+function RacketGridCard({ racket, topPickIds }: { racket: RacketWithInsights; topPickIds?: number[] }) {
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
@@ -44,11 +44,12 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
     : typeof _athleteRaw === 'string' ? _athleteRaw : undefined
   const specLine = buildSpecLine(racket)
   const nivel = derivarNivel(racket)
+  const isTopPick = topPickIds?.includes(racket.id) ?? false
 
   return (
     <Link
       href={`/raquetes/${racket.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden border border-aqua/20 shadow-sm hover:shadow-md hover:border-aqua/40 transition-all flex flex-col"
+      className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col ${isTopPick ? 'border-2 border-gold-deep' : 'border border-aqua/20 hover:border-aqua/40'}`}
     >
       <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} hoverScale topBadges={getTopAttributeBadges(racket.racket_insights)} />
       <div className="p-3 flex flex-col gap-1 flex-1">
@@ -67,7 +68,7 @@ function RacketGridCard({ racket }: { racket: RacketWithInsights }) {
   )
 }
 
-export default function MarcaGrid({ rackets }: { rackets: RacketWithInsights[] }) {
+export default function MarcaGrid({ rackets, topPickIds }: { rackets: RacketWithInsights[]; topPickIds?: number[] }) {
   const [precoKey, setPrecoKey] = useState<string>('todas')
   const [nivelKey, setNivelKey] = useState<NivelKey>('todos')
   const [sort, setSort] = useState<SortKey>('lancamentos')
@@ -193,7 +194,7 @@ export default function MarcaGrid({ rackets }: { rackets: RacketWithInsights[] }
       {filtered.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filtered.map(r => (
-            <RacketGridCard key={r.id} racket={r} />
+            <RacketGridCard key={r.id} racket={r} topPickIds={topPickIds} />
           ))}
         </div>
       ) : (

@@ -25,7 +25,16 @@ function buildSpecLine(racket: RacketWithInsights): string | null {
 // Card compacto usado nas grades de listagem por categoria (DiscoveryFilters)
 // e na seção "Top 3" por nível (TopPicksSection) — mesmo visual nos dois
 // lugares de propósito, pra não criar um segundo estilo de card na mesma página.
-export default function DiscoveryRacketCard({ racket }: { racket: RacketWithInsights }) {
+interface Props {
+  racket: RacketWithInsights
+  // IDs do Top Pick ativo do nível/conforto (ver app/api/top-picks e
+  // lib/recommend.ts) — undefined na grade dentro do próprio TopPicksSection
+  // de propósito: aquele card já vive dentro da caixa dourada, um 2º contorno
+  // dourado ali seria redundante/pouco legível sobre o próprio fundo dourado.
+  topPickIds?: number[]
+}
+
+export default function DiscoveryRacketCard({ racket, topPickIds }: Props) {
   const price = racket.price
     ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(racket.price)
     : null
@@ -36,11 +45,12 @@ export default function DiscoveryRacketCard({ racket }: { racket: RacketWithInsi
   const nivel = derivarNivel(racket)
   const specLine = buildSpecLine(racket)
   const priceDropped = racket.price != null && racket.price_previous != null && racket.price < racket.price_previous
+  const isTopPick = topPickIds?.includes(racket.id) ?? false
 
   return (
     <Link
       href={`/raquetes/${racket.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 hover:border-aqua/30 transition-all duration-200 flex flex-col"
+      className={`group bg-white rounded-2xl overflow-hidden shadow-card hover:-translate-y-1 transition-all duration-200 flex flex-col ${isTopPick ? 'border-2 border-gold-deep' : 'border border-[rgba(14,58,64,0.06)] hover:border-aqua/30'}`}
     >
       <RacketImageTile src={racket.image_url} alt={racket.name} athlete={athlete} brandLogo={racket.brands?.logo_url} brandName={racket.brands?.name} hoverScale topBadges={getTopAttributeBadges(racket.racket_insights)} />
       <div className="p-3 flex flex-col gap-1 flex-1">

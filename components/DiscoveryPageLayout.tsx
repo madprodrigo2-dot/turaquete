@@ -83,6 +83,7 @@ export default function DiscoveryPageLayout({
             showTextSearch={showTextSearch}
             initialQuery={initialQuery}
             autoFocusSearch={showTextSearch && !initialQuery}
+            topPickIds={topPicks?.map(r => r.id)}
           />
         )}
 
