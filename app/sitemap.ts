@@ -7,9 +7,10 @@ const BASE = 'https://www.turaquete.com.br'
 // Fixed dates represent the last meaningful content change per group.
 // Using real dates prevents the sitemap from reporting "modified today"
 // on every deploy, which wastes Google's crawl budget signal.
-const D_STATIC = new Date('2026-06-01') // last major layout/copy overhaul
-const D_GUIA   = new Date('2026-07-01') // guia content last updated
-const D_BRAND  = new Date('2026-07-30') // brand catalog stable; update when brands change
+const D_STATIC   = new Date('2026-06-01') // last major layout/copy overhaul
+const D_GUIA     = new Date('2026-07-01') // guia content last updated
+const D_BRAND    = new Date('2026-07-30') // brand catalog stable; update when brands change
+const D_MELHORES = new Date('2026-11-04') // ranking pages criadas — não enlaçadas no site, só sitemap
 
 // URLs de comparação: mesma regra de "Comparações populares" usada nas fichas
 // de produto (suggestComparisons), + os pares fixos curados do picker. Cada
@@ -83,6 +84,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: D_BRAND,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
+    })),
+    // Ranking "melhores" — só aparecem aqui, sem link em nenhuma página do
+    // site (decisão Rodrigo 2026-11-04): acessíveis só por busca direta.
+    { url: `${BASE}/raquetes/melhores`,                lastModified: D_MELHORES, changeFrequency: 'daily' as const, priority: 0.75 },
+    ...(['iniciante', 'intermediario', 'avancado'] as const).map(nivel => ({
+      url: `${BASE}/raquetes/melhores/${nivel}`,
+      lastModified: D_MELHORES,
+      changeFrequency: 'daily' as const,
+      priority: 0.75,
     })),
     ...rackets.map(r => ({
       url: `${BASE}/raquetes/${r.slug}`,

@@ -577,7 +577,7 @@ const TOP_POOL = 50 // pool maior que o limite pra poder aplicar o teto de 1 por
 // se o catálogo mudar muito. Mesma fórmula do "Grl" em /admin/motor.
 const SCORE_GERAL_FLOOR = 5.8
 
-function scoreGeral(ins: RacketWithInsights['racket_insights'] | undefined): number | null {
+export function scoreGeral(ins: RacketWithInsights['racket_insights'] | undefined): number | null {
   const vals = [ins?.power, ins?.control, ins?.maneuverability, ins?.stability].filter((v): v is number => v != null)
   return vals.length > 0 ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null
 }
@@ -781,7 +781,7 @@ const TOP_NIVEL_CLICKS_POOL = 200
 // por prefixo do nome junta raquetes diferentes por coincidência, ex. "BT
 // Bullet"/"BT Destroyer"/"BT Cruiser" da Ocean Air viram "um grupo" só por
 // começarem com "BT"). Sem atleta, cai pro (marca, nome_base) exato.
-function consolidationKey(r: RacketWithInsights): string {
+export function consolidationKey(r: RacketWithInsights): string {
   const specs = r.specs_extra as Record<string, unknown> | null
   const atleta = typeof specs?.atleta === 'string' ? specs.atleta : null
   const brandKey = r.brands?.slug ?? `sem-marca-${r.id}`
@@ -844,7 +844,7 @@ async function consolidateAndRank(
 // e last_sync_status não é um erro explícito (null conta como ok — nunca
 // passou pelo cron, não é um problema confirmado). Compartilhado por
 // getTopRaquetasPorNivel e getTopRaquetasConforto.
-function temLinkEPrecoValidos(r: RacketWithInsights): boolean {
+export function temLinkEPrecoValidos(r: RacketWithInsights): boolean {
   return typeof r.affiliate_url === 'string' && r.affiliate_url.trim() !== ''
     && r.price != null && (r.last_sync_status == null || r.last_sync_status === 'ok')
 }
