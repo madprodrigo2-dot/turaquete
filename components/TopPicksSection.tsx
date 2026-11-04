@@ -47,10 +47,10 @@ export default function TopPicksSection({ rackets, title, subtitle }: Props) {
       {/* Header — Tury como curadora, selo dourado "Top 3" */}
       <div className="flex items-center gap-3">
         <Image
-          src="/tury-transparente-explicando.png"
+          src="/tury_gold_2.png"
           alt="Tury"
-          width={443}
-          height={563}
+          width={432}
+          height={578}
           className="h-14 md:h-16 w-auto object-contain shrink-0"
         />
         <div className="flex flex-col gap-0.5 min-w-0">
