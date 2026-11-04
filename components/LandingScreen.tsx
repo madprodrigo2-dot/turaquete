@@ -1216,7 +1216,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                   onClick={onStart}
                   className="w-full font-heading font-bold bg-coral text-white text-lg py-4 rounded-full shadow-cta active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
                 >
-                  ⚡ Encontrar minha raquete ideal (1 min)
+                  ⚡ Encontrar raquete ideal
                 </button>
                 <p className="text-center text-xs text-tinta/50">
                   Grátis, sem cadastro e sem e-mail
