@@ -1357,8 +1357,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             arena-grain visível nele em vez da curva. */}
         <div className="relative max-w-sm md:max-w-4xl lg:max-w-7xl mx-auto px-5 md:px-8 pt-9 pb-4 md:pt-16 md:pb-6 flex flex-col gap-8 md:gap-12" style={{ zIndex: 2 }}>
 
-          {/* Explorar por perfil */}
-          <RevealDiv>
+          {/* Explorar por perfil — sem RevealDiv: fica logo abaixo do fold desde que o hero
+              mobile ficou compacto (v0.4.299+), então o fade-on-scroll criava um frame onde
+              o fundo arena já estava pintado mas o título/cards ainda em opacity:0 — lido
+              como "hueco vazio" por Rodrigo. Demais seções abaixo mantêm o RevealDiv normal. */}
           <div id="explorar" className="flex flex-col gap-3 scroll-mt-20 md:scroll-mt-28">
             <div className="flex flex-col gap-0.5">
               <p className="font-heading font-bold text-tinta text-base md:text-lg">Explorar por perfil</p>
@@ -1413,7 +1415,6 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               />
             </div>
           </div>
-          </RevealDiv>
 
           {/* Novidades 2026 */}
           {novidades.length > 0 && (
