@@ -210,7 +210,7 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
             {/* CTA — desabilitado, sem affiliate_url ainda */}
             <button
               disabled
-              className="w-full bg-gray-200 text-gray-400 font-semibold text-base py-4 rounded-2xl text-center block cursor-not-allowed"
+              className="w-full bg-tinta/10 text-tinta/35 font-semibold text-base py-4 rounded-2xl text-center block cursor-not-allowed"
             >
               Em breve
             </button>

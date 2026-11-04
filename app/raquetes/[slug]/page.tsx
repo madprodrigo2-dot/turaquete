@@ -239,7 +239,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                     </span>
                   )}
                   {racket.weight_g != null && racket.weight_g >= 340 && (
-                    <span className="bg-slate-100 text-slate-600 text-xs font-semibold px-3 py-1 rounded-full border border-slate-200">
+                    <span className="bg-tinta/5 text-tinta/70 text-xs font-semibold px-3 py-1 rounded-full border border-tinta/15">
                       Peso alto de fábrica
                     </span>
                   )}

@@ -296,8 +296,8 @@ function StatusIndicator({ status }: { status: Brand['status'] }) {
   }
   return (
     <div className="flex items-center gap-1.5">
-      <span className="inline-flex rounded-full h-2 w-2 bg-gray-300" />
-      <span className="text-gray-400 text-xs font-medium">Em breve</span>
+      <span className="inline-flex rounded-full h-2 w-2 bg-tinta/25" />
+      <span className="text-tinta/40 text-xs font-medium">Em breve</span>
     </div>
   )
 }
@@ -445,7 +445,7 @@ function FeaturedCard({ racket }: { racket: RacketWithInsights }) {
               Ver na loja →
             </a>
           ) : (
-            <span className="mt-auto w-full text-center rounded-xl bg-gray-100 text-gray-400 text-xs font-semibold py-2 cursor-not-allowed select-none block">
+            <span className="mt-auto w-full text-center rounded-xl bg-tinta/5 text-tinta/35 text-xs font-semibold py-2 cursor-not-allowed select-none block">
               Em breve nas lojas
             </span>
           )}
@@ -563,7 +563,7 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
 
   const arrowCls = (disabled: boolean) =>
     `hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border shadow-sm items-center justify-center transition-all
-     ${disabled ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
+     ${disabled ? 'opacity-30 cursor-not-allowed border-tinta/15 text-tinta/30' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
 
   // Number of navigable positions = maxIdx + 1 (reachable slides only)
   const dotCount = maxIdx + 1
@@ -666,7 +666,7 @@ function AthleteCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
 
   const arrowCls = (disabled: boolean) =>
     `hidden md:flex absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border shadow-sm items-center justify-center transition-all
-     ${disabled ? 'opacity-30 cursor-not-allowed border-gray-200 text-gray-300' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
+     ${disabled ? 'opacity-30 cursor-not-allowed border-tinta/15 text-tinta/30' : 'border-aqua/30 text-tinta/60 hover:border-aqua/60 hover:text-tinta hover:shadow-md'}`
 
   return (
     <div className="relative">
