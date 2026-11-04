@@ -265,7 +265,7 @@ function DiscoveryTile({
     >
       {highlighted && (
         <span className="absolute -top-2.5 left-3 rounded-full text-[9px] font-bold px-2.5 py-1 leading-none bg-gold-deep text-white shadow-sm whitespace-nowrap">
-          Recomendado
+          Favorito do momento
         </span>
       )}
       {imageUrl && (
