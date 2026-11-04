@@ -247,15 +247,27 @@ function RevealDiv({ children, className = '', delay = 0 }: { children: ReactNod
 }
 
 function DiscoveryTile({
-  href, label, sub, hoverBorderClass, imageUrl,
+  href, label, sub, hoverBorderClass, imageUrl, highlighted,
 }: {
   href: string; label: string; sub: string; hoverBorderClass: string; imageUrl?: string
+  // Destaque de produto (decisão do Rodrigo, não métrica) — mesmo tratamento
+  // visual do borde dourado de Top Pick (border-gold-deep, ver RacketCard/
+  // DiscoveryRacketCard). Desliga o hover de borda própria da tile pra não
+  // competir com o dourado fixo.
+  highlighted?: boolean
 }) {
   return (
     <Link
       href={href}
-      className={`group bg-white rounded-xl p-4 flex items-center gap-3.5 shadow-card border border-[rgba(14,58,64,0.06)] ${hoverBorderClass} active:scale-[0.98] transition-all`}
+      className={`group relative bg-white rounded-xl p-4 flex items-center gap-3.5 shadow-card active:scale-[0.98] transition-all ${
+        highlighted ? 'border-2 border-gold-deep' : `border border-[rgba(14,58,64,0.06)] ${hoverBorderClass}`
+      }`}
     >
+      {highlighted && (
+        <span className="absolute -top-2.5 left-3 rounded-full text-[9px] font-bold px-2.5 py-1 leading-none bg-gold-deep text-white shadow-sm whitespace-nowrap">
+          Recomendado
+        </span>
+      )}
       {imageUrl && (
         <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-[#EAF7F6]">
           <img src={imageUrl} alt="" className="w-full h-full object-cover" />
@@ -1395,6 +1407,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 sub="Absorvem melhor o impacto e protegem cotovelo, ombro e punho"
                 hoverBorderClass="hover:border-tinta"
                 imageUrl="/ilustracoes/perfil-articulacoes.webp"
+                highlighted
               />
             </div>
             {/* Rango de preço — desktop only */}
