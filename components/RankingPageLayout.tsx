@@ -97,7 +97,10 @@ export default function RankingPageLayout({ title, subtitle, entries, updatedAtL
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={r.image_url} alt={r.name} className="w-full h-full object-contain" />
                   ) : null}
-                  <RacketBadgeOverlay athlete={athlete} brandLogo={r.brands?.logo_url} brandName={r.brands?.name} brandCorner="left" />
+                  {/* brandCorner="right" — o canto esquerdo já tem o número do ranking
+                      (rounded-full acima); "left" fazia o logo da marca cair no mesmo
+                      top-1.5 left-1.5 e se sobrepor ao número. Bug real, Rodrigo 2026-11-04. */}
+                  <RacketBadgeOverlay athlete={athlete} brandLogo={r.brands?.logo_url} brandName={r.brands?.name} brandCorner="right" />
                 </div>
 
                 {/* Conteúdo */}
@@ -109,14 +112,18 @@ export default function RankingPageLayout({ title, subtitle, entries, updatedAtL
                     {price && <span className="font-heading text-coral font-bold text-sm shrink-0">{price}</span>}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {entry.compatPct != null && (
+                  {/* Nota X/10 removida da UI (Rodrigo 2026-11-04 — "6.5/10" passa
+                      impressão ruim pro público). compat_pct sozinho comunica o mesmo
+                      em positivo; o score interno continua intacto em RankingEntry,
+                      só não aparece mais aqui. Quando compat_pct vier null (score
+                      muito baixo), não mostra nada — nunca cai de volta pro score cru. */}
+                  {entry.compatPct != null && (
+                    <div className="flex items-center gap-2">
                       <span className="rounded-full bg-white border border-aqua/30 px-2.5 py-1 text-[11px] font-bold text-tinta shadow-sm">
                         {entry.compatPct}% compatível
                       </span>
-                    )}
-                    <span className="text-tinta/40 text-xs">nota {entry.score.toFixed(1)}/10</span>
-                  </div>
+                    </div>
+                  )}
 
                   {bullets.length > 0 && (
                     <ul className="flex flex-col gap-1 mt-1">

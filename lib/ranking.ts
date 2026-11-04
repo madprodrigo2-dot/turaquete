@@ -7,7 +7,6 @@ import {
   consolidationKey,
 } from './recommend'
 import { scoreForNivel, compatPct, calcular_faixa_ideal } from './scorer'
-import { getDisplayName } from './displayName'
 
 export interface RankingEntry {
   racket: RacketWithInsights
@@ -94,19 +93,12 @@ const BALANCE_LABEL: Record<string, string> = {
 }
 
 export function buildFaqGeral(entries: RankingEntry[]): FaqQA[] {
-  const top1 = entries[0]
   const faixaPreco = precoRange(entries)
 
   return [
     {
       question: 'Como é calculado o ranking das melhores raquetes de beach tennis?',
       answer: 'O ranking combina cliques reais de compra e recomendações reais feitas pela Tury (consultora de IA do site) nos últimos 30 dias, com um piso mínimo de qualidade técnica e no máximo 1 raquete por marca — pra não virar uma lista dominada por quem lança mais modelo.',
-    },
-    {
-      question: 'Qual é a raquete mais bem avaliada do catálogo hoje?',
-      answer: top1
-        ? `Hoje é a ${getDisplayName(top1.racket)}${top1.racket.brands?.name ? ` (${top1.racket.brands.name})` : ''}, com nota ${top1.score.toFixed(1)}/10. Essa posição muda com os cliques e recomendações reais dos últimos 30 dias.`
-        : 'Essa informação é calculada em tempo real a partir do catálogo.',
     },
     {
       question: 'Preço mais alto significa raquete melhor?',
