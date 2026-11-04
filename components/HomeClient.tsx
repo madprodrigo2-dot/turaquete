@@ -48,7 +48,11 @@ function detectContextChips(text: string): string[] | null {
 }
 
 function generateId() {
-  return typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+  // crypto existe mas randomUUID só roda em secure context (HTTPS ou localhost) —
+  // acessando por IP local sem HTTPS (ex. celular na mesma rede, 192.168.x.x) o
+  // objeto existe só que sem o método, e o typeof crypto !== 'undefined' sozinho
+  // não cobre esse caso. Produção sempre tem HTTPS, então randomUUID normalmente roda ali.
+  return typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
 }
 
 type Message = {

@@ -18,7 +18,10 @@ export default function PresenceTracker({ url, anonKey }: { url: string; anonKey
 
   useEffect(() => {
     const client = createClient(url, anonKey)
-    const myKey = crypto.randomUUID()
+    // randomUUID só existe em secure context (HTTPS ou localhost) — sem guarda
+    // isso derruba o RootLayout inteiro ao acessar por IP local sem HTTPS (achado
+    // testando o hero mobile por LAN, mesma causa do bug em HomeClient.generateId).
+    const myKey = typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2)
 
     const ch = client.channel(CHANNEL, {
       config: { presence: { key: myKey } },
