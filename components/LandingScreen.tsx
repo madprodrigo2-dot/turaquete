@@ -930,7 +930,7 @@ const SKY_RGB = '140, 192, 215'  // desaturated sky blue — doesn't compete wit
 export default function LandingScreen({ onStart, brands, featuredRackets, athleteRackets, recsCount, racketCount, exampleRacket, compareRacket, novidades }: Props) {
   const [showHeaderCta, setShowHeaderCta] = useState(false)
   const [mainCtaVisible, setMainCtaVisible] = useState(false)
-  const heroCtaRef = useRef<HTMLButtonElement>(null)
+  const heroCtaRef = useRef<HTMLDivElement>(null)
   const mainCtaRef = useRef<HTMLDivElement>(null)
   const arenaRef = useRef<HTMLDivElement>(null)
   const [ballSettled, setBallSettled] = useState(false)
@@ -1138,8 +1138,11 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               </p>
             </div>
 
-            {/* Badges — compactos, linha única */}
-            <div className="flex gap-2">
+            {/* Badges — compactos, linha única. Mobile: removidos do hero no experimento
+                de compactação (branch experiment/hero-mobile-compacto) — a mensagem
+                "grátis/sem cadastro" virou a linha única abaixo do CTA único mobile.
+                Desktop inalterado. */}
+            <div className="hidden md:flex gap-2">
               {BADGES.map((badge, i) => (
                 <span
                   key={badge}
@@ -1152,10 +1155,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               ))}
             </div>
 
-            {/* Vídeo + píldoras de score + Tury — mobile only, logo após as badges (antes ficava
-                depois do CTA, escondido demais). Espelha o tratamento do frame desktop (delta 18),
-                mas sem aspect-[16/9]/frame forçado — mantém o vídeo mobile no tamanho natural. */}
-            <div className="md:hidden relative w-full mb-5">
+            {/* Módulo visual compacto — mobile only. Experimento de compactação do hero
+                (branch experiment/hero-mobile-compacto, mockup aprovado por Rodrigo pra
+                preview): substitui o vídeo em tamanho natural (~390px de altura) + pílulas
+                de score + bolha da Tury por uma versão curta (h-[148px], object-cover) sem
+                os overlays, pra título+CTA entrarem acima da dobra em mobile. Pílulas de
+                score e o texto da bolha ficam de fora por ora — não decidido ainda pra onde
+                vão (ver conversa com Rodrigo), só tiraram do hero. */}
+            <div className="md:hidden relative w-full h-[148px] rounded-2xl overflow-hidden">
               <video
                 src="/scan-raquete-mobile.mp4"
                 poster="/new_hero_desktop.webp"
@@ -1163,82 +1170,60 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 loop
                 muted
                 playsInline
-                className="w-full h-auto block"
+                className="absolute inset-0 w-full h-full object-cover"
               />
-
-              {exampleRacket?.racket_insights && (
-                <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-2 pointer-events-none">
-                  {([
-                    { label: 'Potência', value: exampleRacket.racket_insights.power },
-                    { label: 'Controle', value: exampleRacket.racket_insights.control },
-                    { label: 'Conforto', value: exampleRacket.racket_insights.comfort },
-                  ] as { label: string; value: number | null }[])
-                    .filter((b): b is { label: string; value: number } => b.value != null)
-                    .map(b => (
-                      <div key={b.label} className="bg-white rounded-xl shadow-md px-3 py-1.5 flex flex-col items-center leading-none">
-                        <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-tinta/40">{b.label}</span>
-                        <span className="font-heading font-extrabold text-tinta text-xl tabular-nums mt-0.5">{b.value}</span>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Tury + bolha — ancorada no canto inferior-esquerdo do marco, pendurada pra fora
-                  (mesmo padrão do delta 15/18 desktop, adaptado pra mobile) */}
-              <div className="max-[359px]:hidden md:hidden absolute left-3 -bottom-[26px] z-10 flex items-end gap-2.5 pointer-events-none">
-                <Image
-                  src="/tury-transparente-explicando.png"
-                  alt="Tury apontando para o botão Começar agora"
-                  width={296}
-                  height={376}
-                  priority
-                  className="select-none pointer-events-none shrink-0"
-                  style={{ height: '72px', width: 'auto' }}
-                />
-                <div className="mb-1 bg-white border border-aqua/25 rounded-xl rounded-bl-sm px-2.5 py-1.5 shadow-sm whitespace-nowrap">
-                  <p className="text-[10px] font-semibold text-tinta leading-none">Encontrei 3 raquetes pra você</p>
-                  <p className="text-[9px] text-tinta/50 leading-none mt-0.5">baseado no seu perfil →</p>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA hero — IntersectionObserver target */}
-            <div className="flex flex-col items-start gap-3 md:flex-row md:items-end md:gap-3">
-              <button
-                ref={heroCtaRef}
-                onClick={onStart}
-                className="w-full md:flex-1 font-heading font-bold bg-coral text-white text-lg md:text-xl py-4 md:py-5 rounded-full shadow-cta hover:scale-[1.02] hover:shadow-[0_10px_32px_rgba(255,94,58,0.44)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
-              >
-                Começar agora
-              </button>
-              <span className="hidden md:inline shrink-0 text-xs text-tinta/50">
-                grátis, sem cadastro e sem e-mail
+              <div className="absolute inset-0 bg-gradient-to-b from-tinta/10 to-tinta/50" aria-hidden="true" />
+              <span className="absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1.5 bg-white/95 text-tinta text-[11px] font-bold px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-aqua shrink-0" aria-hidden="true" />
+                Análise em tempo real
               </span>
+              <Image
+                src="/tury-transparente-explicando.png"
+                alt="Tury"
+                width={296}
+                height={376}
+                priority
+                className="absolute left-2.5 -bottom-1.5 select-none pointer-events-none"
+                style={{ height: '70px', width: 'auto' }}
+              />
             </div>
 
-            {/* Prova social — mobile only, agora logo após o CTA (antes ficava depois da imagem) */}
-            {recsCount >= RECS_THRESHOLD && (
-              <div className="md:hidden">
-                <SocialProof recsCount={recsCount} />
+            {/* CTA hero — IntersectionObserver target. Wrapper (não o <button>) carrega o
+                ref: desktop e mobile agora têm botões separados (experimento de compactação,
+                branch experiment/hero-mobile-compacto) e só um fica visível por vez via CSS
+                — se o ref ficasse no <button>, o lado escondido (display:none) nunca
+                intersecta e quebraria o showHeaderCta/showBottomCta nesse breakpoint. */}
+            <div ref={heroCtaRef} className="flex flex-col gap-3">
+
+              {/* Desktop — inalterado */}
+              <div className="hidden md:flex md:flex-row md:items-end md:gap-3">
+                <button
+                  onClick={onStart}
+                  className="md:flex-1 font-heading font-bold bg-coral text-white text-xl py-5 rounded-full shadow-cta hover:scale-[1.02] hover:shadow-[0_10px_32px_rgba(255,94,58,0.44)] active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
+                >
+                  Começar agora
+                </button>
+                <span className="shrink-0 text-xs text-tinta/50">
+                  grátis, sem cadastro e sem e-mail
+                </span>
               </div>
-            )}
 
-            {/* Franja — texto discreto, abaixo do CTA; some no desktop (Delta 25),
-                mobile mantém — mesmo tratamento do "explore as raquetes" logo abaixo */}
-            <p className="text-xs text-tinta/50 leading-relaxed text-center md:hidden">
-              O mesmo que um especialista cobra pra fazer numa consultoria. Aqui, de graça.
-            </p>
+              {/* Mobile — CTA único, experimento de compactação (mockup aprovado por Rodrigo
+                  pra preview). Badges, prova social, franja e "ou explore as raquetes" saíram
+                  do hero mobile — ainda não decidido se/onde reaparecem mais abaixo na página. */}
+              <div className="md:hidden flex flex-col gap-2">
+                <button
+                  onClick={onStart}
+                  className="w-full font-heading font-bold bg-coral text-white text-lg py-4 rounded-full shadow-cta active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0CC0BE] focus-visible:ring-offset-2"
+                >
+                  ⚡ Encontrar minha raquete ideal (1 min)
+                </button>
+                <p className="text-center text-xs text-tinta/50">
+                  Grátis, sem cadastro e sem e-mail
+                </p>
+              </div>
 
-            {/* Segunda porta — explorar sem quiz; some no desktop (delta 18), mobile mantém */}
-            <p className="text-center text-sm text-tinta/50 md:hidden">
-              ou{' '}
-              <Link
-                href="/#explorar"
-                className="font-medium text-tinta/65 hover:text-tinta transition-colors underline underline-offset-2 decoration-tinta/25"
-              >
-                explore as raquetes
-              </Link>
-            </p>
+            </div>
 
             {/* Prova social — desktop only; vai depois do CTA (delta 18), separada por border-top própria */}
             {recsCount >= RECS_THRESHOLD && (
