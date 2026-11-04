@@ -1,3 +1,5 @@
+import { Trophy } from '@phosphor-icons/react/dist/ssr'
+
 interface Props {
   athlete: string
   variant?: 'overlay' | 'modal'
@@ -23,7 +25,10 @@ function Pill({ name, compact = false }: { name: string; compact?: boolean }) {
         : { background: '#0E3A40', color: '#ffffff' }
       }
     >
-      <span aria-hidden="true" style={{ fontSize: '8px' }}>{isSenna ? '✦' : '★'}</span>
+      {isSenna
+        ? <span aria-hidden="true" style={{ fontSize: '8px' }}>✦</span>
+        : <Trophy aria-hidden="true" weight="fill" size={9} />
+      }
       {label}
     </span>
   )
@@ -34,7 +39,7 @@ export default function AthleteBadge({ athlete, variant = 'overlay' }: Props) {
     const { label } = parse(athlete)
     return (
       <span className="flex items-center gap-1 text-tinta/50 text-xs mt-0.5">
-        <span aria-hidden="true" style={{ fontSize: '9px' }}>★</span>
+        <Trophy aria-hidden="true" weight="fill" size={11} />
         Raquete assinada por {label}
       </span>
     )

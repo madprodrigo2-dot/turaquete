@@ -1,3 +1,4 @@
+import { Trophy } from '@phosphor-icons/react/dist/ssr'
 import BrandLogo from './BrandLogo'
 import type { AttributeBadge } from '@/lib/attributeBadge'
 
@@ -74,7 +75,7 @@ export default function RacketBadgeOverlay({ athlete, brandLogo, brandName, size
       {athlete && (
         <div className="absolute bottom-1.5 left-1.5 right-1.5 z-10 flex justify-start">
           <span className={`inline-flex items-center gap-1 rounded-md bg-tinta text-white font-bold leading-none shadow-sm max-w-full ${chipCls}`}>
-            <span className="text-yellow shrink-0" aria-hidden="true">★</span>
+            <Trophy weight="fill" size={isDetail ? 13 : 11} className="text-yellow shrink-0" aria-hidden="true" />
             <span className="truncate">{cleanAthleteLabel(athlete)}</span>
           </span>
         </div>
