@@ -40,13 +40,19 @@ const authMiddleware = auth((req) => {
 
 export default function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl
+  // Decisão de rota sempre em lowercase. Bug real 2026-11-04: '/RAQUETES/...'
+  // ou '/Raquetes/...' não casava com a comparação case-sensitive abaixo,
+  // caía no fallback de admin e redirecionava pra /admin/login. O lookup do
+  // slug real contra a DB (dentro da page) continua case-sensitive — isso
+  // aqui só decide qual branch do middleware roda, nunca busca dado.
+  const pathLower = pathname.toLowerCase()
 
   // Cobre a ficha /raquetes/{slug}, a rota bare /raquetes (ex: redirect de
   // /marcas) e as imagens /raquetes/{slug}.webp — tudo que compartilha esse
   // prefixo tem que escapar do authMiddleware de admin. Bug real 2026-11-04:
   // 'raquetes'.startsWith('/raquetes/') é false (falta a barra), então o path
   // bare caía no gate de admin e redirecionava pra /admin/login.
-  const isRacketPath = pathname === '/raquetes' || pathname.startsWith('/raquetes/')
+  const isRacketPath = pathLower === '/raquetes' || pathLower.startsWith('/raquetes/')
 
   if (isRacketPath) {
     // Hotlink check só vale pra arquivo de imagem — a página da ficha nunca
