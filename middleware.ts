@@ -41,22 +41,23 @@ const authMiddleware = auth((req) => {
 export default function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl
 
-  // Hotlink check só vale pra arquivo de imagem (/raquetes/{slug}.webp) — a
-  // página da ficha (/raquetes/{slug}, sem extensão) compartilha o mesmo
-  // prefixo e NUNCA deve cair nesse bloqueio, senão todo tráfego real com
-  // referer externo (Google, WhatsApp, etc.) recebe o SVG placeholder em vez
-  // da ficha. Bug real 2026-11-04, confirmado com curl + Referer externo.
-  if (pathname.startsWith('/raquetes/') && /\.(webp|png|jpe?g)$/i.test(pathname)) {
-    if (!isAllowedReferer(req.headers.get('referer'))) {
+  // Cobre a ficha /raquetes/{slug}, a rota bare /raquetes (ex: redirect de
+  // /marcas) e as imagens /raquetes/{slug}.webp — tudo que compartilha esse
+  // prefixo tem que escapar do authMiddleware de admin. Bug real 2026-11-04:
+  // 'raquetes'.startsWith('/raquetes/') é false (falta a barra), então o path
+  // bare caía no gate de admin e redirecionava pra /admin/login.
+  const isRacketPath = pathname === '/raquetes' || pathname.startsWith('/raquetes/')
+
+  if (isRacketPath) {
+    // Hotlink check só vale pra arquivo de imagem — a página da ficha nunca
+    // deve cair nesse bloqueio, senão todo tráfego real com referer externo
+    // (Google, WhatsApp, etc.) recebe o SVG placeholder em vez da ficha.
+    if (/\.(webp|png|jpe?g)$/i.test(pathname) && !isAllowedReferer(req.headers.get('referer'))) {
       return new NextResponse(HOTLINK_SVG, {
         status: 200,
         headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' },
       })
     }
-    return NextResponse.next()
-  }
-
-  if (pathname.startsWith('/raquetes/')) {
     return NextResponse.next()
   }
 

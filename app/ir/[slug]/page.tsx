@@ -191,7 +191,11 @@ export default async function IrPage({
   const [{ slug }, sp, hdrs, session, cookieStore] = await Promise.all([params, searchParams, headers(), auth(), cookies()])
   const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL
   const ua      = hdrs.get('user-agent') ?? ''
-  const isBot   = /bot|crawler|spider|google|bing|baidu|yandex|facebook|slurp|preview/i.test(ua)
+  // 'google' sozinho casava com qualquer UA real que contivesse esse substring
+  // em qualquer lugar — 'googlebot' casa só com o crawler de verdade (Google
+  // já identifica seus bots com 'bot' no nome, ex: Googlebot, AdsBot-Google
+  // não bate aqui mas também não é o crawler que clica em link de afiliado).
+  const isBot   = /bot|crawler|spider|googlebot|bing|baidu|yandex|facebook|slurp|preview/i.test(ua)
   const isTest  = isAdmin || isBot || cookieStore.get('turaquete_test_mode')?.value === '1'
 
   const rawIp = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
