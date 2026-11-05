@@ -297,6 +297,13 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 </div>
               )}
 
+              {/* Separador fino entre seções — pedido do Rodrigo. Dentro do mesmo
+                  `&&` da Avaliação: só aparece quando a seção de cima existe de
+                  verdade, senão ficava uma linha órfã sem nada acima. */}
+              {ins && (ins.power !== null || ins.control !== null) && (
+                <div className="h-px bg-tinta/30" aria-hidden="true" />
+              )}
+
               {/* Specs + Tecnologias — 2 colunas no desktop (Delta 27: colunas desiguais
                   1.3fr/1fr + items-start, pra Tecnologias não esticar até a altura de
                   Especificações quando tem poucas tags) */}
@@ -324,12 +331,14 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 )}
               </div>
 
+              <div className="h-px bg-tinta/30" aria-hidden="true" />
+
               {/* Comparar + Compartilhar */}
               <div className="bg-white rounded-2xl px-5 py-4 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">
                 <div className="flex gap-2">
                   <Link
                     href={`/comparar?a=${racket.slug}`}
-                    className="flex items-center gap-2 flex-1 border border-gray-200 text-tinta/55 font-medium text-sm py-2.5 px-3.5 rounded-xl hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all"
+                    className="flex items-center gap-2 flex-1 border border-tinta/15 text-tinta/55 font-medium text-sm py-2.5 px-3.5 rounded-xl hover:bg-tinta/5 hover:border-tinta/25 active:scale-[0.98] transition-all"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-[#0CC0BE]">
                       <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>

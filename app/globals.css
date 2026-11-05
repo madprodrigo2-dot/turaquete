@@ -62,9 +62,12 @@ body.chat-active [data-site-footer] {
 }
 
 @layer utilities {
-  /* Page background — creme-to-white gradient, harmonizes with warm header (#FBF6EF) */
+  /* Page background — creme-to-white gradient, harmonizes with warm header (#FBF6EF).
+     Delta: stops reforçados (opacidade 0.45→0.65, chega no tom arena mais cedo —
+     75%→58%) pra ficar perceptível contra as cards brancas, sem virar uma 2ª textura
+     tipo .arena-grain (pedido do Rodrigo: mesma lógica do home, só mais notável). */
   .sand-texture {
-    background: linear-gradient(165deg, #F7F3EC 0%, rgba(247,243,236,0.45) 30%, #F7EDDC 75%);
+    background: linear-gradient(165deg, #F7F3EC 0%, rgba(247,243,236,0.65) 22%, #F7EDDC 58%);
   }
 
   .font-heading {
