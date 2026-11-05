@@ -1510,8 +1510,8 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 exemplo real do catálogo, assim chega a sua recomendação
               </p>
               <div className="flex gap-4 items-start">
-                <div className="w-20 shrink-0 rounded-xl overflow-hidden border border-aqua/20">
-                  <RacketImageTile src={exampleRacket.image_url} alt={exampleRacket.name} brandLogo={exampleRacket.brands?.logo_url} brandName={exampleRacket.brands?.name} />
+                <div className="group w-20 shrink-0 rounded-xl overflow-hidden border border-aqua/20">
+                  <RacketImageTile src={exampleRacket.image_url} alt={exampleRacket.name} brandLogo={exampleRacket.brands?.logo_url} brandName={exampleRacket.brands?.name} hoverScale />
                 </div>
                 <div className="flex flex-col gap-1.5 flex-1 min-w-0">
                   {derivarNivel(exampleRacket) && (
@@ -1564,14 +1564,14 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             </div>
             <Link
               href={compareRacket ? `/comparar?a=${compareRacket.slug}` : '/comparar'}
-              className="bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99] md:grid md:grid-cols-[1fr_auto] md:items-stretch"
+              className="group bg-white rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)] hover:-translate-y-1 transition-all duration-200 active:scale-[0.99] md:grid md:grid-cols-[1fr_auto] md:items-stretch"
             >
               <div className="grid grid-cols-[1fr_auto_1fr] items-center p-4 gap-3 md:flex md:gap-4">
                 <div className="flex flex-col gap-2 self-start md:w-32 md:shrink-0">
                   {compareRacket ? (
                     <>
                       <div className="rounded-xl overflow-hidden border border-coral/20">
-                        <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} brandLogo={compareRacket.brands?.logo_url} brandName={compareRacket.brands?.name} />
+                        <RacketImageTile src={compareRacket.image_url} alt={compareRacket.name} brandLogo={compareRacket.brands?.logo_url} brandName={compareRacket.brands?.name} hoverScale />
                       </div>
                       <p className="text-[10px] font-semibold text-tinta/70 leading-snug line-clamp-2 text-center">{compareRacket.name}</p>
                     </>

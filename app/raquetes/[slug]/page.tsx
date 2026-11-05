@@ -181,7 +181,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                     </div>
                   </div>
                   {/* Desktop: tile edge-to-edge, mesmo padrão usado no resto do site */}
-                  <div className="hidden lg:block rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)]">
+                  <div className="group hidden lg:block rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)]">
                     <RacketImageTile
                       src={racket.image_url}
                       alt={racket.name}
@@ -191,6 +191,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                       badgeSize="detail"
                       loading="eager"
                       topBadges={getTopAttributeBadges(racket.racket_insights)}
+                      hoverScale
                     />
                   </div>
                 </>

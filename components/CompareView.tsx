@@ -258,11 +258,11 @@ export default function CompareView({ rackets, topPickIds }: Props) {
           return (
             <div key={r.id} className="flex flex-col gap-2">
               <div
-                className="rounded-xl overflow-hidden"
+                className="group rounded-xl overflow-hidden"
                 style={{ boxShadow: `0 0 0 2px ${color}30`, outline: `3px solid transparent` }}
               >
                 <div className="h-1 w-full" style={{ backgroundColor: color }} />
-                <RacketImageTile src={r.image_url} alt={r.name} brandLogo={r.brands?.logo_url} brandName={r.brands?.name} />
+                <RacketImageTile src={r.image_url} alt={r.name} brandLogo={r.brands?.logo_url} brandName={r.brands?.name} hoverScale />
               </div>
               <div className="flex flex-col gap-1 px-0.5">
                 <Link

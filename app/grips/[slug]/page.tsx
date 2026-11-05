@@ -179,7 +179,7 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
           <div className="lg:sticky lg:top-20">
             <div className="max-w-[240px] md:max-w-[280px] mx-auto lg:mx-0">
               {grip.image_url ? (
-                <div className="rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)]">
+                <div className="group rounded-2xl overflow-hidden shadow-card border border-[rgba(14,58,64,0.06)]">
                   <RacketImageTile
                     src={grip.image_url}
                     alt={displayName}
@@ -187,6 +187,7 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
                     brandName={grip.brand?.name}
                     badgeSize="detail"
                     loading="eager"
+                    hoverScale
                   />
                 </div>
               ) : (
