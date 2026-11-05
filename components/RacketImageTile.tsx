@@ -30,7 +30,7 @@ function Placeholder() {
 // and can never escape card bounds or bleed over a sticky header (z-10 < z-30).
 export default function RacketImageTile({ src, alt, athlete, brandLogo, brandName, hoverScale, loading = 'lazy', badgeSize = 'card', topBadges }: Props) {
   return (
-    <div className="relative aspect-[800/1020] bg-aqua/[0.05] overflow-hidden shrink-0">
+    <div className="relative aspect-[800/1020] bg-white overflow-hidden shrink-0">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
