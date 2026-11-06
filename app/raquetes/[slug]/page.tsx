@@ -24,6 +24,7 @@ import { getTopAttributeBadges } from '@/lib/attributeBadge'
 import PriceNote from '@/components/PriceNote'
 import ShareButton from '@/components/ShareButton'
 import MegaSpinLink from '@/components/MegaSpinLink'
+import StickyBuyBar from '@/components/StickyBuyBar'
 
 export async function generateStaticParams() {
   const rackets = await listarRaquetas().catch(() => [])
@@ -248,8 +249,11 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               </div>
 
               {/* CTA compra — borda dourada quando a raquete é uma Top Pick
-                  ativa agora (mesmo fundo coral, só o contorno muda) */}
+                  ativa agora (mesmo fundo coral, só o contorno muda). id usado
+                  pelo StickyBuyBar (IntersectionObserver) pra saber quando
+                  mostrar a barra fixa no mobile. */}
               {irUrl ? (
+                <div id="main-buy-cta">
                 <BuyButton
                   href={irUrl}
                   racketName={racket.name}
@@ -263,6 +267,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 >
                   {price ? `Ver na loja → ${price}` : 'Ver na loja →'}
                 </BuyButton>
+                </div>
               ) : (
                 <Link
                   href="/?chat=1"
@@ -384,11 +389,13 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 )}
               </div>
 
-              {/* CTA secundário */}
+              {/* CTA secundário — peso visual subido (pedido do Rodrigo): era um link
+                  sublinhado simples, agora é um botão outline com os tokens aqua,
+                  pra ficar visível sem competir com o CTA principal coral. */}
               {irUrl && (
                 <Link
                   href="/?chat=1"
-                  className="w-full text-aqua/80 text-sm font-medium text-center block pt-1 hover:text-aqua active:opacity-70 transition-all underline underline-offset-2"
+                  className="w-full flex items-center justify-center gap-2 border border-aqua/25 text-aqua font-semibold text-sm py-3 rounded-xl hover:bg-aqua/5 hover:border-aqua/40 active:scale-[0.98] transition-all"
                 >
                   Não tem certeza? Fale com a especialista →
                 </Link>
@@ -399,6 +406,17 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
       </div>
+
+      {irUrl && (
+        <StickyBuyBar
+          price={price}
+          href={irUrl}
+          racketName={racket.name}
+          racketSlug={racket.slug}
+          linkTipo={linkTipo}
+          observeId="main-buy-cta"
+        />
+      )}
     </>
   )
 }
