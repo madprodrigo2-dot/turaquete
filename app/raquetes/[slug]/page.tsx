@@ -369,10 +369,12 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                           href={`/comparar/${racket.slug}-vs-${s.slug}`}
                           className="flex items-center gap-3 bg-[#F3FAFA] border border-aqua/10 rounded-2xl px-4 py-3 hover:border-aqua/30 hover:bg-aqua/6 active:scale-[0.98] transition-all"
                         >
-                          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0 text-aqua/50">
-                            <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                            <path d="M8 4.5L11 6.25V9.75L8 11.5L5 9.75V6.25L8 4.5Z" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" strokeOpacity="0.4"/>
-                          </svg>
+                          <div className="relative w-8 h-[41px] shrink-0 rounded-md border border-tinta/8 bg-white overflow-hidden">
+                            {s.image_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={s.image_url} alt="" className="absolute inset-0 w-full h-full object-contain p-0.5" />
+                            ) : null}
+                          </div>
                           <span className="flex-1 text-sm font-semibold text-tinta">vs {s.name}</span>
                           {s.brands?.logo_url && (
                             <div className="shrink-0 h-5 flex items-center rounded-md bg-white px-1.5">
