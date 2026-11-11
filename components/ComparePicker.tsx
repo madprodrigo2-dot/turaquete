@@ -273,6 +273,11 @@ export default function ComparePicker({ rackets, initialSlotA, initialSlotB, pop
                   backgroundColor: badge ? `${badgeColor}08` : 'white',
                 }}
               >
+                <div className="relative w-9 h-[46px] shrink-0 rounded-lg border border-tinta/8 bg-white overflow-hidden">
+                  {r.image_url ? (
+                    <Image src={r.image_url} alt="" fill className="object-contain p-0.5" sizes="36px" />
+                  ) : null}
+                </div>
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                   <span className="text-sm font-medium text-tinta leading-snug line-clamp-1">
                     {r.name}
