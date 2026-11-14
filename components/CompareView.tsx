@@ -311,6 +311,21 @@ export default function CompareView({ rackets, topPickIds }: Props) {
         })}
       </div>
 
+      {/* Insight rápido — plantilla sobre specs reais, sem IA em tempo real */}
+      {compareInsight && (
+        <section className="bg-gradient-to-br from-aqua/8 to-transparent rounded-2xl border border-aqua/15 p-4">
+          <div className="flex items-start gap-2">
+            <Sparkle size={15} weight="fill" className="text-aqua shrink-0 mt-[2px]" aria-hidden="true" />
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <p className="text-[12px] text-tinta leading-snug">{compareInsight.sentence1}</p>
+              {compareInsight.sentence2 && (
+                <p className="text-[12px] text-tinta/70 leading-snug">{compareInsight.sentence2}</p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Hexagon radar — collapsed by default, both breakpoints */}
       {hasTwoRackets && (
         <details className="group bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] p-5">
@@ -435,21 +450,6 @@ export default function CompareView({ rackets, topPickIds }: Props) {
           })}
         </div>
       </section>
-
-      {/* Insight rápido — plantilla sobre specs reais, sem IA em tempo real */}
-      {compareInsight && (
-        <section className="bg-gradient-to-br from-aqua/8 to-transparent rounded-2xl border border-aqua/15 p-4">
-          <div className="flex items-start gap-2">
-            <Sparkle size={15} weight="fill" className="text-aqua shrink-0 mt-[2px]" aria-hidden="true" />
-            <div className="flex flex-col gap-1.5 min-w-0">
-              <p className="text-[12px] text-tinta leading-snug">{compareInsight.sentence1}</p>
-              {compareInsight.sentence2 && (
-                <p className="text-[12px] text-tinta/70 leading-snug">{compareInsight.sentence2}</p>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Melhor para */}
       {hasTwoRackets && (melA.length > 0 || melB.length > 0) && (
