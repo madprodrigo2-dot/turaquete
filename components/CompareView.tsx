@@ -8,7 +8,8 @@ import CompareHexagon from './CompareHexagon'
 import { derivarNivel } from '@/lib/nivel'
 import TermoGlossario from './TermoGlossario'
 import type { GlossarioEntry } from '@/lib/glossario'
-import { Star } from '@phosphor-icons/react'
+import { Star, Sparkle } from '@phosphor-icons/react'
+import { buildCompareInsight } from '@/lib/compareInsight'
 
 const SCORES = [
   { key: 'power',           label: 'Potência'     },
@@ -242,6 +243,7 @@ export default function CompareView({ rackets, topPickIds }: Props) {
   const [melA, melB] = hasTwoRackets
     ? melhorPara(rackets[0], rackets[1], spinAjustA, spinAjustB)
     : [[], []]
+  const compareInsight = hasTwoRackets ? buildCompareInsight(rackets[0], rackets[1]) : null
 
   return (
     <div className="flex flex-col gap-8">
@@ -433,6 +435,21 @@ export default function CompareView({ rackets, topPickIds }: Props) {
           })}
         </div>
       </section>
+
+      {/* Insight rápido — plantilla sobre specs reais, sem IA em tempo real */}
+      {compareInsight && (
+        <section className="bg-gradient-to-br from-aqua/8 to-transparent rounded-2xl border border-aqua/15 p-4">
+          <div className="flex items-start gap-2">
+            <Sparkle size={15} weight="fill" className="text-aqua shrink-0 mt-[2px]" aria-hidden="true" />
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <p className="text-[12px] text-tinta leading-snug">{compareInsight.sentence1}</p>
+              {compareInsight.sentence2 && (
+                <p className="text-[12px] text-tinta/70 leading-snug">{compareInsight.sentence2}</p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Melhor para */}
       {hasTwoRackets && (melA.length > 0 || melB.length > 0) && (
