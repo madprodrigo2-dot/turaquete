@@ -156,9 +156,41 @@ function reasonFor(dim: MotorDim, winner: RacketWithInsights, loser: RacketWithI
   return text
 }
 
+// Dados estruturados (em vez de uma frase já montada) para o componente poder
+// destacar nome da raquete / score com estilo próprio (cor, peso) sem parsear texto.
+export interface CompareInsightLine {
+  racketIndex: 0 | 1
+  racketName: string
+  verb: 'leva vantagem em' | 'compensa com'
+  dimLabel: string
+  scoreWinner: number
+  scoreLoser: number
+  reason: string
+}
+
 export interface CompareInsight {
-  sentence1: string
-  sentence2: string | null
+  line1: CompareInsightLine
+  line2: CompareInsightLine | null
+}
+
+function buildLine(
+  verb: CompareInsightLine['verb'],
+  dim: MotorDim,
+  winner: RacketWithInsights,
+  loser: RacketWithInsights,
+  racketIndex: 0 | 1,
+  traceWinner: MotorTrace,
+  traceLoser: MotorTrace,
+): CompareInsightLine {
+  return {
+    racketIndex,
+    racketName: winner.name,
+    verb,
+    dimLabel: DIM_LABEL_PT[dim],
+    scoreWinner: winner.racket_insights![dim] as number,
+    scoreLoser: loser.racket_insights![dim] as number,
+    reason: reasonFor(dim, winner, loser, traceWinner, traceLoser),
+  }
 }
 
 export function buildCompareInsight(a: RacketWithInsights, b: RacketWithInsights): CompareInsight | null {
@@ -189,14 +221,13 @@ export function buildCompareInsight(a: RacketWithInsights, b: RacketWithInsights
   const diff1 = diffs[dim1]!
   const winner1 = diff1 > 0 ? a : b
   const loser1 = diff1 > 0 ? b : a
+  const winner1Index: 0 | 1 = diff1 > 0 ? 0 : 1
   const traceA = calcularMotorTrace(motorInput(a))
   const traceB = calcularMotorTrace(motorInput(b))
   const traceWinner1 = diff1 > 0 ? traceA : traceB
   const traceLoser1 = diff1 > 0 ? traceB : traceA
 
-  const scoreW1 = (winner1.racket_insights![dim1] as number)
-  const scoreL1 = (loser1.racket_insights![dim1] as number)
-  const sentence1 = `${winner1.name} leva vantagem em ${DIM_LABEL_PT[dim1]} (${scoreW1} vs. ${scoreL1}) — ${reasonFor(dim1, winner1, loser1, traceWinner1, traceLoser1)}.`
+  const line1 = buildLine('leva vantagem em', dim1, winner1, loser1, winner1Index, traceWinner1, traceLoser1)
 
   // Segunda categoria: maior diferença entre as restantes que favoreça quem perdeu a primeira.
   let dim2: MotorDim | null = null
@@ -210,16 +241,16 @@ export function buildCompareInsight(a: RacketWithInsights, b: RacketWithInsights
     if (Math.abs(d) > maxAbs2) { maxAbs2 = Math.abs(d); dim2 = dim }
   }
 
-  if (!dim2) return { sentence1, sentence2: null }
+  if (!dim2) return { line1, line2: null }
 
   const diff2 = diffs[dim2]!
   const winner2 = diff2 > 0 ? a : b // === loser1
   const loser2 = diff2 > 0 ? b : a // === winner1
+  const winner2Index: 0 | 1 = diff2 > 0 ? 0 : 1
   const traceWinner2 = diff2 > 0 ? traceA : traceB
   const traceLoser2 = diff2 > 0 ? traceB : traceA
-  const scoreW2 = (winner2.racket_insights![dim2] as number)
-  const scoreL2 = (loser2.racket_insights![dim2] as number)
-  const sentence2 = `${winner2.name} compensa com ${DIM_LABEL_PT[dim2]} (${scoreW2} vs. ${scoreL2}): ${reasonFor(dim2, winner2, loser2, traceWinner2, traceLoser2)}.`
 
-  return { sentence1, sentence2 }
+  const line2 = buildLine('compensa com', dim2, winner2, loser2, winner2Index, traceWinner2, traceLoser2)
+
+  return { line1, line2 }
 }

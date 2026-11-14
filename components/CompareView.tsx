@@ -9,7 +9,7 @@ import { derivarNivel } from '@/lib/nivel'
 import TermoGlossario from './TermoGlossario'
 import type { GlossarioEntry } from '@/lib/glossario'
 import { Star, Sparkle } from '@phosphor-icons/react'
-import { buildCompareInsight } from '@/lib/compareInsight'
+import { buildCompareInsight, type CompareInsightLine } from '@/lib/compareInsight'
 
 const SCORES = [
   { key: 'power',           label: 'Potência'     },
@@ -108,6 +108,27 @@ function StarIcon({ color }: { color: string }) {
 }
 
 const NEUTRAL_BAR = '#CBD5E1'
+
+// Insight rápido — fila com score grande + barra de cor lateral por raquete
+function InsightRow({ line, color, isLast }: { line: CompareInsightLine; color: string; isLast?: boolean }) {
+  return (
+    <div
+      className={`flex items-center gap-3 py-3 px-3.5 ${isLast ? '' : 'border-b border-tinta/6'}`}
+      style={{ borderLeft: `4px solid ${color}`, background: `${color}0A` }}
+    >
+      <div className="flex flex-col items-center shrink-0 w-12">
+        <span className="text-xl font-black tabular-nums leading-none" style={{ color }}>{line.scoreWinner}</span>
+        <span className="text-[9px] text-tinta/35 font-medium leading-none mt-1">vs. {line.scoreLoser}</span>
+      </div>
+      <p className="text-[12px] text-tinta leading-snug">
+        <span className="font-bold" style={{ color }}>{line.racketName}</span>
+        {' '}{line.verb}{' '}
+        <span className="font-semibold">{line.dimLabel}</span>
+        {' — '}{line.reason}.
+      </p>
+    </div>
+  )
+}
 
 function DivergentRow({
   label, valA, valB, colorA, colorB, spinAjustA, spinAjustB, showSpinBadge,
@@ -313,16 +334,15 @@ export default function CompareView({ rackets, topPickIds }: Props) {
 
       {/* Insight rápido — plantilla sobre specs reais, sem IA em tempo real */}
       {compareInsight && (
-        <section className="bg-gradient-to-br from-aqua/8 to-transparent rounded-2xl border border-aqua/15 p-4">
-          <div className="flex items-start gap-2">
-            <Sparkle size={15} weight="fill" className="text-aqua shrink-0 mt-[2px]" aria-hidden="true" />
-            <div className="flex flex-col gap-1.5 min-w-0">
-              <p className="text-[12px] text-tinta leading-snug">{compareInsight.sentence1}</p>
-              {compareInsight.sentence2 && (
-                <p className="text-[12px] text-tinta/70 leading-snug">{compareInsight.sentence2}</p>
-              )}
-            </div>
+        <section className="bg-white rounded-2xl shadow-card border border-[rgba(14,58,64,0.06)] overflow-hidden">
+          <div className="flex items-center gap-1.5 px-3.5 pt-3.5 pb-2">
+            <Sparkle size={13} weight="fill" className="text-aqua" aria-hidden="true" />
+            <span className="text-[10px] font-bold text-tinta/40 uppercase tracking-widest">Insight rápido</span>
           </div>
+          <InsightRow line={compareInsight.line1} color={COLORS[compareInsight.line1.racketIndex]} isLast={!compareInsight.line2} />
+          {compareInsight.line2 && (
+            <InsightRow line={compareInsight.line2} color={COLORS[compareInsight.line2.racketIndex]} isLast />
+          )}
         </section>
       )}
 
