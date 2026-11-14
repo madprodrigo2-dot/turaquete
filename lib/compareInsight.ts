@@ -159,6 +159,7 @@ function reasonFor(dim: MotorDim, winner: RacketWithInsights, loser: RacketWithI
 // Dados estruturados (em vez de uma frase já montada) para o componente poder
 // destacar nome da raquete / score com estilo próprio (cor, peso) sem parsear texto.
 export interface CompareInsightLine {
+  dim: MotorDim
   racketIndex: 0 | 1
   racketName: string
   verb: 'leva vantagem em' | 'compensa com'
@@ -183,6 +184,7 @@ function buildLine(
   traceLoser: MotorTrace,
 ): CompareInsightLine {
   return {
+    dim,
     racketIndex,
     racketName: winner.name,
     verb,

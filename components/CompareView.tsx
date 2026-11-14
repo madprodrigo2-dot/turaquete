@@ -109,17 +109,22 @@ function StarIcon({ color }: { color: string }) {
 
 const NEUTRAL_BAR = '#CBD5E1'
 
-// Insight rápido — fila com score grande + barra de cor lateral por raquete
+// Insight rápido — fila com score grande + barra de cor lateral por raquete.
+// forgiveness/"sweet spot" não tem barra em Placar/Pontuações (fora do hexágono
+// de 6 pontas) — sem score numérico pra conferir, não mostra o número aqui também.
 function InsightRow({ line, color, isLast }: { line: CompareInsightLine; color: string; isLast?: boolean }) {
+  const showScore = line.dim !== 'forgiveness'
   return (
     <div
       className={`flex items-center gap-3 py-3 px-3.5 ${isLast ? '' : 'border-b border-tinta/6'}`}
       style={{ borderLeft: `4px solid ${color}`, background: `${color}0A` }}
     >
-      <div className="flex flex-col items-center shrink-0 w-12">
-        <span className="text-xl font-black tabular-nums leading-none" style={{ color }}>{line.scoreWinner}</span>
-        <span className="text-[9px] text-tinta/35 font-medium leading-none mt-1">vs. {line.scoreLoser}</span>
-      </div>
+      {showScore && (
+        <div className="flex flex-col items-center shrink-0 w-12">
+          <span className="text-xl font-black tabular-nums leading-none" style={{ color }}>{line.scoreWinner}</span>
+          <span className="text-[9px] text-tinta/35 font-medium leading-none mt-1">vs. {line.scoreLoser}</span>
+        </div>
+      )}
       <p className="text-[12px] text-tinta leading-snug">
         <span className="font-bold" style={{ color }}>{line.racketName}</span>
         {' '}{line.verb}{' '}
