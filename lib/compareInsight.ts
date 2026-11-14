@@ -48,8 +48,15 @@ function factorType(label: string): string {
   return label.slice(0, cut).trim()
 }
 
-// Dado o trace de um dimensão para o vencedor e o perdedor, acha qual fator
+// Dado o trace de uma dimensão para o vencedor e o perdedor, acha qual fator
 // (face, core, furos, esp, peso...) mais explica a diferença entre os dois.
+// Só considera fatores que realmente pesam a favor do vencedor (delta > 0) —
+// um fator pode ter a maior diferença em módulo e ainda assim favorecer quem
+// perdeu a dimensão (ex.: núcleo mais macio dá +controle, mas se o vencedor
+// tem o núcleo mais duro dos dois, esse fator não pode ser citado como "o
+// porquê" da vitória dele). Como o total da dimensão é a soma dos deltas de
+// cada fator, se o vencedor tem score maior, sempre existe pelo menos um
+// fator com delta > 0 — nunca fica sem candidato.
 function dominantFactor(rowsWinner: MotorTraceDim, rowsLoser: MotorTraceDim): string | null {
   const usable = rowsWinner.filter(r => !r.isFinal && r.label !== 'base')
   let best: { type: string; delta: number } | null = null
@@ -58,8 +65,8 @@ function dominantFactor(rowsWinner: MotorTraceDim, rowsLoser: MotorTraceDim): st
     const rl = rowsLoser.find(r => factorType(r.label) === type)
     if (!rl) continue
     const delta = num(rw.value) - num(rl.value)
-    if (delta === 0) continue
-    if (!best || Math.abs(delta) > Math.abs(best.delta)) best = { type, delta }
+    if (delta <= 0) continue
+    if (!best || delta > best.delta) best = { type, delta }
   }
   return best?.type ?? null
 }
