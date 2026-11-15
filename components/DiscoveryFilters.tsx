@@ -6,6 +6,8 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import DiscoveryRacketCard from './DiscoveryRacketCard'
 import NaoAcheiWidget from './NaoAcheiWidget'
 import { PRECO_BUCKETS } from '@/lib/agent/preco-buckets'
+import CatalogFilterControls from './CatalogFilterControls'
+import { applyCatalogFilters, hasCatalogFilter, EMPTY_CATALOG_FILTERS, type CatalogFilterState } from '@/lib/catalogFilters'
 
 function normalize(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -43,6 +45,7 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
   const [marca, setMarca] = useState<string>('todas')
   const [sort, setSort] = useState<SortKey>(defaultSort)
   const [query, setQuery] = useState<string>(initialQuery ?? '')
+  const [catalog, setCatalog] = useState<CatalogFilterState>(EMPTY_CATALOG_FILTERS)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const brands = useMemo(() => {
@@ -81,6 +84,8 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
       out = out.filter(r => r.brands?.name === marca)
     }
 
+    out = applyCatalogFilters(out, catalog)
+
     const scoreDim = SCORE_SORT_DIM[sort]
     if (sort === 'menor-preco') {
       out.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
@@ -103,14 +108,15 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
     }
 
     return out
-  }, [rackets, precoKey, marca, sort, showPrecoFilter])
+  }, [rackets, precoKey, marca, sort, showPrecoFilter, showTextSearch, query, catalog])
 
-  const hasActiveFilter = (showTextSearch && query.trim() !== '') || (showPrecoFilter && precoKey !== 'todas') || marca !== 'todas'
+  const hasActiveFilter = (showTextSearch && query.trim() !== '') || (showPrecoFilter && precoKey !== 'todas') || marca !== 'todas' || hasCatalogFilter(catalog)
 
   function clearFilters() {
     setPrecoKey('todas')
     setMarca('todas')
     setQuery('')
+    setCatalog(EMPTY_CATALOG_FILTERS)
   }
 
   return (
@@ -178,6 +184,8 @@ export default function DiscoveryFilters({ rackets, defaultSort, showPrecoFilter
             <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-14 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
           </div>
         )}
+
+        <CatalogFilterControls rackets={rackets} state={catalog} onChange={setCatalog} resultCount={filtered.length} />
 
         <div className="flex gap-2 md:gap-3 items-center">
           {brands.length > 1 && (

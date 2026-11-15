@@ -9,6 +9,8 @@ import { derivarNivel } from '@/lib/nivel'
 import { getTopAttributeBadges } from '@/lib/attributeBadge'
 import { PRECO_BUCKETS } from '@/lib/agent/preco-buckets'
 import type { SortKey } from '@/components/DiscoveryFilters'
+import CatalogFilterControls from '@/components/CatalogFilterControls'
+import { applyCatalogFilters, hasCatalogFilter, EMPTY_CATALOG_FILTERS, type CatalogFilterState } from '@/lib/catalogFilters'
 
 // Specs duras — núcleo · espessura · material da face. Mesma lógica de
 // DiscoveryFilters.tsx / SpecsGrid, só o que já existe no banco.
@@ -72,6 +74,7 @@ export default function MarcaGrid({ rackets, topPickIds }: { rackets: RacketWith
   const [precoKey, setPrecoKey] = useState<string>('todas')
   const [nivelKey, setNivelKey] = useState<NivelKey>('todos')
   const [sort, setSort] = useState<SortKey>('lancamentos')
+  const [catalog, setCatalog] = useState<CatalogFilterState>(EMPTY_CATALOG_FILTERS)
 
   const filtered = useMemo(() => {
     let out = [...rackets]
@@ -90,6 +93,8 @@ export default function MarcaGrid({ rackets, topPickIds }: { rackets: RacketWith
       out = out.filter(r => derivarNivel(r) === nivelKey)
     }
 
+    out = applyCatalogFilters(out, catalog)
+
     if (sort === 'menor-preco') {
       out.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
     } else if (sort === 'maior-preco') {
@@ -104,13 +109,14 @@ export default function MarcaGrid({ rackets, topPickIds }: { rackets: RacketWith
     }
 
     return out
-  }, [rackets, precoKey, nivelKey, sort])
+  }, [rackets, precoKey, nivelKey, sort, catalog])
 
-  const hasActiveFilter = precoKey !== 'todas' || nivelKey !== 'todos'
+  const hasActiveFilter = precoKey !== 'todas' || nivelKey !== 'todos' || hasCatalogFilter(catalog)
 
   function clearFilters() {
     setPrecoKey('todas')
     setNivelKey('todos')
+    setCatalog(EMPTY_CATALOG_FILTERS)
   }
 
   return (
@@ -152,6 +158,8 @@ export default function MarcaGrid({ rackets, topPickIds }: { rackets: RacketWith
           <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-[#F7F3EC] to-transparent md:hidden" />
           <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-14 bg-gradient-to-l from-[#F7F3EC] to-transparent md:hidden" />
         </div>
+
+        <CatalogFilterControls rackets={rackets} state={catalog} onChange={setCatalog} resultCount={filtered.length} omit={['nivel']} />
 
         <div className="flex gap-2 md:gap-3 items-center">
           <div className="flex items-center gap-1.5 md:gap-2 min-w-0 flex-1 md:flex-initial">
