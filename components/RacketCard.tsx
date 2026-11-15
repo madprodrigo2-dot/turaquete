@@ -92,17 +92,24 @@ export default function RacketCard({ racket, razao, sessionId, calce, custoBenef
   // Threshold >=7 so the card only ever highlights an actual strength, never a
   // middling/weak score dressed up as one (24/264 rackets had a 2nd-highest
   // score <=6 under the old top-2-no-floor rule).
+  // Array.sort is stable, so a fixed candidate order would make whichever dim
+  // is listed last always lose ties (estabilidade, historically) — rotated by
+  // racket id so tie-break priority is distributed evenly across the catalog.
   const topDims = ins
-    ? ([
-        { dim: 'power' as const,           v: ins.power },
-        { dim: 'control' as const,         v: ins.control },
-        { dim: 'comfort' as const,         v: ins.comfort },
-        { dim: 'maneuverability' as const, v: ins.maneuverability },
-        { dim: 'stability' as const,       v: ins.stability },
-      ] as { dim: ScoreDim; v: number | null }[])
-        .filter((d): d is { dim: ScoreDim; v: number } => d.v != null && d.v >= 7)
-        .sort((a, b) => b.v - a.v)
-        .slice(0, 2)
+    ? (() => {
+        const candidatos = [
+          { dim: 'power' as const,           v: ins.power },
+          { dim: 'control' as const,         v: ins.control },
+          { dim: 'comfort' as const,         v: ins.comfort },
+          { dim: 'maneuverability' as const, v: ins.maneuverability },
+          { dim: 'stability' as const,       v: ins.stability },
+        ] as { dim: ScoreDim; v: number | null }[]
+        const offset = racket.id % candidatos.length
+        return [...candidatos.slice(offset), ...candidatos.slice(0, offset)]
+          .filter((d): d is { dim: ScoreDim; v: number } => d.v != null && d.v >= 7)
+          .sort((a, b) => b.v - a.v)
+          .slice(0, 2)
+      })()
     : []
 
   const handleOpenModal = () => {

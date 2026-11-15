@@ -74,16 +74,21 @@ function getNomeCurto(r: RacketWithInsights): string {
 // Mirrors RacketCard.tsx's topDims exactly: excludes spin (weight 0 in every
 // scorer.ts profile — never influences match_score) and forgiveness (internal),
 // with a >=7 floor so a card never shows a middling stat dressed up as a strength.
+// Array.sort is stable, so a fixed candidate order would make whichever dim is
+// listed last always lose ties (estabilidade, historically) — rotated by racket
+// id so tie-break priority is distributed evenly across the catalog instead.
 function getDestaques(r: RacketWithInsights) {
   const ins = r.racket_insights
   if (!ins) return []
-  return [
+  const candidatos = [
     { label: 'Potência',     v: ins.power           },
     { label: 'Controle',     v: ins.control         },
     { label: 'Conforto',     v: ins.comfort         },
     { label: 'Manuseio',     v: ins.maneuverability },
     { label: 'Estabilidade', v: ins.stability       },
   ]
+  const offset = r.id % candidatos.length
+  return [...candidatos.slice(offset), ...candidatos.slice(0, offset)]
     .filter((d): d is { label: string; v: number } => d.v != null && d.v >= 7)
     .sort((a, b) => b.v - a.v)
     .slice(0, 2)
