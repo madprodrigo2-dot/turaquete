@@ -124,48 +124,33 @@ function useCountUp(target: number, duration = 1200) {
   return { count, visible, ref }
 }
 
+// Mobile-only, uma linha: reaparece depois da compactação do hero (v0.4.299) que
+// tirou a prova social do mobile. Sem cartão; mesmo contador animado do desktop.
 function SocialProof({ recsCount }: { recsCount: number }) {
   const { count, visible, ref } = useCountUp(recsCount)
   return (
     <div
       ref={ref}
-      className="flex items-center gap-3 bg-aqua/[0.06] border border-aqua/[0.15] rounded-2xl px-4 py-3"
+      className="md:hidden flex items-center justify-center gap-1.5 text-xs text-tinta/55"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(10px)',
+        transform: visible ? 'translateY(0)' : 'translateY(6px)',
         transition: 'opacity 0.5s ease, transform 0.5s ease',
       }}
     >
-      <span
-        className="font-heading"
-        style={{
-          fontSize: '34px',
-          fontVariantNumeric: 'tabular-nums',
-          fontWeight: 800,
-          color: '#0E3A40',
-          lineHeight: 1,
-          letterSpacing: '-0.02em',
-        }}
-      >
-        {count.toLocaleString('pt-BR')}
-      </span>
-      <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(14,58,64,0.18)', flexShrink: 0, marginBlock: '0.1em' }} />
-      <span
-        style={{
-          fontSize: '0.8125rem',
-          lineHeight: 1.25,
-          color: '#0E3A40',
-          opacity: 0.65,
-        }}
-      >
-        jogadores ja encontraram<br />a raquete certa com a Tury
+      <span aria-hidden="true">👥</span>
+      <span>
+        <strong className="font-heading font-extrabold text-tinta tabular-nums">
+          {count.toLocaleString('pt-BR')}
+        </strong>{' '}
+        jogadores já encontraram sua raquete
       </span>
     </div>
   )
 }
 
 // Desktop-only 3-metric row (jogadores / raquetes com specs / marcas). Mobile
-// keeps the single-metric SocialProof below the video — untouched by this.
+// usa a linha única SocialProof logo abaixo do CTA do hero.
 function HeroMetrics({ recsCount, racketCount, brandsCount }: { recsCount: number; racketCount?: number; brandsCount: number }) {
   const { count, visible, ref } = useCountUp(recsCount)
   return (
@@ -1221,6 +1206,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 <p className="text-center text-xs text-tinta/50">
                   Grátis, sem cadastro e sem e-mail
                 </p>
+                {recsCount >= RECS_THRESHOLD && <SocialProof recsCount={recsCount} />}
               </div>
 
             </div>
