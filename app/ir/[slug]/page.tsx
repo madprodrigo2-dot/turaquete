@@ -269,6 +269,12 @@ export default async function IrPage({
 
   const price = racket.price ? Number(racket.price) : null
 
+  // Sinal de tráfego sem origem humana: sem cookie GA, sem cookie de sessão GA4
+  // e sem ?s= do chat. Ondas de bots com proxies residenciais e UA falsificado
+  // passam pelo regex de UA e pelo rate-limit por IP, mas nunca têm esses sinais.
+  // O clique continua registrado em link_clicks; só não dispara Telegram/GA4.
+  const noHumanSignal = !hasGaCookie && !hasSessionCookie && !sessionId
+
   const ipHash = rawIp && process.env.IP_HASH_SALT
     ? Array.from(
         new Uint8Array(
@@ -297,7 +303,7 @@ export default async function IrPage({
         has_ga_cookie:      hasGaCookie,
         has_session_cookie: hasSessionCookie,
       }),
-    !isTest && hasGaCookie
+    !isTest && !noHumanSignal && hasGaCookie
       ? sendGa4ClickEvent({
           clientId,
           sessionInfo,
@@ -308,7 +314,7 @@ export default async function IrPage({
           currency: racket.currency ?? 'BRL',
         })
       : Promise.resolve(),
-    !isTest
+    !isTest && !noHumanSignal
       ? sendTelegramNotification({
           racketName: racket.name,
           slug,
