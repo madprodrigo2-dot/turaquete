@@ -2,14 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import {
-  getRaquetasPorSlug, getRaquetasPorNivel, getTopRaquetasPorNivel,
-  getRaquetasConforto, getTopRaquetasConforto,
+  getRaquetasPorSlug, getTopPicksNivelCached, getTopPicksConfortoCached,
 } from '@/lib/recommend'
 import { derivarNivel } from '@/lib/nivel'
 import CompareView from '@/components/CompareView'
 import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 
-export const revalidate = 300
+export const revalidate = 3600
 
 interface Props {
   params: Promise<{ par: string }>
@@ -44,8 +43,8 @@ export default async function CompararParPage({ params }: Props) {
   const niveis = [...new Set(rackets.map(r => derivarNivel(r)).filter((n): n is 'iniciante' | 'intermediario' | 'avancado' => n != null))]
   const precisaConforto = rackets.some(r => r.racket_insights?.elbow_friendly)
   const [porNivel, porConforto] = await Promise.all([
-    Promise.all(niveis.map(n => getRaquetasPorNivel(n).then(pool => getTopRaquetasPorNivel(n, pool, 4)).catch(() => []))),
-    precisaConforto ? getRaquetasConforto().then(pool => getTopRaquetasConforto(pool, 4)).catch(() => []) : Promise.resolve([]),
+    Promise.all(niveis.map(n => getTopPicksNivelCached(n).catch(() => []))),
+    precisaConforto ? getTopPicksConfortoCached().catch(() => []) : Promise.resolve([]),
   ])
   // Array, não Set — props de Server pra Client Component precisam ser
   // serializáveis (JSON), Set não passa pela ponte RSC.

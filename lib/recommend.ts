@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { getSupabase } from './supabase'
 import { scoreRacket } from './scorer'
 import { getSaidaDeBola } from './saidaBola'
@@ -1076,3 +1077,28 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
 
   return rackets.length >= NOVIDADES_MIN ? rackets : []
 }
+
+
+// ── Top Picks em cache compartilhado ─────────────────────────────────────────
+// Cada render de /comparar/[par], /raquetes/[slug] e /marcas/[slug] baixava o
+// catálogo inteiro (~345 linhas com joins) + 2 RPCs só para saber o Top Pick
+// por nível/conforto. Esse resultado é o mesmo para todas as páginas, então
+// fica em cache de 1h compartilhado entre elas (Fluid Active CPU estourou o
+// tier grátis em 2026-11-17 por causa disso).
+export const getTopPicksNivelCached = unstable_cache(
+  async (nivel: 'iniciante' | 'intermediario' | 'avancado') => {
+    const pool = await getRaquetasPorNivel(nivel)
+    return getTopRaquetasPorNivel(nivel, pool, 4)
+  },
+  ['top-picks-nivel-v1'],
+  { revalidate: 3600 }
+)
+
+export const getTopPicksConfortoCached = unstable_cache(
+  async () => {
+    const pool = await getRaquetasConforto()
+    return getTopRaquetasConforto(pool, 4)
+  },
+  ['top-picks-conforto-v1'],
+  { revalidate: 3600 }
+)

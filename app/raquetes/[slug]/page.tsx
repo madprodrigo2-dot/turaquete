@@ -1,11 +1,11 @@
-export const revalidate = 300
+export const revalidate = 3600
 
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   getRaquetaPorSlug, listarRaquetas, suggestComparisons,
-  getRaquetasPorNivel, getTopRaquetasPorNivel, getRaquetasConforto, getTopRaquetasConforto,
+  getTopPicksNivelCached, getTopPicksConfortoCached,
 } from '@/lib/recommend'
 import { getDisplayName } from '@/lib/displayName'
 import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
@@ -88,10 +88,10 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   const racketNivel = derivarNivel(racket)
   const [nivelTopPicks, confortoTopPicks] = await Promise.all([
     racketNivel
-      ? getRaquetasPorNivel(racketNivel).then(pool => getTopRaquetasPorNivel(racketNivel, pool, 4)).catch(() => [])
+      ? getTopPicksNivelCached(racketNivel).catch(() => [])
       : Promise.resolve([]),
     ins?.elbow_friendly
-      ? getRaquetasConforto().then(pool => getTopRaquetasConforto(pool, 4)).catch(() => [])
+      ? getTopPicksConfortoCached().catch(() => [])
       : Promise.resolve([]),
   ])
   const isTopPick = nivelTopPicks.some(r => r.id === racket.id) || confortoTopPicks.some(r => r.id === racket.id)

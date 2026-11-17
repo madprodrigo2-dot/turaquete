@@ -4,8 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   listarRaquetasPorMarca, RacketWithInsights,
-  getRaquetasPorNivel, getTopRaquetasPorNivel,
-  getRaquetasConforto, getTopRaquetasConforto,
+  getTopPicksNivelCached, getTopPicksConfortoCached,
 } from '@/lib/recommend'
 import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 import { derivarNivel } from '@/lib/nivel'
@@ -263,8 +262,8 @@ export default async function MarcaPage({ params }: { params: Promise<{ slug: st
   const niveis = [...new Set(rackets.map(r => derivarNivel(r)).filter((n): n is 'iniciante' | 'intermediario' | 'avancado' => n != null))]
   const precisaConforto = rackets.some(r => r.racket_insights?.elbow_friendly)
   const [porNivel, porConforto] = await Promise.all([
-    Promise.all(niveis.map(n => getRaquetasPorNivel(n).then(pool => getTopRaquetasPorNivel(n, pool, 4)).catch(() => []))),
-    precisaConforto ? getRaquetasConforto().then(pool => getTopRaquetasConforto(pool, 4)).catch(() => []) : Promise.resolve([]),
+    Promise.all(niveis.map(n => getTopPicksNivelCached(n).catch(() => []))),
+    precisaConforto ? getTopPicksConfortoCached().catch(() => []) : Promise.resolve([]),
   ])
   const topPickIds = [...new Set([...porNivel.flat(), ...porConforto].map(r => r.id))]
 
