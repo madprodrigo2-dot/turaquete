@@ -120,9 +120,9 @@ const PHRASES: Partial<Record<MotorDim, Record<string, PhraseFn>>> = {
     esp: (w, l) => `${dirEsp(w, l)} muda o comportamento na batida`,
   },
   maneuverability: {
-    esp: (w, l) => `${dirEsp(w, l)} deixa o swing mais rápido`,
+    esp: (w, l) => `${dirEsp(w, l)} deixa a batida mais rápida`,
     peso: (w, l) => `${dirPeso(w, l)} facilita o manuseio`,
-    furos: (w, l) => `${dirFuros(w, l)} aliviam o swing`,
+    furos: (w, l) => `${dirFuros(w, l)} deixam a batida mais leve`,
   },
   forgiveness: {
     FACE_FORG: (w, l) => `face ${w.face_material} perdoa mais o toque fora do centro que a ${l.face_material}`,

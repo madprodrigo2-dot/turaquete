@@ -155,7 +155,7 @@ export function saidaDeBolaCopy(ins: Insights, soAvancado = false): CartaoCopy |
   }
   return {
     titulo: 'Moderada', tom: 'neutro', nivel: 2,
-    texto: 'Pede batida moderada, rende com swing consistente.',
+    texto: 'Pede batida moderada, rende com batida constante.',
   }
 }
 
@@ -231,7 +231,7 @@ const NOTA_ALTO: Record<DimensaoStat['key'], string> = {
 }
 
 const NOTA_BAIXO: Record<DimensaoStat['key'], string> = {
-  power: 'exige seu swing',
+  power: 'depende da sua força',
   control: 'pede técnica',
   comfort: 'mais vibração',
   maneuverability: 'mais pesada',
