@@ -1,9 +1,8 @@
 import type { RacketWithInsights } from '@/lib/recommend'
-import RacketHexagon from '@/components/RacketHexagon'
-import { GLOSSARIO } from '@/lib/glossario'
+import PdpRadar from './PdpRadar'
 import { buildSpecRows } from '@/components/SpecsGrid'
 import {
-  perfilPrincipal, outrasDimensoes, saidaDeBolaCopy, sweetSpotCardCopy, isSuperficieLisa,
+  perfilPrincipal, outrasDimensoes, saidaDeBolaCopy, sweetSpotCardCopy, isSuperficieLisa, dimensoesStats,
 } from '@/lib/pdpCopy'
 import { TOM_CHIP, CARD } from './tom'
 
@@ -13,15 +12,6 @@ import { TOM_CHIP, CARD } from './tom'
 // nomeiam viram uma linha em palavras no cartão de perfil, e o detalhe técnico
 // completo fica no "Como ler este gráfico".
 
-const DIMS: { termo: string; label: string; key: 'power' | 'control' | 'comfort' | 'maneuverability' | 'spin' | 'stability' }[] = [
-  { termo: 'potência', label: 'Potência', key: 'power' },
-  { termo: 'controle', label: 'Controle', key: 'control' },
-  { termo: 'conforto', label: 'Conforto', key: 'comfort' },
-  { termo: 'manuseio', label: 'Manuseio', key: 'maneuverability' },
-  { termo: 'spin', label: 'Spin', key: 'spin' },
-  { termo: 'estabilidade', label: 'Estabilidade', key: 'stability' },
-]
-
 export default function PdpComportamento({
   racket, tratamentoFabrica,
 }: { racket: RacketWithInsights; tratamentoFabrica?: boolean | null }) {
@@ -30,6 +20,7 @@ export default function PdpComportamento({
 
   const superficie = buildSpecRows(racket).find(r => r.label === 'Superfície')?.value
   const spinLisa = isSuperficieLisa(superficie, tratamentoFabrica)
+  const stats = dimensoesStats(ins, spinLisa)
   const perfil = perfilPrincipal(ins)
   const outras = outrasDimensoes(ins, spinLisa)
   const saida = saidaDeBolaCopy(ins)
@@ -39,7 +30,7 @@ export default function PdpComportamento({
     <section aria-label="Como ela joga" className={`${CARD} p-5 flex flex-col gap-4`}>
       <p className="text-tinta font-semibold text-sm">Como ela joga</p>
 
-      <RacketHexagon racket={racket} />
+      <PdpRadar stats={stats} />
 
       <div className="flex flex-col gap-2.5">
         {perfil && (
@@ -84,24 +75,17 @@ export default function PdpComportamento({
         <div className="mt-3 flex flex-col gap-3 rounded-xl bg-[#FBF6EF] border border-[rgba(14,58,64,0.06)] px-4 py-3">
           <p className="leading-relaxed">
             Cada ponta é uma característica de 0 a 10; quanto mais afastado do centro, maior a nota.
-            Notas 9 ou mais ganham ★ dourada.
+            Notas 9 ou mais ganham ★ dourada. Toque numa ponta para ver o que ela mede.
           </p>
           <dl className="flex flex-col gap-2">
-            {DIMS.map(d => {
-              const def = GLOSSARIO.find(e => e.termo === d.termo)?.definicao
-              const v = ins[d.key]
-              return (
-                <div key={d.key} className="flex gap-2">
-                  <dt className="shrink-0 w-24 font-semibold text-tinta/80">
-                    {d.label}{v != null ? ` ${v}` : ''}
-                  </dt>
-                  <dd className="leading-relaxed">
-                    {def}
-                    {d.key === 'spin' && spinLisa && ' Superfície lisa de fábrica: dá pra aumentar com tratamento aplicado depois.'}
-                  </dd>
-                </div>
-              )
-            })}
+            {stats.map(d => (
+              <div key={d.key} className="flex gap-2">
+                <dt className="shrink-0 w-24 font-semibold text-tinta/80">
+                  {d.label}{d.value != null ? ` ${d.value}` : ''}
+                </dt>
+                <dd className="leading-relaxed">{d.desc}</dd>
+              </div>
+            ))}
           </dl>
           <p className="leading-relaxed">
             Potência mede o teto da raquete com batida rápida e técnica. Saída de bola mostra o quanto

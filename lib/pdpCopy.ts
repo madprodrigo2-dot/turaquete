@@ -2,6 +2,7 @@ import type { RacketWithInsights } from './recommend'
 import { classifyFace, classifyCore } from './motor'
 import { getSaidaDeBola } from './saidaBola'
 import { getSweetSpotCopy } from './sweetSpot'
+import { GLOSSARIO } from './glossario'
 
 // Textos editoriais da ficha redesenhada (PDP). Só traduzem para linguagem de
 // quadra dados que já existem no catálogo/motor — nenhum dado novo é criado.
@@ -192,4 +193,33 @@ export function sweetSpotCardCopy(forgiveness: number | null | undefined): Carta
   if (!c) return null
   const tom: Tom = c.label === 'Generoso' ? 'emerald' : c.label === 'Exigente' ? 'amber' : 'neutro'
   return { titulo: c.chip, texto: c.descricao, tom }
+}
+
+// ── Gráfico de 6 dimensões (radar): valor + descrição, uma fonte só ──────────
+// As descrições vêm do GLOSSARIO (mesmas do "Como ler este gráfico" e do modal).
+
+export interface DimensaoStat {
+  key: 'power' | 'control' | 'comfort' | 'maneuverability' | 'spin' | 'stability'
+  label: string
+  value: number | null
+  desc: string
+}
+
+const DIMENSOES: { key: DimensaoStat['key']; label: string; termo: string }[] = [
+  { key: 'power', label: 'Potência', termo: 'potência' },
+  { key: 'control', label: 'Controle', termo: 'controle' },
+  { key: 'comfort', label: 'Conforto', termo: 'conforto' },
+  { key: 'maneuverability', label: 'Manuseio', termo: 'manuseio' },
+  { key: 'spin', label: 'Spin', termo: 'spin' },
+  { key: 'stability', label: 'Estabilidade', termo: 'estabilidade' },
+]
+
+export function dimensoesStats(ins: Insights, spinLisa: boolean): DimensaoStat[] {
+  return DIMENSOES.map(d => {
+    const def = GLOSSARIO.find(e => e.termo === d.termo)?.definicao ?? ''
+    const extra = d.key === 'spin' && spinLisa
+      ? ' Superfície lisa de fábrica: dá pra aumentar com tratamento aplicado depois.'
+      : ''
+    return { key: d.key, label: d.label, value: ins[d.key] ?? null, desc: def + extra }
+  })
 }
