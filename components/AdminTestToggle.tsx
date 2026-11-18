@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { setAdminHint } from '@/lib/adminHint'
 
 const COOKIE = 'admin_test_view'
 const TEST_MODE_COOKIE = 'turaquete_test_mode'
@@ -14,6 +15,8 @@ export default function AdminTestToggle() {
     setActive(document.cookie.split(';').some(c => c.trim().startsWith(`${COOKIE}=1`)))
     // Marca automaticamente sessões de chat como teste enquanto admin estiver logado
     document.cookie = `${TEST_MODE_COOKIE}=1; path=/; max-age=86400`
+    // Pista de admin p/ PresenceTracker/HomeClient só chamarem /api/admin/me quando for admin
+    setAdminHint()
   }, [])
 
   const toggle = () => {

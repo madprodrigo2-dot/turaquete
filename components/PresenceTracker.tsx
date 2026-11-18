@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { fetchIsAdmin } from '@/lib/adminHint'
 
 const CHANNEL = 'turaquete:presence'
 
@@ -10,10 +11,8 @@ export default function PresenceTracker({ url, anonKey }: { url: string; anonKey
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    fetch('/api/admin/me')
-      .then(r => r.json())
-      .then((d: { isAdmin: boolean }) => setIsAdmin(d.isAdmin ?? false))
-      .catch(() => {})
+    // Só consulta o servidor se houver a cookie-pista de admin (ver lib/adminHint).
+    fetchIsAdmin().then(setIsAdmin)
   }, [])
 
   useEffect(() => {

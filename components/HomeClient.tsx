@@ -7,6 +7,7 @@ import { CaretLeft, ArrowCounterClockwise, X } from '@phosphor-icons/react'
 // WARN: always sendGAEvent('event','name',params) — object form sendGAEvent({event}) is silently discarded by GA4 (v16.2.9 pushes arguments, not named args)
 import { sendGAEvent } from '@next/third-parties/google'
 import LandingScreen from '@/components/LandingScreen'
+import { fetchIsAdmin } from '@/lib/adminHint'
 import ChatMessage from '@/components/ChatMessage'
 import { Brand, RecommendedRacket, RacketWithInsights } from '@/lib/recommend'
 import type { FaixaIdeal } from '@/lib/scorer'
@@ -226,10 +227,9 @@ export default function HomeClient({ brands, featuredRackets, athleteRackets, re
   }, [confirmReset])
 
   useEffect(() => {
-    fetch('/api/admin/me')
-      .then(r => r.json())
-      .then((d: { isAdmin: boolean }) => { if (d.isAdmin) setIsAdmin(true) })
-      .catch(() => {})
+    // Compartilha a mesma chamada do PresenceTracker e só consulta o servidor
+    // com a cookie-pista de admin (ver lib/adminHint).
+    fetchIsAdmin().then(ok => { if (ok) setIsAdmin(true) })
   }, [])
 
   function fireEvent(body: Record<string, unknown>) {
