@@ -1,22 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import PresenceTracker from "@/components/PresenceTracker";
 import GALoader from "@/components/GALoader";
 import SiteFooter from "@/components/SiteFooter";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({
+// Fontes self-hosted (latin, variáveis): sem download do Google no build (cortes transitórios no Vercel).
+const display = localFont({
+  src: "./fonts/BricolageGrotesque-latin.woff2",
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400 800",
   display: "swap",
 })
 
-const sans = Plus_Jakarta_Sans({
+const sans = localFont({
+  src: "./fonts/PlusJakartaSans-latin.woff2",
   variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400 600",
   display: "swap",
 })
 
