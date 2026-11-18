@@ -2,9 +2,10 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import PdpRadar from './PdpRadar'
 import { buildSpecRows } from '@/components/SpecsGrid'
 import {
-  perfilPrincipal, outrasDimensoes, saidaDeBolaCopy, sweetSpotCardCopy, confortoCardCopy, isSuperficieLisa, dimensoesStats,
+  perfilPrincipal, destaques, saidaDeBolaCopy, sweetSpotCardCopy, confortoCardCopy, isSuperficieLisa, dimensoesStats,
 } from '@/lib/pdpCopy'
 import { TOM_CHIP, CARD } from './tom'
+import { nivelRange } from '@/lib/nivelRange'
 
 // Hexágono + 3 cartões de comportamento em quadra (texto sempre visível) no
 // lugar das 6 barras, que repetiam o que o hexágono já mostra. Nada some: os 6
@@ -22,8 +23,10 @@ export default function PdpComportamento({
   const spinLisa = isSuperficieLisa(superficie, tratamentoFabrica)
   const stats = dimensoesStats(ins, spinLisa)
   const perfil = perfilPrincipal(ins)
-  const outras = outrasDimensoes(ins, spinLisa)
-  const saida = saidaDeBolaCopy(ins)
+  const dest = destaques(stats, spinLisa)
+  const nr = nivelRange(racket)
+  const soAvancado = !!nr && nr.fit.iniciante === 'fora' && nr.fit.intermediario === 'fora'
+  const saida = saidaDeBolaCopy(ins, soAvancado)
   const sweet = sweetSpotCardCopy(ins.forgiveness)
   const conforto = confortoCardCopy(ins.comfort)
 
@@ -33,17 +36,43 @@ export default function PdpComportamento({
 
       <PdpRadar stats={stats} />
 
+      {(dest.brilha.length > 0 || dest.abreMao.length > 0) && (
+        <div className={`grid grid-cols-1 gap-2.5 ${dest.brilha.length > 0 && dest.abreMao.length > 0 ? 'sm:grid-cols-2' : ''}`}>
+          {dest.brilha.length > 0 && (
+            <div className="rounded-xl border border-aqua/30 bg-aqua/[0.07] px-4 py-3 flex flex-col gap-1.5">
+              <span className="text-[11px] uppercase tracking-wide text-[#058583] font-bold">✓ Onde brilha</span>
+              <ul className="flex flex-col gap-1.5">
+                {dest.brilha.map(l => (
+                  <li key={l.key} className="text-sm leading-snug text-tinta">
+                    <span className="font-bold">{l.label} ({l.value}/10)</span>
+                    <span className="text-tinta/70"> — {l.frase}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {dest.abreMao.length > 0 && (
+            <div className="rounded-xl border border-coral/25 bg-coral/[0.05] px-4 py-3 flex flex-col gap-1.5">
+              <span className="text-[11px] uppercase tracking-wide text-coral font-bold">! O que abre mão</span>
+              <ul className="flex flex-col gap-1.5">
+                {dest.abreMao.map(l => (
+                  <li key={l.key} className="text-sm leading-snug text-tinta">
+                    <span className="font-bold">{l.label} ({l.value}/10)</span>
+                    <span className="text-tinta/70"> — {l.frase}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {perfil && (
           <div className="rounded-xl border border-aqua/30 bg-aqua/[0.07] px-4 py-3 flex flex-col gap-1">
             <span className="text-[10px] uppercase tracking-wide text-aqua font-semibold">Perfil principal</span>
             <p className="text-tinta font-bold text-base leading-snug">{perfil.titulo}</p>
             <p className="text-tinta/70 text-xs leading-relaxed">{perfil.texto}</p>
-            {outras.length > 0 && (
-              <p className="text-tinta/55 text-xs leading-relaxed mt-0.5">
-                Também: {outras.join(' · ')}.
-              </p>
-            )}
           </div>
         )}
 

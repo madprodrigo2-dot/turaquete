@@ -15,6 +15,15 @@ const CX = 180
 const CY = 152
 const RADIUS = 84
 
+// Semáforo só na cor do número (posição/tamanho não mudam): 8-10 aqua intenso,
+// 6-7 como antes (teal no destaque, tinta nos demais), 1-5 coral.
+function semaforo(v: number | null, isTopStat: boolean): string {
+  if (v == null) return 'fill-tinta'
+  if (v >= 8) return 'fill-[#058583]'
+  if (v <= 5) return 'fill-coral'
+  return isTopStat ? 'fill-[#099997]' : 'fill-tinta'
+}
+
 export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
   const gradId = useId().replace(/:/g, '')
   const total = stats.length
@@ -137,13 +146,10 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
                 opacity={isActive ? 1 : 0.82}
               >
                 {s.label}{' '}
-                <tspan
-                  className={isGold ? 'fill-gold-deep' : isTopStat ? 'fill-[#099997]' : 'fill-tinta'}
-                  fontWeight={700}
-                >
+                <tspan className={semaforo(s.value, isTopStat)} fontWeight={700}>
                   {s.value ?? '–'}
-                  {isGold ? '★' : ''}
                 </tspan>
+                {isGold && <tspan className="fill-gold-deep" fontWeight={700}>★</tspan>}
               </text>
             </g>
           )

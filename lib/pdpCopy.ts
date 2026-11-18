@@ -147,31 +147,18 @@ export function perfilPrincipal(ins: Insights): PerfilPrincipal | null {
   }
 }
 
-// O que o hexágono mostra mas os cartões não nomeiam: manuseio, estabilidade
-// e spin (conforto tem cartão próprio), em palavras. O número exato fica no hexágono.
-export function outrasDimensoes(ins: Insights, spinLisa: boolean): string[] {
-  const out: string[] = []
-  if (ins.maneuverability != null) {
-    out.push(ins.maneuverability >= 8 ? 'muito ágil na mão' : ins.maneuverability >= 6 ? 'ágil na mão' : 'mais lenta de manejar')
-  }
-  if (ins.stability != null) {
-    out.push(ins.stability >= 8 ? 'muito firme no impacto' : ins.stability >= 6 ? 'firme no impacto' : 'menos estável em bola forte')
-  }
-  if (ins.spin != null) {
-    const s = ins.spin >= 7 ? 'bom spin de fábrica' : ins.spin >= 4 ? 'spin moderado' : 'pouco spin de fábrica'
-    out.push(spinLisa && ins.spin < 7 ? `${s} (dá pra subir com tratamento)` : s)
-  }
-  return out
-}
-
 export interface CartaoCopy { titulo: string; texto: string; tom: Tom }
 
-export function saidaDeBolaCopy(ins: Insights): CartaoCopy | null {
+// soAvancado: o nível recomendado começa no avançado; então a copy não pode falar
+// em iniciante/evolução (contradiz o "Nível recomendado").
+export function saidaDeBolaCopy(ins: Insights, soAvancado = false): CartaoCopy | null {
   const s = getSaidaDeBola(ins.comfort, ins.power)
   if (!s) return null
   if (s === 'fácil') return {
     titulo: 'Fácil', tom: 'emerald',
-    texto: 'Devolve a bola sem exigir muita força. Rende bem mesmo com batida suave, ideal pra quem tá evoluindo.',
+    texto: soAvancado
+      ? 'Devolve a bola sem exigir muita força. Rende bem mesmo sem forçar o braço.'
+      : 'Devolve a bola sem exigir muita força. Rende bem mesmo com batida suave, ideal pra quem tá evoluindo.',
   }
   if (s === 'exigente') return {
     titulo: 'Exigente', tom: 'amber',
@@ -236,4 +223,49 @@ export function dimensoesStats(ins: Insights, spinLisa: boolean): DimensaoStat[]
       : ''
     return { key: d.key, label: d.label, value: ins[d.key] ?? null, desc: def + extra }
   })
+}
+
+// ── Onde brilha / O que abre mão ─────────────────────────────────────────────
+// Relativo às 6 notas DA raquete: ≥8 brilha (se nenhuma chega a 8, o corte cai
+// para 7 só nessa raquete); ≤5 abre mão; 6-7 ficam implícitas (só no gráfico).
+// Frases-tipo: uma por dimensão e lado (alto/baixo), reusadas em todo o catálogo.
+
+export interface DestaqueLinha { key: DimensaoStat['key']; label: string; value: number; frase: string }
+
+const FRASE_ALTO: Record<DimensaoStat['key'], string> = {
+  power: 'A bola sai rápida e define o ponto',
+  control: 'Coloca a bola onde você quer',
+  comfort: 'Protege o braço do impacto e da vibração',
+  maneuverability: 'Muito rápida pra reagir na rede',
+  spin: 'Boa textura de fábrica pra bola com efeito',
+  stability: 'Firme no impacto, segura bola pesada',
+}
+
+const FRASE_BAIXO: Record<DimensaoStat['key'], string> = {
+  power: 'Exige seu swing pra definir o ponto',
+  control: 'Pede mais da sua técnica pra colocar a bola',
+  comfort: 'Transmite mais vibração pro braço',
+  maneuverability: 'Mais pesada pra reagir na rede',
+  spin: 'Pouco efeito de fábrica (pede tratamento)',
+  stability: 'Sente mais o impacto em bolas pesadas',
+}
+
+export interface Destaques { brilha: DestaqueLinha[]; abreMao: DestaqueLinha[]; corteBrilha: number }
+
+export function destaques(stats: DimensaoStat[], spinLisa: boolean): Destaques {
+  const com = stats.filter((s): s is DimensaoStat & { value: number } => s.value != null)
+  const corteBrilha = com.some(s => s.value >= 8) ? 8 : 7
+  const linha = (s: DimensaoStat & { value: number }, alto: boolean): DestaqueLinha => ({
+    key: s.key,
+    label: s.label,
+    value: s.value,
+    frase: !alto && s.key === 'spin' && spinLisa
+      ? 'Lisa de fábrica (pede tratamento)'
+      : (alto ? FRASE_ALTO : FRASE_BAIXO)[s.key],
+  })
+  return {
+    brilha: com.filter(s => s.value >= corteBrilha).sort((x, y) => y.value - x.value).map(s => linha(s, true)),
+    abreMao: com.filter(s => s.value <= 5).sort((x, y) => x.value - y.value).map(s => linha(s, false)),
+    corteBrilha,
+  }
 }
