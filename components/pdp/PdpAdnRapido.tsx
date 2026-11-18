@@ -3,7 +3,7 @@ import { buildSpecRows } from '@/components/SpecsGrid'
 import { tagPeso, tagBalance, tagFace, tagSuperficie } from '@/lib/pdpCopy'
 import { TOM_CHIP, CARD } from './tom'
 
-// "ADN rápido": os 4 dados que todo jogador olha primeiro, com uma etiqueta que
+// "DNA rápido": os 4 dados que todo jogador olha primeiro, com uma etiqueta que
 // traduz o número em linguagem de quadra. Mesmos dados da tabela de specs.
 export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights }) {
   const rows = buildSpecRows(racket)
@@ -20,8 +20,8 @@ export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights })
   if (cards.length === 0) return null
 
   return (
-    <section aria-label="ADN rápido" className="flex flex-col gap-2">
-      <p className="text-tinta font-semibold text-sm">ADN rápido</p>
+    <section aria-label="DNA rápido" className="flex flex-col gap-2">
+      <p className="text-tinta font-semibold text-sm">DNA rápido</p>
       <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2`}>
         {cards.map(c => (
           <div key={c.label} className={`${CARD} px-3.5 py-3 flex flex-col gap-1 min-w-0`}>

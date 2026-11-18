@@ -293,7 +293,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
               {novoPdp ? (
               <>
               {/* ── Ficha redesenhada (piloto) ──
-                  veredicto curto + barra de nível → ADN rápido → hexágono +
+                  veredicto curto + barra de nível → DNA rápido → hexágono +
                   3 cartões de comportamento → ficha técnica + tecnologias */}
               {(ins?.perfil_resumo || ins) && (
                 <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">

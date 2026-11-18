@@ -9,7 +9,7 @@ import { getSweetSpotCopy } from './sweetSpot'
 export type Tom = 'aqua' | 'emerald' | 'amber' | 'neutro'
 type Insights = NonNullable<RacketWithInsights['racket_insights']>
 
-// ── ADN rápido: valor -> micro-etiqueta ──────────────────────────────────────
+// ── DNA rápido: valor -> micro-etiqueta ──────────────────────────────────────
 
 export function tagPeso(g: number | null | undefined): { tag: string; tom: Tom } | null {
   if (g == null) return null
@@ -61,17 +61,17 @@ export function tagSuperficie(sup: string | null | undefined): { tag: string; to
 export function microFace(face: string | null | undefined): string | null {
   if (!face) return null
   const m: Record<string, string> = {
-    CARBON_3K: 'Carbono 3K: trama fina, mais sensibilidade e toque firme na bola.',
-    CARBON_3K_METAL: 'Carbono com reforço metálico: resposta firme e estável no impacto.',
-    CARBON_1K: 'Carbono 1K: o mais firme e preciso, pede técnica.',
-    CARBON_6K: 'Carbono 6K: firme, com um pouco mais de resposta.',
-    CARBON_6K_15K: 'Carbono de alta gramatura (12K a 16K): resposta mais viva e potência.',
-    CARBON_18K: 'Carbono 18K: rígido, devolve mais energia (potência).',
-    CARBON_24K: 'Carbono 24K: rigidez máxima, potência alta e toque seco.',
-    KEVLAR_PURE: 'Kevlar: absorve vibração, mais conforto para o braço.',
-    KEVLAR_CARBON: 'Kevlar com carbono: resposta firme com amortecimento.',
-    VIDRO: 'Fibra de vidro: face macia, mais conforto e saída de bola suave.',
-    HYBRID_VIDRO: 'Carbono com fibra de vidro: face macia com boa resposta.',
+    CARBON_3K: 'Trama fina, mais sensibilidade e toque firme na bola.',
+    CARBON_3K_METAL: 'Reforço metálico: resposta firme e estável no impacto.',
+    CARBON_1K: 'O mais firme e preciso, pede técnica.',
+    CARBON_6K: 'Firme, com um pouco mais de resposta.',
+    CARBON_6K_15K: 'Gramatura alta: resposta mais viva e potência.',
+    CARBON_18K: 'Rígida, devolve mais energia (potência).',
+    CARBON_24K: 'Rigidez máxima, potência alta e toque seco.',
+    KEVLAR_PURE: 'Absorve vibração, mais conforto para o braço.',
+    KEVLAR_CARBON: 'Resposta firme com amortecimento.',
+    VIDRO: 'Face macia, mais conforto e saída de bola suave.',
+    HYBRID_VIDRO: 'Face macia com boa resposta.',
   }
   return m[classifyFace(face)] ?? null
 }
@@ -79,10 +79,10 @@ export function microFace(face: string | null | undefined): string | null {
 export function microNucleo(core: string | null | undefined): string | null {
   if (!core) return null
   const m: Record<string, string> = {
-    SUPERSOFT: 'EVA muito macio: absorve mais vibração e protege o braço.',
-    SOFT: 'EVA macio: bom conforto com resposta viva.',
-    MEDIUM: 'EVA médio: equilibra conforto e resposta.',
-    HARD: 'EVA firme: devolve mais energia, protege menos o braço.',
+    SUPERSOFT: 'Muito macio: absorve mais vibração e protege o braço.',
+    SOFT: 'Macio: bom conforto com resposta viva.',
+    MEDIUM: 'Médio: equilibra conforto e resposta.',
+    HARD: 'Firme: devolve mais energia, protege menos o braço.',
   }
   return m[classifyCore(core)] ?? null
 }
