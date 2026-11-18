@@ -128,8 +128,8 @@ export function descTecnologia(tipo: string): string {
 
 // ── Comportamento em quadra: 3 cartões homogêneos (textos curtos, ≤10 palavras) ──
 
-export type IconeCartao = 'zap' | 'target' | 'shield'
-export interface CartaoCopy { titulo: string; texto: string; tom: Tom; nota?: string; icone: IconeCartao }
+// nivel: 1 = mais exigente/seco, 2 = equilibrado, 3 = amigável/protegido (barra de 3 segmentos).
+export interface CartaoCopy { titulo: string; texto: string; tom: Tom; nivel: 1 | 2 | 3 }
 
 // soAvancado: o nível recomendado começa no avançado; então a copy não pode falar
 // em iniciante/evolução (contradiz o "Nível recomendado").
@@ -137,17 +137,17 @@ export function saidaDeBolaCopy(ins: Insights, soAvancado = false): CartaoCopy |
   const s = getSaidaDeBola(ins.comfort, ins.power)
   if (!s) return null
   if (s === 'fácil') return {
-    titulo: 'Fácil', nota: 'devolve sem esforço', tom: 'emerald', icone: 'zap',
+    titulo: 'Fácil', tom: 'emerald', nivel: 3,
     texto: soAvancado ? 'Rende bem mesmo sem forçar o braço.' : 'Devolve a bola sem exigir muita força.',
   }
   if (s === 'exigente') return {
-    titulo: 'Controlada', nota: 'exige seu swing', tom: 'amber', icone: 'zap',
+    titulo: 'Controlada', tom: 'amber', nivel: 1,
     texto: (ins.power ?? 0) >= 8
       ? 'Só entrega a potência toda com batida forte.'
       : 'Pede batida forte para render.',
   }
   return {
-    titulo: 'Moderada', nota: 'equilibrada', tom: 'neutro', icone: 'zap',
+    titulo: 'Moderada', tom: 'neutro', nivel: 2,
     texto: 'Pede batida moderada, rende com swing consistente.',
   }
 }
@@ -156,15 +156,15 @@ export function saidaDeBolaCopy(ins: Insights, soAvancado = false): CartaoCopy |
 export function confortoCardCopy(comfort: number | null | undefined): CartaoCopy | null {
   if (comfort == null) return null
   if (comfort >= 8) return {
-    titulo: 'Braço protegido', tom: 'emerald', icone: 'shield',
+    titulo: 'Braço protegido', tom: 'emerald', nivel: 3,
     texto: 'Absorve muita vibração, poupa o cotovelo.',
   }
   if (comfort >= 6) return {
-    titulo: 'Conforto equilibrado', tom: 'neutro', icone: 'shield',
+    titulo: 'Conforto equilibrado', tom: 'neutro', nivel: 2,
     texto: 'Amortece o impacto sem perder firmeza.',
   }
   return {
-    titulo: 'Impacto mais seco', tom: 'amber', icone: 'shield',
+    titulo: 'Impacto mais seco', tom: 'amber', nivel: 1,
     texto: 'Mais vibração no braço, pede batida limpa.',
   }
 }
@@ -173,9 +173,9 @@ export function confortoCardCopy(comfort: number | null | undefined): CartaoCopy
 export function sweetSpotCardCopy(forgiveness: number | null | undefined): CartaoCopy | null {
   const c = getSweetSpotCopy(forgiveness)
   if (!c) return null
-  if (c.label === 'Generoso') return { titulo: 'Perdoa erros', nota: 'amplo e tolerante', tom: 'emerald', icone: 'target', texto: 'Perdoa golpes fora do centro, vibra menos.' }
-  if (c.label === 'Exigente') return { titulo: 'Exigente', nota: 'pede batida limpa', tom: 'amber', icone: 'target', texto: 'Área menor: rende no centro da raquete.' }
-  return { titulo: 'Equilibrado', nota: 'boa área de acerto', tom: 'neutro', icone: 'target', texto: 'Boa área de acerto, resposta viva no centro.' }
+  if (c.label === 'Generoso') return { titulo: 'Perdoa erros', tom: 'emerald', nivel: 3, texto: 'Perdoa golpes fora do centro, vibra menos.' }
+  if (c.label === 'Exigente') return { titulo: 'Exigente', tom: 'amber', nivel: 1, texto: 'Área menor: rende no centro da raquete.' }
+  return { titulo: 'Equilibrado', tom: 'neutro', nivel: 2, texto: 'Boa área de acerto, resposta viva no centro.' }
 }
 
 // ── Gráfico de 6 dimensões (radar): valor + descrição, uma fonte só ──────────
@@ -210,9 +210,7 @@ export function dimensoesStats(ins: Insights, spinLisa: boolean): DimensaoStat[]
 // ── Onde brilha / O que abre mão ─────────────────────────────────────────────
 // Relativo às 6 notas DA raquete: ≥8 brilha (se nenhuma chega a 8, o corte cai
 // para 7 só nessa raquete); ≤5 abre mão; 6-7 ficam implícitas (só no gráfico).
-// Formato compacto: "Controle 8 · Manuseio 8 (muito ágil)". Uma observação curta entre
-// parênteses, só em um item: o mais forte (brilha) / o mais fraco (abre mão), ou o Spin
-// quando a face é lisa.
+// Scorecard: cada item = nota + nome + frase curta.
 
 export interface DestaqueLinha { key: DimensaoStat['key']; label: string; value: number; nota?: string }
 
@@ -242,14 +240,12 @@ export function destaques(stats: DimensaoStat[], spinLisa: boolean): Destaques {
   const base = (s: DimensaoStat & { value: number }): DestaqueLinha => ({ key: s.key, label: s.label, value: s.value })
   const brilha = com.filter(s => s.value >= corteBrilha).sort((x, y) => y.value - x.value).map(base)
   const abreMao = com.filter(s => s.value <= 5).sort((x, y) => x.value - y.value).map(base)
-  if (brilha[0]) {
-    const b = brilha[0]
-    // Intensificador "muito" só com nota 8+ (com 7 vira "ágil").
-    b.nota = b.key === 'maneuverability' && b.value < 8 ? 'ágil' : NOTA_ALTO[b.key]
+  // Cada item leva sua frase curta (scorecard). Intensificador "muito" só com nota 8+.
+  for (const l of brilha) {
+    l.nota = l.key === 'maneuverability' && l.value < 8 ? 'ágil' : NOTA_ALTO[l.key]
   }
-  if (abreMao.length) {
-    const alvo = spinLisa ? abreMao.find(l => l.key === 'spin') ?? abreMao[0] : abreMao[0]
-    alvo.nota = alvo.key === 'spin' && spinLisa ? 'lisa' : NOTA_BAIXO[alvo.key]
+  for (const l of abreMao) {
+    l.nota = l.key === 'spin' && spinLisa ? 'lisa de fábrica' : NOTA_BAIXO[l.key]
   }
   return { brilha, abreMao, corteBrilha }
 }

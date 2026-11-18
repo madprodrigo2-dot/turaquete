@@ -158,15 +158,13 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
       </svg>
       </div>
 
-      {/* Rodapé próprio da tarjeta do gráfico: faixa branca com borda acima, separada das tiras abaixo */}
-      <div
-        className="border-t border-tinta/10 bg-white/80 px-4 py-3 text-xs text-tinta flex items-baseline gap-2"
-        aria-live="polite"
-      >
-        <span className="font-bold shrink-0 text-[#099997]">
-          {activeStat.label} {activeStat.value ?? '–'}/10:
-        </span>
-        <span className="text-tinta/80 leading-snug">{activeStat.desc}</span>
+      {/* Visor da dimensão ativa: faixa escura (alto contraste), rodapé próprio da tarjeta do gráfico */}
+      <div className="bg-tinta px-4 py-3 text-white" aria-live="polite">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-aqua">{activeStat.label}</span>
+          <span className="rounded bg-aqua/20 px-1.5 py-0.5 text-[11px] font-bold text-aqua">{activeStat.value ?? '–'}/10</span>
+        </div>
+        <p className="mt-0.5 text-xs text-white/85 leading-snug">{activeStat.desc}</p>
       </div>
     </div>
   )

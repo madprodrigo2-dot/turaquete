@@ -6,8 +6,7 @@ import {
 } from '@/lib/pdpCopy'
 import { CARD } from './tom'
 import { nivelRange } from '@/lib/nivelRange'
-import type { DestaqueLinha, CartaoCopy } from '@/lib/pdpCopy'
-import { Check, Minus, Zap, Target, ShieldCheck, ShieldAlert } from 'lucide-react'
+import type { DestaqueLinha } from '@/lib/pdpCopy'
 
 // Hexágono + 3 cartões de comportamento em quadra (texto sempre visível) no
 // lugar das 6 barras, que repetiam o que o hexágono já mostra. Nada some: os 6
@@ -15,47 +14,41 @@ import { Check, Minus, Zap, Target, ShieldCheck, ShieldAlert } from 'lucide-reac
 // nomeiam viram uma linha em palavras no cartão de perfil, e o detalhe técnico
 // completo fica no "Como ler este gráfico".
 
-// Linha de pills: cada atributo é uma etiqueta branca sobre uma faixa com tinte de cor.
-function Tira({ tom, titulo, itens }: { tom: 'brilha' | 'abre'; titulo: string; itens: DestaqueLinha[] }) {
+// Scorecard: cada item = quadrado de cor com a nota + nome + frase curta.
+function Scorecard({ tom, titulo, itens }: { tom: 'brilha' | 'abre'; titulo: string; itens: DestaqueLinha[] }) {
   const brilha = tom === 'brilha'
-  const Icone = brilha ? Check : Minus
   return (
-    <div className={`flex flex-wrap items-center gap-1.5 rounded-xl px-3 py-2 border ${
-      brilha ? 'bg-aqua-light/80 border-aqua/20' : 'bg-coral/[0.06] border-coral/15'
-    }`}>
-      <span className={`inline-flex items-center gap-1 text-xs font-semibold mr-1 ${brilha ? 'text-[#088F8D]' : 'text-[#D9482B]'}`}>
-        <Icone className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
-        {titulo}
-      </span>
-      {itens.map(l => (
-        <span
-          key={l.key}
-          className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-0.5 text-xs text-tinta border border-tinta/10 shadow-sm"
-        >
-          <strong className={`font-semibold ${brilha ? 'text-[#088F8D]' : 'text-[#D9482B]'}`}>{l.label} {l.value}</strong>
-          {l.nota && <span className="text-tinta/65">· {l.nota}</span>}
-        </span>
-      ))}
+    <div className={`rounded-xl border p-3 ${brilha ? 'border-aqua/25 bg-aqua-light/60' : 'border-coral/20 bg-coral/[0.05]'}`}>
+      <p className={`text-[11px] font-bold uppercase tracking-wider mb-2 ${brilha ? 'text-[#088F8D]' : 'text-[#D9482B]'}`}>{titulo}</p>
+      <ul className="flex flex-col gap-2">
+        {itens.map(l => (
+          <li key={l.key} className="flex items-center gap-2.5">
+            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${
+              brilha ? 'bg-aqua text-tinta' : 'bg-coral/15 text-[#D9482B]'
+            }`}>{l.value}</span>
+            <div className="min-w-0 leading-tight">
+              <p className="text-xs font-bold text-tinta">{l.label}</p>
+              {l.nota && <p className="text-[11px] text-tinta/70 truncate first-letter:uppercase">{l.nota}</p>}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
 
-// Ícone monocromático do cartão: teal quando bom/neutro, coral quando "seco/exigente".
-function IconeCartao({ c }: { c: CartaoCopy }) {
-  const cor = c.tom === 'amber' ? 'text-[#D9482B]' : 'text-[#088F8D]'
-  const cls = `w-4 h-4 shrink-0 ${cor}`
-  if (c.icone === 'zap') return <Zap className={cls} strokeWidth={2} aria-hidden="true" />
-  if (c.icone === 'target') return <Target className={cls} strokeWidth={2} aria-hidden="true" />
-  return c.tom === 'amber'
-    ? <ShieldAlert className={cls} strokeWidth={2} aria-hidden="true" />
-    : <ShieldCheck className={cls} strokeWidth={2} aria-hidden="true" />
-}
-
-const CHIP_CARTAO: Record<CartaoCopy['tom'], string> = {
-  aqua: 'bg-aqua/10 text-[#088F8D]',
-  emerald: 'bg-aqua/10 text-[#088F8D]',
-  neutro: 'bg-tinta/5 text-tinta/70',
-  amber: 'bg-coral/10 text-[#D9482B]',
+// Medidor de 3 segmentos: aqua (ou coral no nível 1) até o nível, o resto apagado.
+function Medidor({ nivel }: { nivel: 1 | 2 | 3 }) {
+  return (
+    <div className="grid grid-cols-3 gap-1 w-full" role="img" aria-label={`Nível ${nivel} de 3`}>
+      {[1, 2, 3].map(step => (
+        <div
+          key={step}
+          className={`h-1.5 rounded-full ${step <= nivel ? (nivel === 1 ? 'bg-coral' : 'bg-aqua') : 'bg-tinta/10'}`}
+        />
+      ))}
+    </div>
+  )
 }
 
 export default function PdpComportamento({
@@ -78,18 +71,18 @@ export default function PdpComportamento({
     <section aria-label="Como ela joga" className={`${CARD} p-5 flex flex-col gap-4`}>
       <p className="text-tinta font-semibold text-sm">Como ela joga</p>
 
-      {/* Bloco 1: hexágono + resumo em tiras de chips */}
+      {/* Bloco 1: hexágono (com visor escuro) + scorecard de 2 colunas */}
       <div className="flex flex-col gap-3">
         <PdpRadar stats={stats} />
-        {dest.brilha.length > 0 && (
-          <Tira tom="brilha" titulo="Onde brilha" itens={dest.brilha} />
-        )}
-        {dest.abreMao.length > 0 && (
-          <Tira tom="abre" titulo="Abre mão de" itens={dest.abreMao} />
+        {(dest.brilha.length > 0 || dest.abreMao.length > 0) && (
+          <div className={`grid grid-cols-1 gap-2.5 ${dest.brilha.length > 0 && dest.abreMao.length > 0 ? 'sm:grid-cols-2' : ''}`}>
+            {dest.brilha.length > 0 && <Scorecard tom="brilha" titulo="Onde brilha" itens={dest.brilha} />}
+            {dest.abreMao.length > 0 && <Scorecard tom="abre" titulo="Abre mão de" itens={dest.abreMao} />}
+          </div>
         )}
       </div>
 
-      {/* Bloco 2: 3 cartões homogêneos */}
+      {/* Bloco 2: 3 medidores segmentados */}
       <div className="flex flex-col gap-2 border-t border-tinta/10 pt-4">
         <p className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">Na prática</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -98,16 +91,11 @@ export default function PdpComportamento({
             { rotulo: 'Sweet spot', c: sweet },
             { rotulo: 'Conforto no braço', c: conforto },
           ].filter(x => x.c).map(({ rotulo, c }) => (
-            <div key={rotulo} className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-3.5 py-3 flex flex-col items-start gap-1.5">
-              <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">{rotulo}</span>
-              <span className={`inline-flex items-start gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-xl leading-snug ${CHIP_CARTAO[c!.tom]}`}>
-                <span className="mt-px"><IconeCartao c={c!} /></span>
-                <span>
-                {c!.titulo}
-                {c!.nota && <span className="font-normal opacity-80"> ({c!.nota})</span>}
-                </span>
-              </span>
-              <p className="text-tinta/80 text-xs leading-snug">{c!.texto}</p>
+            <div key={rotulo} className="rounded-xl border border-tinta/10 bg-white p-3 flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium text-tinta/65">{rotulo}</span>
+              <span className={`text-sm font-bold leading-snug sm:min-h-[2.5rem] ${c!.nivel === 1 ? 'text-[#D9482B]' : 'text-[#088F8D]'}`}>{c!.titulo}</span>
+              <Medidor nivel={c!.nivel} />
+              <p className="text-[11px] text-tinta/75 leading-snug">{c!.texto}</p>
             </div>
           ))}
         </div>
