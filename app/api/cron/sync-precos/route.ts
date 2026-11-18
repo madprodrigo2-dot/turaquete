@@ -3,17 +3,18 @@ import { createClient } from '@supabase/supabase-js'
 import { sendTelegram } from '@/lib/telegram'
 
 export const dynamic    = 'force-dynamic'
-export const maxDuration = 300 // 5 min — teto do plano Hobby com Fluid Compute
+export const maxDuration = 800 // ~13 min — teto do plano Pro com Fluid Compute (Hobby era 300s)
 
 const GECKO_URL          = 'https://api.geckoapi.com.br/v1/extract'
 const DELAY_MS           = 1200
 const RETRY_DELAYS_MS    = [2000, 4000, 6000] // só para 429
-const CHUNK_SIZE         = 25
-const BUDGET_MS          = 230_000  // 70s de margem antes do kill de 300s do Vercel
+const CHUNK_SIZE         = 60       // ~7s/raquete (1,2s de pausa + ~5-6s do GeckoAPI) => ~7 min
+const BUDGET_MS          = 600_000  // 200s de margem antes do kill de 800s do Vercel
 const TEN_DAYS_MS        = 10 * 24 * 60 * 60 * 1000 // janela de elegibilidade
-// Janela de 10 dias assume rotação de ~8 dias (25/dia, ~190 raquetes).
-// Se o total passar de ~250 raquetes, a rotação estica além de 10 dias e a janela
+// Rotação: ~236 raquetes no pool / 60 por dia => ~4 dias por ciclo (era ~9,4 com 25/dia).
+// Se o total passar de ~600 raquetes, o ciclo estica além de 10 dias e a janela
 // precisa subir junto — senão as raquetes do fim do ciclo nunca sincronizam.
+// Se o Telegram mostrar salto de gecko_429 / error_429, baixar CHUNK_SIZE (era 25).
 
 function stripParams(url: string): string {
   try { const u = new URL(url); return u.origin + u.pathname } catch { return url }
