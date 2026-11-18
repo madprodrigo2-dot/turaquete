@@ -25,6 +25,15 @@ import PriceNote from '@/components/PriceNote'
 import ShareButton from '@/components/ShareButton'
 import MegaSpinLink from '@/components/MegaSpinLink'
 import StickyBuyBar from '@/components/StickyBuyBar'
+import PdpNivelBar from '@/components/pdp/PdpNivelBar'
+import PdpAdnRapido from '@/components/pdp/PdpAdnRapido'
+import PdpComportamento from '@/components/pdp/PdpComportamento'
+import { PdpSpecs, PdpTecnologias } from '@/components/pdp/PdpSpecs'
+
+// Piloto da ficha redesenhada (PDP): só as raquetes destas marcas (slug da marca)
+// usam o layout novo; o resto do catálogo segue com a ficha antiga.
+// Para ver o layout em qualquer raquete localmente: PDP_NOVO_TODAS=1 (nunca em prod).
+const PDP_NOVO_MARCAS = new Set(['zeiq'])
 
 export async function generateStaticParams() {
   const rackets = await listarRaquetas().catch(() => [])
@@ -78,6 +87,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   if (!racket) notFound()
 
   const sugestoes = suggestComparisons(racket, allRackets, 6)
+  const novoPdp = (!!racket.brands?.slug && PDP_NOVO_MARCAS.has(racket.brands.slug)) || process.env.PDP_NOVO_TODAS === '1'
 
   const ins = racket.racket_insights
 
@@ -229,7 +239,10 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 <div className="flex gap-2 flex-wrap mt-1">
                   {(() => {
                     const nivel = derivarNivel(racket)
-                    return nivel ? (
+                    // Ficha nova: o nível vira a barra "Nível recomendado" abaixo do
+                    // veredicto; o badge "De iniciante a avançado" sairia contradizendo
+                    // um veredicto que soa mais avançado.
+                    return nivel && !novoPdp ? (
                       <span className="bg-aqua/[0.08] text-aqua text-xs font-semibold px-3 py-1 rounded-full border border-aqua/20">
                         {NIVEL_LABEL[nivel] ?? nivel}
                       </span>
@@ -277,6 +290,26 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                 </Link>
               )}
 
+              {novoPdp ? (
+              <>
+              {/* ── Ficha redesenhada (piloto) ──
+                  veredicto curto + barra de nível → ADN rápido → hexágono +
+                  3 cartões de comportamento → ficha técnica + tecnologias */}
+              {(ins?.perfil_resumo || ins) && (
+                <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)] flex flex-col gap-4">
+                  {ins?.perfil_resumo && (
+                    <p className="text-tinta leading-relaxed text-sm">{ins.perfil_resumo}</p>
+                  )}
+                  <PdpNivelBar racket={racket} />
+                </div>
+              )}
+              <PdpAdnRapido racket={racket} />
+              <PdpComportamento racket={racket} tratamentoFabrica={tratamentoFabrica} />
+              <PdpSpecs racket={racket} athlete={athlete} tratamentoFabrica={tratamentoFabrica} />
+              <PdpTecnologias tecnologias={tecnologias} />
+              </>
+              ) : (
+              <>
               {/* Perfil resumo */}
               {ins?.perfil_resumo && (
                 <div className="bg-white rounded-2xl p-5 shadow-card border border-[rgba(14,58,64,0.06)]">
@@ -335,6 +368,8 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
                   </div>
                 )}
               </div>
+              </>
+              )}
 
               <div className="h-px bg-tinta/30" aria-hidden="true" />
 

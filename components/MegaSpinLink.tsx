@@ -22,9 +22,11 @@ interface Props {
   racketId: number
   racketSlug: string
   racketName: string
+  // Dentro da linha de Superfície da ficha nova: sem a borda/margem de rodapé.
+  inline?: boolean
 }
 
-export default function MegaSpinLink({ racketId, racketSlug, racketName }: Props) {
+export default function MegaSpinLink({ racketId, racketSlug, racketName, inline = false }: Props) {
   const href = buildMegaSpinUrl(racketName)
   return (
     <a
@@ -32,7 +34,9 @@ export default function MegaSpinLink({ racketId, racketSlug, racketName }: Props
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => fireParceriaClick({ racket_id: racketId, slug: racketSlug, racket_name: racketName, destination_url: href })}
-      className="mt-3 pt-3 border-t border-aqua/10 flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 transition-colors"
+      className={inline
+        ? 'mt-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 transition-colors'
+        : 'mt-3 pt-3 border-t border-aqua/10 flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-amber-800 transition-colors'}
     >
       <WhatsappLogo size={14} weight="fill" aria-hidden="true" className="shrink-0" />
       Quer aplicar tratamento? Fale com a MegaSpin
