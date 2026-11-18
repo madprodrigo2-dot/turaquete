@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getRaquetasPorNivel, getTopRaquetasPorNivel } from '@/lib/recommend'
+import { getTopPicksNivelCached } from '@/lib/recommend'
 
 // Rota só-leitura — devolve os IDs do Top Picks ativo de um nível, pra uso
 // client-side (comparador embutido no chat, 'use client', não pode chamar
@@ -14,8 +14,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const pool = await getRaquetasPorNivel(nivel)
-    const topPicks = await getTopRaquetasPorNivel(nivel, pool, 4)
+    const topPicks = await getTopPicksNivelCached(nivel)
     return NextResponse.json(
       { ids: topPicks.map(r => r.id) },
       { headers: { 'Cache-Control': 's-maxage=300, stale-while-revalidate=600' } }

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { getRaquetasConforto, getTopRaquetasConforto } from '@/lib/recommend'
+import { getRaquetasConfortoCached, getTopPicksConfortoCached } from '@/lib/recommend'
 import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 
-export const revalidate = 300
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Raquetes de Beach Tennis para Cotovelo e Ombro',
@@ -20,8 +20,8 @@ function IconConforto() {
 }
 
 export default async function ConfortoPage() {
-  const rackets = await getRaquetasConforto().catch(() => [])
-  const topPicks = await getTopRaquetasConforto(rackets, 4).catch(() => [])
+  const rackets = await getRaquetasConfortoCached().catch(() => [])
+  const topPicks = await getTopPicksConfortoCached().catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-articulacoes.webp"

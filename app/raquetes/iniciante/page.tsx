@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { getRaquetasPorNivel, getTopRaquetasPorNivel } from '@/lib/recommend'
+import { getRaquetasPorNivelCached, getTopPicksNivelCached } from '@/lib/recommend'
 import DiscoveryPageLayout from '@/components/DiscoveryPageLayout'
 
-export const revalidate = 300
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Raquetes para Iniciantes — Beach Tennis',
@@ -21,10 +21,10 @@ function IconIniciante() {
 }
 
 export default async function InicirantePage() {
-  const rackets = await getRaquetasPorNivel('iniciante').catch(() => [])
+  const rackets = await getRaquetasPorNivelCached('iniciante').catch(() => [])
   // topN=4: desktop mostra 4 numa grade fechada (sem buraco), mobile corta pra
   // 3 na lista compacta — ver TopPicksSection.tsx.
-  const topPicks = await getTopRaquetasPorNivel('iniciante', rackets, 4).catch(() => [])
+  const topPicks = await getTopPicksNivelCached('iniciante').catch(() => [])
   return (
     <DiscoveryPageLayout
       imageUrl="/ilustracoes/perfil-iniciante.webp"
