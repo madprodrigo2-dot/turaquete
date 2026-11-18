@@ -2,7 +2,7 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import PdpRadar from './PdpRadar'
 import { buildSpecRows } from '@/components/SpecsGrid'
 import {
-  perfilPrincipal, outrasDimensoes, saidaDeBolaCopy, sweetSpotCardCopy, isSuperficieLisa, dimensoesStats,
+  perfilPrincipal, outrasDimensoes, saidaDeBolaCopy, sweetSpotCardCopy, confortoCardCopy, isSuperficieLisa, dimensoesStats,
 } from '@/lib/pdpCopy'
 import { TOM_CHIP, CARD } from './tom'
 
@@ -25,6 +25,7 @@ export default function PdpComportamento({
   const outras = outrasDimensoes(ins, spinLisa)
   const saida = saidaDeBolaCopy(ins)
   const sweet = sweetSpotCardCopy(ins.forgiveness)
+  const conforto = confortoCardCopy(ins.comfort)
 
   return (
     <section aria-label="Como ela joga" className={`${CARD} p-5 flex flex-col gap-4`}>
@@ -32,7 +33,7 @@ export default function PdpComportamento({
 
       <PdpRadar stats={stats} />
 
-      <div className="flex flex-col gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {perfil && (
           <div className="rounded-xl border border-aqua/30 bg-aqua/[0.07] px-4 py-3 flex flex-col gap-1">
             <span className="text-[10px] uppercase tracking-wide text-aqua font-semibold">Perfil principal</span>
@@ -62,6 +63,15 @@ export default function PdpComportamento({
             <p className="text-tinta text-sm leading-snug">
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mr-1.5 ${TOM_CHIP[sweet.tom]}`}>{sweet.titulo}</span>
               {sweet.texto}
+            </p>
+          </div>
+        )}
+        {conforto && (
+          <div className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-4 py-3 flex flex-col gap-1">
+            <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">Conforto no braço</span>
+            <p className="text-tinta text-sm leading-snug">
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mr-1.5 ${TOM_CHIP[conforto.tom]}`}>{conforto.titulo}</span>
+              {conforto.texto}
             </p>
           </div>
         )}

@@ -38,15 +38,15 @@ export function tagFace(face: string | null | undefined): { tag: string; tom: To
   return { tag: FACE_TAG[classifyFace(face)] ?? 'Face de carbono', tom: 'aqua' }
 }
 
-// Etiquetas de núcleo e espessura: máx. 2-3 palavras (as 4 tarjetas do DNA rápido
+// Etiquetas de núcleo (material -> benefício, sem repetir o cartão de conforto) e espessura: máx. 2-3 palavras (as 4 tarjetas do DNA rápido
 // precisam ter a mesma altura no mobile).
 export function tagNucleo(core: string | null | undefined): { tag: string; tom: Tom } | null {
   if (!core) return null
   const m: Record<string, { tag: string; tom: Tom }> = {
-    SUPERSOFT: { tag: 'Muito macio', tom: 'emerald' },
-    SOFT: { tag: 'Macio', tom: 'emerald' },
-    MEDIUM: { tag: 'Médio', tom: 'neutro' },
-    HARD: { tag: 'Firme', tom: 'amber' },
+    SUPERSOFT: { tag: 'Protege o braço', tom: 'emerald' },
+    SOFT: { tag: 'Amortece o impacto', tom: 'emerald' },
+    MEDIUM: { tag: 'Equilibrado', tom: 'neutro' },
+    HARD: { tag: 'Devolve energia', tom: 'amber' },
   }
   return m[classifyCore(core)] ?? null
 }
@@ -147,8 +147,8 @@ export function perfilPrincipal(ins: Insights): PerfilPrincipal | null {
   }
 }
 
-// O que o hexágono mostra mas os 3 cartões não nomeiam: manuseio, estabilidade,
-// conforto e spin, em palavras. O número exato fica no hexágono.
+// O que o hexágono mostra mas os cartões não nomeiam: manuseio, estabilidade
+// e spin (conforto tem cartão próprio), em palavras. O número exato fica no hexágono.
 export function outrasDimensoes(ins: Insights, spinLisa: boolean): string[] {
   const out: string[] = []
   if (ins.maneuverability != null) {
@@ -156,9 +156,6 @@ export function outrasDimensoes(ins: Insights, spinLisa: boolean): string[] {
   }
   if (ins.stability != null) {
     out.push(ins.stability >= 8 ? 'muito firme no impacto' : ins.stability >= 6 ? 'firme no impacto' : 'menos estável em bola forte')
-  }
-  if (ins.comfort != null) {
-    out.push(ins.comfort >= 8 ? 'protege bem o braço' : ins.comfort >= 6 ? 'conforto moderado' : 'mais firme no braço')
   }
   if (ins.spin != null) {
     const s = ins.spin >= 7 ? 'bom spin de fábrica' : ins.spin >= 4 ? 'spin moderado' : 'pouco spin de fábrica'
@@ -185,6 +182,23 @@ export function saidaDeBolaCopy(ins: Insights): CartaoCopy | null {
   return {
     titulo: 'Média', tom: 'neutro',
     texto: 'Pede batida moderada: nem sobra nem falta, rende bem com um swing consistente.',
+  }
+}
+
+// Conforto no braço: cortes 8 / 6 (os mesmos do agente e do recommend).
+export function confortoCardCopy(comfort: number | null | undefined): CartaoCopy | null {
+  if (comfort == null) return null
+  if (comfort >= 8) return {
+    titulo: '🛡️ Braço protegido', tom: 'emerald',
+    texto: 'Absorve muito a vibração. Ideal pra evitar dor no cotovelo ou jogar partidas longas.',
+  }
+  if (comfort >= 6) return {
+    titulo: '🛡️ Conforto equilibrado', tom: 'neutro',
+    texto: 'Amortece bem o impacto no dia a dia sem perder a firmeza na batida.',
+  }
+  return {
+    titulo: '⚡ Impacto mais seco', tom: 'amber',
+    texto: 'Transmite mais vibração pro braço; exige batida mais limpa e técnica.',
   }
 }
 
