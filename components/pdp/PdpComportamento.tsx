@@ -4,9 +4,10 @@ import { buildSpecRows } from '@/components/SpecsGrid'
 import {
   destaques, saidaDeBolaCopy, sweetSpotCardCopy, confortoCardCopy, isSuperficieLisa, dimensoesStats,
 } from '@/lib/pdpCopy'
-import { TOM_CHIP, CARD } from './tom'
+import { CARD } from './tom'
 import { nivelRange } from '@/lib/nivelRange'
-import type { DestaqueLinha } from '@/lib/pdpCopy'
+import type { DestaqueLinha, CartaoCopy } from '@/lib/pdpCopy'
+import { Check, Minus, Zap, Target, ShieldCheck, ShieldAlert } from 'lucide-react'
 
 // Hexágono + 3 cartões de comportamento em quadra (texto sempre visível) no
 // lugar das 6 barras, que repetiam o que o hexágono já mostra. Nada some: os 6
@@ -14,23 +15,47 @@ import type { DestaqueLinha } from '@/lib/pdpCopy'
 // nomeiam viram uma linha em palavras no cartão de perfil, e o detalhe técnico
 // completo fica no "Como ler este gráfico".
 
+// Linha de pills: cada atributo é uma etiqueta branca sobre uma faixa com tinte de cor.
 function Tira({ tom, titulo, itens }: { tom: 'brilha' | 'abre'; titulo: string; itens: DestaqueLinha[] }) {
-  const cls = tom === 'brilha'
-    ? 'border-aqua/30 bg-aqua/[0.07]'
-    : 'border-coral/25 bg-coral/[0.05]'
-  const cor = tom === 'brilha' ? 'text-[#058583]' : 'text-coral'
+  const brilha = tom === 'brilha'
+  const Icone = brilha ? Check : Minus
   return (
-    <p className={`rounded-xl border ${cls} px-3.5 py-2.5 text-sm leading-snug text-tinta`}>
-      <span className={`font-bold ${cor}`}>{titulo}:</span>{' '}
-      {itens.map((l, i) => (
-        <span key={l.key}>
-          {i > 0 && <span className="text-tinta/60 font-bold"> · </span>}
-          <span className="font-semibold">{l.label} {l.value}</span>
-          {l.nota && <span className="text-tinta/60"> ({l.nota})</span>}
+    <div className={`flex flex-wrap items-center gap-1.5 rounded-xl px-3 py-2 border ${
+      brilha ? 'bg-aqua-light/80 border-aqua/20' : 'bg-coral/[0.06] border-coral/15'
+    }`}>
+      <span className={`inline-flex items-center gap-1 text-xs font-semibold mr-1 ${brilha ? 'text-[#088F8D]' : 'text-[#D9482B]'}`}>
+        <Icone className="w-4 h-4" strokeWidth={2} aria-hidden="true" />
+        {titulo}
+      </span>
+      {itens.map(l => (
+        <span
+          key={l.key}
+          className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-0.5 text-xs text-tinta border border-tinta/10 shadow-sm"
+        >
+          <strong className={`font-semibold ${brilha ? 'text-[#088F8D]' : 'text-[#D9482B]'}`}>{l.label} {l.value}</strong>
+          {l.nota && <span className="text-tinta/65">· {l.nota}</span>}
         </span>
       ))}
-    </p>
+    </div>
   )
+}
+
+// Ícone monocromático do cartão: teal quando bom/neutro, coral quando "seco/exigente".
+function IconeCartao({ c }: { c: CartaoCopy }) {
+  const cor = c.tom === 'amber' ? 'text-[#D9482B]' : 'text-[#088F8D]'
+  const cls = `w-4 h-4 shrink-0 ${cor}`
+  if (c.icone === 'zap') return <Zap className={cls} strokeWidth={2} aria-hidden="true" />
+  if (c.icone === 'target') return <Target className={cls} strokeWidth={2} aria-hidden="true" />
+  return c.tom === 'amber'
+    ? <ShieldAlert className={cls} strokeWidth={2} aria-hidden="true" />
+    : <ShieldCheck className={cls} strokeWidth={2} aria-hidden="true" />
+}
+
+const CHIP_CARTAO: Record<CartaoCopy['tom'], string> = {
+  aqua: 'bg-aqua/10 text-[#088F8D]',
+  emerald: 'bg-aqua/10 text-[#088F8D]',
+  neutro: 'bg-tinta/5 text-tinta/70',
+  amber: 'bg-coral/10 text-[#D9482B]',
 }
 
 export default function PdpComportamento({
@@ -54,13 +79,13 @@ export default function PdpComportamento({
       <p className="text-tinta font-semibold text-sm">Como ela joga</p>
 
       {/* Bloco 1: hexágono + resumo em tiras de chips */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <PdpRadar stats={stats} />
         {dest.brilha.length > 0 && (
-          <Tira tom="brilha" titulo="✓ Onde brilha" itens={dest.brilha} />
+          <Tira tom="brilha" titulo="Onde brilha" itens={dest.brilha} />
         )}
         {dest.abreMao.length > 0 && (
-          <Tira tom="abre" titulo="! O que abre mão" itens={dest.abreMao} />
+          <Tira tom="abre" titulo="Abre mão de" itens={dest.abreMao} />
         )}
       </div>
 
@@ -75,9 +100,12 @@ export default function PdpComportamento({
           ].filter(x => x.c).map(({ rotulo, c }) => (
             <div key={rotulo} className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-3.5 py-3 flex flex-col items-start gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">{rotulo}</span>
-              <span className={`text-xs font-semibold px-2.5 py-1 rounded-xl leading-snug ${TOM_CHIP[c!.tom]}`}>
+              <span className={`inline-flex items-start gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-xl leading-snug ${CHIP_CARTAO[c!.tom]}`}>
+                <span className="mt-px"><IconeCartao c={c!} /></span>
+                <span>
                 {c!.titulo}
                 {c!.nota && <span className="font-normal opacity-80"> ({c!.nota})</span>}
+                </span>
               </span>
               <p className="text-tinta/80 text-xs leading-snug">{c!.texto}</p>
             </div>

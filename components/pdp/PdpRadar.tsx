@@ -56,7 +56,8 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
   // Mobile: o gráfico usa quase toda a largura (menos padding + sangra sobre o padding do
   // cartão pai); com 3 camadas de padding as letras ficavam em ~7px a 375px.
   return (
-    <div className="rounded-2xl border border-tinta/10 bg-aqua-light/45 p-2 -mx-3 sm:mx-0 sm:p-4">
+    <div className="rounded-2xl border border-tinta/10 bg-aqua-light/45 overflow-hidden -mx-3 sm:mx-0">
+      <div className="p-2 sm:p-4">
       <svg
         viewBox="0 0 360 305"
         className="w-full max-w-[380px] mx-auto select-none overflow-visible"
@@ -155,9 +156,11 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
           )
         })}
       </svg>
+      </div>
 
+      {/* Rodapé próprio da tarjeta do gráfico: faixa branca com borda acima, separada das tiras abaixo */}
       <div
-        className="mt-1 rounded-xl bg-white/85 px-3 py-2 text-xs text-tinta border border-tinta/5 flex items-baseline gap-2"
+        className="border-t border-tinta/10 bg-white/80 px-4 py-3 text-xs text-tinta flex items-baseline gap-2"
         aria-live="polite"
       >
         <span className="font-bold shrink-0 text-[#099997]">
