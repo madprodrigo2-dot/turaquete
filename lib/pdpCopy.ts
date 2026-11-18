@@ -156,15 +156,15 @@ export function saidaDeBolaCopy(ins: Insights, soAvancado = false): CartaoCopy |
 export function confortoCardCopy(comfort: number | null | undefined): CartaoCopy | null {
   if (comfort == null) return null
   if (comfort >= 8) return {
-    titulo: 'Braço protegido', tom: 'emerald', nivel: 3,
+    titulo: 'Protegido', tom: 'emerald', nivel: 3,
     texto: 'Absorve muita vibração, poupa o cotovelo.',
   }
   if (comfort >= 6) return {
-    titulo: 'Conforto equilibrado', tom: 'neutro', nivel: 2,
+    titulo: 'Equilibrado', tom: 'neutro', nivel: 2,
     texto: 'Amortece o impacto sem perder firmeza.',
   }
   return {
-    titulo: 'Impacto mais seco', tom: 'amber', nivel: 1,
+    titulo: 'Seco', tom: 'amber', nivel: 1,
     texto: 'Mais vibração no braço, pede batida limpa.',
   }
 }
