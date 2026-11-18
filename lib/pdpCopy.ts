@@ -128,7 +128,7 @@ export function descTecnologia(tipo: string): string {
 
 // ── Comportamento em quadra: 3 cartões homogêneos (textos curtos, ≤10 palavras) ──
 
-export interface CartaoCopy { titulo: string; texto: string; tom: Tom }
+export interface CartaoCopy { titulo: string; texto: string; tom: Tom; nota?: string }
 
 // soAvancado: o nível recomendado começa no avançado; então a copy não pode falar
 // em iniciante/evolução (contradiz o "Nível recomendado").
@@ -136,17 +136,17 @@ export function saidaDeBolaCopy(ins: Insights, soAvancado = false): CartaoCopy |
   const s = getSaidaDeBola(ins.comfort, ins.power)
   if (!s) return null
   if (s === 'fácil') return {
-    titulo: 'Fácil', tom: 'emerald',
+    titulo: '🚀 Fácil', nota: 'devolve sem esforço', tom: 'emerald',
     texto: soAvancado ? 'Rende bem mesmo sem forçar o braço.' : 'Devolve a bola sem exigir muita força.',
   }
   if (s === 'exigente') return {
-    titulo: 'Exigente', tom: 'amber',
+    titulo: '🎯 Controlada', nota: 'exige seu swing', tom: 'amber',
     texto: (ins.power ?? 0) >= 8
       ? 'Só entrega a potência toda com batida forte.'
       : 'Pede batida forte para render.',
   }
   return {
-    titulo: 'Média', tom: 'neutro',
+    titulo: '⚖️ Moderada', nota: 'equilibrada', tom: 'neutro',
     texto: 'Pede batida moderada, rende com swing consistente.',
   }
 }
@@ -172,9 +172,9 @@ export function confortoCardCopy(comfort: number | null | undefined): CartaoCopy
 export function sweetSpotCardCopy(forgiveness: number | null | undefined): CartaoCopy | null {
   const c = getSweetSpotCopy(forgiveness)
   if (!c) return null
-  if (c.label === 'Generoso') return { titulo: c.chip, tom: 'emerald', texto: 'Perdoa golpes fora do centro, vibra menos.' }
-  if (c.label === 'Exigente') return { titulo: c.chip, tom: 'amber', texto: 'Área menor: rende no centro da raquete.' }
-  return { titulo: c.chip, tom: 'neutro', texto: 'Boa área de acerto, resposta viva no centro.' }
+  if (c.label === 'Generoso') return { titulo: '🤝 Perdoa erros', nota: 'amplo e tolerante', tom: 'emerald', texto: 'Perdoa golpes fora do centro, vibra menos.' }
+  if (c.label === 'Exigente') return { titulo: '🎯 Exigente', nota: 'pede batida limpa', tom: 'amber', texto: 'Área menor: rende no centro da raquete.' }
+  return { titulo: '⚖️ Equilibrado', nota: 'boa área de acerto', tom: 'neutro', texto: 'Boa área de acerto, resposta viva no centro.' }
 }
 
 // ── Gráfico de 6 dimensões (radar): valor + descrição, uma fonte só ──────────

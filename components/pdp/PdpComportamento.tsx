@@ -75,7 +75,10 @@ export default function PdpComportamento({
           ].filter(x => x.c).map(({ rotulo, c }) => (
             <div key={rotulo} className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-3.5 py-3 flex flex-col items-start gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">{rotulo}</span>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TOM_CHIP[c!.tom]}`}>{c!.titulo}</span>
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-xl leading-snug ${TOM_CHIP[c!.tom]}`}>
+                {c!.titulo}
+                {c!.nota && <span className="font-normal opacity-80"> ({c!.nota})</span>}
+              </span>
               <p className="text-tinta/80 text-xs leading-snug">{c!.texto}</p>
             </div>
           ))}
