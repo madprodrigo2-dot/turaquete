@@ -3,6 +3,8 @@ import { buildSpecRows } from '@/components/SpecsGrid'
 import { tagPeso, tagFace, tagNucleo, tagEspessura } from '@/lib/pdpCopy'
 import { TOM_CHIP, CARD } from './tom'
 
+const COLS_SM: Record<number, string> = { 1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4' }
+
 // "DNA rápido": os 4 dados que todo jogador olha primeiro, com uma etiqueta que
 // traduz o número em linguagem de quadra. Mesmos dados da tabela de specs.
 export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights }) {
@@ -19,7 +21,7 @@ export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights })
   const cards = [
     { label: 'Peso', value: peso, t: tagPeso(racket.weight_g) },
     { label: 'Face', value: get('Material da face'), t: tagFace(racket.face_material) },
-    { label: 'Núcleo', value: get('Núcleo (EVA)'), t: tagNucleo(racket.core) },
+    { label: 'Núcleo', value: get('Núcleo (EVA)'), t: tagNucleo(racket.core, racket.racket_insights?.comfort) },
     { label: 'Espessura', value: espMm != null ? `${espMm}mm` : get('Espessura'), t: tagEspessura(espMm) },
   ].filter(c => c.value)
 
@@ -28,9 +30,10 @@ export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights })
   return (
     <section aria-label="DNA rápido" className="flex flex-col gap-2">
       <p className="text-tinta font-semibold text-sm">DNA rápido</p>
-      <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2`}>
-        {cards.map(c => (
-          <div key={c.label} className={`${CARD} px-3.5 py-3 flex flex-col gap-1 min-w-0`}>
+      {/* Colunas = nº de tarjetas (sem buraco no desktop); no mobile, se for ímpar, a última ocupa as 2 colunas. */}
+      <div className={`grid grid-cols-2 gap-2 ${COLS_SM[cards.length] ?? 'sm:grid-cols-4'}`}>
+        {cards.map((c, i) => (
+          <div key={c.label} className={`${CARD} px-3.5 py-3 flex flex-col gap-1 min-w-0 ${cards.length % 2 === 1 && i === cards.length - 1 ? 'col-span-2 sm:col-span-1' : ''}`}>
             <span className="text-[10px] uppercase tracking-wide text-tinta/40 font-medium">{c.label}</span>
             {/* Mobile: 1 linha sempre (as 4 tarjetas ficam da mesma altura; o valor completo
                 está na ficha técnica). Desktop é uma única fila, então pode quebrar linha. */}

@@ -40,8 +40,15 @@ export function tagFace(face: string | null | undefined): { tag: string; tom: To
 
 // Etiquetas de núcleo (material -> benefício, sem repetir o cartão de conforto) e espessura: máx. 2-3 palavras (as 4 tarjetas do DNA rápido
 // precisam ter a mesma altura no mobile).
-export function tagNucleo(core: string | null | undefined): { tag: string; tom: Tom } | null {
+// comfort: quando a nota de conforto do motor é baixa (<=5), a etiqueta não promete
+// proteção que o cartão "Conforto no braço" (Seco) desmente: descreve só o material.
+export function tagNucleo(core: string | null | undefined, comfort?: number | null): { tag: string; tom: Tom } | null {
   if (!core) return null
+  const classe = classifyCore(core)
+  if (comfort != null && comfort <= 5) {
+    if (classe === 'SUPERSOFT') return { tag: 'Núcleo muito macio', tom: 'neutro' }
+    if (classe === 'SOFT') return { tag: 'Núcleo macio', tom: 'neutro' }
+  }
   const m: Record<string, { tag: string; tom: Tom }> = {
     SUPERSOFT: { tag: 'Protege o braço', tom: 'emerald' },
     SOFT: { tag: 'Amortece o impacto', tom: 'emerald' },

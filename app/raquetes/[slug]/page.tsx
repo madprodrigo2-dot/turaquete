@@ -30,9 +30,9 @@ import PdpAdnRapido from '@/components/pdp/PdpAdnRapido'
 import PdpComportamento from '@/components/pdp/PdpComportamento'
 import { PdpSpecs, PdpTecnologias } from '@/components/pdp/PdpSpecs'
 
-// Piloto da ficha redesenhada (PDP): só as raquetes destas marcas (slug da marca)
-// usam o layout novo; o resto do catálogo segue com a ficha antiga.
-// Para ver o layout em qualquer raquete localmente: PDP_NOVO_TODAS=1 (nunca em prod).
+// Ficha redesenhada (PDP), ativa para o catálogo inteiro. Para voltar ao piloto
+// (só as marcas de PDP_NOVO_MARCAS, resto com a ficha antiga): PDP_NOVO_TODAS = false.
+const PDP_NOVO_TODAS = true
 const PDP_NOVO_MARCAS = new Set(['zeiq'])
 
 export async function generateStaticParams() {
@@ -87,7 +87,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
   if (!racket) notFound()
 
   const sugestoes = suggestComparisons(racket, allRackets, 6)
-  const novoPdp = (!!racket.brands?.slug && PDP_NOVO_MARCAS.has(racket.brands.slug)) || process.env.PDP_NOVO_TODAS === '1'
+  const novoPdp = PDP_NOVO_TODAS || (!!racket.brands?.slug && PDP_NOVO_MARCAS.has(racket.brands.slug)) || process.env.PDP_NOVO_TODAS === '1'
 
   const ins = racket.racket_insights
 
