@@ -137,3 +137,4 @@ Atualizar `image_url = '/raquetes/{slug}.webp'` na tabela `rackets`.
 |---------|-------------|
 | `npx tsx scripts/seed-insights.ts <id>` | Alta de raquete nova — obrigatório no mesmo turno do INSERT |
 | `npm run motor:recalc` | Recalcular scores de todas as raquetes publicadas após mudança de specs |
+| `npx tsx scripts/check-nivel-textos.ts [slug]` | Após alta de raquete ou editar `summary`/`perfil_resumo`: acusa texto que recomenda um nível que o motor marca como "fora" (só lê; sai com 1 se achar) |
