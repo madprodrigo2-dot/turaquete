@@ -483,7 +483,14 @@ export async function getRaquetaPorSlug(slug: string): Promise<RacketWithInsight
     .eq('publicada', true)
     .single()
 
-  if (error) return null
+  // Só "sem linhas" (PGRST116) é 404 de verdade. Qualquer outro erro do Supabase (rede,
+  // timeout, rate limit) NÃO pode virar null: a página chamaria notFound() e o ISR/SSG
+  // cachearia um 404 de uma raquete publicada (aconteceu com kona-bulldog-black-2026).
+  // Lançando, o Next tenta de novo no build e, na revalidação, segue servindo a versão anterior.
+  if (error) {
+    if (error.code === 'PGRST116') return null
+    throw new Error(`Supabase getRaquetaPorSlug(${slug}): ${error.message}`)
+  }
   return normalizeRacket(data)
 }
 
