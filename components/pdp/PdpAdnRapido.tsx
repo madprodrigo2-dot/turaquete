@@ -1,6 +1,6 @@
 import type { RacketWithInsights } from '@/lib/recommend'
 import { buildSpecRows } from '@/components/SpecsGrid'
-import { tagPeso, tagBalance, tagFace, tagSuperficie } from '@/lib/pdpCopy'
+import { tagPeso, tagFace, tagNucleo, tagEspessura } from '@/lib/pdpCopy'
 import { TOM_CHIP, CARD } from './tom'
 
 // "DNA rápido": os 4 dados que todo jogador olha primeiro, com uma etiqueta que
@@ -9,12 +9,18 @@ export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights })
   const rows = buildSpecRows(racket)
   const get = (label: string) => rows.find(r => r.label === label)?.value
 
+  const extra = (racket.specs_extra ?? {}) as Record<string, unknown>
+  const espMm = extra.espessura_mm as number | null | undefined
+
+  // Os 4 dados "fixos" da raquete (não mudam com tratamento nem ajuste). Balance e
+  // superfície ficam de fora: o balance já se lê no hexágono e a superfície tem
+  // lugar próprio na ficha técnica (junto da MegaSpin).
   const peso = racket.weight_g ? get('Peso') : undefined
   const cards = [
     { label: 'Peso', value: peso, t: tagPeso(racket.weight_g) },
-    { label: 'Balance', value: get('Balance'), t: tagBalance(racket.balance) },
     { label: 'Face', value: get('Material da face'), t: tagFace(racket.face_material) },
-    { label: 'Superfície', value: get('Superfície'), t: tagSuperficie(get('Superfície')) },
+    { label: 'Núcleo', value: get('Núcleo (EVA)'), t: tagNucleo(racket.core) },
+    { label: 'Espessura', value: espMm != null ? `${espMm}mm` : get('Espessura'), t: tagEspessura(espMm) },
   ].filter(c => c.value)
 
   if (cards.length === 0) return null
@@ -26,9 +32,16 @@ export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights })
         {cards.map(c => (
           <div key={c.label} className={`${CARD} px-3.5 py-3 flex flex-col gap-1 min-w-0`}>
             <span className="text-[10px] uppercase tracking-wide text-tinta/40 font-medium">{c.label}</span>
-            <span className="text-tinta font-bold text-base leading-tight break-words">{c.value}</span>
+            {/* Mobile: 1 linha sempre (as 4 tarjetas ficam da mesma altura; o valor completo
+                está na ficha técnica). Desktop é uma única fila, então pode quebrar linha. */}
+            <span
+              title={c.value}
+              className="text-tinta font-bold text-sm sm:text-base leading-tight truncate sm:overflow-visible sm:whitespace-normal sm:break-words"
+            >
+              {c.value}
+            </span>
             {c.t && (
-              <span className={`self-start text-[11px] font-semibold px-2 py-0.5 rounded-full ${TOM_CHIP[c.t.tom]}`}>
+              <span title={c.t.tag} className={`self-start max-w-full truncate text-[11px] font-semibold px-2 py-0.5 rounded-full ${TOM_CHIP[c.t.tom]}`}>
                 {c.t.tag}
               </span>
             )}

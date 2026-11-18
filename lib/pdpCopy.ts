@@ -18,26 +18,17 @@ export function tagPeso(g: number | null | undefined): { tag: string; tom: Tom }
   return { tag: 'Pesada e estável', tom: 'amber' }
 }
 
-export function tagBalance(b: string | null | undefined): { tag: string; tom: Tom } | null {
-  if (!b) return null
-  const s = b.toLowerCase()
-  if (s.includes('cabeça') || s.includes('cabeca')) return { tag: 'Mais potência', tom: 'amber' }
-  if (s.includes('cabo')) return { tag: 'Mais ágil e controle', tom: 'aqua' }
-  if (s.includes('médio') || s.includes('medio')) return { tag: 'Equilibrada', tom: 'neutro' }
-  return null
-}
-
 const FACE_TAG: Record<string, string> = {
   CARBON_3K: 'Toque firme',
   CARBON_3K_METAL: 'Firme e estável',
-  CARBON_1K: 'Muito firme e preciso',
-  CARBON_6K: 'Firme, mais resposta',
+  CARBON_1K: 'Firme e preciso',
+  CARBON_6K: 'Firme e reativa',
   CARBON_6K_15K: 'Resposta mais viva',
   CARBON_18K: 'Rígida e potente',
   CARBON_24K: 'Máxima rigidez',
   KEVLAR_PURE: 'Absorve vibração',
-  KEVLAR_CARBON: 'Firme com amortecimento',
-  VIDRO: 'Macia e confortável',
+  KEVLAR_CARBON: 'Firme e amortecida',
+  VIDRO: 'Macia e suave',
   HYBRID_VIDRO: 'Macia com resposta',
 }
 
@@ -46,14 +37,24 @@ export function tagFace(face: string | null | undefined): { tag: string; tom: To
   return { tag: FACE_TAG[classifyFace(face)] ?? 'Face de carbono', tom: 'aqua' }
 }
 
-export function tagSuperficie(sup: string | null | undefined): { tag: string; tom: Tom } | null {
-  if (!sup) return null
-  const s = sup.toLowerCase()
-  if (s.includes('lisa')) return { tag: 'Sem tratamento', tom: 'neutro' }
-  if (s.includes('levemente')) return { tag: 'Textura leve', tom: 'aqua' }
-  if (s.includes('tratamento de fábrica') || s.includes('tratamento de fabrica')) return { tag: 'Tratada de fábrica', tom: 'aqua' }
-  if (s.includes('áspera') || s.includes('aspera') || s.includes('quartzo')) return { tag: 'Com textura', tom: 'aqua' }
-  return null
+// Etiquetas de núcleo e espessura: máx. 2-3 palavras (as 4 tarjetas do DNA rápido
+// precisam ter a mesma altura no mobile).
+export function tagNucleo(core: string | null | undefined): { tag: string; tom: Tom } | null {
+  if (!core) return null
+  const m: Record<string, { tag: string; tom: Tom }> = {
+    SUPERSOFT: { tag: 'Muito macio', tom: 'emerald' },
+    SOFT: { tag: 'Macio', tom: 'emerald' },
+    MEDIUM: { tag: 'Médio', tom: 'neutro' },
+    HARD: { tag: 'Firme', tom: 'amber' },
+  }
+  return m[classifyCore(core)] ?? null
+}
+
+export function tagEspessura(mm: number | null | undefined): { tag: string; tom: Tom } | null {
+  if (mm == null) return null
+  if (mm <= 20) return { tag: 'Perfil fino', tom: 'aqua' }
+  if (mm <= 22) return { tag: 'Perfil médio', tom: 'neutro' }
+  return { tag: 'Perfil grosso', tom: 'amber' }
 }
 
 // ── Especificações: micro-explicação do que cada linha significa na prática ──
