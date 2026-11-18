@@ -126,26 +126,7 @@ export function descTecnologia(tipo: string): string {
   return TECH_DESC[tipo] ?? 'Característica de construção desta raquete.'
 }
 
-// ── Comportamento em quadra: 3 cartões ───────────────────────────────────────
-
-export interface PerfilPrincipal { titulo: string; texto: string }
-
-export function perfilPrincipal(ins: Insights): PerfilPrincipal | null {
-  if (ins.power == null || ins.control == null) return null
-  const d = ins.control - ins.power
-  if (d >= 2) return {
-    titulo: 'Mais controle do que força',
-    texto: 'Coloca a bola onde você quer. A força vem do seu swing, não da raquete.',
-  }
-  if (d <= -2) return {
-    titulo: 'Mais força do que controle',
-    texto: 'Entrega potência fácil, mas pede mão firme para colocar a bola com precisão.',
-  }
-  return {
-    titulo: 'Força e controle equilibrados',
-    texto: 'Nenhum dos dois domina: é uma raquete versátil para vários estilos de jogo.',
-  }
-}
+// ── Comportamento em quadra: 3 cartões homogêneos (textos curtos, ≤10 palavras) ──
 
 export interface CartaoCopy { titulo: string; texto: string; tom: Tom }
 
@@ -156,19 +137,17 @@ export function saidaDeBolaCopy(ins: Insights, soAvancado = false): CartaoCopy |
   if (!s) return null
   if (s === 'fácil') return {
     titulo: 'Fácil', tom: 'emerald',
-    texto: soAvancado
-      ? 'Devolve a bola sem exigir muita força. Rende bem mesmo sem forçar o braço.'
-      : 'Devolve a bola sem exigir muita força. Rende bem mesmo com batida suave, ideal pra quem tá evoluindo.',
+    texto: soAvancado ? 'Rende bem mesmo sem forçar o braço.' : 'Devolve a bola sem exigir muita força.',
   }
   if (s === 'exigente') return {
     titulo: 'Exigente', tom: 'amber',
     texto: (ins.power ?? 0) >= 8
-      ? 'Só entrega a potência toda com batida forte e técnica. Com batida suave, rende menos que uma raquete macia.'
-      : 'Pede batida forte para render. Com batida suave, a bola sai mais curta.',
+      ? 'Só entrega a potência toda com batida forte.'
+      : 'Pede batida forte para render.',
   }
   return {
     titulo: 'Média', tom: 'neutro',
-    texto: 'Pede batida moderada: nem sobra nem falta, rende bem com um swing consistente.',
+    texto: 'Pede batida moderada, rende com swing consistente.',
   }
 }
 
@@ -177,23 +156,25 @@ export function confortoCardCopy(comfort: number | null | undefined): CartaoCopy
   if (comfort == null) return null
   if (comfort >= 8) return {
     titulo: '🛡️ Braço protegido', tom: 'emerald',
-    texto: 'Absorve muito a vibração. Ideal pra evitar dor no cotovelo ou jogar partidas longas.',
+    texto: 'Absorve muita vibração, poupa o cotovelo.',
   }
   if (comfort >= 6) return {
     titulo: '🛡️ Conforto equilibrado', tom: 'neutro',
-    texto: 'Amortece bem o impacto no dia a dia sem perder a firmeza na batida.',
+    texto: 'Amortece o impacto sem perder firmeza.',
   }
   return {
     titulo: '⚡ Impacto mais seco', tom: 'amber',
-    texto: 'Transmite mais vibração pro braço; exige batida mais limpa e técnica.',
+    texto: 'Mais vibração no braço, pede batida limpa.',
   }
 }
 
+// Versão curta só da ficha nova (o texto longo de lib/sweetSpot segue nos outros usos).
 export function sweetSpotCardCopy(forgiveness: number | null | undefined): CartaoCopy | null {
   const c = getSweetSpotCopy(forgiveness)
   if (!c) return null
-  const tom: Tom = c.label === 'Generoso' ? 'emerald' : c.label === 'Exigente' ? 'amber' : 'neutro'
-  return { titulo: c.chip, texto: c.descricao, tom }
+  if (c.label === 'Generoso') return { titulo: c.chip, tom: 'emerald', texto: 'Perdoa golpes fora do centro, vibra menos.' }
+  if (c.label === 'Exigente') return { titulo: c.chip, tom: 'amber', texto: 'Área menor: rende no centro da raquete.' }
+  return { titulo: c.chip, tom: 'neutro', texto: 'Boa área de acerto, resposta viva no centro.' }
 }
 
 // ── Gráfico de 6 dimensões (radar): valor + descrição, uma fonte só ──────────
@@ -228,26 +209,28 @@ export function dimensoesStats(ins: Insights, spinLisa: boolean): DimensaoStat[]
 // ── Onde brilha / O que abre mão ─────────────────────────────────────────────
 // Relativo às 6 notas DA raquete: ≥8 brilha (se nenhuma chega a 8, o corte cai
 // para 7 só nessa raquete); ≤5 abre mão; 6-7 ficam implícitas (só no gráfico).
-// Frases-tipo: uma por dimensão e lado (alto/baixo), reusadas em todo o catálogo.
+// Formato compacto: "Controle 8 · Manuseio 8 (muito ágil)". Uma observação curta entre
+// parênteses, só em um item: o mais forte (brilha) / o mais fraco (abre mão), ou o Spin
+// quando a face é lisa.
 
-export interface DestaqueLinha { key: DimensaoStat['key']; label: string; value: number; frase: string }
+export interface DestaqueLinha { key: DimensaoStat['key']; label: string; value: number; nota?: string }
 
-const FRASE_ALTO: Record<DimensaoStat['key'], string> = {
-  power: 'A bola sai rápida e define o ponto',
-  control: 'Coloca a bola onde você quer',
-  comfort: 'Protege o braço do impacto e da vibração',
-  maneuverability: 'Muito rápida pra reagir na rede',
-  spin: 'Boa textura de fábrica pra bola com efeito',
-  stability: 'Firme no impacto, segura bola pesada',
+const NOTA_ALTO: Record<DimensaoStat['key'], string> = {
+  power: 'bola rápida',
+  control: 'coloca onde quer',
+  comfort: 'poupa o braço',
+  maneuverability: 'muito ágil',
+  spin: 'bom efeito',
+  stability: 'firme no impacto',
 }
 
-const FRASE_BAIXO: Record<DimensaoStat['key'], string> = {
-  power: 'Exige seu swing pra definir o ponto',
-  control: 'Pede mais da sua técnica pra colocar a bola',
-  comfort: 'Transmite mais vibração pro braço',
-  maneuverability: 'Mais pesada pra reagir na rede',
-  spin: 'Pouco efeito de fábrica (pede tratamento)',
-  stability: 'Sente mais o impacto em bolas pesadas',
+const NOTA_BAIXO: Record<DimensaoStat['key'], string> = {
+  power: 'exige seu swing',
+  control: 'pede técnica',
+  comfort: 'mais vibração',
+  maneuverability: 'mais pesada',
+  spin: 'pouco efeito',
+  stability: 'sente o impacto',
 }
 
 export interface Destaques { brilha: DestaqueLinha[]; abreMao: DestaqueLinha[]; corteBrilha: number }
@@ -255,17 +238,13 @@ export interface Destaques { brilha: DestaqueLinha[]; abreMao: DestaqueLinha[]; 
 export function destaques(stats: DimensaoStat[], spinLisa: boolean): Destaques {
   const com = stats.filter((s): s is DimensaoStat & { value: number } => s.value != null)
   const corteBrilha = com.some(s => s.value >= 8) ? 8 : 7
-  const linha = (s: DimensaoStat & { value: number }, alto: boolean): DestaqueLinha => ({
-    key: s.key,
-    label: s.label,
-    value: s.value,
-    frase: !alto && s.key === 'spin' && spinLisa
-      ? 'Lisa de fábrica (pede tratamento)'
-      : (alto ? FRASE_ALTO : FRASE_BAIXO)[s.key],
-  })
-  return {
-    brilha: com.filter(s => s.value >= corteBrilha).sort((x, y) => y.value - x.value).map(s => linha(s, true)),
-    abreMao: com.filter(s => s.value <= 5).sort((x, y) => x.value - y.value).map(s => linha(s, false)),
-    corteBrilha,
+  const base = (s: DimensaoStat & { value: number }): DestaqueLinha => ({ key: s.key, label: s.label, value: s.value })
+  const brilha = com.filter(s => s.value >= corteBrilha).sort((x, y) => y.value - x.value).map(base)
+  const abreMao = com.filter(s => s.value <= 5).sort((x, y) => x.value - y.value).map(base)
+  if (brilha[0]) brilha[0].nota = NOTA_ALTO[brilha[0].key]
+  if (abreMao.length) {
+    const alvo = spinLisa ? abreMao.find(l => l.key === 'spin') ?? abreMao[0] : abreMao[0]
+    alvo.nota = alvo.key === 'spin' && spinLisa ? 'lisa' : NOTA_BAIXO[alvo.key]
   }
+  return { brilha, abreMao, corteBrilha }
 }

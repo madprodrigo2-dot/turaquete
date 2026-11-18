@@ -2,16 +2,36 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import PdpRadar from './PdpRadar'
 import { buildSpecRows } from '@/components/SpecsGrid'
 import {
-  perfilPrincipal, destaques, saidaDeBolaCopy, sweetSpotCardCopy, confortoCardCopy, isSuperficieLisa, dimensoesStats,
+  destaques, saidaDeBolaCopy, sweetSpotCardCopy, confortoCardCopy, isSuperficieLisa, dimensoesStats,
 } from '@/lib/pdpCopy'
 import { TOM_CHIP, CARD } from './tom'
 import { nivelRange } from '@/lib/nivelRange'
+import type { DestaqueLinha } from '@/lib/pdpCopy'
 
 // Hexágono + 3 cartões de comportamento em quadra (texto sempre visível) no
 // lugar das 6 barras, que repetiam o que o hexágono já mostra. Nada some: os 6
 // valores continuam nos vértices do hexágono, as dimensões que os cartões não
 // nomeiam viram uma linha em palavras no cartão de perfil, e o detalhe técnico
 // completo fica no "Como ler este gráfico".
+
+function Tira({ tom, titulo, itens }: { tom: 'brilha' | 'abre'; titulo: string; itens: DestaqueLinha[] }) {
+  const cls = tom === 'brilha'
+    ? 'border-aqua/30 bg-aqua/[0.07]'
+    : 'border-coral/25 bg-coral/[0.05]'
+  const cor = tom === 'brilha' ? 'text-[#058583]' : 'text-coral'
+  return (
+    <p className={`rounded-xl border ${cls} px-3.5 py-2.5 text-sm leading-snug text-tinta`}>
+      <span className={`font-bold ${cor}`}>{titulo}:</span>{' '}
+      {itens.map((l, i) => (
+        <span key={l.key}>
+          {i > 0 && <span className="text-tinta/60 font-bold"> · </span>}
+          <span className="font-semibold">{l.label} {l.value}</span>
+          {l.nota && <span className="text-tinta/60"> ({l.nota})</span>}
+        </span>
+      ))}
+    </p>
+  )
+}
 
 export default function PdpComportamento({
   racket, tratamentoFabrica,
@@ -22,7 +42,6 @@ export default function PdpComportamento({
   const superficie = buildSpecRows(racket).find(r => r.label === 'Superfície')?.value
   const spinLisa = isSuperficieLisa(superficie, tratamentoFabrica)
   const stats = dimensoesStats(ins, spinLisa)
-  const perfil = perfilPrincipal(ins)
   const dest = destaques(stats, spinLisa)
   const nr = nivelRange(racket)
   const soAvancado = !!nr && nr.fit.iniciante === 'fora' && nr.fit.intermediario === 'fora'
@@ -34,76 +53,33 @@ export default function PdpComportamento({
     <section aria-label="Como ela joga" className={`${CARD} p-5 flex flex-col gap-4`}>
       <p className="text-tinta font-semibold text-sm">Como ela joga</p>
 
-      <PdpRadar stats={stats} />
+      {/* Bloco 1: hexágono + resumo em tiras de chips */}
+      <div className="flex flex-col gap-2">
+        <PdpRadar stats={stats} />
+        {dest.brilha.length > 0 && (
+          <Tira tom="brilha" titulo="✓ Onde brilha" itens={dest.brilha} />
+        )}
+        {dest.abreMao.length > 0 && (
+          <Tira tom="abre" titulo="! O que abre mão" itens={dest.abreMao} />
+        )}
+      </div>
 
-      {(dest.brilha.length > 0 || dest.abreMao.length > 0) && (
-        <div className={`grid grid-cols-1 gap-2.5 ${dest.brilha.length > 0 && dest.abreMao.length > 0 ? 'sm:grid-cols-2' : ''}`}>
-          {dest.brilha.length > 0 && (
-            <div className="rounded-xl border border-aqua/30 bg-aqua/[0.07] px-4 py-3 flex flex-col gap-1.5">
-              <span className="text-[11px] uppercase tracking-wide text-[#058583] font-bold">✓ Onde brilha</span>
-              <ul className="flex flex-col gap-1.5">
-                {dest.brilha.map(l => (
-                  <li key={l.key} className="text-sm leading-snug text-tinta">
-                    <span className="font-bold">{l.label} ({l.value}/10)</span>
-                    <span className="text-tinta/70"> — {l.frase}</span>
-                  </li>
-                ))}
-              </ul>
+      {/* Bloco 2: 3 cartões homogêneos */}
+      <div className="flex flex-col gap-2 border-t border-tinta/10 pt-4">
+        <p className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">Na prática</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {[
+            { rotulo: 'Saída de bola', c: saida },
+            { rotulo: 'Sweet spot', c: sweet },
+            { rotulo: 'Conforto no braço', c: conforto },
+          ].filter(x => x.c).map(({ rotulo, c }) => (
+            <div key={rotulo} className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-3.5 py-3 flex flex-col items-start gap-1.5">
+              <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">{rotulo}</span>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TOM_CHIP[c!.tom]}`}>{c!.titulo}</span>
+              <p className="text-tinta/80 text-xs leading-snug">{c!.texto}</p>
             </div>
-          )}
-          {dest.abreMao.length > 0 && (
-            <div className="rounded-xl border border-coral/25 bg-coral/[0.05] px-4 py-3 flex flex-col gap-1.5">
-              <span className="text-[11px] uppercase tracking-wide text-coral font-bold">! O que abre mão</span>
-              <ul className="flex flex-col gap-1.5">
-                {dest.abreMao.map(l => (
-                  <li key={l.key} className="text-sm leading-snug text-tinta">
-                    <span className="font-bold">{l.label} ({l.value}/10)</span>
-                    <span className="text-tinta/70"> — {l.frase}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          ))}
         </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        {perfil && (
-          <div className="rounded-xl border border-aqua/30 bg-aqua/[0.07] px-4 py-3 flex flex-col gap-1">
-            <span className="text-[10px] uppercase tracking-wide text-aqua font-semibold">Perfil principal</span>
-            <p className="text-tinta font-bold text-base leading-snug">{perfil.titulo}</p>
-            <p className="text-tinta/70 text-xs leading-relaxed">{perfil.texto}</p>
-          </div>
-        )}
-
-        {saida && (
-          <div className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-4 py-3 flex flex-col gap-1">
-            <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">Saída de bola</span>
-            <p className="text-tinta text-sm leading-snug">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mr-1.5 ${TOM_CHIP[saida.tom]}`}>{saida.titulo}</span>
-              {saida.texto}
-            </p>
-          </div>
-        )}
-
-        {sweet && (
-          <div className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-4 py-3 flex flex-col gap-1">
-            <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">Sweet spot</span>
-            <p className="text-tinta text-sm leading-snug">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mr-1.5 ${TOM_CHIP[sweet.tom]}`}>{sweet.titulo}</span>
-              {sweet.texto}
-            </p>
-          </div>
-        )}
-        {conforto && (
-          <div className="rounded-xl border border-[rgba(14,58,64,0.08)] bg-[#FBF6EF] px-4 py-3 flex flex-col gap-1">
-            <span className="text-[10px] uppercase tracking-wide text-tinta/45 font-semibold">Conforto no braço</span>
-            <p className="text-tinta text-sm leading-snug">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full mr-1.5 ${TOM_CHIP[conforto.tom]}`}>{conforto.titulo}</span>
-              {conforto.texto}
-            </p>
-          </div>
-        )}
       </div>
 
       <details className="group text-xs text-tinta/60">
