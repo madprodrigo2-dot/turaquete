@@ -82,9 +82,9 @@ export function PdpTecnologias({ tecnologias }: { tecnologias: { nome: string; t
   return (
     <section aria-label="Tecnologias e acabamentos" className={`${CARD} p-5 flex flex-col gap-3`}>
       <p className="text-tinta font-semibold text-sm">Tecnologias e acabamentos</p>
-      <div className="flex flex-col gap-2">
+      <div className={`grid grid-cols-1 gap-2 ${tecnologias.length >= 2 ? 'sm:grid-cols-2' : ''}`}>
         {tecnologias.map((t, i) => (
-          <div key={i} className="rounded-xl bg-aqua/[0.06] border border-aqua/15 px-4 py-3 flex flex-col gap-0.5">
+          <div key={i} className={`rounded-xl bg-aqua/[0.06] border border-aqua/15 px-4 py-3 flex flex-col gap-0.5 ${tecnologias.length > 2 && tecnologias.length % 2 === 1 && i === tecnologias.length - 1 ? 'sm:col-span-2' : ''}`}>
             <span className="text-sm font-semibold text-tinta">{t.nome}</span>
             <span className="text-xs text-tinta/65 leading-relaxed">{descTecnologia(t.tipo)}</span>
           </div>
