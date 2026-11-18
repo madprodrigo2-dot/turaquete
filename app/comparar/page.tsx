@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
-import { listarRaquetas, type RacketWithInsights } from '@/lib/recommend'
-import ComparePicker from '@/components/ComparePicker'
+import { listarRaquetasCached, type RacketWithInsights } from '@/lib/recommend'
+import ComparePageClient from '@/components/ComparePageClient'
 import SiteNav from '@/components/SiteNav'
 import { SITE_URL } from '@/lib/site'
 
-export const revalidate = 300
+// Sem searchParams aqui de propósito: ler ?a=/?b= no servidor torna a rota
+// dinâmica e ignora o revalidate (ver ComparePageClient, que lê no cliente).
+export const revalidate = 3600
 
 function computePopularPairs(rackets: RacketWithInsights[]) {
   const byBrand = new Map<string, RacketWithInsights[]>()
@@ -38,15 +40,8 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/comparar` },
 }
 
-export default async function CompararPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ a?: string; b?: string }>
-}) {
-  const { a, b } = await searchParams
-  const rackets = await listarRaquetas().catch(() => [])
-  const initialSlotA = a ? rackets.find(r => r.slug === a) : undefined
-  const initialSlotB = b ? rackets.find(r => r.slug === b) : undefined
+export default async function CompararPage() {
+  const rackets = await listarRaquetasCached().catch(() => [] as RacketWithInsights[])
   const popularPairs = computePopularPairs(rackets)
 
   return (
@@ -54,15 +49,7 @@ export default async function CompararPage({
       <SiteNav maxWidth="max-w-4xl lg:max-w-7xl" />
 
       <div className="max-w-4xl lg:max-w-7xl mx-auto px-5 md:px-8 py-8 flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl md:text-3xl font-bold text-tinta">Comparar raquetes</h1>
-          <p className="text-tinta/60 text-sm">
-            {initialSlotA
-              ? `${initialSlotA.name} já está no slot A — escolha a segunda raquete.`
-              : 'Escolha duas raquetes para comparar pontuações e especificações lado a lado.'}
-          </p>
-        </div>
-        <ComparePicker rackets={rackets} initialSlotA={initialSlotA} initialSlotB={initialSlotB} popularPairs={popularPairs} />
+        <ComparePageClient rackets={rackets} popularPairs={popularPairs} />
       </div>
     </div>
   )

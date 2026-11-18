@@ -1079,15 +1079,33 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
 }
 
 
-// ── Top Picks em cache compartilhado ─────────────────────────────────────────
-// Cada render de /comparar/[par], /raquetes/[slug] e /marcas/[slug] baixava o
-// catálogo inteiro (~345 linhas com joins) + 2 RPCs só para saber o Top Pick
-// por nível/conforto. Esse resultado é o mesmo para todas as páginas, então
-// fica em cache de 1h compartilhado entre elas (Fluid Active CPU estourou o
-// tier grátis em 2026-11-17 por causa disso).
+// ── Catálogo e Top Picks em cache compartilhado ──────────────────────────────
+// Cada render de /comparar, /raquetes/[slug], /raquetes/{nivel} e /marcas/[slug]
+// baixava o catálogo inteiro (~320 linhas com joins) + RPCs. O resultado é o
+// mesmo para todas as páginas, então fica em cache de 1h compartilhado entre
+// elas (Fluid Active CPU estourou o tier grátis em 2026-11-17 por causa disso).
+// Uma única leitura do catálogo por hora serve a todos os pools abaixo.
+export const listarRaquetasCached = unstable_cache(
+  async () => listarRaquetas(),
+  ['listar-raquetas-v1'],
+  { revalidate: 3600 }
+)
+
+export async function getRaquetasPorNivelCached(
+  nivel: 'iniciante' | 'intermediario' | 'avancado'
+): Promise<RacketWithInsights[]> {
+  const all = await listarRaquetasCached()
+  return all.filter(r => computeNivelFormula(r) === nivel)
+}
+
+export async function getRaquetasConfortoCached(): Promise<RacketWithInsights[]> {
+  const all = await listarRaquetasCached()
+  return all.filter(r => r.racket_insights?.elbow_friendly === true)
+}
+
 export const getTopPicksNivelCached = unstable_cache(
   async (nivel: 'iniciante' | 'intermediario' | 'avancado') => {
-    const pool = await getRaquetasPorNivel(nivel)
+    const pool = await getRaquetasPorNivelCached(nivel)
     return getTopRaquetasPorNivel(nivel, pool, 4)
   },
   ['top-picks-nivel-v1'],
@@ -1096,7 +1114,7 @@ export const getTopPicksNivelCached = unstable_cache(
 
 export const getTopPicksConfortoCached = unstable_cache(
   async () => {
-    const pool = await getRaquetasConforto()
+    const pool = await getRaquetasConfortoCached()
     return getTopRaquetasConforto(pool, 4)
   },
   ['top-picks-conforto-v1'],
