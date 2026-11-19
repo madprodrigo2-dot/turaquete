@@ -44,13 +44,14 @@ export default function BackButton({
       className={cls}
     >
       <CaretLeft size={16} weight="regular" aria-hidden="true" />
-      {/* Mobile (<sm): sempre "Voltar" (curto, sobra espaço para a tagline e a busca; marcas longas como
-          "Alma Genius" apertavam o cabeçalho). Desktop (sm+): descreve o destino quando vem de fora. */}
+      {/* Chegada de fora do site (sem página anterior): mobile (<sm) mostra "Ver mais" (curto: sobra espaço
+          para a tagline e a busca; marcas longas como "Alma Genius" apertavam o cabeçalho) e desktop (sm+)
+          descreve o destino ("Ver mais da Nox"). Com página anterior do site, sempre "Voltar". */}
       {voltaNoSite || !fallbackLabel ? (
         'Voltar'
       ) : (
         <>
-          <span className="sm:hidden">Voltar</span>
+          <span className="sm:hidden">Ver mais</span>
           <span className="hidden sm:inline">{fallbackLabel}</span>
         </>
       )}
