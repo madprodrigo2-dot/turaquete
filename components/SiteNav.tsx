@@ -36,6 +36,18 @@ export default function SiteNav({
             {backLabel}
           </Link>
         )}
+        {/* Tagline: deixa claro que o site indica raquetes e não é loja. Ocupa o espaço livre entre o
+            botão de voltar e a busca; se faltar espaço (botão "Ver mais da {marca}" longo, busca
+            expandida no mobile) o texto é cortado em silêncio, sem empurrar os vizinhos. Mobile usa a versão
+            curta "Não vendemos" (a completa não cabe ao lado de "Ver mais da {marca}" a 360-375px);
+            abaixo de 360px some (aria-hidden: é só reforço de marca, não informação essencial). */}
+        <p
+          className="hidden min-[360px]:block flex-1 min-w-0 overflow-hidden whitespace-nowrap text-center text-[11px] sm:text-xs text-tinta/55 leading-none"
+          aria-hidden="true"
+        >
+          <span className="sm:hidden">Não vendemos</span>
+          <span className="hidden sm:inline">Indicamos raquetes, não vendemos</span>
+        </p>
         <SearchBar />
       </div>
     </div>
