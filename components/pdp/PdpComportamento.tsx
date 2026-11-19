@@ -18,13 +18,13 @@ import type { DestaqueLinha } from '@/lib/pdpCopy'
 function Scorecard({ tom, titulo, itens }: { tom: 'brilha' | 'abre'; titulo: string; itens: DestaqueLinha[] }) {
   const brilha = tom === 'brilha'
   return (
-    <div className={`rounded-xl border p-3 ${brilha ? 'border-aqua/25 bg-aqua-light/60' : 'border-coral/20 bg-coral/[0.05]'}`}>
-      <p className={`text-[11px] font-bold uppercase tracking-wider mb-2 ${brilha ? 'text-[#088F8D]' : 'text-[#D9482B]'}`}>{titulo}</p>
+    <div className={`rounded-xl border p-3 ${brilha ? 'border-aqua/25 bg-[#EAF7F6]' : 'border-tinta/10 bg-[#F4F5F5]'}`}>
+      <p className={`text-[11px] font-bold uppercase tracking-wider mb-2 ${brilha ? 'text-[#088F8D]' : 'text-tinta/60'}`}>{titulo}</p>
       <ul className="flex flex-col gap-2">
         {itens.map(l => (
           <li key={l.key} className="flex items-center gap-2.5">
             <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${
-              brilha ? 'bg-aqua text-tinta' : 'bg-coral/15 text-[#D9482B]'
+              brilha ? 'bg-aqua text-tinta' : 'bg-[#E4E7E7] text-tinta/75'
             }`}>{l.value}</span>
             <div className="min-w-0 leading-tight">
               <p className="text-xs font-bold text-tinta">{l.label}</p>
@@ -37,14 +37,14 @@ function Scorecard({ tom, titulo, itens }: { tom: 'brilha' | 'abre'; titulo: str
   )
 }
 
-// Medidor de 3 segmentos: aqua (ou coral no nível 1) até o nível, o resto apagado.
+// Medidor de 3 segmentos: aqua até o nível (no nível 1, tinta apagada: coral é só do CTA), o resto apagado.
 function Medidor({ nivel }: { nivel: 1 | 2 | 3 }) {
   return (
     <div className="grid grid-cols-3 gap-1 w-full" role="img" aria-label={`Nível ${nivel} de 3`}>
       {[1, 2, 3].map(step => (
         <div
           key={step}
-          className={`h-1.5 rounded-full ${step <= nivel ? (nivel === 1 ? 'bg-coral' : 'bg-aqua') : 'bg-tinta/10'}`}
+          className={`h-1.5 rounded-full ${step <= nivel ? (nivel === 1 ? 'bg-tinta/45' : 'bg-aqua') : 'bg-tinta/10'}`}
         />
       ))}
     </div>
@@ -93,7 +93,7 @@ export default function PdpComportamento({
           ].filter(x => x.c).map(({ rotulo, c }) => (
             <div key={rotulo} className="rounded-xl border border-tinta/10 bg-white p-3 flex flex-col gap-1.5">
               <span className="text-[11px] font-medium text-tinta/65">{rotulo}</span>
-              <span className={`text-sm font-bold leading-snug sm:min-h-[2.5rem] ${c!.nivel === 1 ? 'text-[#D9482B]' : 'text-[#088F8D]'}`}>{c!.titulo}</span>
+              <span className={`text-sm font-bold leading-snug sm:min-h-[2.5rem] ${c!.nivel === 1 ? 'text-tinta/60' : 'text-[#088F8D]'}`}>{c!.titulo}</span>
               <Medidor nivel={c!.nivel} />
               <p className="text-[11px] text-tinta/75 leading-snug">{c!.texto}</p>
             </div>

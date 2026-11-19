@@ -15,13 +15,14 @@ const CX = 180
 const CY = 152
 const RADIUS = 84
 
-// Semáforo só na cor do número (posição/tamanho não mudam): 8-10 aqua intenso,
-// 6-7 como antes (teal no destaque, tinta nos demais), 1-5 coral.
-function semaforo(v: number | null, isTopStat: boolean): string {
-  if (v == null) return 'fill-tinta'
-  if (v >= 8) return 'fill-[#058583]'
-  if (v <= 5) return 'fill-coral'
-  return isTopStat ? 'fill-[#099997]' : 'fill-tinta'
+// Semáforo só no número (posição/tamanho não mudam). O coral é reservado ao CTA de compra, por isso
+// nenhuma faixa usa coral: 8-10 aqua intenso em negrito, 6-7 tinta (teal petróleo) regular,
+// 1-5 tinta apagada (opacity 45) para passar a segundo plano.
+function semaforo(v: number | null): { cls: string; weight: number } {
+  if (v == null) return { cls: 'fill-tinta', weight: 400 }
+  if (v >= 8) return { cls: 'fill-[#088F8D]', weight: 700 }
+  if (v <= 5) return { cls: 'fill-tinta/45', weight: 400 }
+  return { cls: 'fill-tinta', weight: 400 }
 }
 
 export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
@@ -134,7 +135,7 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
               <circle
                 cx={pt.x} cy={pt.y}
                 r={isActive || isTopStat ? 4.8 : 3.6}
-                className={`fill-white ${isGold ? 'stroke-gold-deep' : 'stroke-aqua'}`}
+                className={`fill-white ${isGold ? 'stroke-[#D99B00]' : 'stroke-aqua'}`}
                 strokeWidth={isActive ? 2.8 : 2.2}
               />
 
@@ -147,10 +148,10 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
                 opacity={isActive ? 1 : 0.82}
               >
                 {s.label}{' '}
-                <tspan className={semaforo(s.value, isTopStat)} fontWeight={700}>
+                <tspan className={semaforo(s.value).cls} fontWeight={semaforo(s.value).weight}>
                   {s.value ?? '–'}
                 </tspan>
-                {isGold && <tspan className="fill-gold-deep" fontWeight={700}>★</tspan>}
+                {isGold && <tspan className="fill-yellow" fontWeight={700}>★</tspan>}
               </text>
             </g>
           )
