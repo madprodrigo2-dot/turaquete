@@ -151,7 +151,7 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
                 <tspan className={semaforo(s.value).cls} fontWeight={semaforo(s.value).weight}>
                   {s.value ?? '–'}
                 </tspan>
-                {isGold && <tspan className="fill-yellow" fontWeight={700}>★</tspan>}
+                {isGold && <tspan className="fill-[#D99B00]" fontWeight={700}>★</tspan>}
               </text>
             </g>
           )
