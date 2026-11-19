@@ -1420,8 +1420,10 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
           )}
 
           {/* Como funciona — desktop only */}
-          <RevealDiv>
-            <div className="hidden md:block bg-white rounded-2xl p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
+          {/* O hidden fica no wrapper (não no filho): um wrapper vazio no mobile ainda conta como item do
+              flex e somava mais um gap-8 (64px em vez de 32px) entre o carrossel e a tarjeta da Tury. */}
+          <RevealDiv className="hidden md:block">
+            <div className="bg-white rounded-2xl p-6 shadow-card border border-[rgba(14,58,64,0.06)]">
               <div className="mb-5">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-tinta/40">Como funciona</p>
                 <p className="font-heading font-bold text-tinta text-lg mt-1">Perguntas rápidas, sem enrolação</p>
