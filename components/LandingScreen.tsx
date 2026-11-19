@@ -1539,7 +1539,7 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
                 <p className="font-heading font-bold text-tinta text-base md:text-lg">
                   As mais recomendadas pela Tury
                 </p>
-                <p className="text-tinta/70 text-xs">com base nas consultorias recentes</p>
+                <p className="text-tinta/70 text-xs">com base nas indicações recentes</p>
               </div>
               <FeaturedCarousel rackets={featuredRackets} />
             </div>
