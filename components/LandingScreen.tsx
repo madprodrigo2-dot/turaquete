@@ -599,8 +599,14 @@ function FeaturedCarousel({ rackets }: { rackets: RacketWithInsights[] }) {
       </button>
 
       {/* Dots — only as many as positions that are actually reachable */}
+      {/* Mobile: indicador compacto "3 / 12" (13 pontinhos viravam ruído visual) */}
       {dotCount > 1 && (
-        <div className="flex justify-center gap-1.5 mt-3" role="group" aria-label="Navegação do carrossel">
+        <p className="md:hidden mt-2 text-center text-[11px] text-tinta/50 tabular-nums" aria-hidden="true">
+          {Math.min(activeIdx, dotCount - 1) + 1} / {dotCount}
+        </p>
+      )}
+      {dotCount > 1 && (
+        <div className="hidden md:flex justify-center gap-1.5 mt-3" role="group" aria-label="Navegação do carrossel">
           {Array.from({ length: dotCount }, (_, idx) => (
             <button
               key={idx}
@@ -1463,16 +1469,13 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
               />
               <div className="self-end pb-0.5 md:pb-0 md:self-start">
                 <p className="font-heading font-bold text-tinta text-base md:text-lg leading-snug">Por que a Tury existe</p>
-                <p className="text-tinta/50 text-xs mt-0.5">Uma especialista virtual, não uma pessoa</p>
+                <p className="text-tinta/60 text-xs mt-0.5">Sua especialista de IA pra escolher a raquete certa</p>
               </div>
               <div className="col-span-2 md:col-span-1 md:self-start flex flex-col gap-1.5">
-                <p className="text-tinta/70 text-sm leading-snug mb-1">
-                  Quando você vai escolher a primeira raquete, quer achar a que encaixa no seu jogo e te ajuda a jogar melhor. No fim, é um investimento. A Tury existe pra você acertar essa escolha, com dados reais e sem nenhuma marca pagando pra aparecer primeiro.
-                </p>
                 {[
-                  'Analisa dados reais de cada raquete: peso, balance, material e pontuações técnicas',
-                  'Sem patrocínio: nenhuma marca paga para aparecer primeiro',
-                  'Explica o porquê de cada recomendação, não só o resultado',
+                  'Dados reais de peso, balance e materiais',
+                  'Zero patrocínio: nenhuma marca paga pra aparecer',
+                  'Explica o porquê de cada indicação pro seu jogo',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-2.5">
                     <span className="mt-0.5 w-4 h-4 rounded-full bg-aqua/10 border border-aqua/20 flex items-center justify-center shrink-0">
@@ -1534,9 +1537,9 @@ export default function LandingScreen({ onStart, brands, featuredRackets, athlet
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-0.5">
                 <p className="font-heading font-bold text-tinta text-base md:text-lg">
-                  As mais recomendadas pelo especialista
+                  As mais recomendadas pela Tury
                 </p>
-                <p className="text-tinta/50 text-xs">com base nas consultorias recentes</p>
+                <p className="text-tinta/70 text-xs">com base nas consultorias recentes</p>
               </div>
               <FeaturedCarousel rackets={featuredRackets} />
             </div>
