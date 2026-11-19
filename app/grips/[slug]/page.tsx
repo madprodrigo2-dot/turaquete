@@ -164,7 +164,7 @@ export default async function GripPage({ params }: { params: Promise<{ slug: str
 
   return (
     <div className="min-h-screen sand-texture">
-      <SiteNav useHistory fallbackHref="/" maxWidth="max-w-7xl" />
+      <SiteNav useHistory fallbackHref="/grips" fallbackLabel="Ver mais grips" maxWidth="max-w-7xl" />
 
       <div className="max-w-7xl mx-auto px-5 md:px-10 py-8">
 

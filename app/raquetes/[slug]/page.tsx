@@ -13,6 +13,7 @@ import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 import BuyButton from '@/components/BuyButton'
 import SiteNav from '@/components/SiteNav'
 import { buildRacketDescription } from '@/lib/metaDescription'
+import { labelVerMaisMarca } from '@/lib/navStack'
 import RacketBadgeOverlay from '@/components/RacketBadgeOverlay'
 import RacketImageTile from '@/components/RacketImageTile'
 import BrandLogo from '@/components/BrandLogo'
@@ -168,6 +169,7 @@ export default async function RaquetaPage({ params }: { params: Promise<{ slug: 
         <SiteNav
           useHistory
           fallbackHref={racket.brands?.slug ? `/marcas/${racket.brands.slug}` : '/'}
+          fallbackLabel={labelVerMaisMarca(racket.brands?.slug ? racket.brands?.name : null)}
           maxWidth="max-w-7xl"
         />
 

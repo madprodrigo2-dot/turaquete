@@ -8,6 +8,7 @@ import { CaretLeft } from '@phosphor-icons/react'
 interface Props {
   useHistory?: boolean
   fallbackHref?: string
+  fallbackLabel?: string
   backHref?: string
   backLabel?: string
   maxWidth?: string
@@ -16,6 +17,7 @@ interface Props {
 export default function SiteNav({
   useHistory,
   fallbackHref = '/',
+  fallbackLabel,
   backHref = '/',
   backLabel = 'Início',
   maxWidth = 'max-w-4xl',
@@ -24,7 +26,7 @@ export default function SiteNav({
     <div className="sticky top-0 z-30 bg-[#FBF6EF]/90 backdrop-blur-sm border-b border-[rgba(14,58,64,0.06)]">
       <div className={`${maxWidth} mx-auto px-5 md:px-8 py-3 flex items-center justify-between gap-4`}>
         {useHistory ? (
-          <BackButton fallbackHref={fallbackHref} />
+          <BackButton fallbackHref={fallbackHref} fallbackLabel={fallbackLabel} />
         ) : (
           <Link
             href={backHref}

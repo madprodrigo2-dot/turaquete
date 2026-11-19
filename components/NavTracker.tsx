@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { readStack, writeStack } from '@/lib/navStack'
+import { readStack, writeStack, NAV_EVENT } from '@/lib/navStack'
 
 // Mantém a pilha de páginas do site (ver lib/navStack.ts). Não renderiza nada.
 //  - Carga completa vinda de fora do site (Google, redes, link direto) ou aba sem histórico:
@@ -35,19 +35,25 @@ export default function NavTracker() {
   }, [])
 
   useEffect(() => {
-    let stack = readStack()
-    if (!iniciado.current) {
-      iniciado.current = true
-      if (cargaExterna() || stack.length === 0) {
-        writeStack([pathname])
-        return
+    atualizar()
+    // Avisa o BackButton (que decide o texto "Voltar" vs. "Ver mais da {marca}") que a pilha está pronta.
+    window.dispatchEvent(new Event(NAV_EVENT))
+
+    function atualizar() {
+      let stack = readStack()
+      if (!iniciado.current) {
+        iniciado.current = true
+        if (cargaExterna() || stack.length === 0) {
+          writeStack([pathname])
+          return
+        }
       }
+      const topo = stack[stack.length - 1]
+      if (pathname === topo) return
+      const foiAtras = Date.now() - popEm.current < POP_WINDOW_MS && stack[stack.length - 2] === pathname
+      stack = foiAtras ? stack.slice(0, -1) : [...stack, pathname]
+      writeStack(stack)
     }
-    const topo = stack[stack.length - 1]
-    if (pathname === topo) return
-    const foiAtras = Date.now() - popEm.current < POP_WINDOW_MS && stack[stack.length - 2] === pathname
-    stack = foiAtras ? stack.slice(0, -1) : [...stack, pathname]
-    writeStack(stack)
   }, [pathname])
 
   return null
