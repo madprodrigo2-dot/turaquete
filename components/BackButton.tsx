@@ -44,7 +44,16 @@ export default function BackButton({
       className={cls}
     >
       <CaretLeft size={16} weight="regular" aria-hidden="true" />
-      {voltaNoSite ? 'Voltar' : (fallbackLabel ?? 'Voltar')}
+      {/* Mobile (<sm): sempre "Voltar" (curto, sobra espaço para a tagline e a busca; marcas longas como
+          "Alma Genius" apertavam o cabeçalho). Desktop (sm+): descreve o destino quando vem de fora. */}
+      {voltaNoSite || !fallbackLabel ? (
+        'Voltar'
+      ) : (
+        <>
+          <span className="sm:hidden">Voltar</span>
+          <span className="hidden sm:inline">{fallbackLabel}</span>
+        </>
+      )}
     </Link>
   )
 }
