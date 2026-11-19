@@ -3,7 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 import { sendTelegram } from '@/lib/telegram'
 
 export const dynamic    = 'force-dynamic'
-export const maxDuration = 800 // ~13 min — teto do plano Pro com Fluid Compute (Hobby era 300s)
+// DEPENDE DO PLANO PRO: maxDuration 800 s (~13 min) é o teto do Pro com Fluid Compute.
+// Se voltar ao Hobby: o teto cai para 300 s. Reverter assim: maxDuration = 300, BUDGET_MS = 200_000 e
+// CHUNK_SIZE = 25 (o valor antigo; ~7 s/raquete => ~3 min por execução), o que faz o job cobrir o
+// catálogo em mais execuções (cada execução pega as raquetes com price_updated_at mais antigo, então o catálogo se completa ao longo dos dias).
+// Ver "Dependências do plano Vercel" no CLAUDE.md.
+export const maxDuration = 800
 
 const GECKO_URL          = 'https://api.geckoapi.com.br/v1/extract'
 const DELAY_MS           = 1200

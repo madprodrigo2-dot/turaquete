@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  listarRaquetasPorMarca, RacketWithInsights,
+  listarRaquetasPorMarca, listarMarcas, RacketWithInsights,
   getTopPicksNivelCached, getTopPicksConfortoCached,
 } from '@/lib/recommend'
 import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
@@ -11,7 +11,16 @@ import { derivarNivel } from '@/lib/nivel'
 import SiteNav from '@/components/SiteNav'
 import MarcaGrid from './MarcaGrid'
 
-export const dynamic = 'force-dynamic'
+// ISR: a página é igual para todo visitante (sem cookies/searchParams), então vira estática e
+// se regenera a cada 1h. Antes era force-dynamic: cada visita fazia 2 consultas ao Supabase.
+// ISR NÃO é recurso exclusivo do plano Pro (funciona igual no Hobby). Para forçar a atualização
+// logo após editar dados: npx tsx scripts/revalidate.ts --marcas
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const marcas = await listarMarcas().catch(() => [])
+  return marcas.map(m => ({ slug: m.slug }))
+}
 
 // ── Derived brand intro (deterministic, no LLM) ───────────────────────────────
 

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import VercelAnalytics from "@/components/VercelAnalytics";
+import VercelSpeedInsights from "@/components/VercelSpeedInsights";
 import PresenceTracker from "@/components/PresenceTracker";
 import GALoader from "@/components/GALoader";
 import SiteFooter from "@/components/SiteFooter";
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <SiteFooter />
         <VercelAnalytics />
+        <VercelSpeedInsights />
       </body>
       {process.env.NEXT_PUBLIC_GA_ID && (
         <GALoader gaId={process.env.NEXT_PUBLIC_GA_ID} />

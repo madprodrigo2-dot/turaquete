@@ -1092,10 +1092,14 @@ export async function getNovidadesRaquetas(): Promise<RacketWithInsights[]> {
 // mesmo para todas as páginas, então fica em cache de 1h compartilhado entre
 // elas (Fluid Active CPU estourou o tier grátis em 2026-11-17 por causa disso).
 // Uma única leitura do catálogo por hora serve a todos os pools abaixo.
+// Tag única do cache compartilhado do catálogo (1h). /api/admin/revalidate aceita { tags: ['catalogo'] }
+// para limpar tudo de uma vez após editar dados no banco (scripts/revalidate.ts faz isso).
+export const CATALOGO_TAG = 'catalogo'
+
 export const listarRaquetasCached = unstable_cache(
   async () => listarRaquetas(),
   ['listar-raquetas-v1'],
-  { revalidate: 3600 }
+  { revalidate: 3600, tags: [CATALOGO_TAG] }
 )
 
 export async function getRaquetasPorNivelCached(
@@ -1116,7 +1120,7 @@ export const getTopPicksNivelCached = unstable_cache(
     return getTopRaquetasPorNivel(nivel, pool, 4)
   },
   ['top-picks-nivel-v1'],
-  { revalidate: 3600 }
+  { revalidate: 3600, tags: [CATALOGO_TAG] }
 )
 
 export const getTopPicksConfortoCached = unstable_cache(
@@ -1125,5 +1129,5 @@ export const getTopPicksConfortoCached = unstable_cache(
     return getTopRaquetasConforto(pool, 4)
   },
   ['top-picks-conforto-v1'],
-  { revalidate: 3600 }
+  { revalidate: 3600, tags: [CATALOGO_TAG] }
 )

@@ -137,5 +137,25 @@ Atualizar `image_url = '/raquetes/{slug}.webp'` na tabela `rackets`.
 |---------|-------------|
 | `npx tsx scripts/seed-insights.ts <id>` | Alta de raquete nova — obrigatório no mesmo turno do INSERT |
 | `npm run motor:recalc` | Recalcular scores de todas as raquetes publicadas após mudança de specs |
+| `npx tsx scripts/revalidate.ts <slug...>` (ou `--todas`, `--marcas`, `--catalogo`) | **Depois de editar dados direto no banco** (textos, notas, preço): força a atualização das páginas em produção (ISR de 1h + cache do catálogo). Sem isto a ficha antiga pode aparecer por até 1h. Imprime só contagens |
 | `npx tsx scripts/check-nivel-textos.ts [slug]` | Após alta de raquete ou editar `summary`/`perfil_resumo`: acusa texto que recomenda um nível que o motor marca como "fora" (só lê; sai com 1 se achar) |
 | `npx tsx scripts/check-textos-notas.ts [slug] [--min=2] [--json=arq]` | Após alta de raquete ou editar textos: compara afirmações de `summary`/`perfil_resumo` (superlativos, "alto/baixo", "raquete de X", números) com as 7 notas reais do motor. Heurístico (há falsos positivos): serve para priorizar revisão humana; só lê |
+
+---
+
+## Dependências do plano Vercel (Pro vs Hobby)
+
+O projeto está no **Vercel Pro**. Esta seção lista o que depende (ou poderia depender) do plano, com o
+valor equivalente do Hobby e como reverter. Os limites do Hobby abaixo são os conhecidos na data desta
+nota (2026-11); **confirmar na documentação da Vercel antes de agir**, porque os planos mudam.
+
+| Recurso | Onde | Depende do Pro? | Se voltar ao Hobby |
+|---|---|---|---|
+| `maxDuration = 800` (~13 min) | `app/api/cron/sync-precos/route.ts` | **Sim** (teto do Pro com Fluid Compute) | Hobby: 300 s. Usar `maxDuration = 300`, `BUDGET_MS = 200_000`, `CHUNK_SIZE = 25`. Já documentado no próprio arquivo |
+| Crons (`vercel.json`: `daily-summary` 14:00 e `sync-precos` 09:00) | `vercel.json` | Não: 1 execução/dia por cron é compatível com o Hobby | **Não adicionar crons mais frequentes que 1x/dia** sem Pro. Se um dia precisar, avisar que no Hobby não é possível |
+| ISR (`revalidate`) e revalidação sob demanda (`/api/admin/revalidate`, `scripts/revalidate.ts`) | páginas e API | Não | Nada a mudar |
+| Vercel Analytics + Speed Insights | `components/VercelAnalytics.tsx`, `components/VercelSpeedInsights.tsx` | Parcial: existem no Hobby, com cota menor de pontos de dados; ao estourar a coleta pausa (o site não quebra) | Nada quebra. Para desligar: remover o componente do `app/layout.tsx` |
+| Firewall (regras, rate limits, IP blocks) e Spend Management | painel da Vercel, não está no código | **Sim** (limites maiores no Pro) | Regras que excederem o limite do Hobby precisam ser removidas ou consolidadas. O rate limit **da aplicação** (`lib/rate-limit.ts`: chat, events, cliques) **não depende do plano** e continua funcionando |
+
+Regra: ao criar algo que dependa do plano (`maxDuration`, frequência de cron, cotas, limites do Firewall),
+deixar um comentário junto ao código com o valor do Hobby e este quadro atualizado.
