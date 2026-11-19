@@ -5,6 +5,13 @@ import { TOM_CHIP, CARD } from './tom'
 
 const COLS_SM: Record<number, string> = { 1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4' }
 
+// Valores muito longos (ex.: "Fiberglass & Carbon (SXY NanoGlass)") perdem o parêntese técnico no card.
+function valorCurto(v: string): string {
+  if (v.length <= 24) return v
+  const sem = v.replace(/\s*\([^)]*\)\s*/g, ' ').trim()
+  return sem || v
+}
+
 // "DNA rápido": os 4 dados que todo jogador olha primeiro, com uma etiqueta que
 // traduz o número em linguagem de quadra. Mesmos dados da tabela de specs.
 export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights }) {
@@ -35,16 +42,17 @@ export default function PdpAdnRapido({ racket }: { racket: RacketWithInsights })
         {cards.map((c, i) => (
           <div key={c.label} className={`${CARD} px-3.5 py-3 flex flex-col gap-1 min-w-0 ${cards.length % 2 === 1 && i === cards.length - 1 ? 'col-span-2 sm:col-span-1' : ''}`}>
             <span className="text-[10px] uppercase tracking-wide text-tinta/40 font-medium">{c.label}</span>
-            {/* Mobile: 1 linha sempre (as 4 tarjetas ficam da mesma altura; o valor completo
-                está na ficha técnica). Desktop é uma única fila, então pode quebrar linha. */}
+            {/* Sem truncar: o valor quebra entre palavras (nunca "Fibra d…"). Valores muito longos perdem só
+                o parêntese técnico (o texto completo fica no title e na ficha técnica). A tarjeta mais alta
+                da fila define a altura das outras e a etiqueta fica sempre no pé. */}
             <span
               title={c.value}
-              className="text-tinta font-bold text-sm sm:text-base leading-tight truncate sm:overflow-visible sm:whitespace-normal sm:break-words"
+              className="text-tinta font-bold text-[13px] sm:text-base leading-tight break-words min-h-[2.5em] sm:min-h-0"
             >
-              {c.value}
+              {valorCurto(c.value ?? '')}
             </span>
             {c.t && (
-              <span title={c.t.tag} className={`self-start max-w-full truncate text-[11px] font-semibold px-2 py-0.5 rounded-full ${TOM_CHIP[c.t.tom]}`}>
+              <span title={c.t.tag} className={`self-start mt-auto max-w-full text-[11px] leading-tight font-semibold px-2 py-0.5 rounded-lg ${TOM_CHIP[c.t.tom]}`}>
                 {c.t.tag}
               </span>
             )}
