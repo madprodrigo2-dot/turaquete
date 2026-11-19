@@ -12,6 +12,7 @@ import { SEARCH_FALLBACK_UNCOVERED } from '@/lib/ml-search'
 import { SITE_URL, breadcrumbJsonLd } from '@/lib/site'
 import BuyButton from '@/components/BuyButton'
 import SiteNav from '@/components/SiteNav'
+import { buildRacketDescription } from '@/lib/metaDescription'
 import RacketBadgeOverlay from '@/components/RacketBadgeOverlay'
 import RacketImageTile from '@/components/RacketImageTile'
 import BrandLogo from '@/components/BrandLogo'
@@ -54,9 +55,9 @@ export async function generateMetadata(
 
   const displayName = getDisplayName(racket)
   const title = `${displayName} — Raquete de Beach Tennis`
-  const description =
-    ins?.perfil_resumo ??
-    `Especificações reais, avaliação e onde comprar a ${displayName}.${price ? ` A partir de ${price}.` : ''}`
+  // Frase(s) do perfil + "Consultoria gratuita, sem cadastro." (ver lib/metaDescription.ts).
+  // O JSON-LD de Product mais abaixo segue usando o perfil_resumo puro, sem a chamada.
+  const description = buildRacketDescription(ins?.perfil_resumo, displayName, price)
 
   return {
     title,
