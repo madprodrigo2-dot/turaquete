@@ -3,9 +3,11 @@
 // o trecho da raquete é que é recortado (em limite de palavra, sem reticências), nunca a chamada.
 // O JSON-LD (Product) NÃO usa isto: segue com o perfil_resumo puro (ver app/raquetes/[slug]/page.tsx).
 
-export const CTA_CONSULTORIA = 'Consultoria gratuita, sem cadastro.'
+// Decisão do Rodrigo: "indicação" (não "consultoria"), por precaução legal (não soar como serviço profissional
+// regulado), e sem citar o nome do assistente (Tury).
+export const CTA_INDICACAO = 'Indicação gratuita, sem cadastro.'
 
-// Orçamento do trecho da raquete: 115 + ". " (2) + CTA (35) ≈ 152 caracteres no máximo.
+// Orçamento do trecho da raquete: 115 + ". " (2) + CTA (33) ≈ 150 caracteres no máximo.
 const MAX_TRECHO = 115
 
 // Palavras que não podem ficar soltas no fim de um trecho recortado ("... linha de" / "... para").
@@ -52,5 +54,5 @@ export function buildRacketDescription(perfilResumo: string | null | undefined, 
     trecho = `Especificações reais, avaliação e onde comprar a ${nomeParaFallback}.${preco ? ` A partir de ${preco}.` : ''}`
   }
   trecho = trecho.replace(/[.!?\s]+$/, '')
-  return `${trecho}. ${CTA_CONSULTORIA}`
+  return `${trecho}. ${CTA_INDICACAO}`
 }

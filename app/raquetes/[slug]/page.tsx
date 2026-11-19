@@ -55,7 +55,7 @@ export async function generateMetadata(
 
   const displayName = getDisplayName(racket)
   const title = `${displayName} — Raquete de Beach Tennis`
-  // Frase(s) do perfil + "Consultoria gratuita, sem cadastro." (ver lib/metaDescription.ts).
+  // Frase(s) do perfil + "Indicação gratuita, sem cadastro." (ver lib/metaDescription.ts).
   // O JSON-LD de Product mais abaixo segue usando o perfil_resumo puro, sem a chamada.
   const description = buildRacketDescription(ins?.perfil_resumo, displayName, price)
 
