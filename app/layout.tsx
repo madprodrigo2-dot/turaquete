@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import NavTracker from "@/components/NavTracker";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import VercelSpeedInsights from "@/components/VercelSpeedInsights";
 import PresenceTracker from "@/components/PresenceTracker";
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           anonKey={process.env.SUPABASE_ANON_KEY!}
         />
         <SiteFooter />
+        <NavTracker />
         <VercelAnalytics />
         <VercelSpeedInsights />
       </body>
