@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { sendTelegram } from '@/lib/telegram'
+import { montarMensagemVenda } from '@/lib/affiliateSaleMessage'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +16,6 @@ export const dynamic = 'force-dynamic'
  * Body JSON: { id, fecha|data, produto, tienda|loja, venta|venda, comision|comissao, estado|status }
  * Só `id` é obrigatório; o resto é opcional e vai em texto simples (escapado). Nada é gravado em banco.
  */
-
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 function autorizado(req: Request): boolean {
   const secret = process.env.AFFILIATE_NOTIFY_SECRET || process.env.CRON_SECRET
@@ -41,8 +40,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Decodifica o corpo como UTF-8 estrito. Se vier em outra codificação (cliente que manda bytes
+  // Windows-1252/Latin-1, ex.: curl no Windows), cai para Windows-1252 em vez de gravar "�" no texto.
   let body: unknown
-  try { body = await req.json() } catch {
+  try {
+    const bytes = await req.arrayBuffer()
+    let txt: string
+    try { txt = new TextDecoder('utf-8', { fatal: true }).decode(bytes) }
+    catch { txt = new TextDecoder('windows-1252').decode(bytes) }
+    body = JSON.parse(txt)
+  } catch {
     return NextResponse.json({ error: 'Body inválido' }, { status: 400 })
   }
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -53,21 +60,15 @@ export async function POST(req: Request) {
   const id = campo(b, 'id')
   if (!id) return NextResponse.json({ error: 'id é obrigatório' }, { status: 400 })
 
-  const linhas: Array<[string, string | null]> = [
-    ['Produto', campo(b, 'produto', 'product')],
-    ['Loja', campo(b, 'tienda', 'loja', 'tienda')],
-    ['Venda', campo(b, 'venta', 'venda')],
-    ['Comissão', campo(b, 'comision', 'comissao', 'comisión', 'comissão')],
-    ['Data', campo(b, 'fecha', 'data')],
-    ['Status', campo(b, 'estado', 'status')],
-  ]
-
-  const texto = [
-    '💰 <b>Nova venda de afiliado (Mercado Livre)</b>',
-    '',
-    ...linhas.filter(([, v]) => v).map(([k, v]) => `<b>${k}:</b> ${esc(v as string)}`),
-    `<b>ID:</b> <code>${esc(id)}</code>`,
-  ].join('\n')
+  const texto = montarMensagemVenda({
+    id,
+    produto: campo(b, 'produto', 'product'),
+    loja: campo(b, 'tienda', 'loja'),
+    venda: campo(b, 'venta', 'venda'),
+    comissao: campo(b, 'comision', 'comissao', 'comisión', 'comissão'),
+    data: campo(b, 'fecha', 'data'),
+    status: campo(b, 'estado', 'status'),
+  })
 
   try {
     await sendTelegram(texto)
