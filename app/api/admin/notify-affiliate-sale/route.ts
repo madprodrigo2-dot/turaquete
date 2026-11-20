@@ -1,5 +1,5 @@
-import { timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
+import { autorizadoAfiliado } from '@/lib/affiliateAuth'
 import { sendTelegram } from '@/lib/telegram'
 import { montarMensagemVenda } from '@/lib/affiliateSaleMessage'
 
@@ -17,14 +17,6 @@ export const dynamic = 'force-dynamic'
  * Só `id` é obrigatório; o resto é opcional e vai em texto simples (escapado). Nada é gravado em banco.
  */
 
-function autorizado(req: Request): boolean {
-  const secret = process.env.AFFILIATE_NOTIFY_SECRET || process.env.CRON_SECRET
-  if (!secret) return false
-  const got = Buffer.from(req.headers.get('authorization') ?? '')
-  const want = Buffer.from(`Bearer ${secret}`)
-  return got.length === want.length && timingSafeEqual(got, want)
-}
-
 // Aceita string ou número; corta em 200 caracteres.
 function campo(body: Record<string, unknown>, ...chaves: string[]): string | null {
   for (const k of chaves) {
@@ -36,7 +28,7 @@ function campo(body: Record<string, unknown>, ...chaves: string[]): string | nul
 }
 
 export async function POST(req: Request) {
-  if (!autorizado(req)) {
+  if (!autorizadoAfiliado(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
