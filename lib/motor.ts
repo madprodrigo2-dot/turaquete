@@ -11,6 +11,8 @@ import {
 type Tecnologia = { nome: string; tipo: string }
 
 export interface MotorInput {
+  // Formato da cabeça (rackets.format). Só decide o +1 de perdão: ver bonusPerdaoFormato().
+  format?: string | null
   superficie?: string | null
   furos?: number | null
   espessura_mm?: number | null
@@ -101,6 +103,17 @@ function texturaScore(superficie: string | null | undefined, hasSpinTech: boolea
   return 5
 }
 
+// ── Formato da cabeça → +1 de perdão ──────────────────────────────────────────
+// O motor sempre deu +1 de perdão "porque a cabeça é redonda". Agora o bônus só some quando o formato
+// está preenchido e NÃO é redondo/oval (ex.: 'diamante', 'gota'), que têm sweet spot menor. Sem dado
+// (null/vazio) mantém o +1 de sempre, para não mexer em quem nunca teve o formato carregado.
+// 'redondo' (masculino) e 'Oval Clássica' continuam recebendo o +1, como antes.
+export function bonusPerdaoFormato(format: string | null | undefined): number {
+  const f = (format ?? '').trim().toLowerCase()
+  if (!f) return 1
+  return f.includes('redond') || f.includes('oval') ? 1 : 0
+}
+
 // ── Motor principal ───────────────────────────────────────────────────────────
 
 export function calcularMotor(input: MotorInput): MotorResult {
@@ -160,7 +173,7 @@ export function calcularMotor(input: MotorInput): MotorResult {
   let forg = 4
   forg += FACE_FORG[faceGrade]
   forg += CORE_FORG[coreClass]
-  forg += 1  // formato sempre redonda
+  forg += bonusPerdaoFormato(input.format)  // +1 se redonda/oval ou sem dado; 0 para diamante/gota/etc.
   if (esp != null && esp >= 22) forg += 1
   if (esp != null && esp <= 20) forg -= 1
   // Faces muito rígidas (18K/24K) não são muito forgiving mesmo com core soft
@@ -238,7 +251,8 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
   const maneuverabilityFinal = Math.min(10, Math.max(1, manRaw))
 
   const forgEsp = esp != null && esp >= 22 ? 1 : esp != null && esp <= 20 ? -1 : 0
-  let forgRaw = 4 + FACE_FORG[faceGrade] + CORE_FORG[coreClass] + 1 + forgEsp
+  const forgFormato = bonusPerdaoFormato(input.format)
+  let forgRaw = 4 + FACE_FORG[faceGrade] + CORE_FORG[coreClass] + forgFormato + forgEsp
   const forgCapped = (faceGrade === 'CARBON_18K' || faceGrade === 'CARBON_24K') && forgRaw > 7
   if (forgCapped) forgRaw = 7
   const forgivenessFinal = Math.min(10, Math.max(1, forgRaw))
@@ -290,7 +304,7 @@ export function calcularMotorTrace(input: MotorInput): MotorTrace {
       { label: 'base', value: 4, isBase: true },
       { label: `FACE_FORG[${faceGrade}]`, value: fmt(FACE_FORG[faceGrade]) },
       { label: `CORE_FORG[${coreClass}]`, value: fmt(CORE_FORG[coreClass]) },
-      { label: 'formato redonda', value: '+1' },
+      { label: `formato${input.format ? ' ' + input.format : ' (sem dado)'}`, value: fmt(forgFormato) },
       { label: `esp (${esp ?? '?'}mm)`, value: fmt(forgEsp) },
       { label: 'resultado', value: forgivenessFinal, isFinal: true, note: forgCapped ? 'cap 7 para faces 18K/24K' : undefined },
     ],

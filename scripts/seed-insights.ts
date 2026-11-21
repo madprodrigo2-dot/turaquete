@@ -18,7 +18,7 @@ if (!ids.length) { console.error('Uso: npx tsx scripts/seed-insights.ts <id1> <i
 async function main() {
   const { data: rackets, error } = await sb
     .from('rackets')
-    .select('id, name, slug, face_material, core, weight_g, balance, specs_extra')
+    .select('id, name, slug, format, face_material, core, weight_g, balance, specs_extra')
     .in('id', ids)
 
   if (error) { console.error('DB error:', error.message); process.exit(1) }
@@ -37,6 +37,7 @@ async function main() {
 
     const sx = r.specs_extra ?? {}
     const nv = calcularMotor({
+      format: r.format,
       superficie: sx.superficie,
       furos: sx.furos,
       espessura_mm: sx.espessura_mm,

@@ -26,6 +26,7 @@ const DIM_PRIORITY: MotorDim[] = ['control', 'power', 'comfort', 'maneuverabilit
 function motorInput(r: RacketWithInsights) {
   const sx = (r.specs_extra ?? {}) as Record<string, unknown>
   return {
+    format: r.format,
     superficie: (sx.superficie as string | undefined) ?? null,
     furos: (sx.furos as number | undefined) ?? null,
     espessura_mm: (sx.espessura_mm as number | undefined) ?? null,

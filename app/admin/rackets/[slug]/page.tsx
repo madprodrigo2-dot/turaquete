@@ -115,6 +115,7 @@ export default async function EditRaquetaPage({
 
   const se = (racket.specs_extra ?? {}) as Record<string, unknown>
   const motorTrace = calcularMotorTrace({
+    format: racket.format,
     face_material: racket.face_material,
     core: racket.core,
     weight_g: racket.weight_g,

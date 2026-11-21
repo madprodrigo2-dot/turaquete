@@ -62,7 +62,7 @@ export async function salvarFisicos(slug: string, data: FisicosData) {
 
   const { data: racket, error } = await sb
     .from('rackets')
-    .select('id, specs_extra')
+    .select('id, specs_extra, format')
     .eq('slug', slug)
     .single()
   if (error || !racket) throw new Error('Raqueta não encontrada')
@@ -88,6 +88,7 @@ export async function salvarFisicos(slug: string, data: FisicosData) {
 
   // Run motor calculation (all 7 dims)
   const motorResult = calcularMotor({
+    format: racket.format,
     superficie: data.superficie,
     furos: data.furos,
     espessura_mm: data.espessura_mm,

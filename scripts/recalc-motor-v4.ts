@@ -17,7 +17,7 @@ const sb = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:
 async function main() {
   const { data: rackets, error } = await sb
     .from('rackets')
-    .select(`id, name, slug, face_material, core, weight_g, balance, specs_extra,
+    .select(`id, name, slug, format, face_material, core, weight_g, balance, specs_extra,
       racket_insights(${MOTOR_DIMS.join(',')}, overrides, motor_cache)`)
     .eq('publicada', true)
     .order('name')
@@ -33,6 +33,7 @@ async function main() {
 
     const sx = r.specs_extra ?? {}
     const nv = calcularMotor({
+      format: r.format,
       superficie: sx.superficie,
       furos: sx.furos,
       espessura_mm: sx.espessura_mm,
