@@ -23,12 +23,12 @@ function Scorecard({ tom, titulo, itens }: { tom: 'brilha' | 'abre'; titulo: str
       <ul className="flex flex-col gap-2">
         {itens.map(l => (
           <li key={l.key} className="flex items-center gap-2.5">
-            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[16px] leading-none font-extrabold ${
               brilha ? 'bg-aqua text-tinta' : 'bg-[#E4E7E7] text-tinta/75'
             }`}>{l.value}</span>
             <div className="min-w-0 leading-tight">
               <p className="text-xs font-bold text-tinta">{l.label}</p>
-              {l.nota && <p className="text-[11px] text-tinta/70 truncate first-letter:uppercase">{l.nota}</p>}
+              {l.nota && <p className="text-[11px] text-[#0E3A40]/80 truncate first-letter:uppercase">{l.nota}</p>}
             </div>
           </li>
         ))}

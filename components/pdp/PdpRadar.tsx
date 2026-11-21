@@ -13,16 +13,16 @@ import type { DimensaoStat } from '@/lib/pdpCopy'
 
 const CX = 180
 const CY = 152
-const RADIUS = 84
+const RADIUS = 96
 
-// Semáforo só no número (posição/tamanho não mudam). O coral é reservado ao CTA de compra, por isso
-// nenhuma faixa usa coral: 8-10 aqua intenso em negrito, 6-7 tinta (teal petróleo) regular,
-// 1-5 tinta apagada (opacity 45) para passar a segundo plano.
-function semaforo(v: number | null): { cls: string; weight: number } {
-  if (v == null) return { cls: 'fill-tinta', weight: 400 }
-  if (v >= 8) return { cls: 'fill-[#088F8D]', weight: 700 }
-  if (v <= 5) return { cls: 'fill-tinta/45', weight: 400 }
-  return { cls: 'fill-tinta', weight: 400 }
+// Semáforo só na cor do número (sempre em negrito, 16px). O coral é reservado ao CTA de compra, por isso
+// nenhuma faixa usa coral: 8-10 aqua intenso, 6-7 tinta (teal petróleo),
+// 1-5 tinta apagada (opacity 55) para passar a segundo plano sem perder legibilidade.
+function semaforo(v: number | null): { cls: string } {
+  if (v == null) return { cls: 'fill-tinta' }
+  if (v >= 8) return { cls: 'fill-[#088F8D]' }
+  if (v <= 5) return { cls: 'fill-tinta/55' }
+  return { cls: 'fill-tinta' }
 }
 
 export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
@@ -60,7 +60,7 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
     <div className="rounded-2xl border border-tinta/10 bg-aqua-light/45 overflow-hidden -mx-3 sm:mx-0">
       <div className="p-2 sm:p-4">
       <svg
-        viewBox="0 0 360 305"
+        viewBox="3 0 344 305"
         className="w-full max-w-[380px] mx-auto select-none overflow-visible"
         role="group"
         aria-label="Gráfico das 6 características da raquete"
@@ -105,8 +105,14 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
           const isGold = v >= 9
 
           const cos = Math.cos(pt.angle)
+          const sin = Math.sin(pt.angle)
           const textAnchor = Math.abs(cos) < 0.2 ? 'middle' : cos > 0 ? 'start' : 'end'
-          const dy = Math.sin(pt.angle) < -0.7 ? -4 : Math.sin(pt.angle) > 0.7 ? 10 : 4
+          // Etiqueta em 2 linhas: nome (11px) em cima, nota (16px) embaixo. O bloco fica acima do
+          // vértice no topo, abaixo nos vértices de baixo e centrado na vertical nas laterais.
+          const NOME_Y = 11
+          const NOTA_Y = 17
+          const lyNome = labelPos.y + (sin < -0.7 ? -NOTA_Y - 2 : sin > 0.7 ? NOME_Y : -3)
+          const lyNota = lyNome + NOTA_Y
 
           return (
             <g
@@ -139,19 +145,28 @@ export default function PdpRadar({ stats }: { stats: DimensaoStat[] }) {
                 strokeWidth={isActive ? 2.8 : 2.2}
               />
 
-              <text
-                x={labelPos.x}
-                y={labelPos.y + dy}
-                textAnchor={textAnchor}
-                className="text-[12.5px] fill-tinta transition-opacity"
-                fontWeight={isActive || isTopStat ? 700 : 500}
-                opacity={isActive ? 1 : 0.82}
-              >
-                {s.label}{' '}
-                <tspan className={semaforo(s.value).cls} fontWeight={semaforo(s.value).weight}>
-                  {s.value ?? '–'}
+              {/* Duas linhas: o opacity do nome fica no próprio fill (a nota usa a cor do semáforo, sem
+                  opacidade extra, para as notas baixas não escurecerem duas vezes). */}
+              <text x={labelPos.x} y={lyNome} textAnchor={textAnchor} className="select-none">
+                <tspan
+                  x={labelPos.x}
+                  className={isActive ? 'fill-tinta' : 'fill-tinta/80'}
+                  fontSize="11"
+                  fontWeight={isActive || isTopStat ? 600 : 500}
+                >
+                  {s.label}
                 </tspan>
-                {isGold && <tspan className="fill-[#D99B00]" fontWeight={700}>★</tspan>}
+                <tspan
+                  x={labelPos.x}
+                  y={lyNota}
+                  className={semaforo(s.value).cls}
+                  fontSize="16"
+                  fontWeight={700}
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {s.value ?? '–'}
+                  {isGold && <tspan className="fill-[#D99B00]" fontSize="14" fontWeight={700}>★</tspan>}
+                </tspan>
               </text>
             </g>
           )
