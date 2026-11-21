@@ -740,6 +740,9 @@ export async function getRaquetasComAtleta(): Promise<RacketWithInsights[]> {
     .select(SELECT_FIELDS)
     .eq('publicada', true)
     .eq('destaque_atleta', true)
+    // is_active=false = "não recomendada": só a home usa esta lista (vitrine "raquetes dos atletas"),
+    // então as inativas ficam de fora (mesma regra de getTopRaquetas). Continuam no catálogo e na ficha.
+    .neq('is_active', false)
     .order('name')
 
   if (error) throw new Error(`Supabase: ${error.message}`)
