@@ -103,6 +103,16 @@ export function microEspessura(mm: number | null | undefined): string | null {
   return 'Perfil grosso: mais rigidez e potência.'
 }
 
+// Balance (ponto de equilíbrio). Texto a partir da definição do glossário (cabo = controle e manuseio,
+// cabeça = potência). Valor desconhecido: sem micro-explicação.
+export function microBalance(balance: string | null | undefined): string | null {
+  const b = (balance ?? '').toLowerCase()
+  if (b.includes('cabeça') || b.includes('cabeca')) return 'Peso concentrado na cabeça: mais potência.'
+  if (b.includes('cabo')) return 'Peso mais perto do cabo: mais controle e manuseio.'
+  if (b.includes('médio') || b.includes('medio')) return 'Equilíbrio entre potência e manuseio.'
+  return null
+}
+
 export const MICRO_FUROS =
   'Aberturas que formam a trama da face; influenciam spin, saída de bola e controle.'
 

@@ -3,13 +3,14 @@ import type { RacketWithInsights } from '@/lib/recommend'
 import { buildSpecRows } from '@/components/SpecsGrid'
 import MegaSpinLink from '@/components/MegaSpinLink'
 import {
-  microFace, microNucleo, microEspessura, microSuperficie, MICRO_FUROS, descTecnologia,
+  microFace, microNucleo, microEspessura, microSuperficie, microBalance, MICRO_FUROS, descTecnologia,
 } from '@/lib/pdpCopy'
 import { CARD } from './tom'
 
 // Bloco A: ficha técnica "em quadra" — cada linha com uma micro-explicação do
 // que o dado significa na prática; a MegaSpin fica dentro da linha Superfície.
-// Bloco B: dados de catálogo (marca, atleta, ano) numa linha discreta no rodapé.
+// Bloco B: dados de catálogo (marca, atleta) numa linha discreta no rodapé. Balance e Ano têm
+// linha própria (rótulos "Balance" e "Ano"), só quando o dado existe.
 
 interface Props {
   racket: RacketWithInsights
@@ -42,19 +43,18 @@ export function PdpSpecs({ racket, athlete, tratamentoFabrica }: Props) {
   const espessura = espMm != null ? `${espMm}mm` : get('Espessura')
   const furos = get('Furos')
   const superficie = get('Superfície')
+  const balance = get('Balance')
+  const ano = get('Ano')
 
-  const catalogo = [
-    racket.brands?.name,
-    athlete,
-    racket.model_year ? String(racket.model_year) : null,
-  ].filter(Boolean) as string[]
+  const catalogo = [racket.brands?.name, athlete].filter(Boolean) as string[]
 
-  if (!face && !nucleo && !espessura && !furos && !superficie) return null
+  if (!face && !nucleo && !espessura && !furos && !superficie && !balance && !ano) return null
 
   return (
     <section aria-label="Especificações" className={`${CARD} p-5 flex flex-col gap-3`}>
       <p className="text-tinta font-semibold text-sm">Ficha técnica</p>
       <div className="flex flex-col">
+        {balance && <Linha label="Balance" value={balance} micro={microBalance(racket.balance)} />}
         {face && <Linha label="Material da face" value={face} micro={microFace(racket.face_material)} />}
         {nucleo && <Linha label="Núcleo (EVA)" value={nucleo} micro={microNucleo(racket.core)} />}
         {espessura && <Linha label="Espessura" value={espessura} micro={microEspessura(espMm)} />}
@@ -67,6 +67,7 @@ export function PdpSpecs({ racket, athlete, tratamentoFabrica }: Props) {
             extra={<MegaSpinLink inline racketId={racket.id} racketSlug={racket.slug} racketName={racket.name} />}
           />
         )}
+        {ano && <Linha label="Ano" value={ano} />}
       </div>
       {catalogo.length > 0 && (
         <p className="text-[11px] text-tinta/40 pt-2 border-t border-tinta/[0.06]">
