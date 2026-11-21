@@ -618,7 +618,12 @@ export async function getTopRaquetas(): Promise<TopRaquetasResult> {
   const rawRecIds = [...recCounts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id)
 
   const allIds = [...new Set([...rawClickIds, ...rawRecIds])]
-  const racketsById = new Map((await getRaquetasByIds(allIds)).map(r => [r.id, r]))
+  // is_active=false = "não recomendada" (mesma regra do chat em buscarRaquetas): fica de fora do
+  // carrossel mesmo que tenha clique/recomendação no histórico. Sem o id no mapa, as etapas abaixo
+  // (piso, tryAdd, troca por iniciante) já a ignoram e o slot é preenchido pela próxima candidata.
+  const racketsById = new Map(
+    (await getRaquetasByIds(allIds)).filter(r => r.is_active !== false).map(r => [r.id, r]),
+  )
 
   // Piso de qualidade: descarta candidatas com scoreGeral abaixo do corte
   // antes de rankear por clique/recs — resolve a queixa de raquetes de gama
