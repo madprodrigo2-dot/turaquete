@@ -73,6 +73,12 @@ export function classifyCore(core: string | null | undefined): CoreClass {
   // "Soft Plus" — o "Plus" indica um EVA mais macio que o soft padrão (dado de
   // mercado, 2026-09). Checado ANTES do 'soft' genérico abaixo, senão nunca seria alcançado.
   if (c.includes('soft plus')) return 'SUPERSOFT'
+  // Oxy (2026-11): a marca publica a dureza. "EVA Extra Power" = baixa densidade, 8 a 10 Shore (mesma
+  // faixa do 'eva 10' abaixo → SUPERSOFT); "EVA Power" = média densidade, 12 a 14 Shore (entre o 'eva 13'
+  // e o 'eva15' → SOFT, por prudência). Regras específicas, não um includes('power') genérico. Checar
+  // 'extra power' ANTES de 'eva power' (um não contém o outro, mas a ordem deixa a intenção clara).
+  if (c.includes('extra power')) return 'SUPERSOFT'
+  if (c.includes('eva power')) return 'SOFT'
   if (c.includes('branco') || c.includes('white')) return 'SUPERSOFT'
   if (c === 'eva 10' || c === 'eva 13') return 'SUPERSOFT'
   if (c.includes('hard') || c.includes('duro') || c.includes('high density') || c.includes('alta densidade')) return 'HARD'
